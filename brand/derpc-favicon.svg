@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 16 16" role="img" aria-label="DeRPC">
+  <title>DeRPC</title>
+  <rect width="16" height="16" rx="3.4" fill="#0A0A0F"/>
+  <g>
+    <rect x="2.220" y="2.220" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="3.920" y="2.220" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="5.620" y="2.220" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="7.320" y="2.220" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="9.020" y="2.220" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="2.220" y="3.920" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="3.920" y="3.920" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="9.020" y="3.920" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="10.720" y="3.920" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="2.220" y="5.620" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="3.920" y="5.620" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="10.720" y="5.620" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="12.420" y="5.620" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="2.220" y="7.320" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="3.920" y="7.320" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="10.720" y="7.320" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="12.420" y="7.320" width="1.360" height="1.360" rx="0.340" fill="#C8F63C"/>
+    <rect x="2.220" y="9.020" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="3.920" y="9.020" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="10.720" y="9.020" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="12.420" y="9.020" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="2.220" y="10.720" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="3.920" y="10.720" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="9.020" y="10.720" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="10.720" y="10.720" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="2.220" y="12.420" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="3.920" y="12.420" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="5.620" y="12.420" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="7.320" y="12.420" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+    <rect x="9.020" y="12.420" width="1.360" height="1.360" rx="0.340" fill="#FFFFFF"/>
+  </g>
+</svg>
