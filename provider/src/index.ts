@@ -11,6 +11,7 @@ export {
 export { createPinnedBootstrapProvider, type Eip1193Like } from "./transport/pinned-bootstrap.ts";
 export {
   startAnonTransport,
+  TransportUnavailableError,
   type AnonTransport,
   type AnonFetchOptions,
   type TransportState,

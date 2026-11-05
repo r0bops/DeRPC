@@ -38,12 +38,36 @@ export interface StartOptions {
 
 const DEFAULT_TIMEOUT_MS = 60_000;
 
+/** The worker is gone (failed or closed). Not an endpoint problem: do not retry another operator. */
+export class TransportUnavailableError extends Error {
+  readonly state: "failed" | "closed";
+  constructor(state: "failed" | "closed", options?: { cause?: unknown }) {
+    super(`DeRPC: anonymous transport is ${state}; refusing to send (no direct fallback)`, options);
+    this.name = "TransportUnavailableError";
+    this.state = state;
+  }
+}
+
+// Errors the harness uses when the whole worker dies (signalFailed, crash, bundle load, close).
+function isWorkerFailure(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.name === "WorkerFailedError") return true;
+  return /^worker (error:|bundle failed to load:|closed$)/.test(error.message);
+}
+
 /** Start one long-lived anonymity worker. Calls made before it is ready are buffered by the harness. */
 export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonTransport {
   let current: TransportState = "booting";
+  let failure: unknown;
   const setState = (next: TransportState, detail?: string) => {
     current = next;
     onState?.(next, detail);
+  };
+  const state = (): TransportState => current;
+  const markFailed = (error: unknown) => {
+    if (current === "failed" || current === "closed") return;
+    failure = error;
+    setState("failed", error instanceof Error ? error.message : String(error));
   };
 
   const worker = new AnonRpcWorker({
@@ -53,33 +77,44 @@ export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonT
   });
 
   const ready = worker.ready.then(
-    () => setState("ready"),
+    () => {
+      if (current === "booting") setState("ready");
+    },
     (error: unknown) => {
-      setState("failed", error instanceof Error ? error.message : String(error));
+      markFailed(error);
       throw error;
     },
   );
   onState?.("booting");
 
-  if (onLog) void pumpLogs(worker, onLog);
+  // The log queue closes only when the worker dies, so it also reports failures after startup.
+  if (onLog) void pumpLogs(worker, onLog).then((error) => markFailed(error));
 
   return {
     pin,
     ready,
-    state: () => current,
+    state,
     async fetch(url, options = {}) {
       if (current === "failed" || current === "closed") {
-        throw new Error(`DeRPC: anonymous transport is ${current}; refusing to send (no direct fallback)`);
+        throw new TransportUnavailableError(current, { cause: failure });
       }
       const timeout = AbortSignal.timeout(options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
       const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
-      return worker.fetch(url, {
-        method: options.method ?? "GET",
-        headers: options.headers,
-        body: options.body,
-        signal,
-        ...(options.isolationKey ? { anonOptions: { isolationKey: options.isolationKey } } : {}),
-      } as RequestInit);
+      try {
+        return await worker.fetch(url, {
+          method: options.method ?? "GET",
+          headers: options.headers,
+          body: options.body,
+          signal,
+          ...(options.isolationKey ? { anonOptions: { isolationKey: options.isolationKey } } : {}),
+        } as RequestInit);
+      } catch (error) {
+        // close() may have run while the call was in flight.
+        if (state() === "closed") throw new TransportUnavailableError("closed", { cause: error });
+        if (!isWorkerFailure(error)) throw error;
+        markFailed(error);
+        throw new TransportUnavailableError("failed", { cause: error });
+      }
     },
     close() {
       setState("closed");
@@ -88,13 +123,14 @@ export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonT
   };
 }
 
-async function pumpLogs(worker: AnonRpcWorker, onLog: (line: WorkerLogLine) => void): Promise<void> {
+/** Resolves with the worker's failure once it fails or closes and its retained entries are drained (SPEC §13.1). */
+async function pumpLogs(worker: AnonRpcWorker, onLog: (line: WorkerLogLine) => void): Promise<unknown> {
   for (;;) {
     let entry;
     try {
       entry = await worker.acceptLog();
-    } catch {
-      return; // worker failed or closed and its retained entries are drained (SPEC §13.1)
+    } catch (error) {
+      return error;
     }
     const text = entry.args
       .map((a: unknown) => (typeof a === "string" ? a : a instanceof Uint8Array ? `<${a.length} bytes>` : JSON.stringify(a)))
