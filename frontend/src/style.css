@@ -45,3 +45,5 @@ h3 { font-size: 0.95rem; margin: 18px 0 4px; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .events { list-style: none; padding: 0; margin: 8px 0 0; font-family: ui-monospace, monospace; font-size: 0.8rem; max-height: 220px; overflow: auto; }
 .events li { padding: 2px 0; border-bottom: 1px solid var(--line); word-break: break-word; }
+.badge { font-size: 0.7rem; padding: 1px 6px; border-radius: 8px; border: 1px solid var(--warn); color: var(--warn); margin-left: 6px; }
+code { font-family: ui-monospace, monospace; font-size: 0.9em; }
