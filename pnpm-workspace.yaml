@@ -1,6 +1,7 @@
 packages:
   - provider
   - frontend
+  - web
 
 # The Lodestar light client stopped publishing at 1.43.0 (it moved out of the Lodestar monorepo).
 # Keep every @lodestar package on that release, and keep @chainsafe/ssz at 1.7.0:

@@ -8,7 +8,9 @@
   },
   "scripts": {
     "dev": "pnpm --filter frontend dev",
+    "dev:web": "pnpm --filter web dev",
     "build": "pnpm --filter frontend build",
+    "build:web": "pnpm --filter web build",
     "typecheck": "pnpm -r typecheck"
   }
 }
