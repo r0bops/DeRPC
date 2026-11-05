@@ -14,6 +14,7 @@ import {
 import { derpcTransport } from "@derpc/provider/viem";
 import { createPublicClient, erc20Abi, formatUnits } from "viem";
 import { mainnet } from "viem/chains";
+import { renderStatus as setText, tableRow, textCell, type StatusPart } from "./render.ts";
 
 type Operator = (typeof MAINNET_OPERATORS)[number];
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -81,42 +82,46 @@ function renderStatus(s: DeRPCStatus) {
   const now = performance.now();
   const t = s.transport;
   if (t.state === "ready") workerReadyAt ??= now;
-  $("worker-status").innerHTML =
-    t.state === "booting" ? `booting ${s.worker.name} via ${gatewayLabel}… ${seconds(now - pageStarted)}`
-    : t.state === "ready" ? `<span class="ok">ready</span> — ${s.worker.name} via ${gatewayLabel}, after ${seconds(workerReadyAt! - pageStarted)}`
-    : t.state === "failed" ? `<span class="bad">failed</span> — ${escape(t.error ?? "unknown error")} (no direct fallback)`
-    : `<span class="bad">closed</span> — anonymous network cut; DeRPC never falls back to a direct request`;
+  setText($("worker-status"),
+    t.state === "booting" ? [plain(`booting ${s.worker.name} via ${gatewayLabel}… ${seconds(now - pageStarted)}`)]
+    : t.state === "ready" ? [tag("ready", "ok"), plain(` — ${s.worker.name} via ${gatewayLabel}, after ${seconds(workerReadyAt! - pageStarted)}`)]
+    : t.state === "failed" ? [tag("failed", "bad"), plain(` — ${t.error ?? "unknown error"} (no direct fallback)`)]
+    : [tag("closed", "bad"), plain(" — anonymous network cut; DeRPC never falls back to a direct request")]);
 
   const lc = s.lightClient;
   const checkpointDays = ((Date.now() / 1000 - (MAINNET_GENESIS + s.checkpoint.epoch * 384)) / 86400).toFixed(1);
   const checkpoint = `pinned checkpoint epoch ${s.checkpoint.epoch} (${checkpointDays} days old)`;
   if (lc.state === "verified") lightClientReadyAt ??= now;
-  $("lc-status").innerHTML =
-    lc.state === "waiting" ? "waiting for the worker…"
-    : lc.state === "syncing" ? `syncing from the ${checkpoint}…`
-    : lc.state === "verified" ? `<span class="ok">verified</span> — sync-committee signatures checked, ${seconds(lightClientReadyAt! - (workerReadyAt ?? pageStarted))} after the worker · ${checkpoint}`
-    : `<span class="bad">${lc.state}</span> — ${escape(lc.error ?? "")}`;
+  setText($("lc-status"),
+    lc.state === "waiting" ? [plain("waiting for the worker…")]
+    : lc.state === "syncing" ? [plain(`syncing from the ${checkpoint}…`)]
+    : lc.state === "verified" ? [tag("verified", "ok"), plain(` — sync-committee signatures checked, ${seconds(lightClientReadyAt! - (workerReadyAt ?? pageStarted))} after the worker · ${checkpoint}`)]
+    : [tag(lc.state, "bad"), plain(` — ${lc.error ?? ""}`)]);
   if (lc.header) {
     const ageMin = ((Date.now() / 1000 - lc.header.timestamp) / 60).toFixed(1);
     $("lc-header").textContent = `${lc.header.blockNumber} (${ageMin} min ago) · hash ${short(lc.header.blockHash)} · state root ${short(lc.header.stateRoot)}`;
   }
 
   const p = s.pin;
-  $("pin-status").innerHTML =
-    p.state === "waiting-for-operators" ? "proven through your operators once you choose them (the check is a read too)"
-    : p.state === "waiting-for-light-client" ? "waiting for the light client…"
-    : p.state === "checking" ? `proving ${s.worker.name}'s on-chain workerHash (specifier slot 1)…`
-    : p.state === "verified" ? `<span class="ok">verified</span> — on-chain workerHash ${short(p.workerHash!)} matches the pin at block ${p.block}`
-    : p.state === "mismatch" ? `<span class="bad">rejected</span> — ${escape(p.error ?? "")}`
-    : `<span class="warn">not verified yet</span> — ${escape(p.error ?? "")}; it runs again with the next read`;
+  setText($("pin-status"),
+    p.state === "waiting-for-operators" ? [plain("proven through your operators once you choose them (the check is a read too)")]
+    : p.state === "waiting-for-light-client" ? [plain("waiting for the light client…")]
+    : p.state === "checking" ? [plain(`proving ${s.worker.name}'s on-chain workerHash (specifier slot 1)…`)]
+    : p.state === "verified" ? [tag("verified", "ok"), plain(` — on-chain workerHash ${short(p.workerHash!)} matches the pin at block ${p.block}`)]
+    : p.state === "mismatch" ? [tag("rejected", "bad"), plain(` — ${p.error ?? ""}`)]
+    : [tag("not verified yet", "warn"), plain(` — ${p.error ?? ""}; it runs again with the next read`)]);
 
-  $("pool").innerHTML = s.operators
-    .map((o) => {
+  $("pool").replaceChildren(
+    ...s.operators.map((o) => {
       const tier = o.priority < 0 ? "demo" : o.priority === 0 ? "preferred" : "fallback";
       const css = o.state === "eligible" ? "ok" : o.state === "excluded" ? "bad" : "warn";
-      return `<tr><td>${label(o.id)}${o.operator ? ` <span class="muted">(${o.operator})</span>` : ""}</td><td>${tier}</td><td class="${css}">${o.state === "excluded" ? "excluded locally" : o.state}</td></tr>`;
-    })
-    .join("");
+      const name = textCell(label(o.id));
+      if (o.operator) name.append(" ", Object.assign(document.createElement("span"), { className: "muted", textContent: `(${o.operator})` }));
+      const row = tableRow([{ text: tier }, { text: o.state === "excluded" ? "excluded locally" : o.state, className: css }]);
+      row.prepend(name);
+      return row;
+    }),
+  );
 }
 setInterval(() => renderStatus(derpc.status()), 1000);
 
@@ -203,31 +208,37 @@ function readAll(): Promise<void> {
 
 async function runReads() {
   if (!chosen.length) {
-    readsEl.innerHTML = `<tr><td colspan="4" class="muted">No reads yet: choose at least one operator above.</td></tr>`;
+    const empty = textCell("No reads yet: choose at least one operator above.", "muted");
+    empty.colSpan = 4;
+    const tr = document.createElement("tr");
+    tr.append(empty);
+    readsEl.replaceChildren(tr);
     return;
   }
-  readsEl.innerHTML = "";
+  readsEl.replaceChildren();
   for (const read of READS) {
+    const result = textCell("verifying…", "muted");
+    const via = textCell("");
+    const time = textCell("");
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${read.label}</td><td class="muted">verifying…</td><td></td><td></td>`;
+    tr.append(textCell(read.label), result, via, time);
     readsEl.append(tr);
-    const [, result, via, time] = tr.children as unknown as HTMLElement[];
     servedBy = [];
     const t = performance.now();
     try {
       const text = await read.run();
       const block = derpc.status().lightClient.header?.blockNumber;
-      result!.textContent = `${text}${block ? ` · verified at block ${block}` : ""}`;
-      result!.className = read.refused ? "bad" : "ok";
-      via!.textContent = servedBy.at(-1) ?? "on-device cache (proven earlier at this block)";
+      result.textContent = `${text}${block ? ` · verified at block ${block}` : ""}`;
+      result.className = read.refused ? "bad" : "ok";
+      via.textContent = servedBy.at(-1) ?? "on-device cache (proven earlier at this block)";
     } catch (error) {
       const e = rootError(error);
       const expected = read.refused && e.code === 4200;
-      result!.textContent = expected ? `refused as expected — ${e.text}` : e.text;
-      result!.className = expected ? "warn" : "bad";
-      via!.textContent = servedBy.at(-1) ?? "nothing sent";
+      result.textContent = expected ? `refused as expected — ${e.text}` : e.text;
+      result.className = expected ? "warn" : "bad";
+      via.textContent = servedBy.at(-1) ?? "nothing sent";
     }
-    time!.textContent = seconds(performance.now() - t);
+    time.textContent = seconds(performance.now() - t);
   }
   const transportOk = derpc.status().transport.state === "ready";
   readAgainBtn.disabled = false;
@@ -277,15 +288,15 @@ function renderDirectConnections() {
     const host = new URL(entry.name).host;
     counts.set(host, (counts.get(host) ?? 0) + 1);
   }
-  $("direct").innerHTML = [...counts]
-    .map(([host, n]) => {
-      const [kind, css] = host === location.host ? ["page assets", "ok"]
+  $("direct").replaceChildren(
+    ...[...counts].map(([host, n]) => {
+      const [kind, css]: [string, string] = host === location.host ? ["page assets", "ok"]
         : BUNDLE_HOSTS.has(host) ? ["worker bundle download (expected, disclosed)", "warn"]
         : RPC_HOSTS.has(host) ? ["RPC/beacon request outside the worker — LEAK", "bad"]
         : ["unexpected", "bad"];
-      return `<tr><td>${host}</td><td class="${css}">${kind}</td><td>${n}</td></tr>`;
-    })
-    .join("");
+      return tableRow([{ text: host }, { text: kind, className: css }, { text: String(n) }]);
+    }),
+  );
 }
 renderDirectConnections();
 setInterval(renderDirectConnections, 3000);
@@ -296,7 +307,12 @@ function amount(value: bigint, decimals: number): string {
   return `${BigInt(whole!).toLocaleString("en-US")}.${frac.padEnd(4, "0").slice(0, 4)}`;
 }
 const short = (hex: string) => `${hex.slice(0, 10)}…`;
-const escape = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
+function plain(text: string): StatusPart {
+  return { text };
+}
+function tag(text: string, className: string): StatusPart {
+  return { text, className };
+}
 
 /** The DeRPC error under viem's wrapping: its EIP-1193 code and reason. */
 function rootError(error: unknown): { code?: number; text: string } {
