@@ -1,0 +1,14 @@
+{
+  "name": "derpc-workspace",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter frontend dev",
+    "build": "pnpm --filter frontend build",
+    "typecheck": "pnpm -r typecheck"
+  }
+}
