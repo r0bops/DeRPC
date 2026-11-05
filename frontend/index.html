@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DeRPC — P1 network check</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>DeRPC <span class="muted">P1 · private network path</span></h1>
+      <p class="muted">
+        Starts the real tor-js worker, then fetches a mainnet proof and light-client data through it.
+        Nothing here falls back to a direct request.
+      </p>
+    </header>
+
+    <section>
+      <h2>1 · Worker</h2>
+      <div id="worker-status" class="status">starting…</div>
+      <details>
+        <summary>Worker log</summary>
+        <pre id="worker-log"></pre>
+      </details>
+    </section>
+
+    <section>
+      <h2>2 · Checks through the worker</h2>
+      <button id="run" disabled>Run checks</button>
+      <table>
+        <thead><tr><th>Check</th><th>Result</th><th>Time</th><th>Size</th></tr></thead>
+        <tbody id="results"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>3 · Direct connections made by this page</h2>
+      <p class="muted">
+        From the browser's resource timing. Expected: page assets and the worker bundle download.
+        Not listed by the browser: the WebRTC connection to the Tor gateway.
+      </p>
+      <table>
+        <thead><tr><th>Host</th><th>Kind</th><th>Count</th></tr></thead>
+        <tbody id="direct"></tbody>
+      </table>
+    </section>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
