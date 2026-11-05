@@ -48,11 +48,14 @@ export class TransportUnavailableError extends Error {
   }
 }
 
-// Errors the harness uses when the whole worker dies (signalFailed, crash, bundle load, close).
-function isWorkerFailure(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  if (error.name === "WorkerFailedError") return true;
-  return /^worker (error:|bundle failed to load:|closed$)/.test(error.message);
+// The harness rejects pending calls and closes the log queue in the same step, so once a call has
+// failed, a dead worker has settled `died` by the next macrotask.
+function settlesSoon(died: Promise<unknown>): Promise<boolean> {
+  return Promise.race([died.then(() => true), new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 0))]);
+}
+
+function logToConsole(line: WorkerLogLine): void {
+  console[line.level]("[worker]", line.text);
 }
 
 /** Start one long-lived anonymity worker. Calls made before it is ready are buffered by the harness. */
@@ -87,8 +90,9 @@ export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonT
   );
   onState?.("booting");
 
-  // The log queue closes only when the worker dies, so it also reports failures after startup.
-  if (onLog) void pumpLogs(worker, onLog).then((error) => markFailed(error));
+  // Always read the log queue: it closes only when the worker dies, so it also reports failures
+  // after startup. Without onLog, lines go to the console as the harness would print them.
+  const died = pumpLogs(worker, onLog ?? logToConsole).then((error) => markFailed(error));
 
   return {
     pin,
@@ -111,9 +115,8 @@ export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonT
       } catch (error) {
         // close() may have run while the call was in flight.
         if (state() === "closed") throw new TransportUnavailableError("closed", { cause: error });
-        if (!isWorkerFailure(error)) throw error;
-        markFailed(error);
-        throw new TransportUnavailableError("failed", { cause: error });
+        if (!(await settlesSoon(died))) throw error;
+        throw new TransportUnavailableError(state() === "closed" ? "closed" : "failed", { cause: error });
       }
     },
     close() {
