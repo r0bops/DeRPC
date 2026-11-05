@@ -40,13 +40,26 @@
         Ready only after a sync-committee-signed head update verifies.
       </p>
       <div id="lc-status" class="status">waiting for the worker…</div>
+      <div id="pin-status" class="status">worker pin: waiting for the light client…</div>
       <table>
         <tbody id="lc-header"></tbody>
       </table>
     </section>
 
     <section>
-      <h2>4 · Direct connections made by this page</h2>
+      <h2>4 · Verified reads</h2>
+      <p class="muted">
+        eth_getProof at the verified finalized block, through the worker, checked in this page against the
+        light client's state root. Public addresses only.
+      </p>
+      <table>
+        <thead><tr><th>Read</th><th>Result</th><th>Time</th></tr></thead>
+        <tbody id="reads"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>5 · Direct connections made by this page</h2>
       <p class="muted">
         From the browser's resource timing. Expected: page assets and the worker bundle download.
         Not listed by the browser: the WebRTC connection to the Tor gateway.

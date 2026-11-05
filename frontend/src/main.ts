@@ -2,8 +2,14 @@ import {
   MAINNET_BEACON_ENDPOINTS,
   MAINNET_CHECKPOINT,
   MAINNET_EXECUTION_ENDPOINTS,
+  MAINNET_TOKENS,
   TOR_JS_PIN as PINNED_TOR_JS,
   asFetch,
+  createJsonRpcSend,
+  createVerifiedReader,
+  checkWorkerPin,
+  gateReader,
+  type WorkerPin,
   startAnonTransport,
   startVerifiedHeaderSource,
   withGateways,
@@ -17,7 +23,16 @@ const configuredGateways = String(import.meta.env.VITE_TOR_GATEWAYS ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
-const TOR_JS_PIN = withGateways(PINNED_TOR_JS, configuredGateways);
+const GATEWAY_PIN = withGateways(PINNED_TOR_JS, configuredGateways);
+
+// Dev-only fault injection for testing the failure paths in a real browser. Never in production builds.
+//   ?fault=bad-worker-hash  the worker boots from a wrong hash: the harness must reject the bundle
+//   ?fault=wrong-pin        the on-chain check expects a different hash: reads must stay blocked
+const fault = import.meta.env.DEV ? new URLSearchParams(location.search).get("fault") : null;
+const flipHash = (h: `0x${string}`) => `${h.slice(0, -1)}${h.endsWith("0") ? "1" : "0"}` as `0x${string}`;
+const TOR_JS_PIN: WorkerPin = fault === "bad-worker-hash" ? { ...GATEWAY_PIN, workerHash: flipHash(GATEWAY_PIN.workerHash) } : GATEWAY_PIN;
+const EXPECTED_PIN: WorkerPin = fault === "wrong-pin" ? { ...TOR_JS_PIN, workerHash: flipHash(TOR_JS_PIN.workerHash) } : TOR_JS_PIN;
+if (fault) document.title = `DeRPC — fault: ${fault}`;
 const gatewayLabel = configuredGateways.length ? `own gateway (${configuredGateways.length})` : "demo gateway";
 
 // P1 check page (specs/ROADMAP.md, P1). Public fixtures only: no user addresses are sent anywhere.
@@ -186,7 +201,13 @@ const lcHeaderEl = $("lc-header");
 let headerSource: VerifiedHeaderSource | undefined;
 
 async function startLightClient() {
-  await transport.ready;
+  try {
+    await transport.ready;
+  } catch {
+    lcStatusEl.innerHTML = `<span class="bad">not started</span> — the worker failed, and nothing is ever sent directly`;
+    $("pin-status").textContent = "worker pin: not checked (no worker)";
+    return;
+  }
   const started = performance.now();
   lcStatusEl.textContent = `syncing from pinned checkpoint (epoch ${MAINNET_CHECKPOINT.epoch})…`;
   try {
@@ -199,6 +220,7 @@ async function startLightClient() {
     lcStatusEl.innerHTML = `<span class="ok">verified</span> — ready after ${elapsed(started)}`;
     renderHeader();
     setInterval(renderHeader, 12_000);
+    void runVerifiedReads();
   } catch (e) {
     lcStatusEl.innerHTML = `<span class="bad">not verified</span> — ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`;
   }
@@ -217,6 +239,67 @@ function renderHeader() {
     ].map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("");
   } catch (e) {
     lcStatusEl.innerHTML = `<span class="bad">stale</span> — ${e instanceof Error ? e.message : String(e)}`;
+  }
+}
+
+// 4. Verified reads at the verified finalized block, through the first candidate execution endpoint.
+const readsEl = $("reads");
+const UNISWAP_USDC_WETH_PAIR = "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc" as const; // public contract
+
+function formatUnits(value: bigint, decimals: number): string {
+  const whole = value / 10n ** BigInt(decimals);
+  const frac = (value % 10n ** BigInt(decimals)).toString().padStart(decimals, "0").slice(0, 4);
+  return `${whole.toLocaleString("en-US")}.${frac}`;
+}
+
+async function runVerifiedReads() {
+  if (!headerSource) return;
+  const endpoint = MAINNET_EXECUTION_ENDPOINTS[0];
+  const ungated = createVerifiedReader({ headers: headerSource, send: createJsonRpcSend(transport, endpoint) });
+
+  // The worker booted from a local pin. Prove the specifier's on-chain workerHash matches it before
+  // any read; on failure, every read is refused.
+  const pinStatusEl = $("pin-status");
+  pinStatusEl.textContent = `worker pin: proving ${EXPECTED_PIN.name}'s workerHash (slot 1) on mainnet…`;
+  const pinCheck = checkWorkerPin({ pin: EXPECTED_PIN, network: "mainnet", reader: ungated });
+  pinCheck.then(
+    ({ workerHash, block }) => {
+      pinStatusEl.innerHTML = `<span class="ok">worker pin verified</span> — on-chain workerHash ${workerHash.slice(0, 10)}… matches the pin at block ${block.blockNumber}`;
+    },
+    (e) => {
+      pinStatusEl.innerHTML = `<span class="bad">worker pin rejected</span> — ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`;
+    },
+  );
+  const reader = gateReader(ungated, pinCheck);
+  const weth = MAINNET_TOKENS.WETH;
+  const reads: [string, () => Promise<string>][] = [
+    [`ETH balance of the WETH contract (via ${new URL(endpoint).host})`, async () => {
+      const r = await reader.getBalance(weth.address);
+      return `${formatUnits(r.value, 18)} ETH · verified at block ${r.block.blockNumber}`;
+    }],
+    ["WETH balance of the Uniswap V2 USDC/WETH pair", async () => {
+      const r = await reader.getTokenBalance(weth, UNISWAP_USDC_WETH_PAIR);
+      return `${formatUnits(r.value, weth.decimals)} WETH · verified at block ${r.block.blockNumber}`;
+    }],
+    ["WETH contract code", async () => {
+      const r = await reader.getCode(weth.address);
+      return `${(r.value.length - 2) / 2} bytes · hash matches the proven code hash`;
+    }],
+  ];
+  for (const [label, read] of reads) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${label}</td><td class="muted">verifying…</td><td></td>`;
+    readsEl.append(tr);
+    const [, result, time] = tr.children as unknown as HTMLElement[];
+    const t = performance.now();
+    try {
+      result!.textContent = await read();
+      result!.className = "ok";
+    } catch (e) {
+      result!.textContent = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+      result!.className = "bad";
+    }
+    time!.textContent = `${((performance.now() - t) / 1000).toFixed(2)} s`;
   }
 }
 
