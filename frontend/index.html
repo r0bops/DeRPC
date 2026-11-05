@@ -34,7 +34,19 @@
     </section>
 
     <section>
-      <h2>3 · Direct connections made by this page</h2>
+      <h2>3 · Verified header (light client)</h2>
+      <p class="muted">
+        Lodestar light client from the pinned checkpoint, with every beacon request through the worker.
+        Ready only after a sync-committee-signed head update verifies.
+      </p>
+      <div id="lc-status" class="status">waiting for the worker…</div>
+      <table>
+        <tbody id="lc-header"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>4 · Direct connections made by this page</h2>
       <p class="muted">
         From the browser's resource timing. Expected: page assets and the worker bundle download.
         Not listed by the browser: the WebRTC connection to the Tor gateway.

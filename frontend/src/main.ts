@@ -1,10 +1,14 @@
 import {
   MAINNET_BEACON_ENDPOINTS,
+  MAINNET_CHECKPOINT,
   MAINNET_EXECUTION_ENDPOINTS,
   TOR_JS_PIN as PINNED_TOR_JS,
+  asFetch,
   startAnonTransport,
+  startVerifiedHeaderSource,
   withGateways,
   type AnonTransport,
+  type VerifiedHeaderSource,
 } from "@derpc/provider";
 
 // Gateways come from VITE_TOR_GATEWAYS (frontend/.env.local, comma-separated KPS addresses);
@@ -176,6 +180,47 @@ function renderDirectConnections() {
   }
 }
 
+// 3. Light client: verified finalized header from the pinned checkpoint, all requests through the worker.
+const lcStatusEl = $("lc-status");
+const lcHeaderEl = $("lc-header");
+let headerSource: VerifiedHeaderSource | undefined;
+
+async function startLightClient() {
+  await transport.ready;
+  const started = performance.now();
+  lcStatusEl.textContent = `syncing from pinned checkpoint (epoch ${MAINNET_CHECKPOINT.epoch})…`;
+  try {
+    headerSource = await startVerifiedHeaderSource({
+      network: "mainnet",
+      checkpoint: MAINNET_CHECKPOINT,
+      beaconUrl: MAINNET_BEACON_ENDPOINTS[0],
+      fetch: asFetch(transport, { isolationKey: "derpc:consensus" }),
+    });
+    lcStatusEl.innerHTML = `<span class="ok">verified</span> — ready after ${elapsed(started)}`;
+    renderHeader();
+    setInterval(renderHeader, 12_000);
+  } catch (e) {
+    lcStatusEl.innerHTML = `<span class="bad">not verified</span> — ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`;
+  }
+}
+
+function renderHeader() {
+  if (!headerSource) return;
+  try {
+    const h = headerSource.finalized();
+    const ageMin = ((Date.now() / 1000 - h.timestamp) / 60).toFixed(1);
+    lcHeaderEl.innerHTML = [
+      ["finalized block", `${h.blockNumber} (${ageMin} min ago)`],
+      ["block hash", h.blockHash],
+      ["state root", h.stateRoot],
+      ["beacon slot", String(h.slot)],
+    ].map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+  } catch (e) {
+    lcStatusEl.innerHTML = `<span class="bad">stale</span> — ${e instanceof Error ? e.message : String(e)}`;
+  }
+}
+
+void startLightClient();
 runBtn.addEventListener("click", () => void runChecks());
 renderDirectConnections();
 setInterval(renderDirectConnections, 3000);
