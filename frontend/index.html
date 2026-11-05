@@ -56,6 +56,21 @@
         <thead><tr><th>Read</th><th>Result</th><th>Time</th></tr></thead>
         <tbody id="reads"></tbody>
       </table>
+      <div class="controls">
+        <button id="read-again" disabled>Read again</button>
+        <button id="inject-liar" disabled>Inject a lying node (simulated)</button>
+        <button id="cut-network" disabled>Cut the anonymous network</button>
+      </div>
+      <p class="muted">
+        The simulated lying node is part of this demo, not a real provider: it makes a real request to dRPC
+        through Tor, then inflates the balance it returns. Rejecting it is local evidence only.
+      </p>
+      <h3>Endpoint pool</h3>
+      <table>
+        <thead><tr><th>Endpoint</th><th>Tier</th><th>State</th></tr></thead>
+        <tbody id="pool"></tbody>
+      </table>
+      <ul id="pool-events" class="events"></ul>
     </section>
 
     <section>

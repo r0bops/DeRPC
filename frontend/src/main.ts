@@ -6,9 +6,17 @@ import {
   TOR_JS_PIN as PINNED_TOR_JS,
   asFetch,
   createJsonRpcSend,
-  createVerifiedReader,
   checkWorkerPin,
   gateReader,
+  createPool,
+  createPooledReader,
+  MAINNET_POOL,
+  type AccountProof,
+  type JsonRpcSend,
+  type Pool,
+  type PoolEndpoint,
+  type PoolEvent,
+  type VerifiedReader,
   type WorkerPin,
   startAnonTransport,
   startVerifiedHeaderSource,
@@ -66,6 +74,8 @@ const transport: AnonTransport = startAnonTransport({
   },
 });
 transport.ready.catch(() => {});
+// Dev-only handle for experiments in the browser console and automated checks. Not in production builds.
+if (import.meta.env.DEV) (globalThis as Record<string, unknown>).__derpc = { transport };
 const bootTicker = setInterval(() => {
   if (transport.state() !== "booting") return clearInterval(bootTicker);
   statusEl.textContent = `booting ${TOR_JS_PIN.name} via ${gatewayLabel}… ${elapsed(bootStarted)}`;
@@ -242,9 +252,19 @@ function renderHeader() {
   }
 }
 
-// 4. Verified reads at the verified finalized block, through the first candidate execution endpoint.
+// 4. Verified reads through the endpoint pool, at the verified finalized block.
 const readsEl = $("reads");
+const poolEl = $("pool");
+const eventsEl = $("pool-events");
+const readAgainBtn = $<HTMLButtonElement>("read-again");
+const injectLiarBtn = $<HTMLButtonElement>("inject-liar");
+const cutNetworkBtn = $<HTMLButtonElement>("cut-network");
 const UNISWAP_USDC_WETH_PAIR = "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc" as const; // public contract
+const LIAR = "simulated-lying-node";
+
+let pool: Pool | undefined;
+let pinCheck: Promise<unknown> | undefined;
+let lastServedBy = "";
 
 function formatUnits(value: bigint, decimals: number): string {
   const whole = value / 10n ** BigInt(decimals);
@@ -252,28 +272,95 @@ function formatUnits(value: bigint, decimals: number): string {
   return `${whole.toLocaleString("en-US")}.${frac}`;
 }
 
+const endpointLabel = (url: string) => (url === LIAR ? "simulated lying node" : new URL(url).host);
+
+function logEvent(e: PoolEvent) {
+  if (e.type === "success" && e.endpoint) lastServedBy = endpointLabel(e.endpoint);
+  const li = document.createElement("li");
+  li.className = e.type === "success" ? "ok" : e.type === "transient-failure" ? "warn" : e.type === "attempt" ? "" : "bad";
+  const parts = [new Date(e.at).toISOString().slice(11, 19), e.type];
+  if (e.endpoint) parts.push(endpointLabel(e.endpoint));
+  if (e.attempt) parts.push(`attempt ${e.attempt}`);
+  if (e.type === "invalid-proof") parts.push("excluded locally");
+  if (e.detail) parts.push(e.detail.slice(0, 160));
+  li.textContent = parts.join(" · ");
+  eventsEl.prepend(li);
+  renderPool();
+}
+
+function renderPool() {
+  if (!pool) return;
+  poolEl.innerHTML = pool
+    .status()
+    .map((s) => {
+      const tier = s.priority < 0 ? "demo" : s.priority === 0 ? "preferred" : "fallback";
+      const css = s.state === "eligible" ? "ok" : s.state === "excluded" ? "bad" : "warn";
+      return `<tr><td>${endpointLabel(s.url)}${s.operator ? ` <span class="muted">(${s.operator})</span>` : ""}</td><td>${tier}</td><td class="${css}">${s.state === "excluded" ? "excluded locally" : s.state}</td></tr>`;
+    })
+    .join("");
+}
+
+/** Demo only: a real request to dRPC through Tor, with the balance claims inflated before returning. */
+function liarSend(): JsonRpcSend {
+  const real = createJsonRpcSend(transport, MAINNET_EXECUTION_ENDPOINTS[0], { timeoutMs: 20_000 });
+  return async (method, params, opts) => {
+    const result = await real(method, params, opts);
+    if (method !== "eth_getProof" || !result || typeof result !== "object") return result;
+    const proof = structuredClone(result) as AccountProof;
+    const inflate = (hex: string) => `0x${(BigInt(hex) + 10n ** 21n).toString(16)}` as `0x${string}`; // +1000 units
+    proof.balance = inflate(proof.balance);
+    proof.storageProof = proof.storageProof.map((entry) => ({ ...entry, value: inflate(entry.value) }));
+    return proof;
+  };
+}
+
+function buildPool(withLiar: boolean): Pool {
+  const endpoints: PoolEndpoint[] = [
+    ...(withLiar ? [{ url: LIAR, priority: -1, operator: "demo" }] : []),
+    ...MAINNET_POOL.map((e) => ({ ...e })),
+  ];
+  pool = createPool({
+    endpoints,
+    sendFor: (url) => (url === LIAR ? liarSend() : createJsonRpcSend(transport, url, { timeoutMs: 20_000 })),
+    onEvent: logEvent,
+  });
+  renderPool();
+  return pool;
+}
+
+/** A fresh pooled reader (empty cache) on the current pool, behind the worker-pin gate. */
+function currentReader(): VerifiedReader {
+  return gateReader(createPooledReader({ headers: headerSource!, pool: pool! }), pinCheck!);
+}
+
 async function runVerifiedReads() {
   if (!headerSource) return;
-  const endpoint = MAINNET_EXECUTION_ENDPOINTS[0];
-  const ungated = createVerifiedReader({ headers: headerSource, send: createJsonRpcSend(transport, endpoint) });
+  buildPool(false);
 
   // The worker booted from a local pin. Prove the specifier's on-chain workerHash matches it before
   // any read; on failure, every read is refused.
   const pinStatusEl = $("pin-status");
   pinStatusEl.textContent = `worker pin: proving ${EXPECTED_PIN.name}'s workerHash (slot 1) on mainnet…`;
-  const pinCheck = checkWorkerPin({ pin: EXPECTED_PIN, network: "mainnet", reader: ungated });
+  pinCheck = checkWorkerPin({ pin: EXPECTED_PIN, network: "mainnet", reader: createPooledReader({ headers: headerSource, pool: pool! }) });
   pinCheck.then(
-    ({ workerHash, block }) => {
+    (r) => {
+      const { workerHash, block } = r as { workerHash: string; block: { blockNumber: number } };
       pinStatusEl.innerHTML = `<span class="ok">worker pin verified</span> — on-chain workerHash ${workerHash.slice(0, 10)}… matches the pin at block ${block.blockNumber}`;
     },
     (e) => {
       pinStatusEl.innerHTML = `<span class="bad">worker pin rejected</span> — ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`;
     },
   );
-  const reader = gateReader(ungated, pinCheck);
+
+  await readAll();
+  for (const b of [readAgainBtn, injectLiarBtn, cutNetworkBtn]) b.disabled = false;
+}
+
+async function readAll() {
+  const reader = currentReader();
   const weth = MAINNET_TOKENS.WETH;
   const reads: [string, () => Promise<string>][] = [
-    [`ETH balance of the WETH contract (via ${new URL(endpoint).host})`, async () => {
+    ["ETH balance of the WETH contract", async () => {
       const r = await reader.getBalance(weth.address);
       return `${formatUnits(r.value, 18)} ETH · verified at block ${r.block.blockNumber}`;
     }],
@@ -286,6 +373,7 @@ async function runVerifiedReads() {
       return `${(r.value.length - 2) / 2} bytes · hash matches the proven code hash`;
     }],
   ];
+  readsEl.innerHTML = "";
   for (const [label, read] of reads) {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${label}</td><td class="muted">verifying…</td><td></td>`;
@@ -293,7 +381,8 @@ async function runVerifiedReads() {
     const [, result, time] = tr.children as unknown as HTMLElement[];
     const t = performance.now();
     try {
-      result!.textContent = await read();
+      const text = await read();
+      result!.textContent = `${text} · via ${lastServedBy}`;
       result!.className = "ok";
     } catch (e) {
       result!.textContent = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
@@ -301,7 +390,21 @@ async function runVerifiedReads() {
     }
     time!.textContent = `${((performance.now() - t) / 1000).toFixed(2)} s`;
   }
+  renderDirectConnections();
 }
+
+readAgainBtn.addEventListener("click", () => void readAll());
+injectLiarBtn.addEventListener("click", () => {
+  injectLiarBtn.disabled = true;
+  buildPool(true);
+  void readAll();
+});
+cutNetworkBtn.addEventListener("click", () => {
+  cutNetworkBtn.disabled = true;
+  transport.close();
+  statusEl.innerHTML = `<span class="bad">closed</span> — anonymous network cut; DeRPC never falls back to a direct request`;
+  void readAll();
+});
 
 void startLightClient();
 runBtn.addEventListener("click", () => void runChecks());
