@@ -74,3 +74,22 @@ export {
   type EndpointStatus,
 } from "./pool/pool.ts";
 export { createPooledReader } from "./pool/pooled-reader.ts";
+
+// The integrator API: one call for private, verified reads (viem helper: "@derpc/provider/viem").
+export {
+  createDeRPC,
+  simulatedLyingOperator,
+  type DeRPC,
+  type DeRPCOperator,
+  type DeRPCOptions,
+  type DeRPCStatus,
+} from "./api/derpc.ts";
+export {
+  createEip1193Provider,
+  ProviderRpcError,
+  SUPPORTED_METHODS,
+  type Eip1193Provider,
+  type ProviderEvent,
+  type ReadBackend,
+  type RequestArguments,
+} from "./api/eip1193.ts";
