@@ -6,7 +6,8 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./viem": "./src/api/viem.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p .",
@@ -22,8 +23,17 @@
     "@noble/hashes": "1.8.0",
     "buffer": "6.0.3"
   },
+  "peerDependencies": {
+    "viem": "^2.57.8"
+  },
+  "peerDependenciesMeta": {
+    "viem": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "typescript": "5.9.3",
+    "viem": "2.57.8",
     "vitest": "4.1.12"
   }
 }

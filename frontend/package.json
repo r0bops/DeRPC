@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
-    "@derpc/provider": "workspace:*"
+    "@derpc/provider": "workspace:*",
+    "viem": "2.57.8"
   },
   "devDependencies": {
     "typescript": "5.9.3",
