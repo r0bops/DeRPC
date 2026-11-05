@@ -1,0 +1,8 @@
+{
+  "name": "@lodestar/spec-test-util",
+  "version": "1.43.0",
+  "private": true,
+  "description": "Stub. @lodestar/config 1.43.0 lists @lodestar/spec-test-util as a runtime dependency, but the published package declares `vitest: \"catalog:\"` (a pnpm workspace reference), which breaks installs. Nothing at runtime imports it.",
+  "type": "module",
+  "main": "index.js"
+}

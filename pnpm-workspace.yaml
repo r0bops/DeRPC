@@ -1,3 +1,18 @@
 packages:
   - provider
   - frontend
+
+# The Lodestar light client stopped publishing at 1.43.0 (it moved out of the Lodestar monorepo).
+# Keep every @lodestar package on that release, and keep @chainsafe/ssz at 1.7.0:
+# ssz 1.8+ throws "List limit must be a positive integer" with 1.43.0's types.
+overrides:
+  "@lodestar/api": 1.43.0
+  "@lodestar/config": 1.43.0
+  "@lodestar/params": 1.43.0
+  "@lodestar/types": 1.43.0
+  "@lodestar/utils": 1.43.0
+  "@lodestar/spec-test-util": "link:./provider/stubs/lodestar-spec-test-util"
+  "@chainsafe/ssz": 1.7.0
+
+patchedDependencies:
+  '@lodestar/light-client@1.43.0': patches/@lodestar__light-client@1.43.0.patch
