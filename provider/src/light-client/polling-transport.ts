@@ -5,6 +5,13 @@ import type { LightClientFinalityUpdate, LightClientOptimisticUpdate } from "@lo
 export interface PollingTransportOptions {
   /** How often to poll for new head updates. Mainnet produces a block every 12 s. */
   intervalMs?: number;
+  /**
+   * Slot of the optimistic head the light client has actually accepted. Used to skip duplicate
+   * polls without letting a rejected high-slot response hide a later valid update.
+   */
+  getVerifiedHeadSlot?: () => number;
+  /** Slot of the finalized header the light client has actually accepted. */
+  getVerifiedFinalizedSlot?: () => number;
 }
 
 /**
@@ -17,6 +24,8 @@ export interface PollingTransportOptions {
 export class PollingLightClientTransport implements LightClientTransport {
   private readonly rest: LightClientRestTransport;
   private readonly intervalMs: number;
+  private readonly getVerifiedHeadSlot: (() => number) | undefined;
+  private readonly getVerifiedFinalizedSlot: (() => number) | undefined;
   private readonly optimisticHandlers: ((update: LightClientOptimisticUpdate) => void)[] = [];
   private readonly finalityHandlers: ((update: LightClientFinalityUpdate) => void)[] = [];
   private lastOptimisticSlot = -1;
@@ -27,6 +36,8 @@ export class PollingLightClientTransport implements LightClientTransport {
   constructor(api: ApiClient, opts: PollingTransportOptions = {}) {
     this.rest = new LightClientRestTransport(api);
     this.intervalMs = opts.intervalMs ?? 12_000;
+    this.getVerifiedHeadSlot = opts.getVerifiedHeadSlot;
+    this.getVerifiedFinalizedSlot = opts.getVerifiedFinalizedSlot;
   }
 
   getUpdates: LightClientTransport["getUpdates"] = (startPeriod, count) => this.rest.getUpdates(startPeriod, count);
@@ -67,9 +78,14 @@ export class PollingLightClientTransport implements LightClientTransport {
   private async pollOptimistic(): Promise<void> {
     try {
       const { data } = await this.rest.getOptimisticUpdate();
-      if (data.attestedHeader.beacon.slot <= this.lastOptimisticSlot) return;
-      this.lastOptimisticSlot = data.attestedHeader.beacon.slot;
+      const slot = data.attestedHeader.beacon.slot;
+      const verifiedSlot = this.getVerifiedHeadSlot?.() ?? this.lastOptimisticSlot;
+      if (slot <= verifiedSlot) return;
       for (const handler of this.optimisticHandlers) handler(data);
+      // Only remember the polled slot after every handler accepted it. When the light client's
+      // verified slot is available it remains authoritative, since a handler can accept without
+      // advancing the head (for example when participation is below the safety threshold).
+      this.lastOptimisticSlot = slot;
     } catch {
       // A failed poll is retried on the next tick; the light client keeps its last verified head.
     }
@@ -78,9 +94,11 @@ export class PollingLightClientTransport implements LightClientTransport {
   private async pollFinality(): Promise<void> {
     try {
       const { data } = await this.rest.getFinalityUpdate();
-      if (data.finalizedHeader.beacon.slot <= this.lastFinalizedSlot) return;
-      this.lastFinalizedSlot = data.finalizedHeader.beacon.slot;
+      const slot = data.finalizedHeader.beacon.slot;
+      const verifiedSlot = this.getVerifiedFinalizedSlot?.() ?? this.lastFinalizedSlot;
+      if (slot <= verifiedSlot) return;
       for (const handler of this.finalityHandlers) handler(data);
+      this.lastFinalizedSlot = slot;
     } catch {
       // As above.
     }

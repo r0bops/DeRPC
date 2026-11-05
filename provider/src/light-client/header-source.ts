@@ -81,7 +81,14 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
 
   const config = getChainForkConfigFromNetwork(opts.network);
   const api = getClient({ urls: [opts.beaconUrl], fetch: opts.fetch }, { config });
-  const transport = new PollingLightClientTransport(api, { intervalMs: opts.pollIntervalMs });
+  let lc: Lightclient | undefined;
+  const transport = new PollingLightClientTransport(api, {
+    intervalMs: opts.pollIntervalMs,
+    // Polling must skip based on what the light client actually verified, not on the last response
+    // the beacon endpoint returned. A rejected high-slot update must not hide a later valid one.
+    getVerifiedHeadSlot: () => lc?.getHead().beacon.slot ?? -1,
+    getVerifiedFinalizedSlot: () => lc?.getFinalized().beacon.slot ?? -1,
+  });
   const log = opts.onLog ?? (() => {});
   const logger = {
     error: (msg: string) => log("error", msg),
@@ -90,7 +97,6 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
     debug: (msg: string) => log("debug", msg),
   };
 
-  let lc: Lightclient | undefined;
   const close = () => {
     lc?.stop();
     transport.close();

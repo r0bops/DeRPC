@@ -17,6 +17,7 @@ const DAY = 24 * 60 * MINUTE;
 
 const mainnetResponses = mainnet.responses as Record<string, RecordedResponse>;
 const bootstrapPath = `/eth/v1/beacon/light_client/bootstrap/${mainnet.checkpoint.root}`;
+const OPTIMISTIC_PATH = "/eth/v1/beacon/light_client/optimistic_update";
 const bootstrapHeader = JSON.parse(mainnetResponses[bootstrapPath]!.body).data.header;
 const EXPECTED = {
   blockNumber: Number(bootstrapHeader.execution.block_number),
@@ -49,6 +50,27 @@ function start(network: "mainnet" | "hoodi", fixture: typeof mainnet | typeof ho
   return { served, pending };
 }
 
+function mutate(response: RecordedResponse, change: (data: any) => void): RecordedResponse {
+  const body = JSON.parse(response.body);
+  change(body.data);
+  return { ...response, body: JSON.stringify(body) };
+}
+
+function sequencedFetch(sequences: Record<string, RecordedResponse[]>) {
+  const next = new Map<string, number>();
+  const fetchFn = async (input: RequestInfo | URL): Promise<Response> => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+    const path = url.slice(BEACON.length);
+    const sequence = sequences[path] ?? [mainnetResponses[path]!];
+    const index = Math.min(next.get(path) ?? 0, sequence.length - 1);
+    next.set(path, index + 1);
+    const recorded = sequence[index];
+    if (!recorded) return new Response("no fixture", { status: 404 });
+    return new Response(recorded.body, { status: recorded.status, headers: recorded.headers });
+  };
+  return { fetch: fetchFn as typeof fetch };
+}
+
 describe("startVerifiedHeaderSource", () => {
   it("verifies the finalized execution header from the pinned mainnet checkpoint", async () => {
     at(mainnet.capturedAt);
@@ -60,6 +82,29 @@ describe("startVerifiedHeaderSource", () => {
     expect(header.blockNumber).toBe(EXPECTED.blockNumber);
     expect(header.blockHash).toBe(EXPECTED.blockHash);
     expect(header.stateRoot).toBe(EXPECTED.stateRoot);
+  });
+
+  it("applies a valid head update after the beacon sends an invalid high-slot update", async () => {
+    at(mainnet.capturedAt);
+    const genuine = mainnetResponses[OPTIMISTIC_PATH]!;
+    const invalidSignature = mutate(genuine, (data) => {
+      const signature: string = data.sync_aggregate.sync_committee_signature;
+      data.sync_aggregate.sync_committee_signature = signature.slice(0, -2) + (signature.endsWith("00") ? "01" : "00");
+    });
+    const invalidHighSlot = mutate(genuine, (data) => {
+      data.attested_header.beacon.slot = String(Number(data.attested_header.beacon.slot) + 1_000);
+    });
+    const served = sequencedFetch({ [OPTIMISTIC_PATH]: [invalidSignature, invalidHighSlot, genuine] });
+    source = await startVerifiedHeaderSource({
+      network: "mainnet",
+      checkpoint: { root: mainnet.checkpoint.root as `0x${string}`, epoch: mainnet.checkpoint.epoch },
+      beaconUrl: BEACON,
+      fetch: served.fetch,
+      pollIntervalMs: 5,
+      readyTimeoutMs: 1_500,
+    });
+
+    expect(source.finalized().blockNumber).toBe(EXPECTED.blockNumber);
   });
 
   it("refuses a checkpoint older than 7 days before making any request", async () => {
