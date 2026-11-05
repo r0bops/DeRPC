@@ -148,3 +148,16 @@ The browser demo shows three things:
 ## License
 
 [MIT](LICENSE)
+
+## Product site and design
+
+| Path | What it is |
+| :--- | :--- |
+| `web/` | Product site preview (landing, operator directory, operate). Demo data only. |
+| `brand/` | Logo kit |
+| `docs/design-system.md` | Brand, tokens and front-end rules |
+
+```sh
+pnpm dev:web      # product site on http://localhost:5174
+pnpm build:web
+```
