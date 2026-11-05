@@ -55,9 +55,17 @@ export interface HeaderSourceOptions {
   onLog?: (level: "error" | "warn" | "info" | "debug", message: string) => void;
 }
 
+export interface PollHealth {
+  /** Head polls that failed in a row. Zero after any successful poll. */
+  consecutiveFailures: number;
+  lastError?: string;
+}
+
 export interface VerifiedHeaderSource {
   /** The latest verified finalized header. Throws StaleHeaderError instead of returning stale data. */
   finalized(): VerifiedHeader;
+  /** Whether head polling is currently failing, so callers can show it before the header goes stale. */
+  pollHealth(): PollHealth;
   close(): void;
 }
 
@@ -82,12 +90,18 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
   const config = getChainForkConfigFromNetwork(opts.network);
   const api = getClient({ urls: [opts.beaconUrl], fetch: opts.fetch }, { config });
   let lc: Lightclient | undefined;
+  let health: PollHealth = { consecutiveFailures: 0 };
   const transport = new PollingLightClientTransport(api, {
     intervalMs: opts.pollIntervalMs,
     // Polling must skip based on what the light client actually verified, not on the last response
     // the beacon endpoint returned. A rejected high-slot update must not hide a later valid one.
     getVerifiedHeadSlot: () => lc?.getHead().beacon.slot ?? -1,
     getVerifiedFinalizedSlot: () => lc?.getFinalized().beacon.slot ?? -1,
+    onPollError: (error, consecutiveFailures) => {
+      const message = error instanceof Error ? error.message : String(error);
+      health = { consecutiveFailures, lastError: message };
+      opts.onLog?.("warn", `head poll failed (${consecutiveFailures} in a row): ${message}`);
+    },
   });
   const log = opts.onLog ?? (() => {});
   const logger = {
@@ -134,6 +148,9 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
         throw new StaleHeaderError(`latest verified finalized header (block ${header.blockNumber}) is ${ageMin.toFixed(0)} min old`);
       }
       return header;
+    },
+    pollHealth() {
+      return transport.consecutivePollFailures() === 0 ? { consecutiveFailures: 0 } : { ...health };
     },
     close,
   };

@@ -12,6 +12,8 @@ export interface PollingTransportOptions {
   getVerifiedHeadSlot?: () => number;
   /** Slot of the finalized header the light client has actually accepted. */
   getVerifiedFinalizedSlot?: () => number;
+  /** Called on every failed poll with the number of consecutive failures; any success resets it. */
+  onPollError?: (error: unknown, consecutiveFailures: number) => void;
 }
 
 /**
@@ -26,10 +28,12 @@ export class PollingLightClientTransport implements LightClientTransport {
   private readonly intervalMs: number;
   private readonly getVerifiedHeadSlot: (() => number) | undefined;
   private readonly getVerifiedFinalizedSlot: (() => number) | undefined;
+  private readonly onPollError: ((error: unknown, consecutiveFailures: number) => void) | undefined;
   private readonly optimisticHandlers: ((update: LightClientOptimisticUpdate) => void)[] = [];
   private readonly finalityHandlers: ((update: LightClientFinalityUpdate) => void)[] = [];
   private lastOptimisticSlot = -1;
   private lastFinalizedSlot = -1;
+  private consecutiveFailures = 0;
   private running = false;
   private stopped = false;
 
@@ -38,6 +42,7 @@ export class PollingLightClientTransport implements LightClientTransport {
     this.intervalMs = opts.intervalMs ?? 12_000;
     this.getVerifiedHeadSlot = opts.getVerifiedHeadSlot;
     this.getVerifiedFinalizedSlot = opts.getVerifiedFinalizedSlot;
+    this.onPollError = opts.onPollError;
   }
 
   getUpdates: LightClientTransport["getUpdates"] = (startPeriod, count) => this.rest.getUpdates(startPeriod, count);
@@ -59,6 +64,10 @@ export class PollingLightClientTransport implements LightClientTransport {
     this.stopped = true;
   }
 
+  consecutivePollFailures(): number {
+    return this.consecutiveFailures;
+  }
+
   private startPolling(): void {
     if (this.running || this.stopped) return;
     this.running = true;
@@ -78,6 +87,7 @@ export class PollingLightClientTransport implements LightClientTransport {
   private async pollOptimistic(): Promise<void> {
     try {
       const { data } = await this.rest.getOptimisticUpdate();
+      this.consecutiveFailures = 0;
       const slot = data.attestedHeader.beacon.slot;
       const verifiedSlot = this.getVerifiedHeadSlot?.() ?? this.lastOptimisticSlot;
       if (slot <= verifiedSlot) return;
@@ -86,21 +96,28 @@ export class PollingLightClientTransport implements LightClientTransport {
       // verified slot is available it remains authoritative, since a handler can accept without
       // advancing the head (for example when participation is below the safety threshold).
       this.lastOptimisticSlot = slot;
-    } catch {
-      // A failed poll is retried on the next tick; the light client keeps its last verified head.
+    } catch (error) {
+      // Retried on the next tick; the light client keeps its last verified head.
+      this.reportFailure(error);
     }
   }
 
   private async pollFinality(): Promise<void> {
     try {
       const { data } = await this.rest.getFinalityUpdate();
+      this.consecutiveFailures = 0;
       const slot = data.finalizedHeader.beacon.slot;
       const verifiedSlot = this.getVerifiedFinalizedSlot?.() ?? this.lastFinalizedSlot;
       if (slot <= verifiedSlot) return;
       for (const handler of this.finalityHandlers) handler(data);
       this.lastFinalizedSlot = slot;
-    } catch {
-      // As above.
+    } catch (error) {
+      this.reportFailure(error);
     }
+  }
+
+  private reportFailure(error: unknown): void {
+    this.consecutiveFailures += 1;
+    this.onPollError?.(error, this.consecutiveFailures);
   }
 }

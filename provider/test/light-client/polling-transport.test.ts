@@ -123,6 +123,22 @@ describe("PollingLightClientTransport", () => {
     await vi.waitFor(() => expect(finalized).toEqual([FINALIZED_SLOT]));
   });
 
+  it("reports consecutive poll failures and resets the count after a success", async () => {
+    const ok = responses[OPTIMISTIC_PATH]!;
+    const down = { ...ok, status: 503, body: "unavailable" };
+    const served = sequencedFetch({ [OPTIMISTIC_PATH]: [down, down, down, ok] });
+    const api = getClient({ urls: [BEACON], fetch: served.fetch }, { config });
+    const failures: number[] = [];
+    transport = new PollingLightClientTransport(api, { intervalMs: 5, onPollError: (_error, n) => failures.push(n) });
+    const heads: number[] = [];
+
+    transport.onOptimisticUpdate((update) => heads.push(update.attestedHeader.beacon.slot));
+
+    await vi.waitFor(() => expect(heads).toEqual([ATTESTED_SLOT]));
+    expect(failures).toEqual([1, 2, 3]);
+    expect(transport.consecutivePollFailures()).toBe(0);
+  });
+
   it("stops polling after close()", async () => {
     const { served, transport } = setup();
     transport.onOptimisticUpdate(() => {});
