@@ -1,3 +1,6 @@
+import type { HeaderNetwork } from "../light-client/header-source.ts";
+import type { PoolEndpoint } from "../pool/pool.ts";
+
 /**
  * Pinned mainnet configuration. These values are a trust decision (see specs/CONTEXT.md §4):
  * they were read from the worker specifier contracts on Nov 5, 2026 (block 26349613, two RPCs
@@ -8,7 +11,9 @@
 export interface WorkerPin {
   /** Human-readable name of the anonymity network. */
   name: string;
-  /** IWorkerSpecifier contract on mainnet (anon-rpc SPEC §4). */
+  /** Chain the specifier contract lives on: its workerHash must be proven against that chain's state. */
+  chain: HeaderNetwork;
+  /** IWorkerSpecifier contract (anon-rpc SPEC §4). */
   specifier: `0x${string}`;
   /** keccak256 of the worker bundle; also the ABI return data of `workerHash()`. */
   workerHash: `0x${string}`;
@@ -25,6 +30,7 @@ export const TOR_JS_DEMO_GATEWAY = "152.236.3.22:12298:uEiCH0VdbhryzJcMtCfB0vLA4
 
 export const TOR_JS_PIN: WorkerPin = {
   name: "tor-js 0.4.4",
+  chain: "mainnet",
   specifier: "0x700dA3193D35fA54Cd3fBf29B66f2a2A0385659e",
   workerHash: "0x5b62f358ce7a2b94ee9bc3a0e6a08757db68fa08fc348276f31eda788aec818b",
   resolvers: [
@@ -50,6 +56,7 @@ export function withGateways(pin: WorkerPin, gateways: readonly string[]): Worke
 /** Backup worker. Not wired into the P1 page yet. */
 export const NYM_PIN: WorkerPin = {
   name: "Nym anon-rpc-worker 0.1.0",
+  chain: "mainnet",
   specifier: "0x3aCD9742C68F6d993066Ae25533e09b9e1f60eD0",
   workerHash: "0xf13a448a8721b9d0b20da3d5b80ffe00bf4c5bb3aae812a38d3d1e3bc81fceb8",
   resolvers: [
@@ -86,7 +93,30 @@ export const MAINNET_EXECUTION_ENDPOINTS = [
   "https://ethereum-rpc.publicnode.com",
 ] as const;
 
+/**
+ * The curated execution pool (#15): the endpoints that served finalized-block proofs reliably and
+ * quickly through Tor come first; Blast (slow) and publicnode (proof-window errors through some exits)
+ * are a fallback tier. Operator names are the services' own; several URLs don't prove independence.
+ * Users choosing operators from an ENS list is on the roadmap.
+ */
+export const MAINNET_POOL = [
+  { url: "https://eth.drpc.org", priority: 0, operator: "dRPC" },
+  { url: "https://rpc.mevblocker.io", priority: 0, operator: "MEV Blocker" },
+  { url: "https://eth.blockrazor.xyz", priority: 0, operator: "BlockRazor" },
+  { url: "https://eth-mainnet.public.blastapi.io", priority: 1, operator: "Blast API" },
+  { url: "https://ethereum-rpc.publicnode.com", priority: 1, operator: "PublicNode" },
+] as const satisfies readonly PoolEndpoint[];
+
 export const MAINNET_BEACON_ENDPOINTS = [
   "https://ethereum-beacon-api.publicnode.com",
   "https://lodestar-mainnet.chainsafe.io",
 ] as const;
+
+/**
+ * Tokens whose balances DeRPC can prove, each with its documented balance mapping slot.
+ * WETH9 is not upgradeable (no proxy), so slot 3 means "balanceOf" permanently:
+ * name(0) symbol(1) decimals(2) balanceOf(3) allowance(4). Checked live on Nov 5 against balanceOf().
+ */
+export const MAINNET_TOKENS = {
+  WETH: { symbol: "WETH", address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", balanceSlot: 3, decimals: 18 },
+} as const satisfies Record<string, { symbol: string; address: `0x${string}`; balanceSlot: number; decimals: number }>;
