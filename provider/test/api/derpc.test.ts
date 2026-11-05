@@ -47,7 +47,7 @@ function fakeTransport(start: StartOptions, opts: { bootError?: Error } = {}) {
     ready,
     state: () => state,
     async fetch(url, init = {}) {
-      if (state === "failed" || state === "closed") throw new TransportUnavailableError(`anonymous transport is ${state}; refusing to send (no direct fallback)`);
+      if (state === "failed" || state === "closed") throw new TransportUnavailableError(state);
       const { id, method, params } = JSON.parse(String(init.body));
       sent.push({ url, method, params });
       if (url.includes("down.example")) throw new Error("tor: operation timed out at exit");

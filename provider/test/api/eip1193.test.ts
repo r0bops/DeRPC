@@ -124,7 +124,7 @@ describe("createEip1193Provider", () => {
   });
 
   it("reports a dead anonymous network as disconnected (4900)", async () => {
-    const { provider } = createEip1193Provider(failingBackend(new TransportUnavailableError("anonymous transport is closed")));
+    const { provider } = createEip1193Provider(failingBackend(new TransportUnavailableError("closed")));
 
     const error = await rpcError(provider.request({ method: "eth_getBalance", params: [WETH, "finalized"] }));
 

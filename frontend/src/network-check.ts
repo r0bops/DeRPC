@@ -8,6 +8,7 @@ import {
   type AnonTransport,
   type WorkerPin,
 } from "@derpc/provider";
+import { renderStatus, renderWorkerFailure, tableRow, textCell } from "./render.ts";
 
 // Gateways come from VITE_TOR_GATEWAYS (frontend/.env.local, comma-separated KPS addresses);
 // without it, the tor-js demo gateway pinned in the provider config is used.
@@ -37,7 +38,7 @@ const bootStarted = performance.now();
 const elapsed = (from: number) => `${((performance.now() - from) / 1000).toFixed(1)} s`;
 
 const transport: AnonTransport = startAnonTransport({
-  pin: TOR_JS_PIN,
+  pin: { ...TOR_JS_PIN, config: { ...TOR_JS_PIN.config, logLevel: "info" } },
   onLog: (line) => {
     logEl.textContent += `[${line.level}] ${line.text}\n`;
     logEl.scrollTop = logEl.scrollHeight;
@@ -45,10 +46,13 @@ const transport: AnonTransport = startAnonTransport({
   onState: (state, detail) => {
     if (state === "booting") statusEl.textContent = `booting ${TOR_JS_PIN.name} via ${gatewayLabel}…`;
     if (state === "ready") {
-      statusEl.innerHTML = `<span class="ok">ready</span> — ${TOR_JS_PIN.name} via ${gatewayLabel} after ${elapsed(bootStarted)}`;
+      renderStatus(statusEl, [
+        { text: "ready", className: "ok" },
+        { text: ` — ${TOR_JS_PIN.name} via ${gatewayLabel} after ${elapsed(bootStarted)}` },
+      ]);
       runBtn.disabled = false;
     }
-    if (state === "failed") statusEl.innerHTML = `<span class="bad">failed</span> — ${detail ?? "unknown error"} (no direct fallback)`;
+    if (state === "failed") renderWorkerFailure(statusEl, detail);
   },
 });
 transport.ready.catch(() => {});
@@ -61,14 +65,16 @@ interface CheckResult { ok: boolean; detail: string; bytes?: number }
 
 function addRow(name: string): (r: CheckResult, ms: number) => void {
   const tr = document.createElement("tr");
-  tr.innerHTML = `<td>${name}</td><td class="muted">running…</td><td></td><td></td>`;
+  const result = textCell("running…", "muted");
+  const time = textCell("");
+  const size = textCell("");
+  tr.append(textCell(name), result, time, size);
   resultsEl.append(tr);
   return (r, ms) => {
-    const [, result, time, size] = tr.children as unknown as HTMLElement[];
-    result!.className = r.ok ? "ok" : "bad";
-    result!.textContent = r.detail;
-    time!.textContent = `${(ms / 1000).toFixed(2)} s`;
-    size!.textContent = r.bytes ? `${(r.bytes / 1024).toFixed(1)} KB` : "";
+    result.className = r.ok ? "ok" : "bad";
+    result.textContent = r.detail;
+    time.textContent = `${(ms / 1000).toFixed(2)} s`;
+    size.textContent = r.bytes ? `${(r.bytes / 1024).toFixed(1)} KB` : "";
   };
 }
 
@@ -107,7 +113,7 @@ async function getJson(url: string, isolationKey?: string) {
 
 async function runChecks() {
   runBtn.disabled = true;
-  resultsEl.innerHTML = "";
+  resultsEl.replaceChildren();
 
   // A. Does traffic really leave through Tor? Observe exits under two isolation keys (P1 step 6).
   const exits: Record<string, string[]> = { "key-a": [], "key-b": [] };
@@ -169,15 +175,13 @@ function renderDirectConnections() {
     const host = new URL(entry.name).host;
     counts.set(host, (counts.get(host) ?? 0) + 1);
   }
-  directEl.innerHTML = "";
+  directEl.replaceChildren();
   for (const [host, n] of counts) {
     const kind = host === location.host ? ["page assets", "ok"]
       : BUNDLE_HOSTS.has(host) ? ["worker bundle download (expected, see README bypass table)", "warn"]
       : RPC_HOSTS.has(host) ? ["RPC/beacon request outside the worker — LEAK", "bad"]
       : ["unexpected", "bad"];
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${host}</td><td class="${kind[1]}">${kind[0]}</td><td>${n}</td>`;
-    directEl.append(tr);
+    directEl.append(tableRow([{ text: host }, { text: kind[0]!, className: kind[1] }, { text: String(n) }]));
   }
 }
 

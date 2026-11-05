@@ -137,7 +137,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
       transportError = message(error);
       disconnect(`anonymous transport failed: ${transportError}`);
       notify();
-      throw new TransportUnavailableError(`anonymous transport failed (${transportError}); refusing to send (no direct fallback)`);
+      throw new TransportUnavailableError("failed", { cause: error });
     }
     lightClient = { state: "syncing" };
     notify();
@@ -206,7 +206,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     const headers = await headersReady;
     const state = transport.state();
     if (state === "failed" || state === "closed") {
-      throw new TransportUnavailableError(`anonymous transport is ${state}; refusing to send (no direct fallback)`);
+      throw new TransportUnavailableError(state);
     }
     if (!pool) throw new NoOperatorsChosenError();
     startPinCheck();

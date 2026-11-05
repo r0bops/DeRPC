@@ -116,7 +116,7 @@ describe("createPool", () => {
   });
 
   it("reports why it stopped when an error is not the endpoint's fault", async () => {
-    const h = harness(PREFERRED, { a: () => { throw new TransportUnavailableError("anonymous transport is closed"); }, b: ok, c: ok });
+    const h = harness(PREFERRED, { a: () => { throw new TransportUnavailableError("closed"); }, b: ok, c: ok });
 
     await h.read().catch(() => {});
 
