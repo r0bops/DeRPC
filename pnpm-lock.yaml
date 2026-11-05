@@ -14,7 +14,7 @@ overrides:
   '@chainsafe/ssz': 1.7.0
 
 patchedDependencies:
-  '@lodestar/light-client@1.43.0': 39a76dbfc40f7db44547feff5ff5d4821a343b2fd743fd2d44afaeb994397d4d
+  '@lodestar/light-client@1.43.0': 99dc6a7e5eafb0dd300f134318068ee15b1420b429bbd453033c7834b99f5797
 
 importers:
 
@@ -52,7 +52,7 @@ importers:
         version: 1.43.0
       '@lodestar/light-client':
         specifier: 1.43.0
-        version: 1.43.0(patch_hash=39a76dbfc40f7db44547feff5ff5d4821a343b2fd743fd2d44afaeb994397d4d)
+        version: 1.43.0(patch_hash=99dc6a7e5eafb0dd300f134318068ee15b1420b429bbd453033c7834b99f5797)
       '@lodestar/types':
         specifier: 1.43.0
         version: 1.43.0
@@ -960,7 +960,7 @@ snapshots:
     transitivePeerDependencies:
       - '@vekexasia/bigint-uint8array'
 
-  '@lodestar/light-client@1.43.0(patch_hash=39a76dbfc40f7db44547feff5ff5d4821a343b2fd743fd2d44afaeb994397d4d)':
+  '@lodestar/light-client@1.43.0(patch_hash=99dc6a7e5eafb0dd300f134318068ee15b1420b429bbd453033c7834b99f5797)':
     dependencies:
       '@chainsafe/bls': 8.2.0(@chainsafe/blst@2.2.0)
       '@chainsafe/blst': 2.2.0

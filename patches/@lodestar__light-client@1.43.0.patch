@@ -1,3 +1,18 @@
+diff --git a/lib/index.js b/lib/index.js
+index 535795d0c609adcb8acc7897d986d8ca0a62736d..95dec6a02af1b0fe3cf69b0b62e02bb6f1476145 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -20,7 +20,9 @@ const LOOKAHEAD_EPOCHS_COMMITTEE_SYNC = Math.min(8, Math.ceil(EPOCHS_PER_SYNC_CO
+ /** Prevent infinite loops caused by sync errors */
+ const ON_ERROR_RETRY_MS = 1000;
+ // TODO: Customize with option
+-const ALLOW_FORCED_UPDATES = true;
++// DeRPC: never force-adopt a next sync committee from an update without 2/3 participation and a
++// finality proof. A stalled light client fails closed; a forced one can trust a minority-signed committee.
++const ALLOW_FORCED_UPDATES = false;
+ export { RunStatusCode };
+ var RunStatusCode;
+ (function (RunStatusCode) {
 diff --git a/lib/spec/processLightClientUpdate.js b/lib/spec/processLightClientUpdate.js
 index 8907f507d705baff4bed30a98d78492fead69521..84a4004def877d5024ea6c305529cf48796d398b 100644
 --- a/lib/spec/processLightClientUpdate.js
