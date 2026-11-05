@@ -4,6 +4,11 @@ import { createPinnedBootstrapProvider } from "./pinned-bootstrap.ts";
 
 export type TransportState = "booting" | "ready" | "failed" | "closed";
 
+/** The anonymous transport is gone (worker failed or closed). DeRPC never falls back to a direct request. */
+export class TransportUnavailableError extends Error {
+  override name = "TransportUnavailableError";
+}
+
 export interface WorkerLogLine {
   level: "debug" | "info" | "warn" | "error";
   text: string;
@@ -69,7 +74,7 @@ export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonT
     state: () => current,
     async fetch(url, options = {}) {
       if (current === "failed" || current === "closed") {
-        throw new Error(`DeRPC: anonymous transport is ${current}; refusing to send (no direct fallback)`);
+        throw new TransportUnavailableError(`anonymous transport is ${current}; refusing to send (no direct fallback)`);
       }
       const timeout = AbortSignal.timeout(options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
       const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
