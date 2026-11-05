@@ -1,0 +1,13 @@
+# Upstream clones used as read-only context for agents (not our code)
+reference/anon-rpc/
+reference/tor-js/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies and build output
+node_modules/
+dist/
+out/
