@@ -10,7 +10,8 @@ export {
   MAINNET_EXECUTION_ENDPOINTS,
   MAINNET_BEACON_ENDPOINTS,
   MAINNET_TOKENS,
-  MAINNET_POOL,
+  MAINNET_OPERATORS,
+  ENS_NAMES_ARE_MOCK,
   type WorkerPin,
 } from "./config/mainnet.ts";
 export { createJsonRpcSend } from "./transport/json-rpc.ts";
@@ -64,6 +65,7 @@ export { PollingLightClientTransport } from "./light-client/polling-transport.ts
 export {
   createPool,
   PoolExhaustedError,
+  NoOperatorsChosenError,
   type Pool,
   type PoolEndpoint,
   type PoolEvent,

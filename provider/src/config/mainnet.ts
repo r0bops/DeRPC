@@ -94,18 +94,23 @@ export const MAINNET_EXECUTION_ENDPOINTS = [
 ] as const;
 
 /**
- * The curated execution pool (#15): the endpoints that served finalized-block proofs reliably and
- * quickly through Tor come first; Blast (slow) and publicnode (proof-window errors through some exits)
- * are a fallback tier. Operator names are the services' own; several URLs don't prove independence.
- * Users choosing operators from an ENS list is on the roadmap.
+ * The operators users can choose from. DeRPC never picks operators for the user: reads use only the
+ * operators the user selected, and every answer is verified, so a poor choice costs availability,
+ * never correctness.
+ *
+ * ENS names are MOCK placeholders (`<operator>.derpc.eth`): nothing is registered yet. The ENS
+ * milestone replaces this list with operators who mint their own subname as proof of service.
+ * `priority` reflects our Tor measurements (#15): 0 served finalized-block proofs fast and reliably,
+ * 1 was slower or hit proof-window errors through some exits. Several URLs don't prove independence.
  */
-export const MAINNET_POOL = [
-  { url: "https://eth.drpc.org", priority: 0, operator: "dRPC" },
-  { url: "https://rpc.mevblocker.io", priority: 0, operator: "MEV Blocker" },
-  { url: "https://eth.blockrazor.xyz", priority: 0, operator: "BlockRazor" },
-  { url: "https://eth-mainnet.public.blastapi.io", priority: 1, operator: "Blast API" },
-  { url: "https://ethereum-rpc.publicnode.com", priority: 1, operator: "PublicNode" },
-] as const satisfies readonly PoolEndpoint[];
+export const ENS_NAMES_ARE_MOCK = true;
+export const MAINNET_OPERATORS = [
+  { ens: "drpc.derpc.eth", operator: "dRPC", website: "https://drpc.org", url: "https://eth.drpc.org", priority: 0 },
+  { ens: "mevblocker.derpc.eth", operator: "MEV Blocker", website: "https://mevblocker.io", url: "https://rpc.mevblocker.io", priority: 0 },
+  { ens: "blockrazor.derpc.eth", operator: "BlockRazor", website: "https://blockrazor.io", url: "https://eth.blockrazor.xyz", priority: 0 },
+  { ens: "blast.derpc.eth", operator: "Blast API", website: "https://blastapi.io", url: "https://eth-mainnet.public.blastapi.io", priority: 1 },
+  { ens: "publicnode.derpc.eth", operator: "PublicNode", website: "https://publicnode.com", url: "https://ethereum-rpc.publicnode.com", priority: 1 },
+] as const satisfies readonly (PoolEndpoint & { ens: string; website: string })[];
 
 export const MAINNET_BEACON_ENDPOINTS = [
   "https://ethereum-beacon-api.publicnode.com",

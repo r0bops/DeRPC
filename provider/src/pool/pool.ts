@@ -10,6 +10,8 @@ export interface PoolEndpoint {
   priority: number;
   /** Who runs it, where known. Several URLs don't prove independent operators. */
   operator?: string;
+  /** The operator's ENS name (mock until the ENS milestone). */
+  ens?: string;
 }
 
 export type EndpointState = "eligible" | "cooldown" | "excluded";
@@ -39,6 +41,14 @@ export class PoolExhaustedError extends Error {
   }
 }
 
+/** The user hasn't chosen any operator. DeRPC never picks operators on the user's behalf. */
+export class NoOperatorsChosenError extends Error {
+  override name = "NoOperatorsChosenError";
+  constructor() {
+    super("no operators chosen: choose at least one operator before reading");
+  }
+}
+
 export interface PoolOptions {
   endpoints: PoolEndpoint[];
   /** JSON-RPC to one endpoint, through the anonymous transport. */
@@ -55,13 +65,16 @@ export interface PoolOptions {
 }
 
 export interface Pool {
-  /** Run one read on one endpoint at a time; on failure, move to another. */
-  run<T>(operation: (send: JsonRpcSend) => Promise<T>): Promise<T>;
-  status(): { url: string; priority: number; operator?: string; state: EndpointState; until?: number }[];
+  /**
+   * Run one read on one endpoint at a time; on failure, move to another chosen endpoint.
+   * With `account`, reads for that account stay on the endpoint that last served it.
+   */
+  run<T>(operation: (send: JsonRpcSend) => Promise<T>, opts?: { account?: string }): Promise<T>;
+  status(): { url: string; priority: number; operator?: string; ens?: string; state: EndpointState; until?: number }[];
 }
 
 /**
- * A client-side pool of execution endpoints. All of its state stays on the device.
+ * A client-side pool of the execution endpoints the user chose. All of its state stays on the device.
  * - An answer that fails proof verification excludes that endpoint locally for this session. That is
  *   local evidence only: the untrusted worker could also have altered the response.
  * - Timeouts, rate limits, Tor exit failures and RPC errors put the endpoint on a short cooldown.
@@ -76,6 +89,9 @@ export function createPool(opts: PoolOptions): Pool {
   const now = opts.now ?? Date.now;
   const emit = (e: Omit<PoolEvent, "at">) => opts.onEvent?.({ ...e, at: now() });
   const state = new Map(opts.endpoints.map((e) => [e.url, { excluded: false, cooldownUntil: 0 }]));
+  // Sticky per account: each account's reads stay with one operator, so the other operators never
+  // learn about that account. Re-assigned only when its operator fails or is excluded.
+  const affinity = new Map<string, string>();
 
   const stateOf = (url: string): EndpointState => {
     const s = state.get(url)!;
@@ -83,7 +99,9 @@ export function createPool(opts: PoolOptions): Pool {
     return s.cooldownUntil > now() ? "cooldown" : "eligible";
   };
 
-  function choose(tried: Set<string>): PoolEndpoint | undefined {
+  function choose(tried: Set<string>, account?: string): PoolEndpoint | undefined {
+    const assigned = account ? opts.endpoints.find((e) => e.url === affinity.get(account)) : undefined;
+    if (assigned && !tried.has(assigned.url) && stateOf(assigned.url) === "eligible") return assigned;
     const eligible = opts.endpoints.filter((e) => !tried.has(e.url) && stateOf(e.url) === "eligible");
     if (eligible.length === 0) return undefined;
     const best = Math.min(...eligible.map((e) => e.priority));
@@ -92,13 +110,15 @@ export function createPool(opts: PoolOptions): Pool {
   }
 
   return {
-    async run(operation) {
+    async run(operation, runOpts) {
+      if (opts.endpoints.length === 0) throw new NoOperatorsChosenError();
+      const account = runOpts?.account?.toLowerCase();
       const start = now();
       const tried = new Set<string>();
       const attempts: PoolAttempt[] = [];
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         if (attempt > 1 && now() - start >= totalTimeoutMs) break;
-        const endpoint = choose(tried);
+        const endpoint = choose(tried, account);
         if (!endpoint) break;
         tried.add(endpoint.url);
         emit({ type: "attempt", endpoint: endpoint.url, attempt });
@@ -108,6 +128,7 @@ export function createPool(opts: PoolOptions): Pool {
           base(method, params, { isolationKey: attempt === 1 ? isolationKey : `${isolationKey}#retry-${attempt}` });
         try {
           const value = await operation(send);
+          if (account) affinity.set(account, endpoint.url);
           emit({ type: "success", endpoint: endpoint.url, attempt });
           return value;
         } catch (error) {
@@ -134,7 +155,7 @@ export function createPool(opts: PoolOptions): Pool {
       return opts.endpoints.map((e) => {
         const s = state.get(e.url)!;
         const current = stateOf(e.url);
-        return { url: e.url, priority: e.priority, operator: e.operator, state: current, ...(current === "cooldown" ? { until: s.cooldownUntil } : {}) };
+        return { url: e.url, priority: e.priority, operator: e.operator, ens: e.ens, state: current, ...(current === "cooldown" ? { until: s.cooldownUntil } : {}) };
       });
     },
   };

@@ -13,13 +13,18 @@ export function createPooledReader(deps: { headers: { finalized(): VerifiedHeade
   const { headers, pool } = deps;
   const cache = new Map<string, VerifiedValue<unknown>>();
 
-  function cached<A extends unknown[], T>(name: keyof VerifiedReader, read: (reader: VerifiedReader, ...args: A) => Promise<VerifiedValue<T>>) {
+  // `accountOf` names the account a read reveals, so the pool keeps that account on one operator.
+  function cached<A extends unknown[], T>(
+    name: keyof VerifiedReader,
+    accountOf: (...args: A) => string,
+    read: (reader: VerifiedReader, ...args: A) => Promise<VerifiedValue<T>>,
+  ) {
     return async (...args: A): Promise<VerifiedValue<T>> => {
       const block = headers.finalized(); // throws if stale, before anything is sent
       const key = `${block.blockHash}|${name}|${JSON.stringify(args).toLowerCase()}`;
       const hit = cache.get(key);
       if (hit) return hit as VerifiedValue<T>;
-      const result = await pool.run((send) => read(createVerifiedReader({ headers, send }), ...args));
+      const result = await pool.run((send) => read(createVerifiedReader({ headers, send }), ...args), { account: accountOf(...args) });
       if (cache.size >= CACHE_LIMIT) cache.delete(cache.keys().next().value!);
       cache.set(key, result);
       return result;
@@ -27,12 +32,14 @@ export function createPooledReader(deps: { headers: { finalized(): VerifiedHeade
   }
 
   return {
-    getBalance: cached("getBalance", (r, address: `0x${string}`) => r.getBalance(address)),
-    getTransactionCount: cached("getTransactionCount", (r, address: `0x${string}`) => r.getTransactionCount(address)),
-    getCode: cached("getCode", (r, address: `0x${string}`) => r.getCode(address)),
-    getStorageAt: cached("getStorageAt", (r, address: `0x${string}`, slot: `0x${string}`) => r.getStorageAt(address, slot)),
-    getTokenBalance: cached("getTokenBalance", (r, token: Parameters<VerifiedReader["getTokenBalance"]>[0], holder: `0x${string}`) =>
-      r.getTokenBalance(token, holder),
+    getBalance: cached("getBalance", (address) => address, (r, address: `0x${string}`) => r.getBalance(address)),
+    getTransactionCount: cached("getTransactionCount", (address) => address, (r, address: `0x${string}`) => r.getTransactionCount(address)),
+    getCode: cached("getCode", (address) => address, (r, address: `0x${string}`) => r.getCode(address)),
+    getStorageAt: cached("getStorageAt", (address: `0x${string}`, _slot: `0x${string}`) => address, (r, address: `0x${string}`, slot: `0x${string}`) => r.getStorageAt(address, slot)),
+    getTokenBalance: cached(
+      "getTokenBalance",
+      (_token, holder) => holder,
+      (r, token: Parameters<VerifiedReader["getTokenBalance"]>[0], holder: `0x${string}`) => r.getTokenBalance(token, holder),
     ),
   };
 }

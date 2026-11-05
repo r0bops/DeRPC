@@ -44,6 +44,18 @@ describe("createPooledReader", () => {
     expect(pool.status().find((s) => s.url === "liar")?.state).toBe("excluded");
   });
 
+  it("keeps an account's reads with the operator that served it", async () => {
+    const eps = endpoints({ x: "honest", y: "honest" });
+    const randoms = [0, 0.99];
+    const pool = createPool({ endpoints: [{ url: "x", priority: 0 }, { url: "y", priority: 0 }], sendFor: eps.sendFor, random: () => randoms.shift() ?? 0 });
+    const reader = createPooledReader({ headers: { finalized: () => header(fixture.block.number) }, pool });
+
+    await reader.getBalance(HOLDER as Hex); //          random 0    → x
+    await reader.getTransactionCount(HOLDER as Hex); // sticky      → x, although random would say y
+
+    expect(eps.calls.map((c) => c.url)).toEqual(["x", "x"]);
+  });
+
   it("serves a repeated read at the same verified block from cache, without asking again", async () => {
     const eps = endpoints({ honest: "honest" });
     const pool = createPool({ endpoints: [{ url: "honest", priority: 0 }], sendFor: eps.sendFor });

@@ -1,6 +1,6 @@
 // The endpoint pool: which endpoint serves a read, and what happens when one fails.
 import { describe, expect, it } from "vitest";
-import { createPool, PoolExhaustedError, type PoolEndpoint, type PoolEvent } from "../../src/pool/pool.ts";
+import { createPool, NoOperatorsChosenError, PoolExhaustedError, type PoolEndpoint, type PoolEvent } from "../../src/pool/pool.ts";
 import type { JsonRpcSend } from "../../src/verify/reader.ts";
 import { ProofVerificationError } from "../../src/verify/index.ts";
 import { StaleHeaderError } from "../../src/light-client/header-source.ts";
@@ -33,12 +33,12 @@ function harness(endpoints: PoolEndpoint[], behaviors: Record<string, Behavior[]
     onEvent: (e: PoolEvent) => events.push(`${e.type} ${e.endpoint ?? ""}`.trim()),
   });
   // An operation like a verified read: one request, then a "verification" that rejects lies.
-  const read = () =>
+  const read = (account?: string) =>
     pool.run(async (send) => {
       const answer = await send("eth_getProof", [], { isolationKey: KEY });
       if (answer === "lie") throw new ProofVerificationError("proof does not match the verified state root");
       return answer;
-    });
+    }, account ? { account } : undefined);
   return { pool, read, calls, events, advance: (ms: number) => (now += ms) };
 }
 
@@ -139,6 +139,34 @@ describe("createPool", () => {
 
     await expect(h.read()).rejects.toBeInstanceOf(PoolExhaustedError);
     expect(h.calls).toHaveLength(2);
+  });
+
+  it("keeps each account on the operator that first served it (sticky per account)", async () => {
+    const h = harness(PREFERRED, { a: ok, b: ok, c: ok }, { random: [0, 0.99, 0.99, 0] });
+
+    await h.read("alice"); // random 0    → a
+    await h.read("bob"); //   random 0.99 → b
+    await h.read("alice"); // sticky      → a (the random value is not used)
+    await h.read("bob"); //   sticky      → b
+
+    expect(h.calls.map((c) => c.url)).toEqual(["a", "b", "a", "b"]);
+  });
+
+  it("moves an account to another chosen operator when its operator fails, and stays there", async () => {
+    const h = harness(PREFERRED, { a: [exitTimeout, ok], b: ok, c: ok }, { random: [0, 0, 0] });
+
+    await h.read("alice"); // a times out → b serves it
+    h.advance(60_001); //    a is eligible again
+    await h.read("alice"); // stays on b
+
+    expect(h.calls.map((c) => c.url)).toEqual(["a", "b", "b"]);
+  });
+
+  it("refuses to read when the user has not chosen any operator", async () => {
+    const h = harness([], {});
+
+    await expect(h.read("alice")).rejects.toBeInstanceOf(NoOperatorsChosenError);
+    expect(h.calls).toEqual([]);
   });
 
   it("refuses to send anything when every endpoint is excluded", async () => {
