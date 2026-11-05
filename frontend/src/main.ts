@@ -10,6 +10,7 @@ import {
   type AnonTransport,
   type VerifiedHeaderSource,
 } from "@derpc/provider";
+import { renderStatus, renderWorkerFailure, tableRow, textCell } from "./render.ts";
 
 // Gateways come from VITE_TOR_GATEWAYS (frontend/.env.local, comma-separated KPS addresses);
 // without it, the tor-js demo gateway pinned in the provider config is used.
@@ -44,10 +45,13 @@ const transport: AnonTransport = startAnonTransport({
   onState: (state, detail) => {
     if (state === "booting") statusEl.textContent = `booting ${TOR_JS_PIN.name} via ${gatewayLabel}…`;
     if (state === "ready") {
-      statusEl.innerHTML = `<span class="ok">ready</span> — ${TOR_JS_PIN.name} via ${gatewayLabel} after ${elapsed(bootStarted)}`;
+      renderStatus(statusEl, [
+        { text: "ready", className: "ok" },
+        { text: ` — ${TOR_JS_PIN.name} via ${gatewayLabel} after ${elapsed(bootStarted)}` },
+      ]);
       runBtn.disabled = false;
     }
-    if (state === "failed") statusEl.innerHTML = `<span class="bad">failed</span> — ${detail ?? "unknown error"} (no direct fallback)`;
+    if (state === "failed") renderWorkerFailure(statusEl, detail);
   },
 });
 transport.ready.catch(() => {});
@@ -60,14 +64,16 @@ interface CheckResult { ok: boolean; detail: string; bytes?: number }
 
 function addRow(name: string): (r: CheckResult, ms: number) => void {
   const tr = document.createElement("tr");
-  tr.innerHTML = `<td>${name}</td><td class="muted">running…</td><td></td><td></td>`;
+  const result = textCell("running…", "muted");
+  const time = textCell("");
+  const size = textCell("");
+  tr.append(textCell(name), result, time, size);
   resultsEl.append(tr);
   return (r, ms) => {
-    const [, result, time, size] = tr.children as unknown as HTMLElement[];
-    result!.className = r.ok ? "ok" : "bad";
-    result!.textContent = r.detail;
-    time!.textContent = `${(ms / 1000).toFixed(2)} s`;
-    size!.textContent = r.bytes ? `${(r.bytes / 1024).toFixed(1)} KB` : "";
+    result.className = r.ok ? "ok" : "bad";
+    result.textContent = r.detail;
+    time.textContent = `${(ms / 1000).toFixed(2)} s`;
+    size.textContent = r.bytes ? `${(r.bytes / 1024).toFixed(1)} KB` : "";
   };
 }
 
@@ -106,7 +112,7 @@ async function getJson(url: string, isolationKey?: string) {
 
 async function runChecks() {
   runBtn.disabled = true;
-  resultsEl.innerHTML = "";
+  resultsEl.replaceChildren();
 
   // A. Does traffic really leave through Tor? Observe exits under two isolation keys (P1 step 6).
   const exits: Record<string, string[]> = { "key-a": [], "key-b": [] };
@@ -168,15 +174,13 @@ function renderDirectConnections() {
     const host = new URL(entry.name).host;
     counts.set(host, (counts.get(host) ?? 0) + 1);
   }
-  directEl.innerHTML = "";
+  directEl.replaceChildren();
   for (const [host, n] of counts) {
     const kind = host === location.host ? ["page assets", "ok"]
       : BUNDLE_HOSTS.has(host) ? ["worker bundle download (expected, see README bypass table)", "warn"]
       : RPC_HOSTS.has(host) ? ["RPC/beacon request outside the worker — LEAK", "bad"]
       : ["unexpected", "bad"];
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${host}</td><td class="${kind[1]}">${kind[0]}</td><td>${n}</td>`;
-    directEl.append(tr);
+    directEl.append(tableRow([{ text: host }, { text: kind[0]!, className: kind[1] }, { text: String(n) }]));
   }
 }
 
@@ -196,11 +200,17 @@ async function startLightClient() {
       beaconUrl: MAINNET_BEACON_ENDPOINTS[0],
       fetch: asFetch(transport, { isolationKey: "derpc:consensus" }),
     });
-    lcStatusEl.innerHTML = `<span class="ok">verified</span> — ready after ${elapsed(started)}`;
+    renderStatus(lcStatusEl, [
+      { text: "verified", className: "ok" },
+      { text: ` — ready after ${elapsed(started)}` },
+    ]);
     renderHeader();
     setInterval(renderHeader, 12_000);
   } catch (e) {
-    lcStatusEl.innerHTML = `<span class="bad">not verified</span> — ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`;
+    renderStatus(lcStatusEl, [
+      { text: "not verified", className: "bad" },
+      { text: ` — ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}` },
+    ]);
   }
 }
 
@@ -209,14 +219,19 @@ function renderHeader() {
   try {
     const h = headerSource.finalized();
     const ageMin = ((Date.now() / 1000 - h.timestamp) / 60).toFixed(1);
-    lcHeaderEl.innerHTML = [
-      ["finalized block", `${h.blockNumber} (${ageMin} min ago)`],
-      ["block hash", h.blockHash],
-      ["state root", h.stateRoot],
-      ["beacon slot", String(h.slot)],
-    ].map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+    lcHeaderEl.replaceChildren(
+      ...([
+        ["finalized block", `${h.blockNumber} (${ageMin} min ago)`],
+        ["block hash", h.blockHash],
+        ["state root", h.stateRoot],
+        ["beacon slot", String(h.slot)],
+      ] as const).map(([k, v]) => tableRow([{ text: k }, { text: v }])),
+    );
   } catch (e) {
-    lcStatusEl.innerHTML = `<span class="bad">stale</span> — ${e instanceof Error ? e.message : String(e)}`;
+    renderStatus(lcStatusEl, [
+      { text: "stale", className: "bad" },
+      { text: ` — ${e instanceof Error ? e.message : String(e)}` },
+    ]);
   }
 }
 

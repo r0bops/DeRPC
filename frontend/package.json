@@ -7,13 +7,16 @@
     "dev": "vite",
     "build": "tsc --noEmit -p . && vite build",
     "preview": "vite preview",
+    "test": "vitest run --environment happy-dom",
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
     "@derpc/provider": "workspace:*"
   },
   "devDependencies": {
+    "happy-dom": "^21.0.4",
     "typescript": "5.9.3",
-    "vite": "8.3.5"
+    "vite": "8.3.5",
+    "vitest": "4.1.12"
   }
 }
