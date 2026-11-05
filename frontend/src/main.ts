@@ -37,7 +37,7 @@ const bootStarted = performance.now();
 const elapsed = (from: number) => `${((performance.now() - from) / 1000).toFixed(1)} s`;
 
 const transport: AnonTransport = startAnonTransport({
-  pin: TOR_JS_PIN,
+  pin: { ...TOR_JS_PIN, config: { ...TOR_JS_PIN.config, logLevel: "info" } },
   onLog: (line) => {
     logEl.textContent += `[${line.level}] ${line.text}\n`;
     logEl.scrollTop = logEl.scrollHeight;

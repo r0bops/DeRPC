@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const harness = vi.hoisted(() => ({
   onState: undefined as ((state: string, detail?: string) => void) | undefined,
+  pin: undefined as { config?: { logLevel?: string } } | undefined,
 }));
 
 vi.mock("@derpc/provider", () => {
@@ -16,7 +17,11 @@ vi.mock("@derpc/provider", () => {
     MAINNET_EXECUTION_ENDPOINTS: ["https://rpc.example"],
     TOR_JS_PIN: { name: "tor", resolvers: [] },
     asFetch: () => vi.fn(),
-    startAnonTransport: (opts: { onState: (state: string, detail?: string) => void }) => {
+    startAnonTransport: (opts: {
+      pin: { config?: { logLevel?: string } };
+      onState: (state: string, detail?: string) => void;
+    }) => {
+      harness.pin = opts.pin;
       harness.onState = opts.onState;
       return transport;
     },
@@ -54,11 +59,16 @@ beforeEach(async () => {
 
 afterEach(() => {
   harness.onState = undefined;
+  harness.pin = undefined;
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
 describe("frontend status rendering", () => {
+  it("keeps info logging on the network check page", () => {
+    expect(harness.pin?.config?.logLevel).toBe("info");
+  });
+
   it("shows HTML in a worker error as plain text", () => {
     const payload = '<img src=x onerror="window.__pwned = true"><script>window.__pwned = true</script>';
 
