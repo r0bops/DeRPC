@@ -15,4 +15,5 @@ CLAUDE.md
 # Dependencies and build output
 node_modules/
 dist/
+dist-local/
 out/

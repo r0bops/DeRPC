@@ -99,10 +99,10 @@ pnpm install
 pnpm dev                              # check page at http://localhost:5173
 pnpm --filter @derpc/provider test    # provider tests (recorded beacon/proof data, no network)
 pnpm typecheck
-pnpm build
+VITE_TOR_GATEWAYS=<public gateway> pnpm build   # release build; refuses private gateways
 ```
 
-- **Tor gateway.** By default the page uses the tor-js demo gateway, which has limited capacity and may disappear. To use your own [`tor-js-gateway`](https://github.com/ethereum/tor-js), copy `frontend/.env.example` to `frontend/.env.local` and set `VITE_TOR_GATEWAYS`.
+- **Tor gateway.** By default the page uses the tor-js demo gateway, which has limited capacity and may disappear. To use your own [`tor-js-gateway`](https://github.com/ethereum/tor-js), copy `frontend/.env.example` to `frontend/.env.local` and set `VITE_TOR_GATEWAYS`. `pnpm dev` and `pnpm --filter frontend build:local` (output in `dist-local/`) read it; release builds don't. A release takes `VITE_TOR_GATEWAYS` from the shell, fails without a public gateway or on any private, loopback or link-local address, appends the demo gateway as a fallback, and scans its output for such addresses.
 - **Checkpoint.** The pinned checkpoint dates from Nov 5, 2026, and is refused after 7 days. Refresh `MAINNET_CHECKPOINT` in `provider/src/config/mainnet.ts` before running it after Nov 12.
 
 ## Roadmap
