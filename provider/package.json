@@ -19,7 +19,8 @@
     "@lodestar/light-client": "1.43.0",
     "@lodestar/types": "1.43.0",
     "@lodestar/utils": "1.43.0",
-    "@noble/hashes": "1.8.0"
+    "@noble/hashes": "1.8.0",
+    "buffer": "6.0.3"
   },
   "devDependencies": {
     "typescript": "5.9.3",
