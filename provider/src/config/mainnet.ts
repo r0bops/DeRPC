@@ -63,6 +63,17 @@ export const NYM_PIN: WorkerPin = {
 };
 
 /**
+ * Trusted finalized checkpoint for the light client: the root of trust for every verified read.
+ * Pinned Nov 5, 2026, when two beacon APIs (publicnode and ChainSafe's Lodestar node) agreed on it.
+ * The header source refuses a checkpoint older than 7 days, so this one works until about Nov 12:
+ * refresh it before the submission build (and in any later release).
+ */
+export const MAINNET_CHECKPOINT = {
+  epoch: 487173,
+  root: "0x35bd26d77ecef24031f37b86d4be488fd66c472eb68c11595ca1f327a9a54f24",
+} as const satisfies { epoch: number; root: `0x${string}` };
+
+/**
  * Candidate public, keyless endpoints. P1 (Nov 5, through tor-js): eth_getProof at the finalized
  * block worked on the first four. publicnode answered "distance to target block exceeds maximum
  * proof window" through Tor (it worked directly), so it is last and should not count toward the pool.
