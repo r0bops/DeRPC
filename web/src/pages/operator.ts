@@ -57,15 +57,13 @@ function uptimeChart(operator: Operator): string {
 }
 
 function pinSnippet(operator: Operator): string {
-  return `import { createClient } from "viem";
-import { derpc } from "@derpc/transport";
+  return `import { createDeRPC, MAINNET_OPERATORS } from "@derpc/provider";
+import { derpcTransport } from "@derpc/provider/viem";
+import { createPublicClient } from "viem";
+import { mainnet } from "viem/chains";
 
-const client = createClient({
-  chain: mainnet,
-  transport: derpc({
-    pin: "${operator.ens}",
-  }),
-});`;
+const derpc = createDeRPC({ operators: MAINNET_OPERATORS.filter((o) => o.ens === "${operator.ens}") });
+const client = createPublicClient({ chain: mainnet, transport: derpcTransport(derpc) });`;
 }
 
 function scoreRows(operator: Operator): string {

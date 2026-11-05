@@ -1,5 +1,5 @@
 import type { PageResult } from "../page.ts";
-import { formatEth, networks, operators, totalStakeEth } from "../data.ts";
+import { networks, operators } from "../data.ts";
 import { codeCard, icon } from "../ui.ts";
 
 export function landingPage(): PageResult {
@@ -33,15 +33,15 @@ export function landingPage(): PageResult {
               <div class="stat__caption">Networks</div>
             </div>
             <div class="stat">
-              <div class="stat__value">${formatEth(totalStakeEth())}<span class="stat__unit">ETH</span></div>
-              <div class="stat__caption">Bonded stake</div>
+              <div class="stat__value">Roadmap</div>
+              <div class="stat__caption">Staking</div>
             </div>
             <div class="stat">
               <div class="stat__value">0</div>
               <div class="stat__caption">Direct fallbacks</div>
             </div>
           </div>
-          <p class="stats__note">Fixture snapshot for the interface preview. The registry and watcher network are not live yet.</p>
+          <p class="stats__note">The five public mainnet endpoints shipped with the demo. Staking, payments and the ENS operator registry are roadmap, not live.</p>
         </div>
       </section>
 
@@ -50,7 +50,7 @@ export function landingPage(): PageResult {
           <div class="section__head">
             <p class="kicker">Why it holds</p>
             <h2 class="h2">Three guarantees, one route.</h2>
-            <p class="subtitle">Privacy is the route. Trust is the proof. Accountability is the stake. Remove any one of them and the call fails.</p>
+            <p class="subtitle">Privacy is the route. Trust is the proof. Remove either one and the call fails. Operator stake is on the roadmap.</p>
           </div>
           <div class="card-grid">
             <article class="card">
@@ -65,8 +65,8 @@ export function landingPage(): PageResult {
             </article>
             <article class="card">
               <div class="step-num">03</div>
-              <h3 class="card__title">Open by stake</h3>
-              <p class="card__text">Every operator stakes ETH and carries an ENS name. Scores are public, portable and verifiable.</p>
+              <h3 class="card__title">Open by choice</h3>
+              <p class="card__text">You pick the operators. A bad answer excludes that endpoint locally. Stake, scores and an ENS registry are roadmap.</p>
             </article>
           </div>
         </div>

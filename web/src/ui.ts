@@ -151,15 +151,13 @@ export function codeCard(): string {
       </div>
       <div class="code-card__body">
         <pre class="code"><code><span class="tok-com">// private, verified reads</span>
-<span class="tok-key">import</span> { createClient, http } <span class="tok-key">from</span> <span class="tok-str">"viem"</span>
-<span class="tok-key">import</span> { derpc } <span class="tok-key">from</span> <span class="tok-str">"@derpc/transport"</span>
+<span class="tok-key">import</span> { createDeRPC, MAINNET_OPERATORS } <span class="tok-key">from</span> <span class="tok-str">"@derpc/provider"</span>
+<span class="tok-key">import</span> { derpcTransport } <span class="tok-key">from</span> <span class="tok-str">"@derpc/provider/viem"</span>
 
-<span class="tok-key">const</span> client = createClient({
+<span class="tok-key">const</span> derpc = <span class="tok-fn">createDeRPC</span>({ operators: MAINNET_OPERATORS })
+<span class="tok-key">const</span> client = <span class="tok-fn">createPublicClient</span>({
   chain: mainnet,
-  transport: <span class="tok-fn">derpc</span>({
-    network: <span class="tok-str">"ethereum"</span>,
-    pin: <span class="tok-str">"mor.ops.derpc.eth"</span>,
-  }),
+  transport: <span class="tok-fn">derpcTransport</span>(derpc),
 })
 
 <span class="tok-key">await</span> client.<span class="tok-fn">getBalance</span>({ address })

@@ -4,15 +4,14 @@ import type { PageResult } from "../page.ts";
 import { demoNote, escapeHtml, icon, networkAvatar, snippet, verified } from "../ui.ts";
 import { operatorTable } from "../components/tables.ts";
 
-function integrationSnippet(network: Network): string {
-  const chain = network.id === "ethereum" ? "mainnet" : network.id;
-  return `import { ${chain}, createClient } from "viem";
-import { derpc } from "@derpc/transport";
+function integrationSnippet(): string {
+  return `import { createDeRPC, MAINNET_OPERATORS } from "@derpc/provider";
+import { derpcTransport } from "@derpc/provider/viem";
+import { createPublicClient } from "viem";
+import { mainnet } from "viem/chains";
 
-const client = createClient({
-  chain: ${chain},
-  transport: derpc({ network: "${network.id}" }),
-});
+const derpc = createDeRPC({ operators: MAINNET_OPERATORS });
+const client = createPublicClient({ chain: mainnet, transport: derpcTransport(derpc) });
 
 await client.getBalance({ address });`;
 }
@@ -77,7 +76,7 @@ export function networkPage(network: Network): PageResult {
               ${operatorTable(serving, `Operators serving ${network.name}`)}
               ${demoNote()}
             </div>
-            <div>${snippet("API preview", integrationSnippet(network))}</div>
+            <div>${snippet("API preview", integrationSnippet())}</div>
           </div>
         </div>
       </div>
