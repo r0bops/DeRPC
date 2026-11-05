@@ -37,7 +37,7 @@ export class PoolExhaustedError extends Error {
   constructor(readonly attempts: PoolAttempt[]) {
     super(
       attempts.length === 0
-        ? "no eligible endpoint: every endpoint is excluded or cooling down"
+        ? "no endpoint left: every chosen operator is excluded after an invalid proof"
         : `all ${attempts.length} attempts failed: ${attempts.map((a) => `${a.endpoint} (${a.kind})`).join(", ")}`,
     );
   }
@@ -120,10 +120,21 @@ export function createPool(opts: PoolOptions): Pool {
     const assigned = account ? opts.endpoints.find((e) => idOf(e) === affinity.get(account)) : undefined;
     if (assigned && !tried.has(idOf(assigned)) && stateOf(idOf(assigned)) === "eligible") return assigned;
     const eligible = opts.endpoints.filter((e) => !tried.has(idOf(e)) && stateOf(idOf(e)) === "eligible");
-    if (eligible.length === 0) return undefined;
+    if (eligible.length === 0) return secondChance();
     const best = Math.min(...eligible.map((e) => e.priority));
     const tier = eligible.filter((e) => e.priority === best);
     return tier[Math.min(tier.length - 1, Math.floor(random() * tier.length))];
+  }
+
+  /**
+   * Nothing fresh is left: give an operator that isn't excluded another try, on a fresh circuit, the one
+   * whose cooldown ends first. Users choose few operators, and Tor exit failures usually clear on a new
+   * circuit (#14), so a single bad exit shouldn't bench an operator. Invalid proofs are never retried.
+   */
+  function secondChance(): PoolEndpoint | undefined {
+    const candidates = opts.endpoints.filter((e) => stateOf(idOf(e)) !== "excluded");
+    if (candidates.length === 0) return undefined;
+    return candidates.reduce((best, e) => (state.get(idOf(e))!.cooldownUntil < state.get(idOf(best))!.cooldownUntil ? e : best));
   }
 
   return {
@@ -138,15 +149,18 @@ export function createPool(opts: PoolOptions): Pool {
         const endpoint = choose(tried, account);
         if (!endpoint) break;
         const id = idOf(endpoint);
+        // A retry, or another try at an operator that failed before, goes out on a fresh circuit.
+        const fresh = attempt > 1 || tried.has(id) || stateOf(id) !== "eligible";
         tried.add(id);
         emit({ type: "attempt", endpoint: id, attempt });
 
         const base = opts.sendFor(endpoint);
         const send: JsonRpcSend = (method, params, { isolationKey }) =>
-          base(method, params, { isolationKey: attempt === 1 ? isolationKey : `${isolationKey}#retry-${attempt}` });
+          base(method, params, { isolationKey: fresh ? `${isolationKey}#retry-${attempt}` : isolationKey });
         try {
           const value = await operation(send);
           if (account) affinity.set(account, id);
+          state.get(id)!.cooldownUntil = 0; // it answered: no reason to keep it resting
           emit({ type: "success", endpoint: id, attempt });
           return value;
         } catch (error) {

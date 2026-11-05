@@ -183,6 +183,46 @@ describe("createPool", () => {
     expect(h.pool.status().find((s) => s.url === "a")?.state).toBe("excluded");
   });
 
+  it("retries the only chosen operator on a fresh circuit when its first attempt fails at the Tor exit", async () => {
+    const h = harness([{ url: "a", priority: 0 }], { a: [exitTimeout, ok] });
+
+    await expect(h.read()).resolves.toBe("ok");
+
+    expect(h.calls).toEqual([{ url: "a", isolationKey: KEY }, { url: "a", isolationKey: `${KEY}#retry-2` }]);
+  });
+
+  it("gives a cooling-down operator another try on a fresh circuit rather than fail, when no other is available", async () => {
+    const h = harness([{ url: "a", priority: 0 }, { url: "b", priority: 0 }], { a: [exitTimeout, ok], b: [exitTimeout, ok] });
+
+    await expect(h.read()).resolves.toBe("ok"); // a fails, b fails, then a again on a fresh circuit
+
+    expect(h.calls.map((c) => [c.url, c.isolationKey])).toEqual([["a", KEY], ["b", `${KEY}#retry-2`], ["a", `${KEY}#retry-3`]]);
+  });
+
+  it("sends a later read to an operator that is still cooling down on a fresh circuit, not the one that failed", async () => {
+    const h = harness([{ url: "a", priority: 0 }], { a: [exitTimeout, exitTimeout, exitTimeout, ok] });
+
+    await expect(h.read()).rejects.toBeInstanceOf(PoolExhaustedError); // three attempts, all at the exit
+    await expect(h.read()).resolves.toBe("ok");
+
+    expect(h.calls[3]?.isolationKey).toBe(`${KEY}#retry-1`);
+  });
+
+  it("ends an operator's cooldown when it answers", async () => {
+    const h = harness([{ url: "a", priority: 0 }], { a: [exitTimeout, ok] });
+
+    await h.read();
+
+    expect(h.pool.status()[0]?.state).toBe("eligible");
+  });
+
+  it("never gives an operator that returned an invalid proof another try", async () => {
+    const h = harness([{ url: "a", priority: 0 }], { a: [lie, ok] });
+
+    await expect(h.read()).rejects.toBeInstanceOf(PoolExhaustedError);
+    expect(h.calls).toHaveLength(1);
+  });
+
   it("refuses to read when the user has not chosen any operator", async () => {
     const h = harness([], {});
 
