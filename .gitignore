@@ -2,6 +2,11 @@
 reference/anon-rpc/
 reference/tor-js/
 
+# Local agent instruction files (the rules they carry are recorded in specs/ and AI_USAGE.md)
+AGENTS.md
+CLAUDE.md
+.commandcode/
+
 # Local environment and secrets
 .env
 .env.*
