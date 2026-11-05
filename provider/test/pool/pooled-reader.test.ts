@@ -19,7 +19,7 @@ const header = (blockNumber: number): VerifiedHeader => ({
 
 function endpoints(behaviour: Record<string, "honest" | "liar">) {
   const calls: { url: string; params: unknown[] }[] = [];
-  const sendFor = (url: string): JsonRpcSend => async (method, params) => {
+  const sendFor = ({ url }: { url: string }): JsonRpcSend => async (method, params) => {
     calls.push({ url, params });
     if (method !== "eth_getProof" || JSON.stringify(params).toLowerCase() !== JSON.stringify([HOLDER, [], tagOf(fixture.block.number)]).toLowerCase()) {
       throw new Error(`no recorded answer for ${method} ${JSON.stringify(params)}`);

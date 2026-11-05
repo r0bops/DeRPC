@@ -71,5 +71,6 @@ export {
   type PoolEvent,
   type PoolAttempt,
   type EndpointState,
+  type EndpointStatus,
 } from "./pool/pool.ts";
 export { createPooledReader } from "./pool/pooled-reader.ts";

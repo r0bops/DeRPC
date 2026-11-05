@@ -5,6 +5,8 @@ import type { JsonRpcSend } from "../verify/reader.ts";
 import { WorkerPinChainError, WorkerPinMismatchError } from "../verify/worker-pin.ts";
 
 export interface PoolEndpoint {
+  /** Tells apart entries that share a URL (the simulated lying operator wraps a real one). Defaults to `url`. */
+  id?: string;
   url: string;
   /** Lower is preferred. The pool only uses a higher tier when no lower tier is eligible. */
   priority: number;
@@ -52,7 +54,9 @@ export class NoOperatorsChosenError extends Error {
 export interface PoolOptions {
   endpoints: PoolEndpoint[];
   /** JSON-RPC to one endpoint, through the anonymous transport. */
-  sendFor: (url: string) => JsonRpcSend;
+  sendFor: (endpoint: PoolEndpoint) => JsonRpcSend;
+  /** Ids excluded earlier in this session (for example before the user changed their choice). */
+  excluded?: Iterable<string>;
   /** Endpoints tried per read, one at a time. Default 3. */
   maxAttempts?: number;
   /** Time budget per read across attempts. Default 30 s. */
@@ -70,8 +74,20 @@ export interface Pool {
    * With `account`, reads for that account stay on the endpoint that last served it.
    */
   run<T>(operation: (send: JsonRpcSend) => Promise<T>, opts?: { account?: string }): Promise<T>;
-  status(): { url: string; priority: number; operator?: string; ens?: string; state: EndpointState; until?: number }[];
+  status(): EndpointStatus[];
 }
+
+export interface EndpointStatus {
+  id: string;
+  url: string;
+  priority: number;
+  operator?: string;
+  ens?: string;
+  state: EndpointState;
+  until?: number;
+}
+
+const idOf = (e: PoolEndpoint) => e.id ?? e.url;
 
 /**
  * A client-side pool of the execution endpoints the user chose. All of its state stays on the device.
@@ -88,21 +104,22 @@ export function createPool(opts: PoolOptions): Pool {
   const random = opts.random ?? Math.random;
   const now = opts.now ?? Date.now;
   const emit = (e: Omit<PoolEvent, "at">) => opts.onEvent?.({ ...e, at: now() });
-  const state = new Map(opts.endpoints.map((e) => [e.url, { excluded: false, cooldownUntil: 0 }]));
+  const excludedBefore = new Set(opts.excluded ?? []);
+  const state = new Map(opts.endpoints.map((e) => [idOf(e), { excluded: excludedBefore.has(idOf(e)), cooldownUntil: 0 }]));
   // Sticky per account: each account's reads stay with one operator, so the other operators never
   // learn about that account. Re-assigned only when its operator fails or is excluded.
   const affinity = new Map<string, string>();
 
-  const stateOf = (url: string): EndpointState => {
-    const s = state.get(url)!;
+  const stateOf = (id: string): EndpointState => {
+    const s = state.get(id)!;
     if (s.excluded) return "excluded";
     return s.cooldownUntil > now() ? "cooldown" : "eligible";
   };
 
   function choose(tried: Set<string>, account?: string): PoolEndpoint | undefined {
-    const assigned = account ? opts.endpoints.find((e) => e.url === affinity.get(account)) : undefined;
-    if (assigned && !tried.has(assigned.url) && stateOf(assigned.url) === "eligible") return assigned;
-    const eligible = opts.endpoints.filter((e) => !tried.has(e.url) && stateOf(e.url) === "eligible");
+    const assigned = account ? opts.endpoints.find((e) => idOf(e) === affinity.get(account)) : undefined;
+    if (assigned && !tried.has(idOf(assigned)) && stateOf(idOf(assigned)) === "eligible") return assigned;
+    const eligible = opts.endpoints.filter((e) => !tried.has(idOf(e)) && stateOf(idOf(e)) === "eligible");
     if (eligible.length === 0) return undefined;
     const best = Math.min(...eligible.map((e) => e.priority));
     const tier = eligible.filter((e) => e.priority === best);
@@ -120,31 +137,32 @@ export function createPool(opts: PoolOptions): Pool {
         if (attempt > 1 && now() - start >= totalTimeoutMs) break;
         const endpoint = choose(tried, account);
         if (!endpoint) break;
-        tried.add(endpoint.url);
-        emit({ type: "attempt", endpoint: endpoint.url, attempt });
+        const id = idOf(endpoint);
+        tried.add(id);
+        emit({ type: "attempt", endpoint: id, attempt });
 
-        const base = opts.sendFor(endpoint.url);
+        const base = opts.sendFor(endpoint);
         const send: JsonRpcSend = (method, params, { isolationKey }) =>
           base(method, params, { isolationKey: attempt === 1 ? isolationKey : `${isolationKey}#retry-${attempt}` });
         try {
           const value = await operation(send);
-          if (account) affinity.set(account, endpoint.url);
-          emit({ type: "success", endpoint: endpoint.url, attempt });
+          if (account) affinity.set(account, id);
+          emit({ type: "success", endpoint: id, attempt });
           return value;
         } catch (error) {
           const detail = error instanceof Error ? error.message : String(error);
           if (isNotTheEndpointsFault(error)) {
-            emit({ type: "stopped", endpoint: endpoint.url, attempt, detail });
+            emit({ type: "stopped", endpoint: id, attempt, detail });
             throw error;
           }
           if (error instanceof ProofVerificationError) {
-            state.get(endpoint.url)!.excluded = true;
-            attempts.push({ endpoint: endpoint.url, kind: "invalid-proof", error: detail });
-            emit({ type: "invalid-proof", endpoint: endpoint.url, attempt, detail });
+            state.get(id)!.excluded = true;
+            attempts.push({ endpoint: id, kind: "invalid-proof", error: detail });
+            emit({ type: "invalid-proof", endpoint: id, attempt, detail });
           } else {
-            state.get(endpoint.url)!.cooldownUntil = now() + cooldownMs;
-            attempts.push({ endpoint: endpoint.url, kind: "transient-failure", error: detail });
-            emit({ type: "transient-failure", endpoint: endpoint.url, attempt, detail });
+            state.get(id)!.cooldownUntil = now() + cooldownMs;
+            attempts.push({ endpoint: id, kind: "transient-failure", error: detail });
+            emit({ type: "transient-failure", endpoint: id, attempt, detail });
           }
         }
       }
@@ -153,9 +171,9 @@ export function createPool(opts: PoolOptions): Pool {
     },
     status() {
       return opts.endpoints.map((e) => {
-        const s = state.get(e.url)!;
-        const current = stateOf(e.url);
-        return { url: e.url, priority: e.priority, operator: e.operator, ens: e.ens, state: current, ...(current === "cooldown" ? { until: s.cooldownUntil } : {}) };
+        const s = state.get(idOf(e))!;
+        const current = stateOf(idOf(e));
+        return { id: idOf(e), url: e.url, priority: e.priority, operator: e.operator, ens: e.ens, state: current, ...(current === "cooldown" ? { until: s.cooldownUntil } : {}) };
       });
     },
   };

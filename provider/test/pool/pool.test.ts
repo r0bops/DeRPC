@@ -10,12 +10,13 @@ import { TransportUnavailableError } from "../../src/transport/anon-transport.ts
 const KEY = "derpc:account:0xabc";
 type Behavior = () => unknown;
 
-function harness(endpoints: PoolEndpoint[], behaviors: Record<string, Behavior[] | Behavior>, opts: { random?: number[]; stepMs?: number } = {}) {
+function harness(endpoints: PoolEndpoint[], behaviors: Record<string, Behavior[] | Behavior>, opts: { random?: number[]; stepMs?: number; excluded?: string[] } = {}) {
   const calls: { url: string; isolationKey: string }[] = [];
   const events: string[] = [];
   let now = 1_000_000;
   const randoms = [...(opts.random ?? [])];
-  const sendFor = (url: string): JsonRpcSend => async (_method, _params, { isolationKey }) => {
+  const sendFor = (endpoint: PoolEndpoint): JsonRpcSend => async (_method, _params, { isolationKey }) => {
+    const url = endpoint.id ?? endpoint.url;
     calls.push({ url, isolationKey });
     now += opts.stepMs ?? 0;
     const b = behaviors[url];
@@ -30,6 +31,7 @@ function harness(endpoints: PoolEndpoint[], behaviors: Record<string, Behavior[]
     maxAttempts: 3,
     totalTimeoutMs: 30_000,
     cooldownMs: 60_000,
+    excluded: opts.excluded,
     onEvent: (e: PoolEvent) => events.push(`${e.type} ${e.endpoint ?? ""}`.trim()),
   });
   // An operation like a verified read: one request, then a "verification" that rejects lies.
@@ -160,6 +162,25 @@ describe("createPool", () => {
     await h.read("alice"); // stays on b
 
     expect(h.calls.map((c) => c.url)).toEqual(["a", "b", "b"]);
+  });
+
+  it("keeps two entries that share a URL apart by id (a simulated liar wrapping a real operator)", async () => {
+    const h = harness([{ id: "liar", url: "x", priority: -1 }, { url: "x", priority: 0 }], { liar: lie, x: ok });
+
+    await expect(h.read()).resolves.toBe("ok");
+
+    expect(h.calls.map((c) => c.url)).toEqual(["liar", "x"]);
+    expect(h.pool.status().map((s) => [s.id, s.state])).toEqual([["liar", "excluded"], ["x", "eligible"]]);
+    expect(h.events).toContain("invalid-proof liar");
+  });
+
+  it("starts with endpoints excluded earlier in the session still excluded", async () => {
+    const h = harness(PREFERRED, { a: ok, b: ok, c: ok }, { excluded: ["a"] });
+
+    await h.read();
+
+    expect(h.calls.map((c) => c.url)).toEqual(["b"]);
+    expect(h.pool.status().find((s) => s.url === "a")?.state).toBe("excluded");
   });
 
   it("refuses to read when the user has not chosen any operator", async () => {
