@@ -15,7 +15,7 @@ export interface PoolEndpoint {
 export type EndpointState = "eligible" | "cooldown" | "excluded";
 
 export interface PoolEvent {
-  type: "attempt" | "success" | "invalid-proof" | "transient-failure" | "exhausted";
+  type: "attempt" | "success" | "invalid-proof" | "transient-failure" | "stopped" | "exhausted";
   endpoint?: string;
   attempt?: number;
   detail?: string;
@@ -111,8 +111,11 @@ export function createPool(opts: PoolOptions): Pool {
           emit({ type: "success", endpoint: endpoint.url, attempt });
           return value;
         } catch (error) {
-          if (isNotTheEndpointsFault(error)) throw error;
           const detail = error instanceof Error ? error.message : String(error);
+          if (isNotTheEndpointsFault(error)) {
+            emit({ type: "stopped", endpoint: endpoint.url, attempt, detail });
+            throw error;
+          }
           if (error instanceof ProofVerificationError) {
             state.get(endpoint.url)!.excluded = true;
             attempts.push({ endpoint: endpoint.url, kind: "invalid-proof", error: detail });

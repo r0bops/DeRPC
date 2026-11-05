@@ -113,6 +113,14 @@ describe("createPool", () => {
     expect(h.calls).toHaveLength(1);
   });
 
+  it("reports why it stopped when an error is not the endpoint's fault", async () => {
+    const h = harness(PREFERRED, { a: () => { throw new TransportUnavailableError("anonymous transport is closed"); }, b: ok, c: ok });
+
+    await h.read().catch(() => {});
+
+    expect(h.events).toEqual(["attempt a", "stopped a"]);
+  });
+
   it("gives up after the attempt limit with an error listing every attempt", async () => {
     const h = harness(
       [{ url: "a", priority: 0 }, { url: "b", priority: 0 }, { url: "c", priority: 0 }, { url: "d", priority: 0 }],
