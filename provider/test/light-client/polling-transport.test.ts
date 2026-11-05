@@ -12,6 +12,8 @@ const BEACON = "https://beacon.test";
 const responses = fixture.responses as Record<string, RecordedResponse>;
 const OPTIMISTIC_PATH = "/eth/v1/beacon/light_client/optimistic_update";
 const ATTESTED_SLOT = Number(JSON.parse(responses[OPTIMISTIC_PATH]!.body).data.attested_header.beacon.slot);
+const FINALITY_PATH = "/eth/v1/beacon/light_client/finality_update";
+const FINALIZED_SLOT = Number(JSON.parse(responses[FINALITY_PATH]!.body).data.finalized_header.beacon.slot);
 
 const config = getChainForkConfigFromNetwork("mainnet");
 let transport: PollingLightClientTransport | undefined;
@@ -45,6 +47,17 @@ describe("PollingLightClientTransport", () => {
 
     await vi.waitFor(() => expect(served.requested.filter((p) => p === OPTIMISTIC_PATH).length).toBeGreaterThanOrEqual(3));
     expect(heads).toEqual([ATTESTED_SLOT]);
+  });
+
+  it("delivers finality updates by polling, which is what moves the finalized header past the pin", async () => {
+    const { served, eventstream, transport } = setup();
+    const finalized: number[] = [];
+
+    transport.onFinalityUpdate((update) => finalized.push(update.finalizedHeader.beacon.slot));
+
+    await vi.waitFor(() => expect(finalized).toEqual([FINALIZED_SLOT]));
+    expect(served.requested).toContain(FINALITY_PATH);
+    expect(eventstream).not.toHaveBeenCalled();
   });
 
   it("stops polling after close()", async () => {
