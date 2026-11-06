@@ -138,6 +138,8 @@ export interface DeRPCStatus {
   operators: EndpointStatus[];
   /** Present on this provider; optional for consumers supplying older status fixtures. */
   routing?: RoutingStatus;
+  /** Requests DeRPC sent to operators and beacon endpoints. All go through the worker: there is no direct path. */
+  traffic?: { throughWorker: number };
 }
 
 export interface DeRPC {
@@ -348,7 +350,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     emit("disconnect", new ProviderRpcError(4900, reason, { reason: "TransportUnavailableError" }));
   }
 
-  const transport = deps.startTransport({
+  const startedTransport = deps.startTransport({
     pin,
     onLog: line => { try { options.onWorkerLog?.(line); } catch { /* app observer */ } },
     onState: (state, detail) => {
@@ -357,6 +359,17 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
       notify();
     },
   });
+  let throughWorker = 0;
+  const transport: AnonTransport = {
+    pin: startedTransport.pin,
+    ready: startedTransport.ready,
+    state: () => startedTransport.state(),
+    fetch(url, init) {
+      throughWorker++;
+      return startedTransport.fetch(url, init);
+    },
+    close: () => startedTransport.close(),
+  };
 
   const headersReady: Promise<VerifiedHeaderSource> = (async () => {
     try {
@@ -890,6 +903,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
       lightClient: lc,
       pin: pinStatus,
       operators: pool?.status() ?? [],
+      traffic: { throughWorker },
       routing: { ...routing, allowedOperators: routing.allowedOperators ? [...routing.allowedOperators] : undefined, source,
         ...(source === "verified-ens" ? { directory: "derpc.eth" as const } : {}),
         ...(provenDirectory ? { directorySnapshot: provenDirectory.lease.status(!!readSnapshot) } : {}) },

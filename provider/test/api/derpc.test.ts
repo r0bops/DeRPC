@@ -95,6 +95,17 @@ async function rpcError(promise: Promise<unknown>): Promise<ProviderRpcError> {
 }
 
 describe("createDeRPC", () => {
+  it("counts every request sent through the worker", async () => {
+    const { derpc, sent } = setup({ operators: [A] });
+    expect(derpc.status().traffic?.throughWorker).toBe(0);
+
+    await derpc.ready;
+    await derpc.provider.request(balanceOfSpecifier);
+
+    expect(sent.length).toBeGreaterThan(0);
+    expect(derpc.status().traffic?.throughWorker).toBe(sent.length);
+  });
+
   it("reads nothing, not even the worker-pin check, until the user chooses operators", async () => {
     const { derpc, sent } = setup();
     await derpc.ready;

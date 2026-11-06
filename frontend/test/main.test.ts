@@ -5,6 +5,7 @@ import type { DeRPCStatus } from "@derpc/provider";
 import page from "../index.html?raw";
 
 const harness = vi.hoisted(() => ({
+  throughWorker: 0,
   onStatus: undefined as ((status: unknown) => void) | undefined,
   setOperators: vi.fn(),
   setRouting: vi.fn(),
@@ -27,7 +28,7 @@ vi.mock("@derpc/provider", () => ({
   createDeRPC: (opts: { onStatus: (status: unknown) => void }) => {
     harness.onStatus = opts.onStatus;
     harness.initialOptions = opts as unknown as Record<string, unknown>;
-    const status = () => ({ worker: { name: "tor" }, checkpoint: { epoch: 1 }, transport: { state: "booting" }, lightClient: { state: "waiting" }, pin: { state: "waiting-for-operators" }, operators: [], routing: harness.routingStatus });
+    const status = () => ({ worker: { name: "tor" }, checkpoint: { epoch: 1 }, transport: { state: "booting" }, lightClient: { state: "waiting" }, pin: { state: "waiting-for-operators" }, operators: [], routing: harness.routingStatus, traffic: { throughWorker: harness.throughWorker } });
     harness.getStatus = status;
     return {
       ready: Promise.resolve(),
@@ -112,6 +113,27 @@ async function importLifecycle(file: Pick<File, "size" | "text">) {
 }
 
 describe("demo page status rendering", () => {
+  it("explains a gateway that doesn't answer while the worker boots", () => {
+    (harness.initialOptions!.onWorkerLog as (line: { level: string; text: string }) => void)({ level: "warn", text: "all gateways failed for /bootstrap.zip.zst: dial 1.2.3.4: timed out" });
+    harness.onStatus?.(harness.getStatus!());
+
+    const status = document.getElementById("worker-status")!;
+    expect(status.querySelector(".bad")?.textContent).toBe("gateway not answering");
+    expect(status.textContent).toContain("nothing goes direct");
+  });
+
+  it("reports the share of RPC traffic that went through the worker", () => {
+    expect(document.getElementById("traffic")!.textContent).toContain("no RPC traffic yet");
+
+    harness.throughWorker = 12;
+    vi.advanceTimersByTime(1000);
+
+    const traffic = document.getElementById("traffic")!.textContent;
+    harness.throughWorker = 0;
+    expect(traffic).toContain("100% through Anon-RPC");
+    expect(traffic).toContain("12 operator and beacon requests through the worker, 0 direct");
+  });
+
   it("selects every endpoint under one operator checkbox and restricts automatic routing by operator identity", async () => {
     const endpoints = pluralOperators();
     await refreshOperators(endpoints);

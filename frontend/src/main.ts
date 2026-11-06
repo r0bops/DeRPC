@@ -52,6 +52,10 @@ const gateways = String(import.meta.env.VITE_TOR_GATEWAYS ?? "")
   .map((s) => s.trim())
   .filter(Boolean);
 const gatewayLabel = gateways.length ? `configured gateway (${gateways.length})` : "demo gateway";
+// A stalled start must say why: otherwise the page looks broken instead of failing closed.
+const SLOW_BOOT_MS = 30_000;
+const GATEWAY_DIAL_FAILED = /dial .*timed out|all gateways failed/;
+let gatewayDialFailed = false;
 
 // Dev-only fault injection, never in production builds:
 //   ?fault=bad-worker-hash  boot from a wrong worker hash: the harness must reject the bundle, and nothing is read
@@ -134,6 +138,7 @@ const derpc = createDeRPC({
     logEvent(e);
   },
   onWorkerLog: (line) => {
+    if (GATEWAY_DIAL_FAILED.test(line.text)) gatewayDialFailed = true;
     if (sensitiveSession) return; // personal credentials or paid requests must not enter the development log
     devLog("worker", line);
     const log = $("worker-log");
@@ -158,7 +163,12 @@ function renderStatus(s: DeRPCStatus) {
   const t = s.transport;
   if (t.state === "ready") workerReadyAt ??= now;
   setText($("worker-status"),
-    t.state === "booting" ? [plain(`booting ${s.worker.name} via ${gatewayLabel}… ${seconds(now - pageStarted)}`)]
+    t.state === "booting" ? [
+      plain(`booting ${s.worker.name} via ${gatewayLabel}… ${seconds(now - pageStarted)}`),
+      ...(gatewayDialFailed ? [plain(" · "), tag("gateway not answering", "bad"), plain(" — still trying. Reads stay off, and nothing goes direct.")]
+      : now - pageStarted > SLOW_BOOT_MS ? [plain(" · "), tag("slow", "warn"), plain(" — the Tor gateway may be busy. Reads stay off, and nothing goes direct.")]
+      : []),
+    ]
     : t.state === "ready" ? [tag("ready", "ok"), plain(` — ${s.worker.name} via ${gatewayLabel}, after ${seconds(workerReadyAt! - pageStarted)}`)]
     : t.state === "failed" ? [tag("failed", "bad"), plain(` — ${t.error ?? "unknown error"} (no direct fallback)`)]
     : [tag("closed", "bad"), plain(" — anonymous network cut; DeRPC never falls back to a direct request")]);
@@ -658,6 +668,19 @@ const directConnections = mountDirectConnections({
   rpcUrls: [...MAINNET_OPERATORS.map((o) => o.url), ...MAINNET_BEACON_ENDPOINTS],
   bundleUrls: TOR_JS_PIN.resolvers,
 });
+
+// Direct requests to these hosts would be a leak. The resource list only sees the page, not the worker.
+const rpcHosts = new Set([...MAINNET_OPERATORS.map((o) => o.url), ...MAINNET_BEACON_ENDPOINTS].map((u) => new URL(u).host));
+function renderTraffic() {
+  const through = derpc.status().traffic?.throughWorker ?? 0;
+  const direct = performance.getEntriesByType("resource").filter((entry) => rpcHosts.has(new URL(entry.name).host)).length;
+  setText($("traffic"), [
+    tag(through + direct === 0 ? "no RPC traffic yet" : `${Math.round((100 * through) / (through + direct))}% through Anon-RPC`, direct ? "bad" : "ok"),
+    plain(` — ${through} operator and beacon request${through === 1 ? "" : "s"} through the worker, ${direct} direct`),
+  ]);
+}
+renderTraffic();
+setInterval(renderTraffic, 1000);
 
 // ---- helpers ----
 /** Dev server only: mirror events to .dev-logs/calls.log (scripts/show-logs.sh). Changed statuses only. */
