@@ -37,6 +37,14 @@ describe("createJsonRpcSend", () => {
     expect(JSON.parse(String(calls[0]!.options.body))).toMatchObject({ jsonrpc: "2.0", method: "eth_blockNumber", params: [] });
   });
 
+  it("passes the attempt timeout to the transport", async () => {
+    const { transport, calls } = transportAnswering(200, '{"jsonrpc":"2.0","id":1,"result":"0x2a"}');
+
+    await createJsonRpcSend(transport, "https://rpc.test/", { timeoutMs: 1_234 })("eth_blockNumber", [], { isolationKey: "k" });
+
+    expect(calls[0]!.options.timeoutMs).toBe(1_234);
+  });
+
   it("throws the endpoint's JSON-RPC error instead of returning a result", async () => {
     const { transport } = transportAnswering(200, '{"jsonrpc":"2.0","id":1,"error":{"code":-32000,"message":"distance to target block exceeds maximum proof window"}}');
 
