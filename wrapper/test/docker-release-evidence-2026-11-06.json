@@ -145,5 +145,94 @@
     "wrapper/scripts/package-release.mjs": "0f60a9a61b5b7583f1633a4e88e2e1bb2c3275fbecad74a201e4ee919bb24de2",
     "wrapper/test/release-smoke.mjs": "46c7f5a141f0b8a3a90ffc0fa4dee319ae899e2f57c4fc2d6db5737b171b9db5",
     ".github/workflows/release-wrapper.yml": "643ff5d84865fe83cc7fd72ecc78957a474f5649f7ca3f9765d896a24553ccc8"
+  },
+  "publishedRelease": {
+    "url": "https://github.com/r0bops/DeRPC/releases/tag/wrapper-v0.1.0",
+    "tag": "wrapper-v0.1.0",
+    "publishedAt": "2026-11-06T23:43:42Z",
+    "experimentalPrerelease": true,
+    "sourceSha": "03d0419891d08babe7017e00aa7a3a2b5b9376d1",
+    "workflowRun": {
+      "id": 42313333619,
+      "url": "https://github.com/r0bops/DeRPC/actions/runs/42313333619",
+      "conclusion": "success"
+    },
+    "nativeBuilds": [
+      {
+        "ok": true,
+        "archive": "/home/runner/work/DeRPC/DeRPC/wrapper/out/releases/derpc-wrapper-0.1.0-linux-x64.tar.gz",
+        "version": "0.1.0",
+        "platform": "linux/amd64",
+        "sourceSha": "03d0419891d08babe7017e00aa7a3a2b5b9376d1",
+        "uncommittedChanges": false,
+        "operatorInstallWithoutHostNode": true,
+        "existingConfigurationPreserved": true,
+        "images": [
+          {
+            "reference": "derpc-wrapper:0.1.0-linux-x64",
+            "id": "sha256:6884c37174d1f8f127f357cd75916a557c0ca80b491b0a32dd5ee8ba96329b27",
+            "os": "linux",
+            "architecture": "amd64"
+          },
+          {
+            "reference": "derpc-wrapper-tor:0.1.0-linux-x64",
+            "id": "sha256:bc8b4cdeb88f2743bc8a059714c45524ddb475ded9b58a8adae5db3bdba3e515",
+            "os": "linux",
+            "architecture": "amd64"
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "archive": "/home/runner/work/DeRPC/DeRPC/wrapper/out/releases/derpc-wrapper-0.1.0-linux-arm64.tar.gz",
+        "version": "0.1.0",
+        "platform": "linux/arm64",
+        "sourceSha": "03d0419891d08babe7017e00aa7a3a2b5b9376d1",
+        "uncommittedChanges": false,
+        "operatorInstallWithoutHostNode": true,
+        "existingConfigurationPreserved": true,
+        "images": [
+          {
+            "reference": "derpc-wrapper:0.1.0-linux-arm64",
+            "id": "sha256:7c6d704e59e8f620405da47b47e9bdfb619fb83b1b0d96563c849907fb879031",
+            "os": "linux",
+            "architecture": "arm64"
+          },
+          {
+            "reference": "derpc-wrapper-tor:0.1.0-linux-arm64",
+            "id": "sha256:be571dd4dc282e05b9ad07ac887834544378f046e45350da771f9b1c54389424",
+            "os": "linux",
+            "architecture": "arm64"
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "name": "derpc-wrapper-0.1.0-linux-arm64.tar.gz",
+        "size": 97446330,
+        "digest": "sha256:e38abb1a7c532d002b7fbe0d3c4b261c7e104abffc7ef19c6b603136db215cef",
+        "browser_download_url": "https://github.com/r0bops/DeRPC/releases/download/wrapper-v0.1.0/derpc-wrapper-0.1.0-linux-arm64.tar.gz"
+      },
+      {
+        "name": "derpc-wrapper-0.1.0-linux-arm64.tar.gz.sha256",
+        "size": 105,
+        "digest": "sha256:74c121b01d9b5b0add5411943dfcb5b469a926f8bb565c7d47b6c8914a2b66f1",
+        "browser_download_url": "https://github.com/r0bops/DeRPC/releases/download/wrapper-v0.1.0/derpc-wrapper-0.1.0-linux-arm64.tar.gz.sha256"
+      },
+      {
+        "name": "derpc-wrapper-0.1.0-linux-x64.tar.gz",
+        "size": 98056834,
+        "digest": "sha256:93fae1a6a2bba333ad83877196382b900dcaa1a9f68315b37df58d3c8a56a096",
+        "browser_download_url": "https://github.com/r0bops/DeRPC/releases/download/wrapper-v0.1.0/derpc-wrapper-0.1.0-linux-x64.tar.gz"
+      },
+      {
+        "name": "derpc-wrapper-0.1.0-linux-x64.tar.gz.sha256",
+        "size": 103,
+        "digest": "sha256:071728268a27bb6bf3795867ec440fb8ef8138fda59250866fb9288a8df55bbf",
+        "browser_download_url": "https://github.com/r0bops/DeRPC/releases/download/wrapper-v0.1.0/derpc-wrapper-0.1.0-linux-x64.tar.gz.sha256"
+      }
+    ],
+    "qualification": "Clean native x64 and ARM64 CI artifacts, independently checked against attached checksum files before publication. The earlier local artifact remains a dirty/offline rehearsal. Live onion and operator enrollment checks remain separate."
   }
 }

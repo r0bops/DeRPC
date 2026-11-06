@@ -201,6 +201,11 @@ command in the host PATH. Its [evidence](../wrapper/test/docker-release-evidence
 explicitly records a dirty local build; it is not the clean release artifact.
 The workflow builds each architecture on its own native runner and requires both
 before creating an exact-commit draft. Existing release assets are never replaced.
+[Release 0.1.0](https://github.com/r0bops/DeRPC/releases/tag/wrapper-v0.1.0) was published
+as an experimental prerelease from clean commit `03d0419`. Both native builds and
+installer checks passed in [run 42313333619](https://github.com/r0bops/DeRPC/actions/runs/42313333619);
+all four attached assets and checksum files were checked. A follow-up workflow
+guard checks paginated release lists because lookup by tag can miss a draft.
 Public onion reachability, enrollment and real-node acceptance remain separate
 from these offline checks. See [operator instructions](../wrapper/release/README.md)
 and [maintainer workflow](../wrapper/README.md#downloadable-docker-releases).
