@@ -119,17 +119,17 @@ export function assertPublicGateways(gateways: readonly string[]): void {
 }
 
 /**
- * The gateway list baked into a release: the explicitly configured public gateways, then the demo
- * gateway as a fallback. Fails when none is configured rather than silently using only the demo one.
+ * The gateway list baked into a release: only explicitly configured public gateways, deduplicated.
+ * tor-js shuffles this list, so appending a gateway would silently expand who can carry user traffic.
+ * A release that wants the demonstration gateway must include it explicitly.
  */
-export function releaseGateways(configured: string | undefined, demoGateway: string): string[] {
-  const gateways = (configured ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+export function releaseGateways(configured: string | undefined): string[] {
+  const gateways = [...new Set((configured ?? "").split(",").map((s) => s.trim()).filter(Boolean))];
   if (gateways.length === 0) {
     throw new Error("release builds need VITE_TOR_GATEWAYS set in the shell to at least one public tor-js gateway (use `build:local` for a LAN gateway)");
   }
-  const release = gateways.includes(demoGateway) ? gateways : [...gateways, demoGateway];
-  assertPublicGateways(release);
-  return release;
+  assertPublicGateways(gateways);
+  return gateways;
 }
 
 /** Non-public gateway addresses and private, loopback or link-local IPv4 literals found in built text. */

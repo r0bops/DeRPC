@@ -33,7 +33,7 @@ export function checkRelease({ artifact = resolve(REPOSITORY, "web/dist"), root 
     fail("checkpoint", "The pinned checkpoint is future-dated or older than the runtime's seven-day limit; refresh the trusted root and epoch together.");
   }
   let gateways = [];
-  try { gateways = releaseGateways(configuredGateways, TOR_JS_DEMO_GATEWAY); }
+  try { gateways = releaseGateways(configuredGateways); }
   catch { fail("gateways", "Set VITE_TOR_GATEWAYS in the shell to valid public KPS gateway addresses; use the same value for the build and this check."); }
   if (gateways.length && gateways.every(gateway => gateway === TOR_JS_DEMO_GATEWAY)) {
     warnings.push({ check: "demo-gateway", message: "Only the demonstration gateway is configured; reliable public gateway availability remains unverified." });
