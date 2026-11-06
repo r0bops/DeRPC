@@ -47,4 +47,17 @@ describe("operator endpoints", () => {
     expect(() => assertSeparateGateway({ ens: "alice.derpc.eth" }, selected, { "other.example:1234:key-one": "alice.derpc.eth" })).toThrow("share an operator");
     expect(() => assertSeparateGateway({ gateways: ["other:12298:key-two"] }, selected)).not.toThrow();
   });
+
+  it("requires the exact endpoint ID from a plural wrapper while preserving legacy identity", async () => {
+    const common = { ens: "alice.derpc.eth", signer: "0x" + "11".repeat(20), chains: [1], version: "1", service: "node" };
+    let document: unknown = { ...common, endpointId: "node-a" };
+    const transport = { fetch: async () => Response.json(document) } as unknown as AnonTransport;
+    await expect(checkOperatorIdentity(transport, "https://rpc.example/", { ...common, endpointId: "node-a" })).resolves.toMatchObject({ endpointId: "node-a" });
+    for (const endpointId of [undefined, "node-b", "NODE-A", 1]) {
+      document = { ...common, endpointId };
+      await expect(checkOperatorIdentity(transport, "https://rpc.example/", { ...common, endpointId: "node-a" })).rejects.toThrow("does not match");
+    }
+    document = common;
+    await expect(checkOperatorIdentity(transport, "https://rpc.example/", common)).resolves.toMatchObject({ ens: common.ens });
+  });
 });

@@ -30,6 +30,7 @@ function validOnion(host: string): boolean {
 
 export interface OperatorIdentity {
   ens: string;
+  endpointId?: string;
   signer: `0x${string}`;
   chains: number[];
   version: "1";
@@ -37,7 +38,7 @@ export interface OperatorIdentity {
 }
 
 /** A reciprocal claim, not proof that the ENS lookup was correct. Always through the worker. */
-export async function checkOperatorIdentity(transport: AnonTransport, endpoint: string, expected: { ens: string; signer: string }, signal?: AbortSignal): Promise<OperatorIdentity> {
+export async function checkOperatorIdentity(transport: AnonTransport, endpoint: string, expected: { ens: string; signer: string; endpointId?: string }, signal?: AbortSignal): Promise<OperatorIdentity> {
   const url = operatorUrl(endpoint);
   const timeoutMs = 10_000;
   const started = performance.now();
@@ -47,7 +48,7 @@ export async function checkOperatorIdentity(transport: AnonTransport, endpoint: 
   const bytes = await readResponseBody(response, { timeoutMs: timeoutMs - (performance.now() - started), maxBytes: 4096, signal });
   if (!response.ok) throw new Error("operator identity unavailable");
   const identity = JSON.parse(new TextDecoder().decode(bytes)) as OperatorIdentity;
-  if (!identity || identity.version !== "1" || identity.ens !== expected.ens || typeof identity.signer !== "string" || identity.signer.toLowerCase() !== expected.signer.toLowerCase() || !Array.isArray(identity.chains) || !identity.chains.includes(1) || !["node", "demo-proxy"].includes(identity.service)) {
+  if (!identity || identity.version !== "1" || identity.ens !== expected.ens || expected.endpointId !== undefined && identity.endpointId !== expected.endpointId || identity.endpointId !== undefined && (typeof identity.endpointId !== "string" || !/^[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/.test(identity.endpointId)) || typeof identity.signer !== "string" || identity.signer.toLowerCase() !== expected.signer.toLowerCase() || !Array.isArray(identity.chains) || !identity.chains.includes(1) || !["node", "demo-proxy"].includes(identity.service)) {
     throw new Error("operator identity does not match its ENS records");
   }
   return identity;
