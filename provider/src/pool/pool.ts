@@ -1,5 +1,5 @@
 import { HeaderSourceNotReadyError, StaleCheckpointError, StaleHeaderError } from "../light-client/header-source.ts";
-import { TransportUnavailableError } from "../transport/anon-transport.ts";
+import { NetworkUnavailableError, TransportUnavailableError } from "../transport/anon-transport.ts";
 import { ProofVerificationError } from "../verify/mpt.ts";
 import type { JsonRpcSend } from "../verify/reader.ts";
 import { WorkerPinChainError, WorkerPinMismatchError } from "../verify/worker-pin.ts";
@@ -32,7 +32,7 @@ export function assertOperatorActive(endpoint: PoolEndpoint, now = Date.now()): 
 }
 
 export interface PoolEvent {
-  type: "attempt" | "success" | "invalid-proof" | "transient-failure" | "stopped" | "exhausted";
+  type: "attempt" | "success" | "invalid-proof" | "transient-failure" | "network-unavailable" | "stopped" | "exhausted";
   endpoint?: string;
   attempt?: number;
   detail?: string;
@@ -41,7 +41,7 @@ export interface PoolEvent {
 
 export interface PoolAttempt {
   endpoint: string;
-  kind: "invalid-proof" | "transient-failure";
+  kind: "invalid-proof" | "transient-failure" | "network-unavailable";
   error: string;
 }
 
@@ -68,7 +68,7 @@ export class NoOperatorsChosenError extends Error {
 
 export interface PoolOptions {
   /** Manual callers supply canonical groups; automatic mode additionally rejects alias ambiguity. */
-  endpoints: PoolEndpoint[];
+  endpoints: readonly PoolEndpoint[];
   /** Explicit automatic selection; omitted preserves manual priority tiers and random ties. */
   selection?: SelectionMode;
   /**
@@ -164,7 +164,7 @@ export interface PoolObservations {
 }
 
 interface Observation { at: number; order: number; success: boolean; verifiedMs?: number }
-interface EndpointMemory { excluded: boolean; cooldownUntil: number; observations: Observation[] }
+interface EndpointMemory { excluded: boolean; cooldownUntil: number; networkGeneration: number; observations: Observation[] }
 interface AccountAffinity { operator: string; endpoint?: string }
 interface PoolMemory {
   endpoints: PoolEndpoint[];
@@ -222,7 +222,7 @@ export function createPool(opts: PoolOptions): Pool {
   if (new Set(endpoints.map(idOf)).size !== endpoints.length) throw new Error("pool endpoint ids must be globally unique");
   validateSelection(selection);
   const excludedBefore = new Set(opts.excluded ?? []);
-  const state = new Map<string, EndpointMemory>(endpoints.map((e) => [idOf(e), { excluded: excludedBefore.has(idOf(e)), cooldownUntil: 0, observations: [] }]));
+  const state = new Map<string, EndpointMemory>(endpoints.map((e) => [idOf(e), { excluded: excludedBefore.has(idOf(e)), cooldownUntil: 0, networkGeneration: 0, observations: [] }]));
   // Keep each account on its assigned operator while eligible. Only failures or explicit removal
   // move it; changing ranking or exploration never spreads an established account's reads.
   const affinity = new Map<string, AccountAffinity>();
@@ -235,7 +235,7 @@ export function createPool(opts: PoolOptions): Pool {
       const id = idOf(endpoint), prior = previous.endpoints.find(e => idOf(e) === id);
       const memory = previous.state.get(id);
       if (!allowed.has(id) || !prior || !memory || prior.url !== endpoint.url || prior.ens !== endpoint.ens || prior.operator !== endpoint.operator || operatorKey(prior) !== operatorKey(endpoint) || prior.endpointId !== endpoint.endpointId) continue;
-      state.set(id, { excluded: excludedBefore.has(id) || memory.excluded, cooldownUntil: memory.cooldownUntil, observations: memory.observations.map(sample => ({ ...sample })) });
+      state.set(id, { excluded: excludedBefore.has(id) || memory.excluded, cooldownUntil: memory.cooldownUntil, networkGeneration: memory.networkGeneration, observations: memory.observations.map(sample => ({ ...sample })) });
       carried.add(id);
       carriedGroups.add(operatorKey(endpoint));
     }
@@ -405,6 +405,7 @@ export function createPool(opts: PoolOptions): Pool {
       const tried = new Set<string>();
       let previousOperator: string | undefined;
       const attempts: PoolAttempt[] = [];
+      let lastNetworkError: NetworkUnavailableError | undefined;
       try {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         if (opts.signal?.aborted) throw opts.signal.reason;
@@ -420,6 +421,7 @@ export function createPool(opts: PoolOptions): Pool {
         if (account) affinity.set(account, { operator: group, endpoint: id });
         // A retry, or another try at an operator that failed before, goes out on a fresh circuit.
         const fresh = attempt > 1 || tried.has(id) || stateOf(id) !== "eligible";
+        const networkGeneration = state.get(id)!.networkGeneration;
         tried.add(id);
         emit({ type: "attempt", endpoint: id, attempt });
 
@@ -432,7 +434,8 @@ export function createPool(opts: PoolOptions): Pool {
             signal.throwIfAborted();
             assertOperatorActive(endpoint, now());
             const requestSignal = requestOptions.signal ? AbortSignal.any([signal, requestOptions.signal]) : signal;
-            return base(method, params, { ...requestOptions, signal: requestSignal, isolationKey: fresh ? `${requestOptions.isolationKey}#retry-${poolId}-${runId}-${attempt}` : requestOptions.isolationKey });
+            const circuitKey = networkGeneration ? `${requestOptions.isolationKey}#network-${poolId}-${networkGeneration}` : requestOptions.isolationKey;
+            return base(method, params, { ...requestOptions, signal: requestSignal, isolationKey: fresh ? `${circuitKey}#retry-${poolId}-${runId}-${attempt}` : circuitKey });
           };
           lifecycle = opts.prepareAttempt ? await withinSignal(opts.prepareAttempt(context, send).then(prepared => {
             if (signal.aborted) prepared.failed?.(signal.reason);
@@ -470,6 +473,13 @@ export function createPool(opts: PoolOptions): Pool {
             emit({ type: "stopped", endpoint: id, attempt, detail });
             throw error;
           }
+          if (deadline.signal.aborted || now() - start >= budget) {
+            // A local total budget is not evidence about whichever endpoint was in flight.
+            // Retain the attempt diagnostic without updating that endpoint's health or ranking.
+            attempts.push({ endpoint: id, kind: "transient-failure", error: detail });
+            emit({ type: "stopped", endpoint: id, attempt, detail });
+            break;
+          }
           // A caller cancellation or local freshness/signing refusal says nothing about this
           // endpoint. Keep that account assigned; only a retryable endpoint failure moves it.
           if (account && affinity.get(account)?.endpoint === id) affinity.set(account, { operator: group });
@@ -478,6 +488,15 @@ export function createPool(opts: PoolOptions): Pool {
             if (runOpts?.observe !== false) observe(id, false);
             attempts.push({ endpoint: id, kind: "invalid-proof", error: detail });
             emit({ type: "invalid-proof", endpoint: id, attempt, detail });
+          } else if (error instanceof NetworkUnavailableError) {
+            // No usable anonymous route says nothing about this node or its operator's quality.
+            // Retrying may recover a circuit; neither cooldown nor ranking is penalized.
+            lastNetworkError = error;
+            // Remember a failed circuit across logical reads without marking the endpoint unhealthy.
+            // Keep the recovered generation after success instead of returning to the failed key.
+            state.get(id)!.networkGeneration++;
+            attempts.push({ endpoint: id, kind: "network-unavailable", error: detail });
+            emit({ type: "network-unavailable", endpoint: id, attempt, detail });
           } else {
             state.get(id)!.cooldownUntil = now() + cooldownMs;
             // Expiry is local authorization ending, not evidence of endpoint performance.
@@ -486,6 +505,12 @@ export function createPool(opts: PoolOptions): Pool {
             emit({ type: "transient-failure", endpoint: id, attempt, detail });
           }
         }
+      }
+      if (attempts.length && attempts.every(attempt => attempt.kind === "network-unavailable")) {
+        throw new NetworkUnavailableError(
+          `anonymity network unavailable after ${attempts.length} attempts: ${lastNetworkError!.message}`,
+          { cause: lastNetworkError, code: lastNetworkError!.code, kind: lastNetworkError!.kind, torKind: lastNetworkError!.torKind },
+        );
       }
       emit({ type: "exhausted" });
       throw new PoolExhaustedError(attempts);

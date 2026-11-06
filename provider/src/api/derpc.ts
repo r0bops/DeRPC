@@ -10,6 +10,7 @@ import { assertOperatorActive, createPool, NoOperatorsChosenError, operatorKey, 
 import { createPooledReader } from "../pool/pooled-reader.ts";
 import {
   startAnonTransport,
+  NetworkUnavailableError,
   TransportUnavailableError,
   type AnonTransport,
   type StartOptions,
@@ -58,7 +59,7 @@ export type DeRPCOperator = PoolEndpoint & {
 
 export interface DeRPCOptions {
   /** Explicit candidates. Omitted selection keeps the legacy manual choice; omitted operators select none. */
-  operators?: DeRPCOperator[];
+  operators?: readonly DeRPCOperator[];
   /** Opt into free automatic routing across the supplied candidates. */
   selection?: SelectionMode;
   /** Automatic routing only: omitted permits every operator; [] permits none. Group/ENS IDs, never plural endpoint IDs. */
@@ -73,7 +74,7 @@ export interface DeRPCOptions {
   checkpoint?: { epoch: number; root: Hex };
   /** Beacon API for the light client (reached through the worker). */
   beaconUrl?: string;
-  beaconUrls?: string[];
+  beaconUrls?: readonly string[];
   /** Independently known gateway ownership, keyed by KPS gateway address. */
   gatewayOwners?: Record<string, string>;
   /** Timeout for one attempt on one operator. Default 20 s. */
@@ -133,6 +134,8 @@ export interface DeRPCStatus {
   worker: { name: string; workerHash: Hex };
   checkpoint: { epoch: number; root: Hex };
   transport: { state: TransportState; error?: string };
+  /** Last observed anonymous fetch outcome; not a guarantee that every endpoint is reachable. */
+  network?: { state: "ok" | "unavailable"; error?: string };
   lightClient: { state: "waiting" | "syncing" | "verified" | "stale" | "failed"; header?: VerifiedHeader; error?: string; poll?: PollHealth };
   pin: { state: "waiting-for-operators" | "waiting-for-light-client" | "checking" | "verified" | "mismatch" | "failed"; workerHash?: Hex; block?: number; error?: string };
   operators: EndpointStatus[];
@@ -148,9 +151,9 @@ export interface DeRPC {
   /** Resolves when the worker runs and the light client has verified a fresh header. Rejects for good on failure. */
   readonly ready: Promise<void>;
   /** Replace the user's choice; expired listings are refused and session exclusions carry over. */
-  setOperators(operators: DeRPCOperator[]): void;
+  setOperators(operators: readonly DeRPCOperator[]): void;
   /** Change policy and optionally replace explicit candidates in one atomic selection change. */
-  setRouting(routing: RoutingOptions, operators?: DeRPCOperator[]): void;
+  setRouting(routing: RoutingOptions, operators?: readonly DeRPCOperator[]): void;
   /** Manual: retain chosen names. Automatic: adopt all permitted free entries from a proven ENS snapshot. */
   refreshDirectory(options: RefreshDirectoryOptions): Promise<Directory>;
   /** Locally execute against proven state; disabled unless verifiedCalls was explicitly enabled. */
@@ -201,7 +204,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   // Explicit free candidates may recover directory discovery after every listed operator was removed.
   // They are never installed as a fallback for user reads, and the current allowlist still applies.
   let discoveryBootstrap: DeRPCOperator[] = [];
-  let provenDirectory: { operators: DeRPCOperator[]; block: VerifiedHeader; lease: DirectorySnapshotLease } | undefined;
+  let provenDirectory: { operators: readonly DeRPCOperator[]; block: VerifiedHeader; lease: DirectorySnapshotLease } | undefined;
   const authenticatedGroups = new WeakMap<DirectorySnapshotLease, Set<string>>();
   let readSnapshot: DirectorySnapshotLease | undefined;
   // A lease can be reused by a same-block refresh. Keep the selected pool's evidence immutable so
@@ -223,7 +226,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     const prior = paymentEndpoints.get(id);
     if (!prior || prior.session !== session) paymentEndpoints.set(id, { operator, session });
   }
-  function validateOperators(operators: DeRPCOperator[], forSettlement = false) {
+  function validateOperators(operators: readonly DeRPCOperator[], forSettlement = false) {
     if (!Array.isArray(operators)) throw new Error("operators must be an array");
     const groupCounts = new Map<string, number>();
     for (const operator of operators) {
@@ -268,6 +271,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   });
 
   let transportError: string | undefined;
+  let network: NonNullable<DeRPCStatus["network"]> = { state: "ok" };
   let lightClient: { state: "waiting" | "syncing" | "verified" | "failed"; error?: string } = { state: "waiting" };
   let headerSource: VerifiedHeaderSource | undefined;
   let pool: Pool | undefined;
@@ -278,7 +282,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   const destinationKey = (operator: DeRPCOperator) => operatorUrl(operator.url).href;
   const simulatedKey = (operator: DeRPCOperator) => `simulated:${operator.id ?? operator.url}:${destinationKey(operator)}`;
   const destinationExcluded = (operator: DeRPCOperator) => excludedDestinations.has(destinationKey(operator)) || !!operator.tamper && excludedDestinations.has(simulatedKey(operator));
-  const excludedIds = (operators: DeRPCOperator[]) => operators.filter(destinationExcluded).map(operator => operator.id ?? operator.url);
+  const excludedIds = (operators: readonly DeRPCOperator[]) => operators.filter(destinationExcluded).map(operator => operator.id ?? operator.url);
   function excludeDestination(operator: DeRPCOperator): void { excludedDestinations.add(operator.tamper ? simulatedKey(operator) : destinationKey(operator)); }
   function assertDestinationAllowed(operator: DeRPCOperator): void {
     if (destinationExcluded(operator)) throw new ProofVerificationError("endpoint destination was excluded locally");
@@ -316,7 +320,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     if (record) assertOperatorActive(record); // Caller-supplied expiry cannot extend an authenticated lease.
   }
 
-  function authorityForOperators(operators: DeRPCOperator[]): DirectorySnapshotLease | undefined {
+  function authorityForOperators(operators: readonly DeRPCOperator[]): DirectorySnapshotLease | undefined {
     const known = operators.filter(operator => directoryKeys(operator).some(key => knownDirectoryKeys.has(key)));
     if (!known.length) return undefined;
     if (!provenDirectory) throw new DirectorySnapshotExpiredError("is unavailable");
@@ -348,7 +352,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     emit("disconnect", new ProviderRpcError(4900, reason, { reason: "TransportUnavailableError" }));
   }
 
-  const transport = deps.startTransport({
+  const startedTransport = deps.startTransport({
     pin,
     onLog: line => { try { options.onWorkerLog?.(line); } catch { /* app observer */ } },
     onState: (state, detail) => {
@@ -357,6 +361,23 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
       notify();
     },
   });
+
+  const transport: AnonTransport = {
+    pin: startedTransport.pin,
+    ready: startedTransport.ready,
+    state: () => startedTransport.state(),
+    async fetch(url, init) {
+      try {
+        const response = await startedTransport.fetch(url, init);
+        network = { state: "ok" };
+        return response;
+      } catch (error) {
+        if (error instanceof NetworkUnavailableError) network = { state: "unavailable", error: error.message };
+        throw error;
+      } finally { notify(); }
+    },
+    close: () => startedTransport.close(),
+  };
 
   const headersReady: Promise<VerifiedHeaderSource> = (async () => {
     try {
@@ -775,11 +796,11 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     return guarded as unknown as VerifiedReader;
   }
 
-  function setOperators(operators: DeRPCOperator[]) {
+  function setOperators(operators: readonly DeRPCOperator[]) {
     replaceCandidates(operators, routing, provenSource(operators) ? "verified-ens" : "explicit");
   }
 
-  function setRouting(nextRouting: RoutingOptions, operators?: DeRPCOperator[]) {
+  function setRouting(nextRouting: RoutingOptions, operators?: readonly DeRPCOperator[]) {
     const next = normalizeRouting(nextRouting);
     const restoreDirectory = operators === undefined && routing.selection === "manual" && next.selection !== "manual" && source === "verified-ens" && provenDirectory;
     const candidates = operators === undefined ? (restoreDirectory ? restoreDirectory.operators : candidateOperators) : operators;
@@ -788,12 +809,12 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     replaceCandidates(candidates, next, nextSource);
   }
 
-  function provenSource(operators: DeRPCOperator[]): boolean {
+  function provenSource(operators: readonly DeRPCOperator[]): boolean {
     if (!provenDirectory || !Array.isArray(operators) || !operators.every(operator => provenDirectory!.operators.some(proven => sameOperator(operator, proven)))) return false;
     return true;
   }
 
-  function replaceCandidates(operators: DeRPCOperator[], nextRouting: RoutingOptions, nextSource: RoutingStatus["source"]) {
+  function replaceCandidates(operators: readonly DeRPCOperator[], nextRouting: RoutingOptions, nextSource: RoutingStatus["source"]) {
     lifetime.signal.throwIfAborted();
     validateOperators(operators, nextRouting.selection !== "manual");
     const candidates = cloneOperators(operators);
@@ -887,6 +908,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
       worker: { name: pin.name, workerHash: pin.workerHash },
       checkpoint,
       transport: { state: transport.state(), ...(transportError ? { error: transportError } : {}) },
+      network: { ...network },
       lightClient: lc,
       pin: pinStatus,
       operators: pool?.status() ?? [],
@@ -978,8 +1000,8 @@ function normalizeRouting(value: RoutingOptions): RoutingOptions {
   return { selection: value.selection, ...(allowed === undefined ? {} : { allowedOperators: [...allowed] }) };
 }
 
-function permittedOperators(operators: DeRPCOperator[], routing: RoutingOptions): DeRPCOperator[] {
-  if (routing.selection === "manual") return operators;
+function permittedOperators(operators: readonly DeRPCOperator[], routing: RoutingOptions): DeRPCOperator[] {
+  if (routing.selection === "manual") return [...operators];
   const allowlist = routing.allowedOperators === undefined ? undefined : new Set(routing.allowedOperators);
   return operators.filter(operator =>
     !operator.personalToken && !operator.payment && !operator.paymentOperatorId && !operator.tamper &&
@@ -988,7 +1010,7 @@ function permittedOperators(operators: DeRPCOperator[], routing: RoutingOptions)
       operator.endpointId === undefined && allowlist.has(operator.id ?? operator.url)));
 }
 
-function validateEndpointGroups(operators: DeRPCOperator[]): void {
+function validateEndpointGroups(operators: readonly DeRPCOperator[]): void {
   const ids = new Set<string>();
   const urls = new Set<string>();
   const aliases = new Map<string, string>();
@@ -1023,7 +1045,7 @@ function validateEndpointGroups(operators: DeRPCOperator[]): void {
   }
 }
 
-function validateAutomaticIdentities(operators: DeRPCOperator[], routing: RoutingOptions): void {
+function validateAutomaticIdentities(operators: readonly DeRPCOperator[], routing: RoutingOptions): void {
   if (routing.selection === "manual") return;
   // Group names, node keys and ENS aliases share one namespace, but only group aliases authorize routing.
   const identities = new Map<string, string>();
@@ -1042,7 +1064,7 @@ function validateAutomaticIdentities(operators: DeRPCOperator[], routing: Routin
   }
 }
 
-function cloneOperators(operators: DeRPCOperator[]): DeRPCOperator[] {
+function cloneOperators(operators: readonly DeRPCOperator[]): DeRPCOperator[] {
   return operators.map(operator => ({ ...operator, gateways: operator.gateways ? [...operator.gateways] : undefined,
     wrapperIdentity: operator.wrapperIdentity ? { ...operator.wrapperIdentity } : undefined,
     payment: operator.payment ? { ...operator.payment } : undefined }));
