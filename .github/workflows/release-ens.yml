@@ -1,39 +1,38 @@
-name: Release site to IPFS for derpc.eth
+name: Publish derpc.eth through IPNS
 
-# Manual only. Builds and packages the site, pins it on the team's IPFS node, fetches it back from
-# that node and compares every file. It never sends a transaction: the derpc.eth owner sets the
-# contenthash afterwards.
+# main is the release branch. No Ethereum wallet or IPNS private key enters GitHub.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
-      pin:
-        description: Pin the package on the team IPFS node and fetch it back to compare
+      publish:
+        description: Publish the checked release (disable for packaging only)
         type: boolean
         default: true
 
 permissions:
   contents: read
 
+# A canceled publish may already have saved its signed record. The VPS also keeps
+# a durable watermark because workflow queue order does not guarantee commit order.
 concurrency:
   group: release-ens
   cancel-in-progress: false
 
 jobs:
   package:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     outputs:
       cid: ${{ steps.site.outputs.cid }}
-      contenthash: ${{ steps.site.outputs.contenthash }}
     steps:
       - name: Require the release gateway setting
         env:
           TOR_GATEWAYS: ${{ vars.DERPC_TOR_GATEWAYS }}
         run: |
-          if [ -z "$TOR_GATEWAYS" ]; then
-            echo "::error::Set the repository variable DERPC_TOR_GATEWAYS to the public gateway address(es) for visitors (ip:port:certhash)."
-            exit 1
-          fi
+          test -n "$TOR_GATEWAYS" || { echo '::error::Set DERPC_TOR_GATEWAYS to the public gateway address.'; exit 1; }
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
@@ -48,17 +47,17 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
-  pin:
+  deploy:
     needs: package
-    if: inputs.pin
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.publish)
     runs-on: ubuntu-24.04
     timeout-minutes: 25
-    outputs:
-      provider: ${{ steps.provider.outcome }}
-    # Holds the deploy key. Add required reviewers to this environment to approve each release.
-    environment: ens-production
+    environment:
+      name: ens-production
+      url: https://derpc.eth.limo
     env:
       CID: ${{ needs.package.outputs.cid }}
+      PIN_HOST: ${{ vars.DERPC_PIN_HOST }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -66,97 +65,96 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
+      - uses: ./.github/actions/install-kubo
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: site-ipfs-release
           path: release
-      - name: Check the package before sending it
-        run: |
-          expected=$(node -p "require('./release/manifest.json').car.sha256")
-          echo "$expected  release/site.car" | sha256sum --check --strict
-          test "$(node -p "require('./release/manifest.json').cid")" = "$CID"
-      - name: Pin on the team IPFS node
+      - name: Bind the package to this tested commit
+        id: checked
+        run: node scripts/check-site-package.mjs release "$CID" "$GITHUB_SHA"
+      - name: Prepare restricted SSH access
         env:
-          PIN_HOST: ${{ vars.DERPC_PIN_HOST }}
           PIN_KNOWN_HOSTS: ${{ vars.DERPC_PIN_KNOWN_HOSTS }}
           PIN_SSH_KEY: ${{ secrets.DERPC_PIN_SSH_KEY }}
         run: |
           for name in PIN_HOST PIN_KNOWN_HOSTS PIN_SSH_KEY; do
-            if [ -z "${!name}" ]; then echo "::error::$name is not configured for the ens-production environment."; exit 1; fi
+            if [ -z "${!name}" ]; then echo "::error::$name is not configured for ens-production."; exit 1; fi
           done
-          if ! [[ $PIN_HOST =~ ^[a-z_][a-z0-9_-]*@[A-Za-z0-9.-]+$ ]]; then echo "::error::DERPC_PIN_HOST must look like user@host."; exit 1; fi
-          install -d -m 700 ~/.ssh
-          printf '%s\n' "$PIN_SSH_KEY" > ~/.ssh/derpc_pin
-          chmod 600 ~/.ssh/derpc_pin
-          printf '%s\n' "$PIN_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          # The key is bound to scripts/vps/pin-car.sh on the host: it accepts one CAR and its root CID.
-          ssh -i ~/.ssh/derpc_pin -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 "$PIN_HOST" "$CID" < release/site.car
-      - name: Remove the deploy key
-        if: always()
-        run: rm -f ~/.ssh/derpc_pin
-      - uses: ./.github/actions/install-kubo
-      - name: Fetch the release back from the pinning node and compare every file
+          if ! [[ $PIN_HOST =~ ^[a-z_][a-z0-9_-]*@[A-Za-z0-9.-]+$ ]]; then echo '::error::Invalid deploy host.'; exit 1; fi
+          install -d -m 700 "$RUNNER_TEMP/derpc-deploy"
+          umask 077
+          printf '%s\n' "$PIN_SSH_KEY" > "$RUNNER_TEMP/derpc-deploy/key"
+          printf '%s\n' "$PIN_KNOWN_HOSTS" > "$RUNNER_TEMP/derpc-deploy/known_hosts"
+      - name: Validate and pin the CAR on the VPS
         env:
-          PIN_HOST: ${{ vars.DERPC_PIN_HOST }}
-          PIN_PEER_ID: ${{ vars.DERPC_PIN_PEER_ID }}
+          CAR_SHA256: ${{ steps.checked.outputs.car_sha256 }}
         run: |
-          if ! [[ $PIN_PEER_ID =~ ^12D3KooW[1-9A-HJ-NP-Za-km-z]{44}$ ]]; then echo "::error::DERPC_PIN_PEER_ID must be the IPFS node's peer ID."; exit 1; fi
-          host=${PIN_HOST#*@}
-          if [[ $host =~ ^[0-9.]+$ ]]; then address="/ip4/$host"; else address="/dns4/$host"; fi
-          export IPFS_PATH="$RUNNER_TEMP/ipfs-verify"
-          "$IPFS_BIN" init --profile=server >/dev/null
-          # Talk only to the pinning node: no bootstrap peers and no DHT, so the bytes can only come from it.
-          "$IPFS_BIN" bootstrap rm --all >/dev/null
-          "$IPFS_BIN" config Routing.Type none
-          "$IPFS_BIN" daemon >"$RUNNER_TEMP/ipfs-daemon.log" 2>&1 &
-          for attempt in $(seq 1 60); do "$IPFS_BIN" swarm peers >/dev/null 2>&1 && break; sleep 1; done
-          "$IPFS_BIN" swarm connect "$address/tcp/4001/p2p/$PIN_PEER_ID"
-          if ! timeout 600 "$IPFS_BIN" get --output "$RUNNER_TEMP/fetched" "$CID" >/dev/null; then
-            tail -20 "$RUNNER_TEMP/ipfs-daemon.log"
-            echo "::error::The pinning node did not serve the release within 10 minutes."
-            exit 1
-          fi
-          "$IPFS_BIN" shutdown
-          node scripts/verify-ipfs.mjs release/manifest.json --dir "$RUNNER_TEMP/fetched"
-      - name: Check that the network lists the node as a provider
-        id: provider
-        # Advisory: the public routing service can lag or rate-limit. The summary reports the outcome.
+          ssh -i "$RUNNER_TEMP/derpc-deploy/key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$RUNNER_TEMP/derpc-deploy/known_hosts" -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+            "$PIN_HOST" "pin $CID $CAR_SHA256 $GITHUB_SHA" < release/site.car > release/pin-receipt.json
+      - name: Retrieve and verify the pinned CID independently
+        run: node scripts/verify-site-release.mjs --manifest release/manifest.json --phase pinned --out release/pinned-check.json
+      - name: Check the public provider listing
         continue-on-error: true
         env:
           PIN_PEER_ID: ${{ vars.DERPC_PIN_PEER_ID }}
-        run: node scripts/verify-ipfs.mjs release/manifest.json --provider "$PIN_PEER_ID"
+        run: |
+          test -n "$PIN_PEER_ID" || { echo '::warning::DERPC_PIN_PEER_ID is unset; advisory provider check skipped.'; exit 1; }
+          node scripts/verify-ipfs.mjs release/manifest.json --provider "$PIN_PEER_ID"
+      - name: Publish only if this commit is still main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CAR_SHA256: ${{ steps.checked.outputs.car_sha256 }}
+        run: |
+          current=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          if [ "$current" != "$GITHUB_SHA" ]; then
+            echo '::error::A newer main commit exists. This release stays pinned but will not replace IPNS.'
+            exit 1
+          fi
+          ssh -i "$RUNNER_TEMP/derpc-deploy/key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$RUNNER_TEMP/derpc-deploy/known_hosts" -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+            "$PIN_HOST" "publish $CID $CAR_SHA256 $GITHUB_RUN_NUMBER $GITHUB_RUN_ID $GITHUB_SHA" > release/publish-receipt.json
+      - name: Verify the public IPNS record and all ENS website files
+        run: node scripts/verify-site-release.mjs --manifest release/manifest.json --phase published --out release/published-check.json
+      - name: Remove the deploy key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/derpc-deploy/key"
+      - name: Save deployment receipts and verification results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: site-deployment-evidence
+          path: |
+            release/*-receipt.json
+            release/*-check.json
+          retention-days: 90
+          if-no-files-found: warn
 
   summary:
-    needs: [package, pin]
+    needs: [package, deploy]
     if: always() && needs.package.result == 'success'
     runs-on: ubuntu-24.04
     steps:
-      - name: Write the owner's next step
+      - name: Record the deployment result
         env:
           CID: ${{ needs.package.outputs.cid }}
-          CONTENTHASH: ${{ needs.package.outputs.contenthash }}
-          PIN_RESULT: ${{ needs.pin.result }}
-          PROVIDER_RESULT: ${{ needs.pin.outputs.provider }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
         run: |
           {
-            echo "## Site packaged for derpc.eth"
+            echo '## derpc.eth IPNS release'
             echo
-            echo "| | |"
-            echo "| --- | --- |"
-            echo "| Content URI | \`ipfs://$CID\` |"
-            echo "| Contenthash | \`$CONTENTHASH\` |"
-            echo "| Pinned and fetched back with matching bytes | $PIN_RESULT |"
-            echo "| Listed as a provider on the IPFS network | ${PROVIDER_RESULT:-not checked} |"
+            echo "Immutable release: \`ipfs://$CID\`"
             echo
-            if [ "$PIN_RESULT" = "success" ]; then
-              echo "Next, by the derpc.eth owner: set the contenthash to \`ipfs://$CID\` on Ethereum mainnet, read it back, then load https://derpc.eth.limo/ and /demo/ in a fresh browser."
+            echo 'Stable ENS contenthash: `ipns://k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc`'
+            echo
+            echo "Deployment and public verification: **$DEPLOY_RESULT**"
+            echo
+            if [ "$DEPLOY_RESULT" = success ]; then
+              echo 'Live at https://derpc.eth.limo/. All files and the signed IPNS target were checked.'
+            elif [ "$DEPLOY_RESULT" = skipped ]; then
+              echo 'Package only; this run did not deploy.'
             else
-              echo "Not pinned, or the node did not serve matching bytes. Do not change the ENS record for this CID."
-            fi
-            if [ "$PIN_RESULT" = "success" ] && [ "$PROVIDER_RESULT" != "success" ]; then
-              echo
-              echo "The provider listing was not confirmed. Before signing, open https://$CID.ipfs.dweb.link/ in a browser to confirm gateways can find the content."
+              echo 'Inspect the deployment evidence before retrying. Publication may have taken effect even if a network or cache check failed. No automatic rollback was performed.'
             fi
             echo
-            echo "No transaction was sent by this workflow."
+            echo 'Preserve the existing ENS contenthash. No Ethereum transaction or gas payment is needed for this update.'
           } >> "$GITHUB_STEP_SUMMARY"
