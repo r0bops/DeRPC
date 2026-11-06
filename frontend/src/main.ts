@@ -92,11 +92,13 @@ function renderStatus(s: DeRPCStatus) {
   const checkpointDays = ((Date.now() / 1000 - (MAINNET_GENESIS + s.checkpoint.epoch * 384)) / 86400).toFixed(1);
   const checkpoint = `pinned checkpoint epoch ${s.checkpoint.epoch} (${checkpointDays} days old)`;
   if (lc.state === "verified") lightClientReadyAt ??= now;
-  setText($("lc-status"),
-    lc.state === "waiting" ? [plain("waiting for the worker…")]
+  setText($("lc-status"), [
+    ...(lc.state === "waiting" ? [plain("waiting for the worker…")]
     : lc.state === "syncing" ? [plain(`syncing from the ${checkpoint}…`)]
     : lc.state === "verified" ? [tag("verified", "ok"), plain(` — sync-committee signatures checked, ${seconds(lightClientReadyAt! - (workerReadyAt ?? pageStarted))} after the worker · ${checkpoint}`)]
-    : [tag(lc.state, "bad"), plain(` — ${lc.error ?? ""}`)]);
+    : [tag(lc.state, "bad"), plain(` — ${lc.error ?? ""}`)]),
+    ...(lc.poll?.consecutiveFailures ? [plain(" · "), tag(`head poll failing ×${lc.poll.consecutiveFailures}`, "bad"), plain(` — ${lc.poll.lastError ?? "unknown error"}`)] : []),
+  ]);
   if (lc.header) {
     const ageMin = ((Date.now() / 1000 - lc.header.timestamp) / 60).toFixed(1);
     $("lc-header").textContent = `${lc.header.blockNumber} (${ageMin} min ago) · hash ${short(lc.header.blockHash)} · state root ${short(lc.header.stateRoot)}`;
