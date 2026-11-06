@@ -3,7 +3,7 @@ import { resolve, dirname } from 'node:path';
 import solc from 'solc';
 import { encodeDeployData, encodeFunctionData, getContractAddress, keccak256, toHex, zeroAddress } from 'viem';
 import { compile } from './compile.mjs';
-import { addresses, adminClient, curatorRoles, deploymentSalt, dnsEncode, endpointResource, factoryAbi, fail, isEmptyCode, isMain, json, labelId, normalizedRuntimeHash, operatorRecords, preflight, readAt, readText, registrarRoles, registryAbi, reportError, resolverAbi, resolverOwnerRoles, roleTable, roles, sameAddress, save, setter, validateConfig } from './ens-common.mjs';
+import { addresses, adminClient, curatorRoles, deploymentSalt, dnsEncode, ENDPOINT_KEYS, endpointMigrationCalls, endpointMigrationState, endpointRecordKey, endpointState, factoryAbi, fail, isEmptyCode, isMain, labelId, normalizedRuntimeHash, obsoleteEndpointKey, operatorRecords, preflight, readAt, readText, RECORD_KEYS, registrarRoles, registryAbi, reportError, resolverAbi, resolverOwnerRoles, roleTable, roles, sameAddress, save, setter, validateConfig } from './ens-common.mjs';
 
 export function registrarBuild() {
   const compiled = compile();
@@ -20,7 +20,7 @@ export function loadConfig(path) {
 }
 
 /** Returns the next independent stage only. Rerun with resumeConfig after mined receipts. */
-export async function preparePlan({ config: input, client, build = registrarBuild(), snapshot }) {
+export async function preparePlan({ config: input, client, build = registrarBuild(), snapshot, historical = false }) {
   const config = validateConfig(input);
   const observed = snapshot ?? await preflight(client);
   if (observed.chainId !== 1) fail('Wrong preflight chain');
@@ -42,6 +42,7 @@ export async function preparePlan({ config: input, client, build = registrarBuil
   async function finish(stage) {
     plan.stage = stage;
     for (const item of plan.transactions) {
+      if (historical) continue; // Receipt verifier reconstructs historical intents without a fresh gas quotation.
       const tx = item.walletRequest.params[0];
       // Every returned transaction is independently executable against the observed state.
       const gas = await client.estimateGas({ account: tx.from, to: tx.to, data: tx.data, value: 0n, blockNumber });
@@ -77,7 +78,7 @@ export async function preparePlan({ config: input, client, build = registrarBuil
   if (!sameAddress(config.registrar.address, getContractAddress({ from: config.deployer, nonce: BigInt(config.registrar.nonce) }))) fail('Registrar address does not match its reviewed deployer and nonce');
   const registrarCode = await codeAt(config.registrar.address);
   if (isEmptyCode(registrarCode)) {
-    if (await client.getTransactionCount({ address: config.deployer, blockTag: 'pending' }) !== config.registrar.nonce) fail('Registrar deployment nonce changed; check whether its reviewed transaction was mined before preparing a new address');
+    if (await client.getTransactionCount({ address: config.deployer, ...(historical ? { blockNumber } : { blockTag: 'pending' }) }) !== config.registrar.nonce) fail('Registrar deployment nonce changed; check whether its reviewed transaction was mined before preparing a new address');
     const data = encodeDeployData({ abi: build.artifact.abi, bytecode: `0x${build.artifact.evm.bytecode.object}`, args: [subregistry, config.curator] });
     plan.transactions.push({ id: 'deploy-registrar', purpose: 'Deploy the fixed-layout, free curated registrar with no upgrade path', walletRequest: { method: 'eth_sendTransaction', params: [{ from: config.deployer, data, value: '0x0', chainId: '0x1', nonce: toHex(config.registrar.nonce) }] } });
     return finish('deploy-registrar');
@@ -100,21 +101,30 @@ export async function preparePlan({ config: input, client, build = registrarBuil
 
   for (const op of config.operators) {
     const resolver = resolvers[op.label], name = `${op.label}.${config.parentName}`;
-    const [ownerRoot, hotRoot, rootCount, endpointRoles, endpointCount] = await Promise.all([
+    const [ownerRoot, hotRoot, rootCount, endpoints] = await Promise.all([
       read(resolver, resolverAbi, 'roles', [0n, op.coldOwner]), read(resolver, resolverAbi, 'roles', [0n, op.hotKey]), read(resolver, resolverAbi, 'roleCount', [0n]),
-      read(resolver, resolverAbi, 'roles', [endpointResource, op.hotKey]), read(resolver, resolverAbi, 'roleCount', [endpointResource]),
+      endpointState(read, resolver, name, op.hotKey),
     ]);
-    if (ownerRoot !== resolverOwnerRoles || hotRoot !== 0n || rootCount !== resolverOwnerRoles || ![0n, roles.text].includes(endpointRoles) || endpointCount !== endpointRoles) fail(`${op.label} resolver has unexpected roles or additional assignees`);
-    if (endpointRoles === 0n) add(`grant-endpoint-${op.label}`, `Give ${op.label}'s hot key permission for derpc.endpoint only`, op.coldOwner, resolver, resolverAbi, 'grantSetterRoles', [setter(name, 'derpc.endpoint', ''), op.hotKey]);
+    if (ownerRoot !== resolverOwnerRoles || hotRoot !== 0n || rootCount !== resolverOwnerRoles || ENDPOINT_KEYS.some(key => ![0n, roles.text].includes(endpoints.roles[key]) || endpoints.counts[key] !== endpoints.roles[key])) fail(`${op.label} resolver has unexpected roles or additional assignees`);
+    const selected = endpointRecordKey(op), obsolete = obsoleteEndpointKey(op);
     const records = operatorRecords(op);
-    // Read even omitted payment fields so an old paid configuration cannot silently survive.
-    for (const key of new Set([...Object.keys(records), 'derpc.beacon', 'derpc.gateways', 'derpc.price', 'derpc.payee', 'derpc.paymentChain', 'derpc.escrow'])) {
-      if (key !== 'derpc.endpoint' && await read(resolver, resolverAbi, 'roles', [labelId(key), op.hotKey]) !== 0n) fail(`${op.label} hot key has authority outside the endpoint record`);
+    const migrating = endpoints.roles[obsolete] !== 0n || endpoints.records[obsolete] !== '';
+    if (selected === 'derpc.endpoints' || migrating && obsolete === 'derpc.endpoints') {
+      for (const key of ['derpc.price', 'derpc.payee', 'derpc.paymentChain', 'derpc.escrow']) if (await readText(read, resolver, name, key) !== '') fail(`${op.label} paid records must not be migrated into plural endpoint routing`);
+    }
+    if (migrating) {
+      add(`migrate-endpoint-mode-${op.label}`, `Cold-owner mode migration: revoke ${obsolete}, clear obsolete records, publish ${selected}, grant only its scoped role. The plural key controls the entire RPC/beacon list, not individual nodes.`, op.coldOwner, resolver, resolverAbi, 'multicall', [endpointMigrationCalls(op, name)]);
+      plan.transactions.at(-1).migration = { selected, obsolete, before: await endpointMigrationState(read, resolver, name, op) };
+    } else if (endpoints.roles[selected] === 0n) add(`grant-${selected === 'derpc.endpoints' ? 'endpoints' : 'endpoint'}-${op.label}`, `Give ${op.label}'s hot key permission for ${selected} only${selected === 'derpc.endpoints' ? ', including all RPC and beacon URLs in the list' : ''}`, op.coldOwner, resolver, resolverAbi, 'grantSetterRoles', [setter(name, selected, ''), op.hotKey]);
+    // Read omitted keys too: a legacy config must not retain a plural record or stale payment terms.
+    for (const key of RECORD_KEYS) {
+      if (!ENDPOINT_KEYS.includes(key) && await read(resolver, resolverAbi, 'roles', [labelId(key), op.hotKey]) !== 0n) fail(`${op.label} hot key has authority outside the endpoint record`);
+      if (migrating && [...ENDPOINT_KEYS, 'derpc.beacon'].includes(key)) continue; // The one reviewed multicall updates these atomically.
       const expected = records[key] ?? '';
       if (await readText(read, resolver, name, key) !== expected) add(`record-${op.label}-${key}`, `Set ${name} text ${key}`, op.coldOwner, resolver, resolverAbi, 'setText', [dnsEncode(name), key, expected]);
     }
   }
-  if (plan.transactions.length) return finish('configure-permissions-and-records');
+  if (plan.transactions.length) return finish(plan.transactions.some(item => item.migration) ? 'migrate-endpoint-permissions-and-records' : 'configure-permissions-and-records');
 
   const count = Number(await read(config.registrar.address, build.artifact.abi, 'operatorCount'));
   if (!Number.isSafeInteger(count) || count > 128) fail('Registrar count is outside the proof layout bound');

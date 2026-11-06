@@ -3,6 +3,8 @@ import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { createPublicClient, http, parseAbi, encodeFunctionData, decodeFunctionResult, getAddress, isAddress, keccak256, toHex, zeroAddress } from 'viem';
 import { packetToBytes, namehash } from 'viem/ens';
+import { parseOperatorEndpoints, serializeOperatorEndpoints } from '../../provider/src/operators/endpoints.ts';
+export { parseOperatorEndpoints, serializeOperatorEndpoints };
 export const dnsEncode = name => toHex(packetToBytes(name));
 
 export const UPSTREAM = JSON.parse(readFileSync(new URL('../deployments/ens-upstream-mainnet.json', import.meta.url), 'utf8'));
@@ -13,6 +15,10 @@ export const curatorRoles = roles.setParent | (registrarRoles << 128n);
 export const resolverOwnerRoles = roles.text | (roles.text << 128n);
 export const labelId = label => BigInt(keccak256(toHex(label)));
 export const endpointResource = labelId('derpc.endpoint');
+export const ENDPOINT_KEYS = ['derpc.endpoint', 'derpc.endpoints'];
+export const endpointRecordKey = op => Object.hasOwn(op, 'endpoints') || !!op.records?.['derpc.endpoints'] ? 'derpc.endpoints' : 'derpc.endpoint';
+export const obsoleteEndpointKey = op => endpointRecordKey(op) === 'derpc.endpoints' ? 'derpc.endpoint' : 'derpc.endpoints';
+export const RECORD_KEYS = ['derpc.endpoint', 'derpc.endpoints', 'derpc.beacon', 'derpc.signer', 'derpc.caps', 'derpc.gateways', 'derpc.price', 'derpc.payee', 'derpc.paymentChain', 'derpc.escrow'];
 export const sameAddress = (a, b) => typeof a === 'string' && typeof b === 'string' && a.toLowerCase() === b.toLowerCase();
 export const isEmptyCode = code => !code || code === '0x';
 export const json = value => JSON.stringify(value, (_, v) => typeof v === 'bigint' ? v.toString() : v, 2) + '\n';
@@ -48,6 +54,8 @@ export const resolverAbi = [...permissionAbi, ...parseAbi([
   'function setText(bytes name,string key,string value)',
   'function resolve(bytes name,bytes data) view returns(bytes)',
   'function grantSetterRoles(bytes setter,address account) returns(bool)',
+  'function revokeRoles(uint256 resource,uint256 roleBitmap,address account) returns(bool)',
+  'function multicall(bytes[] calls) returns(bytes[] results)',
 ])];
 export const textAbi = parseAbi(['function text(bytes32 node,string key) view returns(string)']);
 export const readAt = (client, blockNumber) => (address, abi, functionName, args = []) => client.readContract({ address, abi, functionName, args, blockNumber });
@@ -111,6 +119,7 @@ function endpoint(value, field) {
   } else if (u.protocol !== 'https:') fail(`${field} requires HTTPS or a v3 onion service`);
   return value;
 }
+export { endpoint as validateEndpoint };
 export function validateConfig(input) {
   if (!input || input.schemaVersion !== 1 || input.chainId !== 1 || input.parentName !== 'derpc.eth') fail('Use ENS config schemaVersion 1, chainId 1 and parentName derpc.eth');
   const only = (object, keys) => { if (Object.keys(object).some(key => !keys.includes(key))) fail('Unknown configuration field; this tool accepts public deployment data only'); };
@@ -122,19 +131,24 @@ export function validateConfig(input) {
   if (!Array.isArray(c.operators) || c.operators.length < 2 || c.operators.length > 3) fail('Supply 2–3 explicitly configured operators');
   const labels = new Set(); const hotKeys = new Set();
   for (const op of c.operators) {
-    only(op, ['label', 'operator', 'coldOwner', 'hotKey', 'signer', 'payee', 'endpoint', 'beacon', 'caps', 'expiry', 'gateways', 'payment']);
+    only(op, ['label', 'operator', 'coldOwner', 'hotKey', 'signer', 'payee', 'endpoint', 'beacon', 'endpoints', 'caps', 'expiry', 'gateways', 'payment']);
     if (typeof op.label !== 'string' || !/^[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/.test(op.label) || labels.has(op.label)) fail('Operator labels must be unique, lowercase ASCII, 1–31 characters with no edge hyphen');
     labels.add(op.label);
     for (const key of ['operator', 'coldOwner', 'hotKey', 'signer', 'payee']) op[key] = address(op[key], `${op.label}.${key}`);
     if (sameAddress(op.hotKey, op.coldOwner) || sameAddress(op.hotKey, op.operator) || sameAddress(op.hotKey, c.curator) || hotKeys.has(op.hotKey.toLowerCase())) fail('Each hot key must be distinct from operator owners, cold owners, curator and other hot keys');
     hotKeys.add(op.hotKey.toLowerCase());
-    op.endpoint = endpoint(op.endpoint, `${op.label}.endpoint`);
-    if (op.beacon) op.beacon = endpoint(op.beacon, `${op.label}.beacon`);
+    if (Object.hasOwn(op, 'endpoints')) {
+      if (Object.hasOwn(op, 'endpoint') || Object.hasOwn(op, 'beacon') || Object.hasOwn(op, 'payment')) fail('Plural endpoints are free-only and exclusive with endpoint, beacon and payment fields');
+      op.endpoints = parseOperatorEndpoints(serializeOperatorEndpoints(op.endpoints));
+    } else {
+      op.endpoint = endpoint(op.endpoint, `${op.label}.endpoint`);
+      if (op.beacon) op.beacon = endpoint(op.beacon, `${op.label}.beacon`);
+    }
     if (!Number.isSafeInteger(op.expiry) || op.expiry <= 0) fail('Set a fixed Unix expiry for each operator; do not regenerate the lease on each run');
     if (op.caps?.chainId !== 1 || !Array.isArray(op.caps.methods) || op.caps.methods.length !== 2 || new Set(op.caps.methods).size !== 2 || !['eth_getProof', 'eth_getCode'].every(m => op.caps.methods.includes(m))) fail('Capabilities must declare mainnet eth_getProof and eth_getCode');
     only(op.caps, ['chainId', 'methods', 'beacon']);
     if (op.caps.beacon !== undefined && typeof op.caps.beacon !== 'boolean') fail('caps.beacon must be a boolean');
-    if (op.caps.beacon === true && !op.beacon) fail('Beacon capability requires the beacon record');
+    if (op.caps.beacon === true && (op.endpoints ? !op.endpoints.every(entry => entry.beaconUrl) : !op.beacon)) fail('Beacon capability requires a beacon URL for every declared endpoint');
     if (op.gateways !== undefined && (!Array.isArray(op.gateways) || op.gateways.some(g => typeof g !== 'string' || g.length > 512))) fail('gateways must be a list of public KPS addresses');
     if (op.payment) {
       const p = op.payment;
@@ -153,11 +167,38 @@ export function validateConfig(input) {
   return c;
 }
 export function operatorRecords(op) {
-  const records = { 'derpc.endpoint': op.endpoint, 'derpc.signer': op.signer, 'derpc.caps': JSON.stringify(op.caps) };
+  const records = Object.hasOwn(op, 'endpoints') ? { 'derpc.endpoints': serializeOperatorEndpoints(op.endpoints), 'derpc.endpoint': '', 'derpc.beacon': '', 'derpc.signer': op.signer, 'derpc.caps': JSON.stringify(op.caps) } : { 'derpc.endpoint': op.endpoint, 'derpc.signer': op.signer, 'derpc.caps': JSON.stringify(op.caps) };
   if (op.beacon) records['derpc.beacon'] = op.beacon;
   if (op.gateways) records['derpc.gateways'] = JSON.stringify(op.gateways);
   if (op.payment) Object.assign(records, { 'derpc.price': op.payment.priceWei, 'derpc.payee': op.payee, 'derpc.paymentChain': String(op.payment.deployment.chainId), 'derpc.escrow': op.payment.deployment.escrow });
   return records;
+}
+/** A reviewed cold-owner transaction moves permissions and records together. */
+export function endpointMigrationCalls(op, name) {
+  const selected = endpointRecordKey(op), obsolete = obsoleteEndpointKey(op), records = operatorRecords(op);
+  return [
+    encodeFunctionData({ abi: resolverAbi, functionName: 'revokeRoles', args: [labelId(obsolete), roles.text, op.hotKey] }),
+    setter(name, obsolete, ''),
+    setter(name, 'derpc.beacon', records['derpc.beacon'] ?? ''),
+    setter(name, selected, records[selected]),
+    encodeFunctionData({ abi: resolverAbi, functionName: 'grantSetterRoles', args: [setter(name, selected, ''), op.hotKey] }),
+  ];
+}
+export async function endpointState(read, resolver, name, hotKey) {
+  const [roleEntries, countEntries, recordEntries] = await Promise.all([
+    Promise.all(ENDPOINT_KEYS.map(async key => [key, await read(resolver, resolverAbi, 'roles', [labelId(key), hotKey])])),
+    Promise.all(ENDPOINT_KEYS.map(async key => [key, await read(resolver, resolverAbi, 'roleCount', [labelId(key)])])),
+    Promise.all([...ENDPOINT_KEYS, 'derpc.beacon'].map(async key => [key, await readText(read, resolver, name, key)])),
+  ]);
+  return { roles: Object.fromEntries(roleEntries), counts: Object.fromEntries(countEntries), records: Object.fromEntries(recordEntries) };
+}
+export async function endpointMigrationState(read, resolver, name, op) {
+  const [endpoints, ownerRoot, hotRoot, rootCount, protectedEntries] = await Promise.all([
+    endpointState(read, resolver, name, op.hotKey),
+    read(resolver, resolverAbi, 'roles', [0n, op.coldOwner]), read(resolver, resolverAbi, 'roles', [0n, op.hotKey]), read(resolver, resolverAbi, 'roleCount', [0n]),
+    Promise.all(RECORD_KEYS.filter(key => !ENDPOINT_KEYS.includes(key) && key !== 'derpc.beacon').map(async key => [key, await readText(read, resolver, name, key)])),
+  ]);
+  return { ...endpoints, ownerRoot, hotRoot, rootCount, protectedRecords: Object.fromEntries(protectedEntries) };
 }
 export const deploymentSalt = (config, kind) => BigInt(keccak256(toHex(`DeRPC:${config.parentName}:${config.deploymentId}:${kind}`)));
 export const roleTable = config => [
@@ -165,7 +206,7 @@ export const roleTable = config => [
   { resource: 'UserRegistry root', account: config.registrar?.address ?? 'registrar address assigned after subregistry deployment', roles: 'REGISTRAR; RENEW', bitmap: registrarRoles.toString() },
   ...config.operators.flatMap(op => [
     { resource: `${op.label} resolver root`, account: op.coldOwner, roles: 'SET_TEXT; SET_TEXT_ADMIN', bitmap: resolverOwnerRoles.toString() },
-    { resource: `${op.label} resolver key derpc.endpoint only`, account: op.hotKey, roles: 'SET_TEXT', bitmap: roles.text.toString() },
+    { resource: `${op.label} resolver key ${endpointRecordKey(op)} only`, account: op.hotKey, roles: 'SET_TEXT', bitmap: roles.text.toString() },
     { resource: `${op.label} ENS name`, account: op.operator, roles: 'none (non-transferable)', bitmap: '0' },
   ]),
 ];
