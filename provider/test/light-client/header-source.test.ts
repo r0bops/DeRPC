@@ -2,6 +2,7 @@
 // Every expected value below is read from the recorded beacon data, not computed by the code under test.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  HeaderSourceNotReadyError,
   StaleCheckpointError,
   StaleHeaderError,
   startVerifiedHeaderSource,
@@ -168,6 +169,61 @@ describe("startVerifiedHeaderSource", () => {
     const { pending } = start("mainnet", mainnet, responses);
 
     await expect(pending).rejects.toThrow();
+  });
+
+  it("retries a failed bootstrap on a fresh circuit and then succeeds", async () => {
+    at(mainnet.capturedAt);
+    const served = sequencedFetch({ [bootstrapPath]: [{ status: 503, body: "unavailable", headers: {} }, mainnetResponses[bootstrapPath]!] });
+    const fetchForAttempt = vi.fn(() => served.fetch);
+    const pending = startVerifiedHeaderSource({
+      network: "mainnet",
+      checkpoint: { root: mainnet.checkpoint.root as `0x${string}`, epoch: mainnet.checkpoint.epoch },
+      beaconUrl: BEACON,
+      fetch: served.fetch,
+      fetchForAttempt,
+      startupAttempts: 2,
+      pollIntervalMs: 5,
+      readyTimeoutMs: 1_500,
+    });
+    source = await pending;
+
+    expect(fetchForAttempt).toHaveBeenCalledTimes(2);
+    expect(source.finalized().blockNumber).toBe(EXPECTED.blockNumber);
+  });
+
+  it("moves startup to the second beacon endpoint after the first one fails", async () => {
+    at(mainnet.capturedAt);
+    const good = fixtureFetch(BEACON, mainnetResponses);
+    const fetchForAttempt = (attempt: number) => (attempt < 3 ? (async () => new Response("unavailable", { status: 503 })) : good.fetch);
+    const pending = startVerifiedHeaderSource({
+      network: "mainnet",
+      checkpoint: { root: mainnet.checkpoint.root as `0x${string}`, epoch: mainnet.checkpoint.epoch },
+      beaconUrl: "https://bad-beacon.test",
+      beaconUrls: [BEACON],
+      fetch: good.fetch,
+      fetchForAttempt,
+      startupAttempts: 3,
+      pollIntervalMs: 5,
+      readyTimeoutMs: 1_500,
+    });
+    source = await pending;
+
+    expect(source.finalized().blockNumber).toBe(EXPECTED.blockNumber);
+  });
+
+  it("reports an unusable startup as light-client-not-ready", async () => {
+    at(mainnet.capturedAt);
+    const pending = startVerifiedHeaderSource({
+      network: "mainnet",
+      checkpoint: { root: mainnet.checkpoint.root as `0x${string}`, epoch: mainnet.checkpoint.epoch },
+      beaconUrl: BEACON,
+      fetch: async () => new Response("unavailable", { status: 503 }),
+      startupAttempts: 1,
+      readyTimeoutMs: 0,
+    });
+
+    await expect(pending).rejects.toBeInstanceOf(HeaderSourceNotReadyError);
+    await expect(pending).rejects.toThrow(/did not become ready/);
   });
 
   it("becomes ready on Hoodi with Hoodi configuration (control for the wrong-chain test)", async () => {

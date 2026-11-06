@@ -3,8 +3,8 @@
 import { describe, expect, it } from "vitest";
 import { createDeRPCWith, simulatedLyingOperator, type DeRPCOperator, type DeRPCStatus } from "../../src/api/derpc.ts";
 import { ProviderRpcError } from "../../src/api/eip1193.ts";
-import { TOR_JS_PIN, type WorkerPin } from "../../src/config/mainnet.ts";
-import { StaleCheckpointError, type VerifiedHeader, type VerifiedHeaderSource } from "../../src/light-client/header-source.ts";
+import { MAINNET_BEACON_ENDPOINTS, TOR_JS_PIN, type WorkerPin } from "../../src/config/mainnet.ts";
+import { StaleCheckpointError, type HeaderSourceOptions, type VerifiedHeader, type VerifiedHeaderSource } from "../../src/light-client/header-source.ts";
 import { TransportUnavailableError, type AnonTransport, type StartOptions, type TransportState } from "../../src/transport/anon-transport.ts";
 import fixture from "../fixtures/mainnet-worker-pin.json" with { type: "json" };
 
@@ -73,15 +73,19 @@ function setup(opts: {
   headersError?: Error;
   headersAfter?: Promise<void>;
   pinGate?: Promise<void>;
+  beaconUrls?: string[];
+  startupAttempts?: number;
   onStatus?: (s: DeRPCStatus) => void;
   onPoolEvent?: (event: { type: string }) => void;
 } = {}) {
   let fake!: ReturnType<typeof fakeTransport>;
+  let headerOpts: HeaderSourceOptions | undefined;
   const headers: VerifiedHeaderSource = { finalized: () => HEADER, assertFresh: () => {}, close: () => {} };
   const derpc = createDeRPCWith(
     {
       startTransport: (start) => (fake = fakeTransport(start, { bootError: opts.bootError, pinGate: opts.pinGate })).transport,
-      startHeaders: async () => {
+      startHeaders: async (headerOptions) => {
+        headerOpts = headerOptions;
         await opts.headersAfter;
         if (opts.headersError) throw opts.headersError;
         return headers;
@@ -92,10 +96,12 @@ function setup(opts: {
       worker: opts.pin ?? TOR_JS_PIN,
       onStatus: opts.onStatus,
       onPoolEvent: opts.onPoolEvent,
+      beaconUrls: opts.beaconUrls,
+      startupAttempts: opts.startupAttempts,
     },
   );
   derpc.ready.catch(() => {});
-  return { derpc, sent: fake.sent };
+  return { derpc, sent: fake.sent, headerOpts: () => headerOpts };
 }
 
 async function rpcError(promise: Promise<unknown>): Promise<ProviderRpcError> {
@@ -114,6 +120,17 @@ describe("createDeRPC", () => {
     expect(error.data).toEqual({ reason: "NoOperatorsChosenError" });
     expect(sent).toEqual([]);
     expect(derpc.status().pin.state).toBe("waiting-for-operators");
+  });
+
+  it("gives the light client the beacon fallbacks and a fresh circuit per startup attempt", async () => {
+    const { derpc, headerOpts } = setup({ operators: [A], startupAttempts: 2 });
+    await derpc.ready;
+
+    const opts = headerOpts()!;
+    expect(opts.beaconUrls).toEqual(MAINNET_BEACON_ENDPOINTS.slice(1));
+    expect(opts.startupAttempts).toBe(2);
+    expect(opts.fetchForAttempt).toBeTypeOf("function");
+    expect(opts.fetchForAttempt!(1)).not.toBe(opts.fetchForAttempt!(2));
   });
 
   it("proves the worker pin through the chosen operator before the first read, then reads through it only", async () => {

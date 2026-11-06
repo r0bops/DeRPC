@@ -42,8 +42,12 @@ export interface DeRPCOptions {
   worker?: WorkerPin;
   /** The light client's trusted checkpoint. Default: the one shipped with this build. */
   checkpoint?: { epoch: number; root: Hex };
-  /** Beacon API for the light client (reached through the worker). */
+  /** Beacon API for the light client (reached through the worker). Default: the first pinned endpoint. */
   beaconUrl?: string;
+  /** Additional beacon endpoints to try when startup fails. Default: the other pinned endpoints. */
+  beaconUrls?: readonly string[];
+  /** Startup attempts across the beacon endpoints. Default 4. */
+  startupAttempts?: number;
   /** Timeout for one attempt on one operator. Default 20 s. */
   attemptTimeoutMs?: number;
   onStatus?: (status: DeRPCStatus) => void;
@@ -161,7 +165,11 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
         network: "mainnet",
         checkpoint,
         beaconUrl: options.beaconUrl ?? MAINNET_BEACON_ENDPOINTS[0],
+        beaconUrls: options.beaconUrls ? [...options.beaconUrls] : options.beaconUrl ? [] : MAINNET_BEACON_ENDPOINTS.slice(1),
+        // A fresh circuit per startup attempt, so one bad exit doesn't fail the whole start (#34).
         fetch: asFetch(transport, { isolationKey: "derpc:consensus" }),
+        fetchForAttempt: (attempt) => asFetch(transport, { isolationKey: `derpc:consensus:startup-${attempt}` }),
+        startupAttempts: options.startupAttempts,
       });
     } catch (error) {
       lightClient = { state: "failed", error: message(error) };

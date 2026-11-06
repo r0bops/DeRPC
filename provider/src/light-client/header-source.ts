@@ -173,9 +173,12 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
   }
-  throw lastError instanceof Error
-    ? lastError
-    : new HeaderSourceNotReadyError("light client did not become ready; no beacon endpoint answered");
+  if (lastError instanceof StaleCheckpointError) throw lastError;
+  const cause = lastError instanceof Error ? lastError : undefined;
+  throw new HeaderSourceNotReadyError(
+    cause ? `light client did not become ready: ${cause.message}` : "light client did not become ready; no beacon endpoint answered",
+    cause ? { cause } : undefined,
+  );
 }
 
 function isFresh(header: LightClientHeader, maxAgeMs: number): boolean {
