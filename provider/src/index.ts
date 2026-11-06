@@ -58,6 +58,7 @@ export {
   GENESIS,
   type HeaderNetwork,
   type HeaderSourceOptions,
+  type PollHealth,
   type VerifiedHeader,
   type VerifiedHeaderSource,
 } from "./light-client/header-source.ts";
