@@ -12,7 +12,7 @@ const CHECKPOINT_TIME = (1_606_824_023 + MAINNET_CHECKPOINT.epoch * 384) * 1000;
 const roots: string[] = [];
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
 
-function fixture() {
+function fixture(gateways = [GATEWAY]) {
   const root = mkdtempSync(join(tmpdir(), "derpc-release-check-"));
   roots.push(root);
   const artifact = join(root, "web/dist");
@@ -26,7 +26,7 @@ function fixture() {
   const entry = '<script type="module" src="./assets/demo.js"></script>';
   write("web/dist/demo/index.html", `${entry}<input id="enable-payments" type="checkbox"><fieldset id="payment-controls" disabled></fieldset>`);
   for (const page of ["example", "network-check"]) write(`web/dist/demo/${page}.html`, entry);
-  write("web/dist/demo/assets/demo.js", `const checkpoint=${JSON.stringify(MAINNET_CHECKPOINT)};const gateways=${JSON.stringify([GATEWAY, TOR_JS_DEMO_GATEWAY])};const rpc="https://eth.drpc.org";`);
+  write("web/dist/demo/assets/demo.js", `const checkpoint=${JSON.stringify(MAINNET_CHECKPOINT)};const gateways=${JSON.stringify(gateways)};const rpc="https://eth.drpc.org";`);
   const run = (extra = {}) => checkRelease({ root, artifact, configuredGateways: GATEWAY, now: CHECKPOINT_TIME + 86_400_000, ...extra });
   return { root, artifact, write, run };
 }
@@ -36,7 +36,7 @@ describe("offline assembled release check", () => {
     const report = fixture().run();
     expect(report.ok).toBe(true);
     expect(report.errors).toEqual([]);
-    expect(report.gatewayCount).toBe(2);
+    expect(report.gatewayCount).toBe(1);
     expect(report.limits.join(" ")).toContain("do not establish gateway reachability");
     expect(report.limits.join(" ")).toContain("initial built HTML only");
   });
@@ -56,9 +56,17 @@ describe("offline assembled release check", () => {
     for (const configuredGateways of [undefined, `kps:${GATEWAY}`, "10.0.0.8:12298:not-a-certificate"]) {
       expect(run({ configuredGateways }).errors).toContainEqual(expect.objectContaining({ check: "gateways" }));
     }
-    const report = run({ configuredGateways: TOR_JS_DEMO_GATEWAY });
+    const report = fixture([TOR_JS_DEMO_GATEWAY]).run({ configuredGateways: TOR_JS_DEMO_GATEWAY });
     expect(report.ok).toBe(true);
     expect(report.warnings).toContainEqual(expect.objectContaining({ check: "demo-gateway" }));
+  });
+
+  it("checks every explicitly configured gateway without adding an implicit backup", () => {
+    const configuredGateways = `${GATEWAY},${TOR_JS_DEMO_GATEWAY},${GATEWAY}`;
+    expect(fixture().run({ configuredGateways }).errors).toContainEqual(expect.objectContaining({ check: "gateway-artifact" }));
+    const report = fixture([GATEWAY, TOR_JS_DEMO_GATEWAY]).run({ configuredGateways });
+    expect(report.ok).toBe(true);
+    expect(report.gatewayCount).toBe(2);
   });
 
   it("reports missing assembled pages before scanning a non-site target", () => {

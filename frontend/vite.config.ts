@@ -2,7 +2,6 @@ import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin } from "vite";
-import { TOR_JS_DEMO_GATEWAY } from "../provider/src/config/mainnet.ts";
 import { findNonPublicAddresses, releaseGateways } from "./build/gateways.ts";
 
 // Dev server only: the demo page POSTs its call events here, and they're appended as JSON lines to
@@ -32,7 +31,7 @@ function devCallLog(): Plugin {
 
 export default defineConfig(({ command, mode }) => {
   const release = command === "build" && mode !== "lan";
-  const gateways = release ? releaseGateways(process.env.VITE_TOR_GATEWAYS, TOR_JS_DEMO_GATEWAY) : undefined;
+  const gateways = release ? releaseGateways(process.env.VITE_TOR_GATEWAYS) : undefined;
   return {
     // Relative asset paths so the build also loads from IPFS gateways and derpc.eth.limo.
     base: "./",
