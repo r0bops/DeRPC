@@ -1,5 +1,5 @@
 import type { VerifiedHeader } from "../light-client/header-source.ts";
-import { TransportUnavailableError } from "../transport/anon-transport.ts";
+import { NetworkUnavailableError, TransportUnavailableError } from "../transport/anon-transport.ts";
 import type { VerifiedReader, VerifiedValue } from "../verify/reader.ts";
 
 type Hex = `0x${string}`;
@@ -142,9 +142,9 @@ export function createEip1193Provider(backend: ReadBackend): {
 
   /** Check the block parameter against the verified block, then return a reader bound to it. */
   async function prepare(blockParam: unknown, signal?: AbortSignal) {
+    const want = blockSelector(blockParam);
     const headers = await backend.headers();
     signal?.throwIfAborted();
-    const want = blockSelector(blockParam);
     const current = headers.finalized();
     if (want) checkBlock(want, current);
     const reader = await backend.reader();
@@ -213,6 +213,9 @@ function blockSelector(param: unknown): BlockSelector {
   if (typeof param === "string" && QUANTITY.test(param)) return { number: Number.parseInt(param, 16) };
   if (param && typeof param === "object") {
     const p = param as { blockHash?: unknown; blockNumber?: unknown };
+    if ("blockHash" in p && "blockNumber" in p) {
+      throw new ProviderRpcError(-32602, "a block selector must name only one of blockHash and blockNumber");
+    }
     if (typeof p.blockHash === "string" && HASH.test(p.blockHash)) return { hash: p.blockHash.toLowerCase() };
     if (typeof p.blockNumber === "string" && QUANTITY.test(p.blockNumber)) return { number: Number.parseInt(p.blockNumber, 16) };
   }
@@ -247,7 +250,7 @@ function toProviderError(error: unknown): ProviderRpcError {
   if (error instanceof ProviderRpcError) return error;
   const name = error instanceof Error ? error.name : "Error";
   const message = error instanceof Error ? error.message : String(error);
-  if (error instanceof TransportUnavailableError) return new ProviderRpcError(4900, message, { reason: name });
+  if (error instanceof TransportUnavailableError || error instanceof NetworkUnavailableError) return new ProviderRpcError(4900, message, { reason: name });
   if (name === "InputError") return new ProviderRpcError(-32602, message, { reason: name });
   if (["ExecutionLimitError", "UnsupportedExecutionError", "CallRevertedError"].includes(name)) return new ProviderRpcError(-32002, message, { reason: name });
   if (REFUSALS.has(name)) return new ProviderRpcError(-32002, message, { reason: name });
