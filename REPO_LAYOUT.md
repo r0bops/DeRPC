@@ -15,6 +15,7 @@ LICENSE            — MIT
 .gitignore         — excludes upstream clones, local agent instruction files, .env files and build output
 .github/workflows/ci.yml — on pull requests and main: type check, tests, release build, offline release check and an IPFS package artifact
 .github/workflows/release-ens.yml — package on main; optionally pins, verifies and publishes the stable IPNS site through a restricted VPS command; sends no Ethereum transaction
+.github/workflows/release-wrapper.yml — native Linux x64/ARM64 Docker archives with checksums and exact-commit draft GitHub releases
 .github/actions/site-package/ — the build, check and packaging steps both workflows share
 .github/actions/install-kubo/ — shared pinned Kubo download and archive-hash verification
 frontend/.env.example — VITE_TOR_GATEWAYS: our own tor-js gateway address(es); copy to .env.local

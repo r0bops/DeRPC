@@ -1,0 +1,233 @@
+name: Package downloadable operator wrappers
+
+# Archives contain prebuilt wrapper and Tor images plus Compose and a launcher.
+# Creating a draft requires an existing version tag at the exact tested commit.
+on:
+  push:
+    tags: ['wrapper-v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Plain X.Y.Z version; a matching existing tag is required for a draft
+        type: string
+        required: true
+        default: '0.1.0'
+      create_release:
+        description: Create a draft release (main only; otherwise save build artifacts)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wrapper-release-${{ github.event_name == 'workflow_dispatch' && format('wrapper-v{0}', inputs.version) || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.request.outputs.version }}
+      source_sha: ${{ steps.request.outputs.source_sha }}
+      create_release: ${{ steps.request.outputs.create_release }}
+    steps:
+      - name: Validate version, event and source commit
+        id: request
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+          CREATE_RELEASE: ${{ inputs.create_release }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+
+          event = os.environ['GITHUB_EVENT_NAME']
+          ref = os.environ['GITHUB_REF']
+          sha = os.environ['GITHUB_SHA']
+          if not re.fullmatch(r'[0-9a-f]{40}', sha):
+              raise SystemExit('Expected an exact source commit SHA.')
+          if event == 'push' and ref.startswith('refs/tags/wrapper-v'):
+              version = ref.removeprefix('refs/tags/wrapper-v')
+              create_release = True
+          elif event == 'workflow_dispatch':
+              version = os.environ['VERSION_INPUT']
+              create_release = os.environ['CREATE_RELEASE'] == 'true'
+              if create_release and ref != 'refs/heads/main':
+                  raise SystemExit('Manual draft releases must run from main.')
+          else:
+              raise SystemExit('Unsupported release event or ref.')
+          # Numeric release versions only; no leading zeroes, suffixes or shell syntax.
+          if not re.fullmatch(r'(0|[1-9][0-9]{0,4})\.(0|[1-9][0-9]{0,4})\.(0|[1-9][0-9]{0,4})', version):
+              raise SystemExit('Version must be X.Y.Z, with each component between 0 and 99999.')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write(f'version={version}\nsource_sha={sha}\ncreate_release={str(create_release).lower()}\n')
+          PY
+
+  package:
+    needs: validate
+    name: Linux ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    env:
+      VERSION: ${{ needs.validate.outputs.version }}
+      SOURCE_SHA: ${{ needs.validate.outputs.source_sha }}
+      ARCH: ${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.validate.outputs.source_sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Check commit, native architecture and Docker
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$SOURCE_SHA" = "$GITHUB_SHA"
+          test "$(node -p 'process.arch')" = "$ARCH"
+          docker version
+          docker compose version
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Type check wrapper and payments
+        run: pnpm --filter @derpc/wrapper --filter @derpc/payments typecheck
+      - name: Test wrapper
+        run: pnpm --filter @derpc/wrapper test
+      - name: Build images, run the offline Docker smoke check and package
+        run: node wrapper/scripts/package-release.mjs --version "$VERSION" --arch "$ARCH"
+      - name: Check the package checksum
+        working-directory: wrapper/out/releases
+        run: |
+          name="derpc-wrapper-$VERSION-linux-$ARCH.tar.gz"
+          test -f "$name"
+          test -f "$name.sha256"
+          sha256sum --check --strict "$name.sha256"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: wrapper-linux-${{ matrix.arch }}
+          path: |
+            wrapper/out/releases/derpc-wrapper-${{ needs.validate.outputs.version }}-linux-${{ matrix.arch }}.tar.gz
+            wrapper/out/releases/derpc-wrapper-${{ needs.validate.outputs.version }}-linux-${{ matrix.arch }}.tar.gz.sha256
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+  draft:
+    needs: [validate, package]
+    if: needs.validate.outputs.create_release == 'true' && needs.package.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.validate.outputs.version }}
+      SOURCE_SHA: ${{ needs.validate.outputs.source_sha }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: wrapper-linux-x64
+          path: release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: wrapper-linux-arm64
+          path: release
+      - name: Verify both native archives against their checksums
+        working-directory: release
+        run: |
+          python3 - <<'PY'
+          import hashlib, os, pathlib, re
+
+          version = os.environ['VERSION']
+          names = [f'derpc-wrapper-{version}-linux-{arch}.tar.gz' for arch in ('x64', 'arm64')]
+          expected = set(names + [name + '.sha256' for name in names])
+          paths = list(pathlib.Path('.').iterdir())
+          if {path.name for path in paths} != expected or any(path.is_symlink() or not path.is_file() for path in paths):
+              raise SystemExit('Expected exactly the two native archives and their checksum files.')
+          for name in names:
+              checksum = pathlib.Path(name + '.sha256')
+              if checksum.stat().st_size > 512:
+                  raise SystemExit('Invalid checksum file size.')
+              match = re.fullmatch(r'([0-9a-f]{64})  ' + re.escape(name) + r'\n?', checksum.read_text())
+              if not match:
+                  raise SystemExit(f'Invalid checksum filename or format: {name}')
+              with open(name, 'rb') as archive:
+                  actual = hashlib.file_digest(archive, 'sha256').hexdigest()
+              if actual != match[1]:
+                  raise SystemExit(f'Checksum mismatch: {name}')
+              print(f'PASS: {name}')
+          PY
+      - name: Require the existing exact-commit tag and create a draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, re, urllib.error, urllib.request
+
+          version, sha = os.environ['VERSION'], os.environ['SOURCE_SHA']
+          if sha != os.environ['GITHUB_SHA'] or not re.fullmatch(r'[0-9a-f]{40}', sha):
+              raise SystemExit('Release source differs from the tested workflow commit.')
+          tag = f'wrapper-v{version}'
+          base = os.environ['GITHUB_API_URL'].rstrip('/') + '/repos/' + os.environ['GITHUB_REPOSITORY']
+          def get(path, missing_ok=False):
+              request = urllib.request.Request(base + path, headers={
+                  'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                  'Accept': 'application/vnd.github+json',
+                  'X-GitHub-Api-Version': '2022-11-28',
+              })
+              try:
+                  with urllib.request.urlopen(request, timeout=30) as response:
+                      return json.load(response)
+              except urllib.error.HTTPError as error:
+                  if missing_ok and error.code == 404:
+                      return None
+                  raise SystemExit(f'GitHub verification failed with HTTP {error.code}.') from None
+          ref = get('/git/ref/tags/' + tag)
+          if ref.get('ref') != 'refs/tags/' + tag:
+              raise SystemExit('Expected the exact version tag.')
+          target = ref['object']
+          for _ in range(5):
+              if target.get('type') == 'commit':
+                  break
+              if target.get('type') != 'tag' or not re.fullmatch(r'[0-9a-f]{40}', target.get('sha', '')):
+                  raise SystemExit('Unsupported version tag target.')
+              target = get('/git/tags/' + target['sha'])['object']
+          if target.get('type') != 'commit' or target.get('sha') != sha:
+              raise SystemExit('Version tag must already point to the exact tested commit.')
+          existing = get('/releases/tags/' + tag, missing_ok=True)
+          if existing is not None:
+              raise SystemExit('A release already exists for this tag; its draft or published assets are left untouched.')
+          body = f'''Prebuilt DeRPC operator wrapper {version} for Linux x64 and ARM64.
+
+          Each archive includes the wrapper and Tor Docker images, Compose configuration, and the launcher. The operator host requires Docker Engine with Docker Compose; Node.js and a source build are not required.
+
+          Download the archive for your architecture and its matching `.sha256` file. Verify the checksum before extracting, then follow the included setup instructions to configure your node endpoint and operator identity. Payments and staking remain disabled for the free release.
+
+          Both architectures were built on native runners after frozen dependency installation, wrapper/payments type checks, wrapper tests, and the package script's offline Docker smoke check. This does not establish public onion availability or independent-operator enrollment.
+
+          Source commit: `{sha}`
+          Workflow run: {os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}
+
+          This release is a draft for review.
+          '''
+          pathlib.Path(os.environ['RUNNER_TEMP'], 'wrapper-release-body.md').write_text(body, encoding='utf-8')
+          PY
+          gh release create "wrapper-v$VERSION" \
+            "release/derpc-wrapper-$VERSION-linux-x64.tar.gz" \
+            "release/derpc-wrapper-$VERSION-linux-x64.tar.gz.sha256" \
+            "release/derpc-wrapper-$VERSION-linux-arm64.tar.gz" \
+            "release/derpc-wrapper-$VERSION-linux-arm64.tar.gz.sha256" \
+            --draft --verify-tag --target "$SOURCE_SHA" \
+            --title "DeRPC operator wrapper $VERSION" \
+            --notes-file "$RUNNER_TEMP/wrapper-release-body.md"
