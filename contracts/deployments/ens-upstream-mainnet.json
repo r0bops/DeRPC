@@ -1,0 +1,99 @@
+{
+  "chainId": 1,
+  "sourceCommit": "4f47cbcc11462fb413196e6b5c0f8090247a6c08",
+  "source": "https://docs.ens.domains/learn/deployments/",
+  "artifacts": {
+    "VerifiableFactory": {
+      "address": "0x77510ba162dfea3d8989e3f0928a691b345730d2",
+      "source": "https://github.com/ensdomains/contracts-v2/blob/4f47cbcc11462fb413196e6b5c0f8090247a6c08/contracts/deployments/mainnet/VerifiableFactory.json",
+      "deploymentTransaction": "0xba22f1c09a7ac6f81af43670e22be51d6f3b5ef164888c7ffa865c4836df19bf",
+      "normalizedRuntimeCodeHash": "0x2a7df71e60cc096d05d6f912bb5f866443c69754ab585a55f66f3f6a3f89b68f",
+      "immutableRanges": [
+        {
+          "length": 32,
+          "start": 168
+        },
+        {
+          "length": 32,
+          "start": 806
+        }
+      ],
+      "runtimeBytes": 1524
+    },
+    "UserRegistryImpl": {
+      "address": "0xfaa23592aca10a6d8875b18ea86954e8eb6d8d72",
+      "source": "https://github.com/ensdomains/contracts-v2/blob/4f47cbcc11462fb413196e6b5c0f8090247a6c08/contracts/deployments/mainnet/UserRegistryImpl.json",
+      "deploymentTransaction": "0x0f9090bea31c67a57fed489e4225f4a52f410e4e701c88b6e45945de2e315cde",
+      "normalizedRuntimeCodeHash": "0xcccecc70b7d7a9c01003f21790b0d9a143aa5c3cb6f18d373a06624903f4edf9",
+      "immutableRanges": [
+        {
+          "length": 32,
+          "start": 9313
+        },
+        {
+          "length": 32,
+          "start": 9354
+        },
+        {
+          "length": 32,
+          "start": 9756
+        },
+        {
+          "length": 32,
+          "start": 2228
+        },
+        {
+          "length": 32,
+          "start": 10149
+        },
+        {
+          "length": 32,
+          "start": 2177
+        },
+        {
+          "length": 32,
+          "start": 4320
+        }
+      ],
+      "runtimeBytes": 18970
+    },
+    "PermissionedResolverImpl": {
+      "address": "0x565b0f456a04ac9b48758190e90030623cff57c5",
+      "source": "https://github.com/ensdomains/contracts-v2/blob/4f47cbcc11462fb413196e6b5c0f8090247a6c08/contracts/deployments/mainnet/PermissionedResolverImpl.json",
+      "deploymentTransaction": "0x490e4e23abd28a3c7b7fb2b959389c9d0e8a682be56590ed50332b1f38f3321d",
+      "normalizedRuntimeCodeHash": "0x230d1165b00f1b366b59fb2c1a351087610846d183d4b49ef39d6dd87b327f63",
+      "immutableRanges": [
+        {
+          "length": 32,
+          "start": 8284
+        },
+        {
+          "length": 32,
+          "start": 8325
+        },
+        {
+          "length": 32,
+          "start": 8727
+        }
+      ],
+      "runtimeBytes": 15608
+    },
+    "ETHRegistry": {
+      "address": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+      "source": "https://github.com/ensdomains/contracts-v2/blob/4f47cbcc11462fb413196e6b5c0f8090247a6c08/contracts/deployments/mainnet/ETHRegistry.json",
+      "deploymentTransaction": "0xf69d06286b2688b64fcafa572f862487a5cb5a4607fd60a925c5727b93d1a6a7",
+      "normalizedRuntimeCodeHash": "0xa2bc002e4d17398ab8fcb9c52553dd2f736f41f5abc21b17078ae2b6714c9ef7",
+      "immutableRanges": [
+        {
+          "length": 32,
+          "start": 1621
+        },
+        {
+          "length": 32,
+          "start": 7995
+        }
+      ],
+      "runtimeBytes": 16000
+    }
+  }
+}

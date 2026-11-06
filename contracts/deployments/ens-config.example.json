@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "parentName": "derpc.eth",
+  "deploymentId": "hackathon-v1",
+  "curator": null,
+  "deployer": null,
+  "operators": [
+    {
+      "label": "operator-a",
+      "operator": null,
+      "coldOwner": null,
+      "hotKey": null,
+      "signer": null,
+      "payee": null,
+      "endpoint": null,
+      "beacon": null,
+      "caps": { "chainId": 1, "methods": ["eth_getProof", "eth_getCode"], "beacon": false },
+      "expiry": null
+    },
+    {
+      "label": "operator-b",
+      "operator": null,
+      "coldOwner": null,
+      "hotKey": null,
+      "signer": null,
+      "payee": null,
+      "endpoint": null,
+      "beacon": null,
+      "caps": { "chainId": 1, "methods": ["eth_getProof", "eth_getCode"], "beacon": false },
+      "expiry": null
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "checkedAt": "2026-11-06T11:31:07.243Z",
+  "scope": "local mainnet fork; no public-chain transactions",
+  "localOnly": true,
+  "complete": true,
+  "sourceCommit": "4f47cbcc11462fb413196e6b5c0f8090247a6c08",
+  "addresses": {
+    "factory": "0x77510ba162dfea3d8989e3f0928a691b345730d2",
+    "registryImplementation": "0xfaa23592aca10a6d8875b18ea86954e8eb6d8d72",
+    "resolverImplementation": "0x565b0f456a04ac9b48758190e90030623cff57c5",
+    "ethRegistry": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2"
+  },
+  "checks": [
+    "UserRegistry factory provenance and parent/subregistry attachment",
+    "Registrar register+renew root roles only; zero owner role bitmap accepted; transfer/resolver replacement refused",
+    "grantSetterRoles authorizes endpoint rotation only, not payee writes or another operator resolver",
+    "Authorized renewal, immediate registrar delisting, revoked renewal refusal, and ENS expiry resolution removal",
+    "Unmodified staged planner gas estimates, exact root/name role counts, canonical receipt verification with 12 local confirmations",
+    "Deployment verifier rejects a genuine extra hot-key grant for an unknown text resource"
+  ],
+  "fork": {
+    "blockNumber": 26355441,
+    "blockHash": "0x0b8c29fc2eb14a4a2bdafac71315480d0cfb18e87a54d5859c75dfe5da756633",
+    "clientVersion": "anvil/v1.5.1"
+  },
+  "runtimeCodeHashes": {
+    "factory": "0xc251b434fe75ce3ca024e85883aafd7c1d0b8e382d747b537c5930018b144a91",
+    "registryImplementation": "0xb5b939d5a80a1d00351e4e0faa3529b8ee25dfcf436d64f781d415ccc8a3b7a9",
+    "resolverImplementation": "0x25df12e14187ae568dca1861b918e01b6e24a671dea6089a6dbbe60c5d3ef640",
+    "ethRegistry": "0xe2873b2a7becb1c9f1d017027d5b528ea4e797e609acaa7a4194694e718a0273"
+  },
+  "planner": {
+    "stages": [
+      {
+        "stage": "deploy-ens-proxies",
+        "transactions": [
+          "deploy-registry",
+          "deploy-resolver-alice",
+          "deploy-resolver-bob"
+        ]
+      },
+      {
+        "stage": "deploy-registrar",
+        "transactions": [
+          "deploy-registrar"
+        ]
+      },
+      {
+        "stage": "configure-permissions-and-records",
+        "transactions": [
+          "grant-registrar",
+          "set-registry-parent",
+          "attach-subregistry",
+          "grant-endpoint-alice",
+          "grant-endpoint-bob"
+        ]
+      },
+      {
+        "stage": "register-or-renew-operators",
+        "transactions": [
+          "register-alice",
+          "register-bob"
+        ]
+      }
+    ],
+    "verification": {
+      "receipts": true,
+      "canonicalBlocks": true,
+      "minimumConfirmations": 12,
+      "stateMatchesConfig": true,
+      "hotKeyEventAudit": true
+    }
+  },
+  "publicTransactionsSent": false,
+  "reproduction": "See contracts/test/ens-fork.test.mjs; requires a loopback Anvil mainnet fork. These checks do not establish a public deployment."
+}

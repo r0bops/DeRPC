@@ -1,0 +1,8 @@
+{
+  "stages": [
+    { "planFile": "ens-plan-1.json", "transactionHashes": [] },
+    { "planFile": "ens-plan-2.json", "transactionHashes": [] },
+    { "planFile": "ens-plan-3.json", "transactionHashes": [] },
+    { "planFile": "ens-plan-4.json", "transactionHashes": [] }
+  ]
+}

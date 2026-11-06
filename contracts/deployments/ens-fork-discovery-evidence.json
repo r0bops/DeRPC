@@ -1,0 +1,88 @@
+{
+  "kind": "local-ens-fork-discovery-evidence",
+  "checkedAt": "2026-11-06T11:56:56.437Z",
+  "localOnly": true,
+  "publicTransactionsSent": false,
+  "consensusVerified": false,
+  "anonymousTransportVerified": false,
+  "sourceFork": {
+    "blockNumber": 26355611,
+    "blockHash": "0x01aae24be043539a8d1aee885987c261393ef481e5bdb92150e696e0239dd942",
+    "clientVersion": "anvil/v1.5.1"
+  },
+  "upstreamSourceCommit": "4f47cbcc11462fb413196e6b5c0f8090247a6c08",
+  "upstreamRuntimeCodeHashes": {
+    "factory": "0xc251b434fe75ce3ca024e85883aafd7c1d0b8e382d747b537c5930018b144a91",
+    "registryImplementation": "0xb5b939d5a80a1d00351e4e0faa3529b8ee25dfcf436d64f781d415ccc8a3b7a9",
+    "resolverImplementation": "0x25df12e14187ae568dca1861b918e01b6e24a671dea6089a6dbbe60c5d3ef640",
+    "ethRegistry": "0xe2873b2a7becb1c9f1d017027d5b528ea4e797e609acaa7a4194694e718a0273"
+  },
+  "checks": [
+    "full registrar membership and payees",
+    "two real nine-record resolver multicalls",
+    "reciprocal identity mismatch rejection",
+    "altered registrar and resolver storage proofs abort discovery",
+    "renewed lease refresh",
+    "delisting removes chosen operator",
+    "expiry empties directory"
+  ],
+  "materializations": [
+    {
+      "blockNumber": 26355650,
+      "blockHash": "0xf8ec2d914abbd67be50b1177f47ce3cce33cb56adc27d9098c555a8d1a93804f",
+      "injectedStateRoot": "0x47303f9e4ee31b39e5bfd6e358cb7ccdb43a5cd5701c35898b06143bd7592a72",
+      "nodeReportedStateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "accounts": 10,
+      "codeBytes": 59683,
+      "storageSlots": 56,
+      "everyAccountCodeAndSlotProven": true
+    },
+    {
+      "blockNumber": 26355652,
+      "blockHash": "0x682d62459dc4fdef2ddac8df89192e2224f753bde779dd66e8d1ae972648d4a9",
+      "injectedStateRoot": "0x53e74eaa5e64b3e8d8e653c83d906d7d2a497b5421ad844f2684aebd1042497a",
+      "nodeReportedStateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "accounts": 10,
+      "codeBytes": 59683,
+      "storageSlots": 56,
+      "everyAccountCodeAndSlotProven": true
+    },
+    {
+      "blockNumber": 26355654,
+      "blockHash": "0x8e12d5978cecc1ad25a18dd17852f595437f98672c8cd02685f8a1de1bff9451",
+      "injectedStateRoot": "0x00ddfb9b55d08fb7d2651b8c163df0ec2e66aff6d0c4c01f05a9e63475400941",
+      "nodeReportedStateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "accounts": 10,
+      "codeBytes": 59683,
+      "storageSlots": 56,
+      "everyAccountCodeAndSlotProven": true
+    },
+    {
+      "blockNumber": 26355656,
+      "blockHash": "0x89e75d29f65214993793921f926afbc2c0f82a3b4374f55a39a44fd72afa7333",
+      "injectedStateRoot": "0x00ddfb9b55d08fb7d2651b8c163df0ec2e66aff6d0c4c01f05a9e63475400941",
+      "nodeReportedStateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "accounts": 10,
+      "codeBytes": 59683,
+      "storageSlots": 56,
+      "everyAccountCodeAndSlotProven": true
+    }
+  ],
+  "referenceComparisons": {
+    "beforeAndAfterMaterialization": 48,
+    "providerExecutionAgainstDirectResult": 37
+  },
+  "initialDirectoryRequests": {
+    "eth_getProof": 87,
+    "eth_getCode": 20
+  },
+  "paymentTerms": {
+    "chainId": 31337,
+    "funded": false
+  },
+  "limits": [
+    "Anvil reported a zero state root after mining on the fork. The test materialized exact traced prestate and injected its common local Merkle-Patricia root.",
+    "Every materialized account, code and requested storage slot was proven against that root; direct contract results were compared before and after materialization.",
+    "Transport and reciprocal identity responses are fixtures. This establishes code/layout/discovery integration, not public deployment, live Tor latency or consensus authentication."
+  ]
+}
