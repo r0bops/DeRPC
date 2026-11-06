@@ -1,0 +1,434 @@
+{
+  "checkedAt": "2026-11-06T20:14:54.481515+00:00",
+  "host": "45.76.81.48",
+  "sshAlias": "derpc-vps",
+  "sshUser": "root",
+  "os": "Ubuntu 26.10",
+  "cpus": 4,
+  "services": {
+    "derpc-gateway": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled",
+      "NRestarts": "0",
+      "MemoryCurrent": "39710720",
+      "MemoryHigh": "1073741824",
+      "MemoryMax": "2147483648",
+      "User": "derpc-gateway"
+    },
+    "derpc-ipfs": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled",
+      "NRestarts": "0",
+      "MemoryCurrent": "184631296",
+      "MemoryHigh": "3221225472",
+      "MemoryMax": "4294967296",
+      "User": "derpc-ipfs"
+    }
+  },
+  "ipfs": {
+    "version": "ipfs version 0.43.1",
+    "peerId": "12D3KooWJTj1tLNu65UUryNtmuv8Fw6HvKXrF9fNMXRYLvkibEbW",
+    "advertisedAddresses": [
+      "/ip4/45.76.81.48/tcp/4001/p2p/12D3KooWJTj1tLNu65UUryNtmuv8Fw6HvKXrF9fNMXRYLvkibEbW",
+      "/ip4/45.76.81.48/udp/4001/quic-v1/p2p/12D3KooWJTj1tLNu65UUryNtmuv8Fw6HvKXrF9fNMXRYLvkibEbW"
+    ],
+    "pin": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me recursive",
+    "pinSurvivedServiceRestart": true,
+    "connectedPeers": 243
+  },
+  "gateway": {
+    "address": "45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg",
+    "identityMode": "0o600",
+    "identitySurvivedServiceRestart": true,
+    "configuration": {
+      "data_dir": "/var/lib/derpc-gateway/data",
+      "kps_port": 12298,
+      "kps_key_file": "/var/lib/derpc-gateway/kps.key",
+      "keccak_repo": "ethereum/tor-js",
+      "keccak_branch": "keccak",
+      "keccak_poll_interval": 86400,
+      "keccak_manual_sync_min_interval": 1800,
+      "demo": true,
+      "advertised_addresses": [
+        "45.76.81.48"
+      ],
+      "tunnel_max": 1024,
+      "tunnel_per_ip": 16,
+      "tunnel_idle_timeout": 300,
+      "tunnel_max_lifetime": 3600
+    },
+    "mirror": {
+      "branch": "keccak",
+      "commit": "c0efbb4d7d422c04115cf93167abf2bf202820ac",
+      "last_attempt": "2026-11-06T20:13:33Z",
+      "last_error": null,
+      "last_success": "2026-11-06T20:13:33Z",
+      "objects": 4,
+      "repo": "ethereum/tor-js"
+    }
+  },
+  "sha256": {
+    "tor-js-gateway": "bb70cd879a763c7b9348cc33c228c467baa07d0106471783d9ba65939393818f",
+    "ipfs": "8768c8a2907f429f177917091e8abe250d3368d1b82ea0348332cf7e53807bf0"
+  },
+  "firewall": "Status: active\n\nTo                         Action      From\n--                         ------      ----\n22/tcp                     ALLOW       Anywhere                  \n12298/udp                  ALLOW       Anywhere                   # DeRPC Tor gateway\n4001/tcp                   ALLOW       Anywhere                   # DeRPC IPFS swarm\n4001/udp                   ALLOW       Anywhere                   # DeRPC IPFS swarm\n22/tcp (v6)                ALLOW       Anywhere (v6)             \n12298/udp (v6)             ALLOW       Anywhere (v6)              # DeRPC Tor gateway\n4001/tcp (v6)              ALLOW       Anywhere (v6)              # DeRPC IPFS swarm\n4001/udp (v6)              ALLOW       Anywhere (v6)              # DeRPC IPFS swarm",
+  "restartCheck": {
+    "checkedAt": "2026-11-06T20:17:01.577740+00:00",
+    "gatewayIdentityRetained": true,
+    "ipfsPinRetained": true,
+    "note": "Initial immediate post-restart CLI probe raced daemon startup and briefly held the repository lock. The daemon recovered automatically. Repeated restart waited for the loopback API before querying pins and completed with zero automatic restarts."
+  },
+  "kind": "derpc-vps-deployment",
+  "schemaVersion": 1,
+  "publicRetrieval": {
+    "checkedAt": "2026-11-06T20:13:40.143509+00:00",
+    "cid": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me",
+    "freshRepository": true,
+    "carImported": false,
+    "manualPeerConnection": false,
+    "transport": "public IPFS discovery and Bitswap from a fresh local node",
+    "providerPeerId": "12D3KooWJTj1tLNu65UUryNtmuv8Fw6HvKXrF9fNMXRYLvkibEbW",
+    "files": [
+      {
+        "path": "assets/index-Dp5B9GpU.css",
+        "bytes": 33910,
+        "sha256": "6ff5520d09abcb49f5a927acd756bcce7c649bb6265b6d67afcef96ecf827475",
+        "match": true
+      },
+      {
+        "path": "assets/index-SDb7JX1G.js",
+        "bytes": 72351,
+        "sha256": "aaae4de17da58c8368c38d4596f5f20069f33f7582602e8216605b0719ac563d",
+        "match": true
+      },
+      {
+        "path": "assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2",
+        "bytes": 25960,
+        "sha256": "ca157063339ac4ad418f214f3abfed119b0798ab4d377386ce5c9e5a7a435ebd",
+        "match": true
+      },
+      {
+        "path": "assets/inter-cyrillic-wght-normal-DqGufNeO.woff2",
+        "bytes": 18748,
+        "sha256": "71d5ee93cc1e9f1d520a3a8b66456de18c7879d8df09d57fcd2eaff75fef0075",
+        "match": true
+      },
+      {
+        "path": "assets/inter-greek-ext-wght-normal-DlzME5K_.woff2",
+        "bytes": 11232,
+        "sha256": "6e9e020a25f9b56d418f2c085b1d3c09725a4da23fe693a5b463064606732190",
+        "match": true
+      },
+      {
+        "path": "assets/inter-greek-wght-normal-CkhJZR-_.woff2",
+        "bytes": 18996,
+        "sha256": "1be3448e292fbf05ffe176fe1e43f135013d50b1e7d324ad1a558f623d3bb6f6",
+        "match": true
+      },
+      {
+        "path": "assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2",
+        "bytes": 85068,
+        "sha256": "34b9c504cab7a73e37b746343a449132e56cf7b5481af2cb81dc74dcff25c956",
+        "match": true
+      },
+      {
+        "path": "assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "bytes": 48256,
+        "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+        "match": true
+      },
+      {
+        "path": "assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2",
+        "bytes": 10252,
+        "sha256": "5c66f9e07e90c6d4ac4922cc68d60de26c17b1858e677fb5e603fce3952b3ff2",
+        "match": true
+      },
+      {
+        "path": "demo/assets/__vite-browser-external-TtGlo6oh.js",
+        "bytes": 94,
+        "sha256": "099e4922cd21d73ac303cc0a95f5fac5b316fe370e881f20a9bb741419ad71db",
+        "match": true
+      },
+      {
+        "path": "demo/assets/address-CYA4zBVK.js",
+        "bytes": 545,
+        "sha256": "01be126d4c343d659d31ae642044335a6542cf346449bfd2670c84710da0c7a3",
+        "match": true
+      },
+      {
+        "path": "demo/assets/ccip-B6i2UnlS.js",
+        "bytes": 2907,
+        "sha256": "a9a1a3280e8ef7cf64d7649fd879226c1116c4444f392d5edd295648da09c971",
+        "match": true
+      },
+      {
+        "path": "demo/assets/check-BaMk2yfm.js",
+        "bytes": 4526,
+        "sha256": "aca460a618f371efb9e6855b71fe4af40c268750cb608351b24c1309e610d012",
+        "match": true
+      },
+      {
+        "path": "demo/assets/decodeFunctionResult-DcsPYciO.js",
+        "bytes": 43150,
+        "sha256": "39a1e729decad2aa8ad038e86824e3baaf68f98f91fda2624427bd2e04ae75c4",
+        "match": true
+      },
+      {
+        "path": "demo/assets/demo-El2EPWdN.js",
+        "bytes": 65546,
+        "sha256": "78141cd98465b02bc2ee6f56f19b1c52065318e5c15f6b2a6888d8f5bf2ea396",
+        "match": true
+      },
+      {
+        "path": "demo/assets/derpc-lockup-CiJcctT3.svg",
+        "bytes": 5926,
+        "sha256": "41d1a1d0d07fa4cfded5584974ddaf7cc3023778771355a6c384e4a6df16fac2",
+        "match": true
+      },
+      {
+        "path": "demo/assets/direct-connections-DJicyUPm.js",
+        "bytes": 2815,
+        "sha256": "c5402aa66508d977b92108bf537ca9f977ca0573090f5e8502c20fafb024d09f",
+        "match": true
+      },
+      {
+        "path": "demo/assets/dist-CM5luU_N.js",
+        "bytes": 21582,
+        "sha256": "a5350ba64490fc6f21762251b8509a52e509b4274e243d0d5c8479d991b3027f",
+        "match": true
+      },
+      {
+        "path": "demo/assets/dist-DOxWJp2w.js",
+        "bytes": 48,
+        "sha256": "342b622a7749626a2efe912f30cb477663a59441c9c8926a84e76dd508eeea92",
+        "match": true
+      },
+      {
+        "path": "demo/assets/encodeFunctionResult-32HQ9o_H.js",
+        "bytes": 520,
+        "sha256": "548ddfd7e51be91cc783846ed571cca80a076714c211bdbe0ed6f57f695da2a9",
+        "match": true
+      },
+      {
+        "path": "demo/assets/endpoints-CRJPe_u7.js",
+        "bytes": 5051,
+        "sha256": "947536fe80808ebadf8433a7e9d10eb997c21d8cecbd56ef8acd497b79740dc1",
+        "match": true
+      },
+      {
+        "path": "demo/assets/ens-BfwB4lmD.js",
+        "bytes": 11815,
+        "sha256": "21b2c4c23982ad0a2add3400944317d9897bbc2aec8cc990be2fd9668928c5cd",
+        "match": true
+      },
+      {
+        "path": "demo/assets/eventsource-BTw0nsCP.js",
+        "bytes": 5098,
+        "sha256": "ab05beb0e920adb4fcbbc45949f6d0c0e9eb22ee451c2a21cd5ad9e89a62fad8",
+        "match": true
+      },
+      {
+        "path": "demo/assets/example-DuEpxmrs.js",
+        "bytes": 946,
+        "sha256": "c27e0a59d637e49cf145bde718fde6afab33c5b90455ff23bd0a653fb57f661c",
+        "match": true
+      },
+      {
+        "path": "demo/assets/execution-DoFCxzZj.js",
+        "bytes": 207,
+        "sha256": "e8b4f3715df3110f0c655772e54efa465a2a4bae3c70e6f5996de1294480f5f7",
+        "match": true
+      },
+      {
+        "path": "demo/assets/favicon-Try9hxE_.svg",
+        "bytes": 2523,
+        "sha256": "840c5ef0525701709f7875c667d95ae39f264eae5b0377aac28de3bed8d9f722",
+        "match": true
+      },
+      {
+        "path": "demo/assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2",
+        "bytes": 25960,
+        "sha256": "ca157063339ac4ad418f214f3abfed119b0798ab4d377386ce5c9e5a7a435ebd",
+        "match": true
+      },
+      {
+        "path": "demo/assets/inter-cyrillic-wght-normal-DqGufNeO.woff2",
+        "bytes": 18748,
+        "sha256": "71d5ee93cc1e9f1d520a3a8b66456de18c7879d8df09d57fcd2eaff75fef0075",
+        "match": true
+      },
+      {
+        "path": "demo/assets/inter-greek-ext-wght-normal-DlzME5K_.woff2",
+        "bytes": 11232,
+        "sha256": "6e9e020a25f9b56d418f2c085b1d3c09725a4da23fe693a5b463064606732190",
+        "match": true
+      },
+      {
+        "path": "demo/assets/inter-greek-wght-normal-CkhJZR-_.woff2",
+        "bytes": 18996,
+        "sha256": "1be3448e292fbf05ffe176fe1e43f135013d50b1e7d324ad1a558f623d3bb6f6",
+        "match": true
+      },
+      {
+        "path": "demo/assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2",
+        "bytes": 85068,
+        "sha256": "34b9c504cab7a73e37b746343a449132e56cf7b5481af2cb81dc74dcff25c956",
+        "match": true
+      },
+      {
+        "path": "demo/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "bytes": 48256,
+        "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+        "match": true
+      },
+      {
+        "path": "demo/assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2",
+        "bytes": 10252,
+        "sha256": "5c66f9e07e90c6d4ac4922cc68d60de26c17b1858e677fb5e603fce3952b3ff2",
+        "match": true
+      },
+      {
+        "path": "demo/assets/localBatchGatewayRequest-BJhp8X5H.js",
+        "bytes": 60095,
+        "sha256": "3c2c414c560db5a89fc291d475c822829258b4f6ef41ba6eaa0b2e7d8a1b573b",
+        "match": true
+      },
+      {
+        "path": "demo/assets/mainnet-BJbUCflL.js",
+        "bytes": 122573,
+        "sha256": "2749a760880c9530645472f27f9f09c09564fa02e0c95123ebe8cb75bc8b10ad",
+        "match": true
+      },
+      {
+        "path": "demo/assets/preload-helper-CRzLMJPS.js",
+        "bytes": 1534,
+        "sha256": "bcc465e3e61dc3878a69ffa95ccb53cb82d95b1639ada223420b281ebd150048",
+        "match": true
+      },
+      {
+        "path": "demo/assets/reader-BwyP6nOv.js",
+        "bytes": 2780,
+        "sha256": "967bb5f304a13a068a90787a38d8c7518866b863760b1b1afa2226a8a1ea363c",
+        "match": true
+      },
+      {
+        "path": "demo/assets/rolldown-runtime-XKyaHtl9.js",
+        "bytes": 726,
+        "sha256": "548d1dbf321e7d2ae804fcc158b588706a7c52f8ca175de1490c6ccb4dbe55b7",
+        "match": true
+      },
+      {
+        "path": "demo/assets/secp256k1-4Q9mvaRg.js",
+        "bytes": 52,
+        "sha256": "7f48442fff0258f7ea49691bea7a30c3f9a5670c3430431feff2be10f7e77281",
+        "match": true
+      },
+      {
+        "path": "demo/assets/secp256k1-DTgEC2Fy.js",
+        "bytes": 26342,
+        "sha256": "49404a8b0a98f9a7f2d81e667a8b1f777e0176ef13f82014f0e260099894aa21",
+        "match": true
+      },
+      {
+        "path": "demo/assets/sha2-CsZgHejA.js",
+        "bytes": 3574,
+        "sha256": "21bf6ca4a29d1a03c1799f3c110180c7b2c0413a798c8246784c68b31351cd28",
+        "match": true
+      },
+      {
+        "path": "demo/assets/sha3-CixuFzsY.js",
+        "bytes": 3229,
+        "sha256": "9b0af5805db52a230efc35c7a5dbf6fda63fafb7334a7fed275b3b9bf1a75b90",
+        "match": true
+      },
+      {
+        "path": "demo/assets/src-B3Gfg644.css",
+        "bytes": 22011,
+        "sha256": "03efb6f9fc8e7192f1d2cfb403f6a09455b2f038195ac6f79e0e887f5f05dd60",
+        "match": true
+      },
+      {
+        "path": "demo/assets/src-C6_sT36k.js",
+        "bytes": 1212653,
+        "sha256": "7688fbb1dfa73010c4cdfb0ece01658e2a0117f1b0deb547b24bbc6d507c3e28",
+        "match": true
+      },
+      {
+        "path": "demo/assets/utils-Bpv4vmSW.js",
+        "bytes": 2194,
+        "sha256": "5114638bb111b647e478a947be5beed5558487685dc8284144566df3fc03d851",
+        "match": true
+      },
+      {
+        "path": "demo/assets/verified-call-BqdT1oAO.js",
+        "bytes": 303111,
+        "sha256": "c1727c52ceff3b05bcaab76f4a558981552b5357a921cb7392d3f21c5077ce17",
+        "match": true
+      },
+      {
+        "path": "demo/assets/verified-ens-CnwdsgS6.js",
+        "bytes": 42971,
+        "sha256": "3db0a724e4ae7a76216a381eec114c48bc0377c394710b07d4ba8206bb3943b1",
+        "match": true
+      },
+      {
+        "path": "demo/assets/verify-BrqvWFSp.js",
+        "bytes": 5210,
+        "sha256": "21d531bb2f3f321606e6022e8129ea2933cf9586bf565cf7d1b5efc81d872566",
+        "match": true
+      },
+      {
+        "path": "demo/example.html",
+        "bytes": 4228,
+        "sha256": "b70c9c03916b42afeba48c1636e47b73375be955551828b9e780b83aabb80eea",
+        "match": true
+      },
+      {
+        "path": "demo/index.html",
+        "bytes": 24616,
+        "sha256": "ddbe3ee98293ad60504d4deaa400ddf57bad48fbd7b58ccf6cf89d3e443ff8ff",
+        "match": true
+      },
+      {
+        "path": "demo/network-check.html",
+        "bytes": 6730,
+        "sha256": "a65b164781253daf76769ee31f22eb46a2101ca6f754c97008e58bd4399d9e04",
+        "match": true
+      },
+      {
+        "path": "derpc-lockup.svg",
+        "bytes": 5926,
+        "sha256": "41d1a1d0d07fa4cfded5584974ddaf7cc3023778771355a6c384e4a6df16fac2",
+        "match": true
+      },
+      {
+        "path": "derpc-logo-512.png",
+        "bytes": 12570,
+        "sha256": "e5c8bcbe8b67cdbdcc9500dbc214564a74cbac5ed7950229e8446544e94a5c8a",
+        "match": true
+      },
+      {
+        "path": "favicon.svg",
+        "bytes": 2523,
+        "sha256": "840c5ef0525701709f7875c667d95ae39f264eae5b0377aac28de3bed8d9f722",
+        "match": true
+      },
+      {
+        "path": "index.html",
+        "bytes": 1284,
+        "sha256": "ad22879af105fac6421b31e807a6ea02f3cdafdf1eac47dfe2cfa40b2a56e2a7",
+        "match": true
+      }
+    ],
+    "ok": true,
+    "filesChecked": 55
+  },
+  "limitations": [
+    "Single VPS; no redundant pin or off-host identity backup established.",
+    "No public execution/beacon node or independent ENS operator enrolled.",
+    "IPFS and gateway service restarts tested; no full VPS reboot performed.",
+    "Third-party HTTPS website retrieval and derpc.eth.limo browser validation remain pending."
+  ]
+}

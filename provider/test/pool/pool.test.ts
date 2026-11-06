@@ -5,7 +5,7 @@ import type { JsonRpcSend } from "../../src/verify/reader.ts";
 import { ProofVerificationError } from "../../src/verify/index.ts";
 import { StaleHeaderError } from "../../src/light-client/header-source.ts";
 import { WorkerPinMismatchError } from "../../src/verify/worker-pin.ts";
-import { TransportUnavailableError } from "../../src/transport/anon-transport.ts";
+import { NetworkUnavailableError, TransportUnavailableError } from "../../src/transport/anon-transport.ts";
 
 const KEY = "derpc:account:0xabc";
 type Behavior = () => unknown;
@@ -50,6 +50,70 @@ const exitTimeout = () => { throw new Error("Failed to connect: tor: operation t
 const PREFERRED: PoolEndpoint[] = [{ url: "a", priority: 0 }, { url: "b", priority: 0 }, { url: "c", priority: 1 }];
 
 describe("createPool", () => {
+  it("rotates a failed network circuit across reads and retains the recovered key and account affinity", async () => {
+    const keys: string[] = [];
+    let unavailable = true;
+    const pool = createPool({ endpoints: [{ url: "only", priority: 0 }], maxAttempts: 1,
+      sendFor: () => async (_method, _params, options) => {
+        keys.push(options.isolationKey);
+        if (unavailable) throw new NetworkUnavailableError("circuit died");
+        return "ok";
+      },
+    });
+    const read = () => pool.run(send => send("eth_getProof", [], { isolationKey: KEY }), { account: "alice" });
+    await expect(read()).rejects.toBeInstanceOf(NetworkUnavailableError);
+    await expect(read()).rejects.toBeInstanceOf(NetworkUnavailableError);
+    expect(keys[1]).not.toBe(keys[0]);
+    expect(pool.status()[0]!.observations).toBeUndefined();
+    expect(pool.status()[0]!.state).toBe("eligible");
+    unavailable = false;
+    await expect(read()).resolves.toBe("ok");
+    await expect(read()).resolves.toBe("ok");
+    expect(keys[2]).not.toBe(keys[1]);
+    expect(keys[3]).toBe(keys[2]);
+    expect(pool.status()[0]!.observations).toMatchObject({ successes: 2, failures: 0 });
+  });
+
+  it("reports an all-network outage without cooling down or ranking any endpoint", async () => {
+    const failure = new NetworkUnavailableError("no circuit", { code: -32000, torKind: "timeout" });
+    const fail = () => { throw failure; };
+    const h = harness(PREFERRED, { a: fail, b: fail, c: fail });
+    const error = await h.read("alice").catch(error => error);
+    expect(error).toBeInstanceOf(NetworkUnavailableError);
+    expect(error).toMatchObject({ cause: failure, code: -32000, torKind: "timeout" });
+    expect(h.calls).toHaveLength(3);
+    expect(h.pool.status().every(endpoint => endpoint.state === "eligible" && !endpoint.observations && !endpoint.operatorObservations)).toBe(true);
+    expect(h.events.filter(event => event.startsWith("transient-failure"))).toEqual([]);
+  });
+
+  it("recovers on another anonymous attempt without recording network failure against the first endpoint", async () => {
+    const h = harness(PREFERRED, { a: () => { throw new NetworkUnavailableError("circuit reset"); }, b: ok, c: ok });
+    await expect(h.read()).resolves.toBe("ok");
+    expect(h.calls.map(call => call.url)).toEqual(["a", "b"]);
+    expect(h.calls[1]!.isolationKey).not.toBe(h.calls[0]!.isolationKey);
+    expect(h.pool.status()[0]).toMatchObject({ state: "eligible" });
+    expect(h.pool.status()[0]!.observations).toBeUndefined();
+    expect(h.pool.status()[1]!.observations).toMatchObject({ successes: 1, failures: 0 });
+  });
+
+  it("preserves endpoint failure attribution when exhaustion mixes HTTP and network failures", async () => {
+    const h = harness(PREFERRED, { a: () => { throw new Error("HTTP 429"); }, b: () => { throw new NetworkUnavailableError("circuit reset"); }, c: () => { throw new NetworkUnavailableError("timeout"); } });
+    const error = await h.read().catch(error => error);
+    expect(error).toBeInstanceOf(PoolExhaustedError);
+    expect(error.attempts.map((attempt: { kind: string }) => attempt.kind)).toEqual(["transient-failure", "network-unavailable", "network-unavailable"]);
+    expect(h.pool.status()[0]!.state).toBe("cooldown");
+    expect(h.pool.status().slice(1).every(endpoint => endpoint.state === "eligible" && !endpoint.observations)).toBe(true);
+  });
+
+  it("does not penalize an endpoint when the local total budget cancels its attempt", async () => {
+    const pool = createPool({ endpoints: [{ url: "a", priority: 0 }], totalTimeoutMs: 5,
+      sendFor: () => () => new Promise(() => {}),
+    });
+    await expect(pool.run(send => send("eth_getProof", [], { isolationKey: KEY }))).rejects.toBeInstanceOf(PoolExhaustedError);
+    expect(pool.status()[0]!.state).toBe("eligible");
+    expect(pool.status()[0]!.observations).toBeUndefined();
+  });
+
   it("stops choosing an expired listing, including affinity and cooldown retries", async () => {
     const h = harness([{ url: "a", priority: 0, expiry: 1001 }, { url: "b", priority: 1 }], { a: ok, b: ok });
     await h.read("account");

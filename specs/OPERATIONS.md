@@ -8,68 +8,120 @@ This is the operational checklist for issues [#44–62](https://github.com/r0bop
 
 ## Public mainnet alpha, November 6
 
-**Current hosting decision: ENS/IPFS through `derpc.eth.limo`.** The team explicitly
-rejected Vercel. Both temporary deployments and their project were removed; the old public alias
-returned HTTP 404. The [historical deployment record](../web/deployment-mainnet-alpha-2026-11-06.json)
-retains the earlier asset/browser evidence and is marked removed. Do not redeploy to
-Vercel or describe those URLs as the active site.
+**The public gateway, IPFS pin and ENS website are deployed and verified.** The supplied VPS is `45.76.81.48`, accessed through the local `derpc-vps`
+SSH alias. It runs gateway and IPFS as separate unprivileged, boot-enabled system
+services. [Service configuration and commands](../scripts/vps/README.md) and the
+[deployment record](../web/deployment-vps-2026-11-06.json) record versions, hashes,
+limits, public ports and restart checks. IPFS administration remains loopback-only.
 
-The [prepared IPFS release](../web/deployment-ens-ipfs-2026-11-06.json) has root CID
-`bafybeihuaqdmtdjlu3rcucz2b7qho4flteohpy2zdmttk3nlnkosem4gqa`. Its CAR archive and
-static directory are generated under `web/out/ens-ipfs-2026-11-06/`. Kubo 0.43.1 was
-obtained from the official release and checked against its published SHA-256. The
-55 checked static files were packaged offline without Vercel configuration. Import
-into a fresh isolated IPFS repository reproduced every asset hash, and Kubo's CID
-conversion independently matched the prepared ENSIP-7 contenthash bytes.
+The owner's transaction `0xc68829ea02c0be675c8c187c4bc20a48cea9ab70e9d179994668c5c36a982bd9`
+was confirmed by two administrative RPC sources with a successful canonical receipt
+and 13 confirmations at observation. The ENS app wrapped the exact prepared setter
+in `multicall`; the sender matched the owner and the transferred value was zero.
+The [publication record](../web/ens-website-publication-2026-11-06.json) includes all
+55 matching HTTPS asset hashes. [Fresh Firefox on the actual ENS domain](../frontend/test/ens-hosted-firefox-evidence-2026-11-06.json)
+passed all 17 checks in 50.9 seconds, verifying pin/balance/storage/code at finalized
+block 26358155 through only the VPS gateway. Payments stayed off; unsupported calls
+and shutdown reads were refused; no external HTTP or asset/page errors appeared.
+The local-preview observations below remain historical evidence of the earlier stage.
 
-**The ENS website is not published yet.** The package needs durable public pinning,
-public retrieval checks, then the owner's contenthash update and a receipt/readback.
-The administrative mainnet preflight at block **26357793** found the expected owner,
-a factory-proven Permissioned Resolver, an empty contenthash and the owner's
-contenthash permission. The name links to record ID 1; shared record links have not
-yet been audited, so no final contenthash transaction was prepared or sent. The
-website contenthash update is separate from deferred independent-operator enrollment.
+The [current release](../web/deployment-ens-ipfs-2026-11-06.json) is pinned at:
 
-The team will provide an existing VPS. It can run persistent IPFS pinning and the
-Tor gateway as separate services. Visitors access the site through the eth.limo
-HTTPS gateway; the browser still needs the Tor gateway's public UDP endpoint.
-[The ENS/IPFS instructions](../web/README.md#ensipfs-deployment) cover packaging,
-pinning, the owner-signed ENS update and subsequent checks. Compile the VPS's actual
-KPS address into a new release before claiming working public reads; changing that
-address changes the IPFS CID. Payments remain disabled by default.
+```text
+ipfs://bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me
+```
 
-The earlier static build, offline release check and **237 frontend tests** passed.
-All 55 hosted files matched the package hashes in the completed HTTP scan; an earlier
-scan stopped on one HTTPS response timeout. The status label says "configured
-gateway", avoiding an ownership claim about an externally supplied gateway.
+Its frozen static directory and CAR are under
+`web/out/ens-ipfs-vps-only-2026-11-06/`. A fresh online IPFS node discovered the
+VPS through public IPFS discovery, without importing the CAR or manually connecting a peer, and
+retrieved all **55 files** with matching SHA-256 hashes. The pin and gateway identity
+survived service restarts. One initial CLI pin probe raced IPFS startup and caused a
+repository-lock retry; a repeated restart waited for the API and passed cleanly.
+There is one persistent pinning host; redundant pinning/off-host backups are not
+established by these checks.
 
-**Anonymous startup remains a release blocker.** The earlier fresh Firefox 156.0.1
-browser loaded the landing, directory, onboarding and dashboard pages. With MEV
-Blocker and BlockRazor selected, the demonstration gateway produced 12 WebRTC ICE
-failures and did not finish startup within 150 seconds. No authenticated header,
-worker-pin proof or verified account read was obtained. The only external HTTP
-request observed was the pinned worker-bundle CDN download; no direct RPC/beacon
-request was observed. Failed startup does not establish working anonymity or
-universal gateway unavailability. The test browser was closed. Repeat startup,
-pin/proof verification, rejection/failover and shutdown after VPS deployment; do not
-mark #13 complete from website publication alone.
+The built gateway list contains only
+`45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg`.
+Release builds now honor the explicit shell list. Upstream tor-js shuffles its
+selection pool, so silently adding the demo gateway was not a reliable backup
+policy. **239 frontend tests**, frontend type checking, the assembled build and the
+55-file offline release check passed after this correction.
 
-The period-1904 startup check after **19:53:59 UTC on November 6** is still pending.
-The packaged checkpoint reaches its seven-day startup limit on **November 12 at
-17:07:35 UTC**; ship a trusted refresh before that deadline. Keep previous IPFS
-releases pinned until the replacement passes its checks.
+[Fresh Firefox evidence](../frontend/test/public-gateway-firefox-evidence-2026-11-06.json)
+passed all 17 checks in 44.5 seconds. The production files were delivered through a
+local Kubo gateway at the release CID; RPC transport used the public VPS. Native
+WebRTC candidate statistics identified only `45.76.81.48:12298`, including received
+worker traffic. Worker pin, balance, storage and code verified; raw `eth_call` was
+refused, payments stayed off, and shutdown refused reads with no subsequent observed
+HTTP. No external HTTP, page errors or failed assets were observed. The authenticated
+header advanced during the run; do not describe every read as one block. Run the
+[opt-in checker](../frontend/test/public-gateway-firefox.mjs) against the final HTTPS
+URL after publication. That local observation alone did not clear the public ENS page gate; the later
+HTTPS run above does.
 
-Earlier proposed public-alpha split (superseded by the local commit history):
+The public HTTPS preflight could not serve the CID: ipfs.io/dweb.link returned a
+service-worker migration notice with HTTP 429, Pinata/inbrowser.link returned 403,
+and the IPFS2 preview resolved to `0.0.0.0` from both tested hosts. Native public IPFS
+retrieval passed instead. The subsequent owner-signed contenthash update and final `derpc.eth.limo` HTTPS
+checks passed as recorded above.
 
-1. `frontend: label configured gateways without claiming ownership` — only the
-   gateway-label lines in `frontend/src/main.ts` and `frontend/src/network-check.ts`
-   from the prior deployment step.
-2. `docs: prepare ENS IPFS hosting and retire Vercel deployment` —
-   `web/deployment-mainnet-alpha-2026-11-06.json`,
-   `web/deployment-ens-ipfs-2026-11-06.json`, `web/README.md`, `README.md`, and the matching additions
-   to `specs/CONTEXT.md`, `specs/ROADMAP.md`, this file, `REPO_LAYOUT.md` and
-   `AI_USAGE.md`. Generated archives and local IPFS identity repositories stay out of
-   commits.
+The [unsigned website transaction](../web/ens-website-transaction-2026-11-06.json)
+sets only `derpc.eth`'s contenthash on Ethereum mainnet. At block **26358109**, two
+administrative RPC sources agreed on the owner, resolver and empty record, and both
+simulations succeeded. The [complete direct-link audit](../web/ens-website-link-audit-2026-11-06.json)
+found only `derpc.eth` linked to record bundle 1. The owner and existing contract
+administrator `0x00c2d95c074A772468657b39D0d4768648147e9d` both have root record,
+link, upgrade and administration rights; this is not owner-only control. No roles
+are changed by the prepared transaction. The owner subsequently signed the exact website setter inside an ENS-app multicall;
+its receipt, record and HTTPS delivery have now been checked.
+Independent operator enrollment remains a separate deferred action. The later team decision permits clearly labelled team-run wrappers for interim mainnet registration; their deployment and finalized discovery evidence are still required and cannot establish independent ownership.
+
+The hosting decision remains ENS/IPFS through `derpc.eth.limo`; Vercel was rejected
+and both temporary deployments and their project were removed. The
+[historical deployment record](../web/deployment-mainnet-alpha-2026-11-06.json)
+retains the earlier static asset checks and failed demo-gateway startup. Those
+results do not replace the new VPS observations. Payments remain disabled.
+
+The period-1904 startup check also [passed at 19:54 UTC](../provider/test/light-client/period-1904-evidence-2026-11-06.json)
+from the original period-1903 checkpoint with forced updates disabled. The build's
+checkpoint reaches its seven-day startup limit on **November 12 at 17:07:35 UTC**;
+ship a trusted refresh before then. The [integrated provider cold start](../provider/test/light-client/period-1904-integration-evidence-2026-11-06.json) also passed through the public VPS at 21:51 UTC, verifying pin and balance at finalized block 26358539 in period 1904. All 38 source hashes stayed unchanged; there were no direct RPC/beacon requests or calls after close. This harness used a local page. The published CID predates the integrated fixes: rebuild, publish and rerun hosted checks before attributing those fixes to the public site. Retain prior published CIDs when updating.
+
+### Stable IPNS address active in ENS
+
+The dedicated VPS key `derpc-website` now publishes:
+
+```text
+ipns://k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc
+```
+
+It targets the unchanged, already verified release CID above. Two fresh nodes
+resolved the name, and the public signed record's signature, target and expiry
+were independently checked. Its encrypted off-host backup restored the same name.
+Initial DHT publication timed out; publication succeeded after configuring an
+explicit HTTP publisher. Kubo is configured to renew every four hours with 48-hour
+validity; a complete renewal cycle has not yet been observed. The initial publisher
+checks reused immutable-CID asset evidence; the later ENS migration checks below
+include a fresh download of all 55 HTTPS files.
+
+The owner signed transaction
+`0x279ae1501ad3df887e4d470ce8423523e68628a147ff34091fac3248d8c51587`.
+Two administrative RPC sources confirmed a successful canonical receipt and
+the expected contenthash at observation block 26358631, with 18 confirmations of inclusion block 26358614; this does not claim finalization. The transaction
+also set the `ETHGlobal` text record to the IPNS URI. All 55 HTTPS files match;
+gateway response headers identify the IPNS path and expected CID. See the
+[migration evidence](../web/ens-ipns-publication-2026-11-06.json).
+Fresh Firefox passed all 17 browser gates in 43.3 seconds, including verified
+pin/balance/storage/code at finalized block 26358571, payment-off/default-call
+refusal and shutdown with no direct HTTP RPC/beacon traffic. The first attempt
+passed reads/shutdown but recorded a canceled logo request during navigation;
+the unchanged checker passed on a fresh rerun. Both outcomes are retained in the
+[browser evidence](../frontend/test/ipns-hosted-firefox-evidence-2026-11-06.json).
+The agent sent no transaction. Future releases reuse the key;
+the existing CI workflow only pins CIDs and does not publish IPNS. See the
+[runbook](../scripts/vps/IPNS.md) and [public evidence](../web/deployment-ipns-2026-11-06.json).
+The VPS publishing key now authorizes new application/verifier code without another
+Ethereum signature. The migration keeps the same release CID, so it does not publish the later integrated fixes. No keys or local backup archives belong in the repository.
 
 ## Deployment boundaries
 
@@ -99,7 +151,7 @@ A subsequent wallet-connection fix passed **47 contract tests** (including 16 wa
 | #45 — resolver records | The planner creates one resolver per operator and scopes each hot key to `derpc.endpoint`; final verification audits roles and role-event history. | On-chain records, endpoint-only hot-key grant, and a failed attempt by that key to alter another record. |
 | #46 — discovery | `provider/src/discovery/ens.ts` labels list/records independently, preserves user selection, and rejects expired/removed entries. Twenty-nine focused tests use controlled ENS metadata plus real worker-pin proof evidence. | Live discovery of the deployed operator directory and UI confirmation of those labels and choice semantics. |
 | #47 — provable list | `OperatorRegistrar.sol` stores fixed-size entries; `discovery/registrar.ts` reads proofs against a pinned runtime hash. Independent tries and the [actual contract-to-discovery integration](../contracts/deployments/ens-fork-discovery-evidence.json) verify membership/payees, altered proofs and list changes against one local root. | Registrar review, deployed runtime pin and live list/payee proofs after list changes at a single verified block. |
-| #48 — verified execution | Host EVM with proven account/storage/code access, bounded execution and CCIP refusal; 62 focused tests now distinguish resource exhaustion from genuine reverts while preserving handled child failures. A live browser call to the actual ENSv2 resolver returned an authenticated empty `derpc.eth` URL record through the onion. | Generic fully on-chain ENS name/hierarchy resolution remains an integration follow-up. Contract/fork compatibility stays limited by the documented executor; the resolver result does not establish the undeployed operator directory. |
+| #48 — verified execution | Host EVM with proven account/storage/code access, bounded execution and CCIP refusal; 62 focused tests now distinguish resource exhaustion from genuine reverts while preserving handled child failures. A live browser call to the actual ENSv2 resolver returned an authenticated empty `derpc.eth` URL record through the onion. | Generic fully on-chain ENS name/hierarchy resolution is implemented, with later evidence below. Contract/fork compatibility stays limited by the documented executor; the resolver result does not establish the undeployed operator directory. |
 | #49 — onion reads | Real Firefox proof/beacon requests and a one-run onion/exit latency comparison passed; `wrapper/test/live-browser.mjs` reproduces the check. | Publish the onion in the deployed ENS records (#45). Observed routes do not prove account unlinkability. |
 | #50 — filtering wrapper | `wrapper/` contains the RPC filter, limits, finalized cache and Tor compose stack. Local filtering/HTTP tests, payment-capable Docker build and live failure checks passed. | Local implementation gate met in disclosed `demo-proxy` mode. Each later node deployment still runs setup; independent ownership is not inferred. |
 | #51 — operator beacon API | Four bounded routes; real-BLS fixture tests cover failed bootstrap, invalid updates, all configured endpoints, deadlines and cancellation. Abandoned Lodestar sync/retry loops stop through the pinned lifecycle patch. Live onion beacon sync passed. | Local implementation gate met. Automatic endpoint switching after startup is outside this startup-fallback feature. |
@@ -132,7 +184,7 @@ The continuation passed **718 default tests**: 59 contracts, 68 payments, 399 pr
 
 The diagnostic used production timeouts unchanged. In a separate frozen-source run, structured worker diagnostics showed hidden-service descriptor/circuit failure and rendezvous recovery before HTTP; local wrapper identity and upstream proofs were responsive. The final report distinguishes that diagnosis from its successful current-source check. Reproduce the focused route with the public `test:live` variables and `node wrapper/test/onion-availability.mjs`; the runner saves bounded request/body timing and errors without introducing an exit fallback.
 
-At this earlier checkpoint, the remaining code included M1-B, general ENS resolution and lifecycle display integration; the later checkpoint below records their implementation. The full goal remains open. Deferred/external gates include independent ENS operator details and authorized wallet transactions, the team's public gateway/hosted browser check, the period-1904 startup check after **19:53:59 UTC on November 6**, the public paid funding/read/settlement/refund cycle, app deployment configuration and the required production/economic/security/legal decisions and reviews. Payments stay at the end of the delivery order. Issue #34/#35 are closed implementation issues and remain release regression cases.
+At this earlier checkpoint, the remaining code included M1-B, general ENS resolution and lifecycle display integration; the later checkpoint below records their implementation. Current external gates include operator registrations and finalized lifecycle observations, independent ownership, sustained gateway/onion availability, publication of the integrated fixes, the public paid funding/read/settlement/refund cycle, app deployment configuration and required production/economic/security/legal decisions and reviews. The recorded public website and both period-1904 cold-start checks passed as described above. Payments stay at the end of the delivery order. Startup recovery (#34) remains a release regression case; the reviewed outage (#35), cache (#38) and block-selector (#39) fixes are integrated with the newer ENS/payment implementation. See [QA_REPORT.md](QA_REPORT.md).
 
 Earlier proposed ENS lifecycle split (superseded by the local commit history):
 
@@ -145,7 +197,7 @@ Earlier proposed ENS lifecycle split (superseded by the local commit history):
 7. `wrapper: diagnose and record all-onion availability` — `wrapper/test/onion-availability.mjs`, its dated sanitized evidence and the matching runbook section.
 8. `docs: record ENS lifecycle controls and threat boundaries` — `THREAT_MODEL.md`, corresponding README/provider-guide and spec updates, `REPO_LAYOUT.md`, `AI_USAGE.md`.
 
-Shared files required the documented hunk boundaries. The ENS lifecycle and snapshot changes are now recorded in local commits; they have not been pushed.
+Shared files required the documented hunk boundaries. The ENS lifecycle and snapshot changes are recorded in the integrated history; the earlier proposed split is not an outstanding staging queue.
 
 ### Live onion observation, November 6
 
@@ -169,7 +221,7 @@ The dashboard groups nodes under one operator checkbox, retains source-aware sav
 
 General on-chain ENS resolution is available through `resolveEns` when verified calls are enabled, or the optional `@derpc/provider/ens` helper. A single local EVM invocation proves the hierarchy and resolver path. The [recorded mainnet evidence](../provider/test/fixtures/ens-mainnet-execution-evidence-2026-11-06.json) covers seven name/profile results and two corruption refusals using actual account/storage/code proofs at block 26356786. Its capture used administrative RPC and an injected state root; the nine offline tests make no light-client or anonymity claim. Content and off-chain URLs are never fetched.
 
-The final workspace run passed **1004 default tests**: 65 contracts, 68 payments, 576 provider, 58 wrapper and 237 frontend. This includes the current concurrent release/diagnostics changes, not only M1-B additions. The five opt-in ENS tests were skipped in that run and separately passed against actual ENS bytecode on a local fork. The [plural lifecycle evidence](../contracts/deployments/ens-endpoints-fork-evidence.json) covers fresh plural deployment, atomic migration in both directions, whole-list rotation, denied permissions, provenance rejection and reorg handling. Independent focused reviews found no remaining concrete blocker at this checkpoint; they are not an independent production audit.
+That implementation checkpoint passed **1004 default tests**: 65 contracts, 68 payments, 576 provider, 58 wrapper and 237 frontend. This includes the current concurrent release/diagnostics changes, not only M1-B additions. The five opt-in ENS tests were skipped in that run and separately passed against actual ENS bytecode on a local fork. The [plural lifecycle evidence](../contracts/deployments/ens-endpoints-fork-evidence.json) covers fresh plural deployment, atomic migration in both directions, whole-list rotation, denied permissions, provenance rejection and reorg handling. Independent focused reviews found no remaining concrete blocker at this checkpoint; they are not an independent production audit.
 
 The [wrapper packaging report](../wrapper/test/multiendpoint-packaging-evidence-2026-11-06.json) records a successful Docker build, identity checks, invalid configuration refusal and shared-schema compatibility. Responsive dashboard and onboarding fixtures passed at 375/768/1280 px without external HTTP or page errors. Workspace type checking and the combined static-site build passed; the build still uses the explicitly supplied upstream demonstration gateway and is not a new public-gateway deployment. Live sibling-onion results remain separate from these automated/local-fork checks.
 
@@ -305,7 +357,7 @@ The externally required inputs are a usable authorized deployment wallet, test f
 
 ## Earlier integration commit plan (historical)
 
-This was the preparation plan for the earlier combined changes. At the team's explicit request, that non-Markdown work was recorded in **30 local commits**, from `1a6164a` through `96439b4`, with no push. Payment and wrapper package implementations are therefore already tracked. The actual dependency-ordered history supersedes the proposed grouping below; retain this table as a rationale, not as an outstanding staging queue. Subsequent ENS and release changes remain uncommitted and have their own splits above and in [QA_REPORT.md](QA_REPORT.md). Markdown was excluded from the recorded series.
+This was the preparation plan for the earlier combined changes. At the team's explicit request, that non-Markdown work was recorded in **30 local commits**, from `1a6164a` through `96439b4`, with no push. Payment and wrapper package implementations are therefore already tracked. The actual dependency-ordered history supersedes the proposed grouping below; retain this table as a rationale, not as an outstanding staging queue. Later ENS and provider changes are recorded in the integrated history; publication evidence and documentation are reconciled separately. Markdown was excluded from that earlier recorded series.
 
 The table covers the ENS, wrapper and payment implementation. Keep the separate directory/brand work (`web/`, `brand/`, `docs/`, `scripts/assemble-site.mjs` and site-build scripts) in its own series. Do not include `.superstack/`, credentials, generated builds, local deployment keys or machine state.
 

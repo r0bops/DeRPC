@@ -26,7 +26,7 @@ The typed-data domain is `DeRPC Query Escrow`, version `1`, the payment chain ID
 
 The client, not the escrow, establishes that a query was correct: it signs only after host verification succeeds. An operator can claim a signed total without submitting per-read proofs to the contract. The client must therefore protect its signer, enforce spending caps and flush the final voucher. The wrapper must retain the highest accepted voucher durably and settle before its safety margin. A recipient that rejects its transfer receives a deferred withdrawal balance, so it cannot prevent the other party's settlement.
 
-An ENS payee record is an unproven claim unless the registrar pin or verified records prove it, so a lying RPC could show a different payee. That is harmless with test funds. Before real funds, take the payee from a proven source.
+An ENS payee record is unproven unless it is authenticated through the pinned registrar or verified records. A lying RPC can substitute a payee in unverified discovery, including in a test flow; label that payee unproven and do not use it for real funds. A proven payee alone does not authenticate the payment contract or all payment terms. Current payment tooling is restricted to test chains.
 
 Paid queries are linkable to the paying account. Wallet deposits, top-ups and refunds and the operator's settlement transaction use their configured payment-chain connection outside the read worker. The worker receives request credentials/vouchers, never the private session signing key.
 

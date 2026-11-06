@@ -1,0 +1,26 @@
+[Unit]
+Description=DeRPC public tor-js gateway
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=derpc-gateway
+Group=derpc-gateway
+StateDirectory=derpc-gateway
+WorkingDirectory=/var/lib/derpc-gateway
+ExecStart=/opt/derpc/bin/tor-js-gateway --config /etc/derpc/gateway.json run
+Environment=RUST_LOG=warn,tor_js_gateway=info,tor_js_gateway::tunnel=warn
+Restart=on-failure
+RestartSec=10
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/derpc-gateway
+MemoryHigh=1G
+MemoryMax=2G
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -12,6 +12,15 @@ import type { Pool } from "./pool.ts";
 
 const CACHE_LIMIT = 256;
 
+function copyHeader(block: VerifiedHeader): VerifiedHeader {
+  return { ...block, ...(block.execution ? { execution: { ...block.execution } } : {}) };
+}
+
+/** Supported read values are primitives; the result and its block context need separate ownership. */
+function copyVerified<T>(result: VerifiedValue<T>): VerifiedValue<T> {
+  return { value: result.value, block: copyHeader(result.block) };
+}
+
 /**
  * Verified reads served by the pool: each read runs on one endpoint at a time and moves to another
  * when an answer fails verification or an attempt fails. Verified results are cached by the verified
@@ -30,10 +39,10 @@ export function createPooledReader(deps: { headers: HeaderView; pool: Pool; paid
   ) {
     return async (...args: A): Promise<VerifiedValue<T>> => {
       validate?.(...args); // caller errors never reach an operator
-      const block = headers.finalized(); // throws if stale, before anything is sent
+      const block = copyHeader(headers.finalized()); // throws if stale, before anything is sent
       const key = `${block.blockHash}|${name}|${JSON.stringify(args).toLowerCase()}`;
       const hit = cache.get(key);
-      if (hit) return hit as VerifiedValue<T>;
+      if (hit) return copyVerified(hit as VerifiedValue<T>);
       // Every attempt proves against the same block, so a retry can't silently move the value's
       // block away from the cache key (#24).
       const pinned: HeaderView = { finalized: () => block, assertFresh: (header) => headers.assertFresh?.(header) };
@@ -43,8 +52,9 @@ export function createPooledReader(deps: { headers: HeaderView; pool: Pool; paid
       });
       headers.assertFresh?.(result.block);
       if (cache.size >= CACHE_LIMIT) cache.delete(cache.keys().next().value!);
-      cache.set(key, result);
-      return result;
+      const stored = copyVerified(result);
+      cache.set(key, stored);
+      return copyVerified(stored);
     };
   }
 

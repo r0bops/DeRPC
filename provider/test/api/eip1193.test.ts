@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { createEip1193Provider, ProviderRpcError, type ReadBackend } from "../../src/api/eip1193.ts";
 import { createPool, NoOperatorsChosenError } from "../../src/pool/pool.ts";
 import { createPooledReader } from "../../src/pool/pooled-reader.ts";
-import { TransportUnavailableError } from "../../src/transport/anon-transport.ts";
+import { NetworkUnavailableError, TransportUnavailableError } from "../../src/transport/anon-transport.ts";
 import type { VerifiedReader } from "../../src/verify/reader.ts";
 import { BLOCK_TAG, RECORDED_HEADER, recordedEndpoint } from "../helpers/recorded-endpoint.ts";
 import fixture from "../fixtures/mainnet-proofs.json" with { type: "json" };
@@ -39,6 +39,17 @@ async function rpcError(promise: Promise<unknown>): Promise<ProviderRpcError> {
 }
 
 describe("createEip1193Provider", () => {
+  it.each([BLOCK_TAG, "invalid", undefined])("refuses both EIP-1898 selectors before consulting the backend: %s", blockNumber => {
+    const { provider } = createEip1193Provider(untouchable);
+    return expect(provider.request({ method: "eth_getBalance", params: [WETH, { blockHash: fixture.block.hash, blockNumber }] })).rejects.toMatchObject({ code: -32602 });
+  });
+
+  it("maps a request-level network outage to 4900 without calling it a worker death", async () => {
+    const { provider } = createEip1193Provider(failingBackend(new NetworkUnavailableError("no circuit")));
+    const error = await rpcError(provider.request({ method: "eth_getBalance", params: [WETH, "finalized"] }));
+    expect(error).toMatchObject({ code: 4900, data: { reason: "NetworkUnavailableError" } });
+  });
+
   it("answers chain id, network version and accounts locally, without any read", async () => {
     const { provider } = createEip1193Provider(untouchable);
 

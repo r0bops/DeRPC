@@ -161,13 +161,15 @@ export function codeCard(): string {
         <span class="code-card__tag">API preview</span>
       </div>
       <div class="code-card__body">
-        <pre class="code"><code><span class="tok-com">// private, verified reads</span>
+        <pre class="code"><code><span class="tok-com">// private, verified reads (finalized only)</span>
 <span class="tok-key">import</span> { createDeRPC, MAINNET_OPERATORS } <span class="tok-key">from</span> <span class="tok-str">"@derpc/provider"</span>
 <span class="tok-key">import</span> { derpcTransport } <span class="tok-key">from</span> <span class="tok-str">"@derpc/provider/viem"</span>
 <span class="tok-key">import</span> { createPublicClient } <span class="tok-key">from</span> <span class="tok-str">"viem"</span>
 <span class="tok-key">import</span> { mainnet } <span class="tok-key">from</span> <span class="tok-str">"viem/chains"</span>
 
-<span class="tok-key">const</span> derpc = <span class="tok-fn">createDeRPC</span>({ operators: MAINNET_OPERATORS })
+<span class="tok-key">const</span> derpc = <span class="tok-fn">createDeRPC</span>({
+  operators: MAINNET_OPERATORS.<span class="tok-fn">filter</span>((o) => o.ens === <span class="tok-str">"drpc.derpc.eth"</span>),
+})
 <span class="tok-key">const</span> client = <span class="tok-fn">createPublicClient</span>({
   chain: mainnet,
   transport: <span class="tok-fn">derpcTransport</span>(derpc),
@@ -177,7 +179,7 @@ export function codeCard(): string {
   address: <span class="tok-str">"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"</span>,
   blockTag: <span class="tok-str">"finalized"</span>,
 })
-<span class="tok-com">// verified by the light client, or it fails closed</span></code></pre>
+<span class="tok-com">// proven at the verified finalized block, or it fails closed</span></code></pre>
       </div>
       <div class="code-card__diagram">${routeDiagram()}</div>
     </div>

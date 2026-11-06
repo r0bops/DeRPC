@@ -6,7 +6,7 @@ const MAX_RESOURCE_OBSERVATIONS = 512;
 export function mountDirectConnections(options: {
   body: HTMLElement;
   status: HTMLElement;
-  rpcUrls: readonly string[];
+  rpcUrls: readonly string[] | (() => readonly string[]);
   bundleUrls: readonly string[];
 }) {
   const httpUrl = (value: string) => {
@@ -19,9 +19,11 @@ export function mountDirectConnections(options: {
     const url = httpUrl(value);
     return url ? [url.host] : [];
   }));
-  const rpcHosts = hosts(options.rpcUrls);
   const bundleHosts = hosts(options.bundleUrls);
   const resourceHosts = new Map<string, string>();
+  // Retain classifications only for retained resource hosts (also bounded by the observation cap).
+  // A later directory rotation must not relabel an already observed RPC resource as an asset.
+  const observedRpcHosts = new Set<string>();
   let observer: PerformanceObserver | undefined;
   let timer: ReturnType<typeof setInterval> | undefined;
   let limitReached = false;
@@ -61,6 +63,8 @@ export function mountDirectConnections(options: {
     }
     const counts = new Map<string, number>();
     for (const host of resourceHosts.values()) counts.set(host, (counts.get(host) ?? 0) + 1);
+    const rpcHosts = hosts(typeof options.rpcUrls === "function" ? options.rpcUrls() : options.rpcUrls);
+    for (const host of counts.keys()) if (rpcHosts.has(host)) observedRpcHosts.add(host);
     const status = [resourceHosts.size
       ? `${resourceHosts.size} HTTP(S) resource timing observations retained for this page.`
       : "No HTTP(S) resource timings are exposed in this page. This does not establish that no network connections occurred."];
@@ -76,7 +80,7 @@ export function mountDirectConnections(options: {
       cell.colSpan = 3; row.append(cell); options.body.append(row);
     }
     for (const [host, count] of counts) {
-      const kind = rpcHosts.has(host) ? ["RPC/beacon resource outside the worker — inspect", "bad"]
+      const kind = observedRpcHosts.has(host) ? ["RPC/beacon resource outside the worker — inspect", "bad"]
         : host === location.host ? ["page assets", "ok"]
         : bundleHosts.has(host) ? ["worker bundle host (direct downloads expected)", "warn"]
         : ["unexpected", "bad"];

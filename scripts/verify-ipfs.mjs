@@ -1,10 +1,10 @@
 // Check a pinned release against its manifest before the ENS record changes. Read-only. Three checks:
 //   default            fetch every file through public IPFS gateways (they rate-limit CI runners)
 //   --dir PATH         compare a directory already fetched from the pinning node (`ipfs get CID`)
-//   --provider PEERID  confirm the IPFS network lists that node as a provider of the root
+//   --provider PEERID  check whether the delegated routing service lists that provider
 // Usage: node scripts/verify-ipfs.mjs [web/out/ipfs-release/manifest.json] [--dir PATH | --provider PEERID | --gateway URL...]
 import { createHash } from "node:crypto";
-import { readFileSync, readdirSync } from "node:fs";
+import { lstatSync, readFileSync, readdirSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -44,14 +44,17 @@ export async function verifyRetrieval({ manifest, gateways = DEFAULT_GATEWAYS, a
   throw new Error(`No gateway served all ${paths.length} files. Last error: ${lastError}`);
 }
 
-/** Every manifest file must be present with the same bytes, and the directory must hold nothing else. */
+/** Match every manifest file; reject extra files, symlinks and special filesystem entries. */
 export function verifyDirectory({ manifest, dir }) {
   const root = resolve(dir);
+  if (!lstatSync(root).isDirectory()) throw new Error("the fetched directory must be a real directory, not a symlink");
   const found = new Map();
   for (const entry of readdirSync(root, { recursive: true, withFileTypes: true })) {
-    if (!entry.isFile()) continue;
     const absolute = resolve(entry.parentPath, entry.name);
-    found.set(relative(root, absolute).split(sep).join("/"), createHash("sha256").update(readFileSync(absolute)).digest("hex"));
+    const path = relative(root, absolute).split(sep).join("/");
+    if (entry.isDirectory()) continue;
+    if (!entry.isFile()) throw new Error(`${path}: symlinks and non-regular files are not allowed`);
+    found.set(path, createHash("sha256").update(readFileSync(absolute)).digest("hex"));
   }
   for (const [path, digest] of Object.entries(manifest.files)) {
     if (!found.has(path)) throw new Error(`${path}: missing from the fetched directory`);
@@ -81,20 +84,43 @@ export async function findProvider({ cid, peerId, endpoint = DELEGATED_ROUTING, 
   return false;
 }
 
+/** Validate the complete command before reading files or making a network request. */
+export function parseVerificationArgs(args) {
+  let manifestPath, mode, dir, peerId;
+  const gateways = [];
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index];
+    if (["--gateway", "--dir", "--provider"].includes(arg)) {
+      const value = args[++index];
+      if (!value?.trim() || value.startsWith("-")) throw new Error(`${arg} requires a value`);
+      const nextMode = arg.slice(2);
+      if (mode && mode !== nextMode) throw new Error("--dir, --provider and --gateway are mutually exclusive");
+      if (mode === nextMode && mode !== "gateway") throw new Error(`${arg} may be supplied only once`);
+      mode = nextMode;
+      if (mode === "dir") dir = value;
+      else if (mode === "provider") peerId = value;
+      else gateways.push(value);
+    } else if (arg.startsWith("-")) {
+      throw new Error(`unknown option: ${arg}`);
+    } else {
+      if (manifestPath) throw new Error(`unexpected argument: ${arg}`);
+      manifestPath = arg;
+    }
+  }
+  return { manifestPath: manifestPath ?? resolve(REPOSITORY, "web/out/ipfs-release/manifest.json"), mode: mode ?? "gateway", dir, peerId, gateways };
+}
+
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
-  const args = process.argv.slice(2);
-  const valued = ["--gateway", "--dir", "--provider"];
-  const option = name => { const index = args.indexOf(name); return index === -1 ? undefined : args[index + 1]; };
-  const gateways = args.flatMap((arg, index) => arg === "--gateway" && args[index + 1] ? [args[index + 1]] : []);
-  const path = args.find((arg, index) => !arg.startsWith("--") && !valued.includes(args[index - 1])) ?? resolve(REPOSITORY, "web/out/ipfs-release/manifest.json");
   try {
-    const manifest = JSON.parse(readFileSync(resolve(path), "utf8"));
-    if (option("--dir")) {
-      const result = verifyDirectory({ manifest, dir: option("--dir") });
+    const { manifestPath, mode, dir, peerId, gateways } = parseVerificationArgs(process.argv.slice(2));
+    const manifest = JSON.parse(readFileSync(resolve(manifestPath), "utf8"));
+    if (mode === "dir") {
+      const result = verifyDirectory({ manifest, dir });
       console.log(`PASS: ${result.filesChecked} fetched files match the manifest for ${manifest.cid}.`);
-    } else if (option("--provider")) {
-      if (!await findProvider({ cid: manifest.cid, peerId: option("--provider") })) throw new Error(`the routing service does not list ${option("--provider")} as a provider of ${manifest.cid}`);
-      console.log(`PASS: the IPFS network lists ${option("--provider")} as a provider of ${manifest.cid}.`);
+    } else if (mode === "provider") {
+      if (!await findProvider({ cid: manifest.cid, peerId })) throw new Error(`the delegated routing service does not list ${peerId} as a provider of ${manifest.cid}`);
+      console.log(`PASS: the delegated routing service lists ${peerId} as a provider of ${manifest.cid}.`);
+      console.log("This is a provider listing, not proof of asset retrieval or durable pinning.");
     } else {
       const result = await verifyRetrieval({ manifest, ...(gateways.length ? { gateways } : {}) });
       console.log(`PASS: ${result.filesChecked} files match the manifest through ${result.gateway}.`);

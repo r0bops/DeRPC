@@ -4,6 +4,7 @@ import { getChainForkConfigFromNetwork } from "@lodestar/light-client/utils";
 import type { LightClientHeader } from "@lodestar/types";
 import { fromHex, toHex } from "@lodestar/utils";
 import { PollingLightClientTransport } from "./polling-transport.ts";
+import { TransportUnavailableError } from "../transport/anon-transport.ts";
 
 export type HeaderNetwork = "mainnet" | "hoodi";
 
@@ -54,7 +55,7 @@ export interface HeaderSourceOptions {
   checkpoint: { root: `0x${string}`; epoch: number };
   beaconUrl: string;
   /** Additional beacon endpoints to try when startup fails. */
-  beaconUrls?: string[];
+  beaconUrls?: readonly string[];
   /** Anonymized fetch. Every request of the light client goes through it. */
   fetch: typeof fetch;
   /** Per-startup-attempt fetch (for example a fresh isolation key). Defaults to `fetch`. */
@@ -147,7 +148,15 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
     const controller = new AbortController();
     const signal = opts.signal ? AbortSignal.any([controller.signal, opts.signal]) : controller.signal;
     const beaconUrl = beaconUrls[index]!;
-    const api = getClient({ urls: [beaconUrl], fetch: cancellableFetch(fetchForAttempt(attempt), signal) }, { config });
+    const attemptFetch = fetchForAttempt(attempt);
+    const api = getClient({ urls: [beaconUrl], fetch: cancellableFetch(async (input, init) => {
+      try { return await attemptFetch(input, init); }
+      catch (error) {
+        // Lodestar can log and swallow update-fetch errors. Worker death must still stop startup.
+        if (error instanceof TransportUnavailableError) controller.abort(error);
+        throw error;
+      }
+    }, signal) }, { config });
     let client: Lightclient | undefined;
     const transport = new PollingLightClientTransport(api, {
       intervalMs: opts.pollIntervalMs,
@@ -222,13 +231,16 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
       closeAttempt();
       lastError = error;
       opts.signal?.throwIfAborted();
-      if (error instanceof StaleCheckpointError) throw error;
+      if (error instanceof StaleCheckpointError || error instanceof TransportUnavailableError || error instanceof Error && error.name === "AbortError") throw error;
       if (performance.now() >= deadline) break;
     }
   }
-  throw lastError instanceof Error
-    ? lastError
-    : new HeaderSourceNotReadyError("light client did not become ready; no beacon endpoint answered");
+  opts.signal?.throwIfAborted();
+  if (lastError instanceof StaleCheckpointError || lastError instanceof TransportUnavailableError || lastError instanceof Error && lastError.name === "AbortError") throw lastError;
+  throw new HeaderSourceNotReadyError(
+    lastError instanceof Error ? `light client did not become ready: ${lastError.message}` : "light client did not become ready; no beacon endpoint answered",
+    lastError === undefined ? undefined : { cause: lastError },
+  );
 }
 
 function isFresh(header: LightClientHeader, maxAgeMs: number): boolean {

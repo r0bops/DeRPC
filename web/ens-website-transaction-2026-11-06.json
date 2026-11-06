@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-ens-website-unsigned-transaction",
+  "status": "prepared-not-broadcast",
+  "preparedAt": "2026-11-06T20:10:38.430Z",
+  "ensName": "derpc.eth",
+  "targetUrl": "https://derpc.eth.limo/",
+  "ipfs": {
+    "cid": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me",
+    "contentUri": "ipfs://bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me",
+    "contenthash": "0xe301017012206a936b3a8bede09082aedf768c2efb6b802f3a2d9045f42bd463a9c5c9575c61",
+    "cidAndContenthashMatch": true
+  },
+  "transaction": {
+    "chainId": 1,
+    "from": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+    "to": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59",
+    "value": "0x0",
+    "data": "0xc5d7badd00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000b05646572706303657468000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000026e301017012206a936b3a8bede09082aedf768c2efb6b802f3a2d9045f42bd463a9c5c9575c610000000000000000000000000000000000000000000000000000"
+  },
+  "decoded": {
+    "function": "setContenthash(bytes,bytes)",
+    "selector": "0xc5d7badd",
+    "dnsName": "0x0564657270630365746800",
+    "contenthash": "0xe301017012206a936b3a8bede09082aedf768c2efb6b802f3a2d9045f42bd463a9c5c9575c61"
+  },
+  "preflight": {
+    "schemaVersion": 1,
+    "kind": "derpc-ens-preflight",
+    "chainId": 1,
+    "rpcOrigin": "https://ethereum-rpc.publicnode.com",
+    "localOnly": false,
+    "checkedAt": "2026-11-06T20:10:37.758Z",
+    "blockNumber": "26358109",
+    "blockHash": "0x6940b30f1cab1ba7d315d22327d48deb582dd7b89f45236dda26e30f41ade400",
+    "timestamp": "1793995823",
+    "upstreamSource": "https://docs.ens.domains/learn/deployments/",
+    "upstreamSourceCommit": "4f47cbcc11462fb413196e6b5c0f8090247a6c08",
+    "upstream": {
+      "VerifiableFactory": {
+        "address": "0x77510ba162dfea3d8989e3f0928a691b345730d2",
+        "runtimeCodeHash": "0xc251b434fe75ce3ca024e85883aafd7c1d0b8e382d747b537c5930018b144a91",
+        "normalizedRuntimeCodeHash": "0x2a7df71e60cc096d05d6f912bb5f866443c69754ab585a55f66f3f6a3f89b68f"
+      },
+      "UserRegistryImpl": {
+        "address": "0xfaa23592aca10a6d8875b18ea86954e8eb6d8d72",
+        "runtimeCodeHash": "0xb5b939d5a80a1d00351e4e0faa3529b8ee25dfcf436d64f781d415ccc8a3b7a9",
+        "normalizedRuntimeCodeHash": "0xcccecc70b7d7a9c01003f21790b0d9a143aa5c3cb6f18d373a06624903f4edf9"
+      },
+      "PermissionedResolverImpl": {
+        "address": "0x565b0f456a04ac9b48758190e90030623cff57c5",
+        "runtimeCodeHash": "0x25df12e14187ae568dca1861b918e01b6e24a671dea6089a6dbbe60c5d3ef640",
+        "normalizedRuntimeCodeHash": "0x230d1165b00f1b366b59fb2c1a351087610846d183d4b49ef39d6dd87b327f63"
+      },
+      "ETHRegistry": {
+        "address": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+        "runtimeCodeHash": "0xe2873b2a7becb1c9f1d017027d5b528ea4e797e609acaa7a4194694e718a0273",
+        "normalizedRuntimeCodeHash": "0xa2bc002e4d17398ab8fcb9c52553dd2f736f41f5abc21b17078ae2b6714c9ef7"
+      }
+    },
+    "parent": {
+      "name": "derpc.eth",
+      "registry": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+      "status": 2,
+      "expiry": "1825433555",
+      "latestOwner": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "tokenId": "86421749974462203513281326918437045380435208352249783119946164121359903358976",
+      "resource": "86421749974462203513281326918437045380435208352249783119946164121359903358976",
+      "subregistry": "0x0000000000000000000000000000000000000000",
+      "resolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59"
+    },
+    "trust": "Read-only administrative RPC observations; not light-client verified. No transactions sent."
+  },
+  "website": {
+    "implementation": "0x565b0F456a04Ac9b48758190e90030623Cff57C5",
+    "recordId": "1",
+    "recordCount": "1",
+    "defaultRecordId": "0",
+    "previousContenthash": "0x",
+    "ownerCanSetContenthash": true,
+    "rootAuthorities": [
+      {
+        "account": "0x00c2d95c074A772468657b39D0d4768648147e9d",
+        "roleBitmap": "7719472615821079694904732333912527190217998977709370935963838933860875309329",
+        "codePresent": true,
+        "canSetContenthash": true,
+        "canLink": true,
+        "canUpgrade": true,
+        "canAdministerContenthashRole": true
+      },
+      {
+        "account": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "roleBitmap": "7719472615821079694904732333912527190217998977709370935963838933860875309329",
+        "codePresent": false,
+        "canSetContenthash": true,
+        "canLink": true,
+        "canUpgrade": true,
+        "canAdministerContenthashRole": true
+      }
+    ]
+  },
+  "sharedRecordAudit": {
+    "source": "web/ens-website-link-audit-2026-11-06.json",
+    "creationBlock": "26349943",
+    "auditedThroughBlock": "26358109",
+    "initialLogCount": 7,
+    "newLogCount": 0,
+    "currentLinks": [
+      {
+        "node": "0x4c8cff9ac30c32afd77c31e2c39ebf56c5b96a0b4974018421d7c78c940a46b9",
+        "name": "derpc.eth",
+        "recordId": "1"
+      }
+    ],
+    "onlyDirectLinkedName": "derpc.eth",
+    "qualification": "An unrelated name could intentionally alias derpc.eth through a registry; this scan establishes direct resolver bundle links, not global alias enumeration."
+  },
+  "simulation": {
+    "blockNumber": "26358109",
+    "blockHash": "0x6940b30f1cab1ba7d315d22327d48deb582dd7b89f45236dda26e30f41ade400",
+    "primaryRpc": "https://ethereum-rpc.publicnode.com",
+    "secondRpc": "https://rpc.mevblocker.io",
+    "bothCallResults": "0x",
+    "gasEstimateUnits": "112045",
+    "suggestedGasLimit": "145659",
+    "gasPriceWei": "128103694",
+    "estimatedFeeAtObservedGasPriceWei": "14353378394230",
+    "upperFeeAtSuggestedGasLimitAndObservedPriceWei": "18659455964346",
+    "ownerBalanceWei": "2950139583287096",
+    "balanceCoversSuggestedLimitAtObservedPrice": true,
+    "qualification": "Read-only eth_call and eth_estimateGas. These do not submit a transaction or guarantee future inclusion or fees. Wallet must refresh fees and chain/sender immediately before signing."
+  },
+  "permissions": "The owner and existing contract administrator 0x00c2d95c074A772468657b39D0d4768648147e9d both have root contenthash/link/upgrade/admin roles. This transaction changes no permissions, links or address records.",
+  "trust": "Administrative RPC observations, not light-client verified. No private key, wallet connection or transaction broadcast used.",
+  "releaseEvidence": "web/deployment-ens-ipfs-2026-11-06.json"
+}

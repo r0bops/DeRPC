@@ -68,6 +68,70 @@ describe("createPooledReader", () => {
     expect(eps.calls).toHaveLength(1);
   });
 
+  it.each(["initial result", "cache hit"])("isolates mutations of a returned %s from verified state", async returned => {
+    const eps = endpoints({ honest: "honest" });
+    let completions = 0;
+    const pool = createPool({
+      endpoints: [{ url: "honest", priority: 0 }], sendFor: eps.sendFor,
+      prepareAttempt: async (_context, send) => ({ send, verified: async () => { completions++; } }),
+    });
+    // Keep one source-owned object, including execution context, to expose any shared references.
+    const source: VerifiedHeader = {
+      ...header(fixture.block.number), network: "mainnet",
+      execution: {
+        feeRecipient: `0x${"11".repeat(20)}`, prevRandao: `0x${"22".repeat(32)}`,
+        gasLimit: 60_000_000n, baseFeePerGas: 1_000_000_000n, excessBlobGas: 0n,
+      },
+    };
+    const expected = { value: BigInt(fixture.reference.holderBalance), block: structuredClone(source) };
+    const reader = createPooledReader({ headers: { finalized: () => source }, pool });
+    const first = await reader.getBalance(HOLDER as Hex);
+    const exposed = returned === "cache hit" ? await reader.getBalance(HOLDER as Hex) : first;
+
+    exposed.value = 999999999999999999999999n;
+    Object.assign(exposed.block, {
+      network: "hoodi", slot: 1, blockNumber: source.blockNumber + 1,
+      blockHash: `0x${"ab".repeat(32)}`, stateRoot: `0x${"00".repeat(32)}`, timestamp: 0,
+    });
+    Object.assign(exposed.block.execution!, {
+      feeRecipient: `0x${"33".repeat(20)}`, prevRandao: `0x${"44".repeat(32)}`,
+      gasLimit: 1n, baseFeePerGas: 2n, excessBlobGas: 3n,
+    });
+
+    expect(source).toEqual(expected.block);
+    expect(await reader.getBalance(HOLDER as Hex)).toEqual(expected);
+    if (returned === "cache hit") expect(first).toEqual(expected);
+    expect(eps.calls).toHaveLength(1);
+    expect(completions).toBe(1); // cache isolation must not repeat a paid verification.
+  });
+
+  it("retains the proven block when the header source updates its object during completion", async () => {
+    const eps = endpoints({ honest: "honest" });
+    const source: VerifiedHeader = {
+      ...header(fixture.block.number),
+      execution: {
+        feeRecipient: `0x${"11".repeat(20)}`, prevRandao: `0x${"22".repeat(32)}`,
+        gasLimit: 60_000_000n, baseFeePerGas: 1_000_000_000n,
+      },
+    };
+    const expected = { value: BigInt(fixture.reference.holderBalance), block: structuredClone(source) };
+    const pool = createPool({
+      endpoints: [{ url: "honest", priority: 0 }], sendFor: eps.sendFor,
+      prepareAttempt: async (_context, send) => ({ send, verified: async () => {
+        Object.assign(source, header(fixture.block.number + 1));
+        source.execution!.baseFeePerGas = 2n;
+      } }),
+    });
+    const reader = createPooledReader({ headers: { finalized: () => source }, pool });
+
+    expect(await reader.getBalance(HOLDER as Hex)).toEqual(expected);
+    expect(source.blockNumber).toBe(fixture.block.number + 1);
+    // Revisit the old block to verify the stored result was also bound to the proof's block.
+    Object.assign(source, structuredClone(expected.block));
+    expect(await reader.getBalance(HOLDER as Hex)).toEqual(expected);
+    expect(eps.calls).toHaveLength(1);
+  });
+
   it("asks again once the verified block has moved on", async () => {
     const eps = endpoints({ honest: "honest" });
     const pool = createPool({ endpoints: [{ url: "honest", priority: 0 }], sendFor: eps.sendFor, maxAttempts: 1 });

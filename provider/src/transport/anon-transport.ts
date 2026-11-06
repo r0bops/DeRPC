@@ -126,7 +126,8 @@ export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonT
         if (state() === "closed") throw new TransportUnavailableError("closed", { cause: error });
         if (error instanceof Error && error.name === "WorkerFailedError") markFailed(error);
         if (state() === "failed") throw new TransportUnavailableError("failed", { cause: error });
-        if (signal.aborted) throw signal.reason;
+        // Caller cancellation is local; a worker request timeout is an anonymity-network failure.
+        if (options.signal?.aborted) throw options.signal.reason;
         // A request-level failure while the worker stays up: the anonymity network, not the operator.
         if (error instanceof NetworkUnavailableError) throw error;
         throw new NetworkUnavailableError(error instanceof Error ? error.message : String(error), { cause: error, ...detailsOf(error) });

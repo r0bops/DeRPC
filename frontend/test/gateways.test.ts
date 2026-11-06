@@ -100,26 +100,27 @@ describe("gatewayHost", () => {
 
 describe("releaseGateways", () => {
   it("fails without an explicit gateway instead of falling back to the demo one", () => {
-    expect(() => releaseGateways(undefined, DEMO)).toThrow("VITE_TOR_GATEWAYS");
-    expect(() => releaseGateways(" , ", DEMO)).toThrow("VITE_TOR_GATEWAYS");
+    expect(() => releaseGateways(undefined)).toThrow("VITE_TOR_GATEWAYS");
+    expect(() => releaseGateways(" , ")).toThrow("VITE_TOR_GATEWAYS");
   });
 
   it("refuses a non-public gateway, even next to a public one", () => {
-    expect(() => releaseGateways(`${PUBLIC},${gw("192.168.1.20")}`, DEMO)).toThrow("192.168.1.20");
+    expect(() => releaseGateways(`${PUBLIC},${gw("192.168.1.20")}`)).toThrow("192.168.1.20");
     expect(() => assertPublicGateways([gw("0x7f.1")])).toThrow("loopback");
     expect(() => assertPublicGateways([`[64:ff9b::a00:1]:12298:${CERT}`])).toThrow("NAT64 private network");
     expect(() => assertPublicGateways([gw("gateway.example.org")])).toThrow("hostname");
   });
 
-  it("appends the demo gateway as a fallback, once", () => {
-    expect(releaseGateways(PUBLIC, DEMO)).toEqual([PUBLIC, DEMO]);
-    expect(releaseGateways(DEMO, DEMO)).toEqual([DEMO]);
+  it("uses only explicitly configured gateways, preserving their order and removing duplicates", () => {
+    expect(releaseGateways(PUBLIC)).toEqual([PUBLIC]);
+    expect(releaseGateways(` ${PUBLIC} , ${PUBLIC}, , ${DEMO}, ${DEMO} `)).toEqual([PUBLIC, DEMO]);
+    expect(releaseGateways(DEMO)).toEqual([DEMO]);
   });
 
   it("rejects malformed gateways even when a working fallback exists", () => {
-    expect(() => releaseGateways(`kps:${PUBLIC}`, DEMO)).toThrow("malformed gateway address");
-    expect(() => releaseGateways("95.216.10.20:12298:not-a-certificate", DEMO)).toThrow("malformed gateway address");
-    expect(() => releaseGateways(PUBLIC, `kps:${DEMO}`)).toThrow("malformed gateway address");
+    expect(() => releaseGateways(`kps:${PUBLIC}`)).toThrow("malformed gateway address");
+    expect(() => releaseGateways("95.216.10.20:12298:not-a-certificate")).toThrow("malformed gateway address");
+    expect(() => releaseGateways(`${PUBLIC},kps:${DEMO}`)).toThrow("malformed gateway address");
   });
 });
 
@@ -134,7 +135,7 @@ describe("release build config", () => {
       process.env.VITE_TOR_GATEWAYS = PUBLIC;
       expect(config({ command: "build", mode: "production" })).toMatchObject({
         envDir: false,
-        define: { "import.meta.env.VITE_TOR_GATEWAYS": JSON.stringify(`${PUBLIC},${DEMO}`) },
+        define: { "import.meta.env.VITE_TOR_GATEWAYS": JSON.stringify(PUBLIC) },
       });
     } finally {
       if (saved === undefined) delete process.env.VITE_TOR_GATEWAYS;

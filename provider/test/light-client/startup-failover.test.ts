@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { startVerifiedHeaderSource, type VerifiedHeaderSource } from "../../src/light-client/header-source.ts";
+import { HeaderSourceNotReadyError, startVerifiedHeaderSource, type VerifiedHeaderSource } from "../../src/light-client/header-source.ts";
 import type { RecordedResponse } from "../helpers/fixture-fetch.ts";
 import fixture from "../fixtures/mainnet-light-client.json" with { type: "json" };
+import { TransportUnavailableError } from "../../src/transport/anon-transport.ts";
 
 const recorded = fixture.responses as Record<string, RecordedResponse>;
 const checkpoint = { root: fixture.checkpoint.root as `0x${string}`, epoch: fixture.checkpoint.epoch };
@@ -34,6 +35,36 @@ function response(path: string, invalidSignature = false): Response {
 }
 
 describe("recorded BLS startup failover", () => {
+  it.each(["bootstrap", "head"])("preserves terminal worker failure during %s without another startup attempt", async phase => {
+    fixtureClock();
+    const failure = new TransportUnavailableError("failed");
+    const attempts: number[] = [];
+    await expect(startVerifiedHeaderSource({
+      network: "mainnet", checkpoint, beaconUrl: beacons[0]!, beaconUrls: [beacons[1]!], readyTimeoutMs: 1500,
+      fetch: async () => { throw new Error("use attempt fetch"); },
+      fetchForAttempt: attempt => {
+        attempts.push(attempt);
+        return async input => {
+          const path = new URL(input instanceof Request ? input.url : String(input)).pathname;
+          if (phase === "head" && path === bootstrapPath) return response(path);
+          throw failure;
+        };
+      },
+    })).rejects.toBe(failure);
+    expect(attempts).toEqual([1]);
+  });
+
+  it("normalizes malformed bootstrap startup failure while preserving the cause", async () => {
+    fixtureClock();
+    const failure = await startVerifiedHeaderSource({
+      network: "mainnet", checkpoint, beaconUrl: beacons[0]!, beaconUrls: Object.freeze([]), startupAttempts: 1,
+      fetch: async () => new Response("{}", { headers: { "content-type": "application/json" } }), readyTimeoutMs: 1000,
+    }).catch(error => error);
+    expect(failure).toBeInstanceOf(HeaderSourceNotReadyError);
+    expect(failure.cause).toBeInstanceOf(Error);
+    expect(failure.message).toContain("light client did not become ready");
+  });
+
   it("uses the healthy second beacon after a failed first bootstrap, with a new fetch attempt", async () => {
     fixtureClock();
     const requests: { attempt: number; origin: string; signal: AbortSignal }[] = [];
@@ -125,8 +156,9 @@ describe("recorded BLS startup failover", () => {
       fetch: async (_input, init) => { signals.push(init!.signal!); return new Promise(resolve => { release = resolve; }); },
       readyTimeoutMs: 1000,
     });
-    const stopped = expect(pending).rejects.toThrow("provider closed");
-    controller.abort(new Error("provider closed"));
+    const reason = new Error("provider closed");
+    const stopped = expect(pending).rejects.toBe(reason);
+    controller.abort(reason);
     await stopped;
     release(response(bootstrapPath));
     await new Promise(resolve => setTimeout(resolve, 30));

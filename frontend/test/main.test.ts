@@ -5,6 +5,10 @@ import type { DeRPCStatus } from "@derpc/provider";
 import page from "../index.html?raw";
 
 const harness = vi.hoisted(() => ({
+  traffic: undefined as DeRPCStatus["traffic"],
+  networkStatus: undefined as DeRPCStatus["network"],
+  transportStatus: { state: "booting" } as DeRPCStatus["transport"],
+  operatorStatus: [] as DeRPCStatus["operators"],
   onStatus: undefined as ((status: unknown) => void) | undefined,
   setOperators: vi.fn(),
   setRouting: vi.fn(),
@@ -27,7 +31,7 @@ vi.mock("@derpc/provider", () => ({
   createDeRPC: (opts: { onStatus: (status: unknown) => void }) => {
     harness.onStatus = opts.onStatus;
     harness.initialOptions = opts as unknown as Record<string, unknown>;
-    const status = () => ({ worker: { name: "tor" }, checkpoint: { epoch: 1 }, transport: { state: "booting" }, lightClient: { state: "waiting" }, pin: { state: "waiting-for-operators" }, operators: [], routing: harness.routingStatus });
+    const status = () => ({ worker: { name: "tor" }, checkpoint: { epoch: 1 }, transport: harness.transportStatus, lightClient: { state: "waiting" }, pin: { state: "waiting-for-operators" }, operators: harness.operatorStatus, routing: harness.routingStatus, traffic: harness.traffic, network: harness.networkStatus });
     harness.getStatus = status;
     return {
       ready: Promise.resolve(),
@@ -61,6 +65,10 @@ beforeEach(async () => {
     if (operators) harness.setOperators(operators);
   });
   harness.routingStatus = undefined;
+  harness.traffic = undefined;
+  harness.networkStatus = undefined;
+  harness.transportStatus = { state: "booting" };
+  harness.operatorStatus = [];
   harness.refreshDirectory.mockReset();
   harness.verifiedCall.mockReset();
   document.body.innerHTML = page.match(/<body>([\s\S]*)<\/body>/)![1].replace(/<script[\s\S]*?<\/script>/g, "");
@@ -112,6 +120,124 @@ async function importLifecycle(file: Pick<File, "size" | "text">) {
 }
 
 describe("demo page status rendering", () => {
+  it("labels worker logs as diagnostics and leaves transport state and controls authoritative", async () => {
+    (document.querySelector("#operators input") as HTMLInputElement).checked = true;
+    document.getElementById("operators")!.dispatchEvent(new Event("change"));
+    document.getElementById("use-operators")!.click();
+    await vi.advanceTimersByTimeAsync(0);
+    const disabledBefore = (document.getElementById("read-again") as HTMLButtonElement).disabled;
+    const chosenBefore = document.getElementById("choice-status")!.textContent;
+    (harness.initialOptions!.onWorkerLog as (line: unknown) => void)({ level: "warn", text: "all gateways failed: dial timed out" });
+    harness.onStatus?.(harness.getStatus!());
+    expect(document.getElementById("worker-status")!.textContent).toContain("worker log reports a gateway dial failure");
+    expect(document.getElementById("worker-status")!.textContent).toContain("waiting for transport status");
+    expect((document.getElementById("read-again") as HTMLButtonElement).disabled).toBe(disabledBefore);
+    expect(document.getElementById("choice-status")!.textContent).toBe(chosenBefore);
+    expect(harness.transportStatus.state).toBe("booting");
+    harness.transportStatus = { state: "ready" };
+    harness.onStatus?.(harness.getStatus!());
+    expect(document.getElementById("worker-status")!.textContent).not.toContain("gateway dial failure");
+    expect(document.getElementById("worker-status")!.textContent).not.toContain("nothing goes direct");
+  });
+
+  it("explains slow startup without guessing which gateway failed", () => {
+    vi.spyOn(performance, "now").mockReturnValue(performance.now() + 31_000);
+    harness.onStatus?.(harness.getStatus!());
+    const status = document.getElementById("worker-status")!.textContent;
+    expect(status).toContain("taking longer than usual");
+    expect(status).toContain("no direct RPC fallback");
+    expect(status).not.toContain("gateway not answering");
+  });
+
+  it("keeps cumulative fetch attempts separate from retained resource observations", async () => {
+    expect(document.getElementById("traffic")!.textContent).toContain("count unavailable");
+    harness.traffic = { throughWorker: 0 };
+    harness.onStatus?.(harness.getStatus!());
+    expect(document.getElementById("traffic")!.textContent).toContain("0 fetch attempts");
+    harness.traffic = { throughWorker: 12 };
+    harness.networkStatus = { state: "unavailable", error: "last attempt failed" };
+    vi.mocked(performance.getEntriesByType).mockReturnValue([
+      { name: "https://rpc.example/a", entryType: "resource", startTime: 1, duration: 2 },
+      { name: "https://rpc.example/b", entryType: "resource", startTime: 2, duration: 2 },
+    ] as PerformanceEntry[]);
+    await vi.advanceTimersByTimeAsync(3_000);
+    expect(document.getElementById("traffic")!.textContent).toContain("12 fetch attempts handed to Anon-RPC");
+    expect(document.getElementById("traffic")!.textContent).not.toMatch(/%|direct|successful/);
+    expect(document.getElementById("direct-status")!.textContent).toContain("2 HTTP(S) resource timing observations retained");
+    vi.mocked(performance.getEntriesByType).mockReturnValue([]);
+    await vi.advanceTimersByTimeAsync(3_000);
+    expect(document.getElementById("direct-status")!.textContent).toContain("2 HTTP(S)");
+    expect(document.getElementById("traffic")!.textContent).toContain("12 fetch attempts");
+    vi.mocked(performance.getEntriesByType).mockImplementation(() => { throw new Error("timing disabled"); });
+    await vi.advanceTimersByTimeAsync(3_000);
+    expect(document.getElementById("direct-status")!.textContent).toContain("snapshot is unavailable");
+    expect(document.getElementById("direct")!.textContent).toContain("rpc.example");
+    expect(document.getElementById("traffic")!.textContent).toContain("12 fetch attempts");
+    harness.traffic = undefined;
+    harness.onStatus?.(harness.getStatus!());
+    expect(document.getElementById("traffic")!.textContent).toContain("count unavailable");
+  });
+
+  it("shows typed network outages as text, preserves retry controls and clears stale diagnostics on recovery", async () => {
+    (document.querySelector("#operators input") as HTMLInputElement).checked = true;
+    document.getElementById("operators")!.dispatchEvent(new Event("change"));
+    document.getElementById("use-operators")!.click();
+    await vi.advanceTimersByTimeAsync(0);
+    harness.transportStatus = { state: "ready" };
+    harness.networkStatus = { state: "unavailable", error: PAYLOAD };
+    harness.onStatus?.(harness.getStatus!());
+    expectPlainText("network-status");
+    expect(document.getElementById("network-status")!.textContent).toContain("Anonymous request failed");
+    expect(document.getElementById("read-policy-status")!.textContent).toContain("You can retry");
+    expect((document.getElementById("read-again") as HTMLButtonElement).disabled).toBe(false);
+    expect((document.getElementById("run-verified-call") as HTMLButtonElement).disabled).toBe(false);
+    harness.networkStatus = { state: "ok" };
+    harness.onStatus?.(harness.getStatus!());
+    expect(document.getElementById("network-status")!.textContent).toBe("");
+    expect(document.getElementById("read-policy-status")!.textContent).not.toContain("request failed");
+    harness.networkStatus = undefined;
+    harness.onStatus?.(harness.getStatus!());
+    expect(document.getElementById("network-status")!.textContent).toBe("");
+  });
+
+  it("classifies discovered ENS RPC/beacon hosts and custom selected endpoints, even after a directory rotation", async () => {
+    await refreshOperators([{ ...pluralOperators()[0], beaconUrl: "https://custom-beacon.example/" }]);
+    harness.operatorStatus = [{ id: "custom", url: "https://selected.example/rpc", priority: 0, state: "eligible" }];
+    vi.mocked(performance.getEntriesByType).mockReturnValue([
+      { name: "https://east.example/rpc", entryType: "resource", startTime: 1, duration: 2 },
+      { name: "https://custom-beacon.example/bootstrap", entryType: "resource", startTime: 2, duration: 2 },
+      { name: "https://selected.example/rpc", entryType: "resource", startTime: 3, duration: 2 },
+    ] as PerformanceEntry[]);
+    await vi.advanceTimersByTimeAsync(3_000);
+    const classified = () => [...document.querySelectorAll("#direct tr")].map(row => row.textContent);
+    expect(classified()).toEqual([
+      expect.stringContaining("east.exampleRPC/beacon resource"),
+      expect.stringContaining("custom-beacon.exampleRPC/beacon resource"),
+      expect.stringContaining("selected.exampleRPC/beacon resource"),
+    ]);
+    harness.operatorStatus = [];
+    await refreshOperators([]);
+    vi.mocked(performance.getEntriesByType).mockReturnValue([]);
+    await vi.advanceTimersByTimeAsync(3_000);
+    expect(classified().every(row => row?.includes("RPC/beacon resource"))).toBe(true);
+  });
+
+  it("shows a network-unavailable attempt without blaming or penalizing its selected endpoint", () => {
+    harness.transportStatus = { state: "ready" };
+    harness.operatorStatus = [{ id: "bootstrap", url: "https://rpc.example/", priority: 0, state: "eligible" }];
+    harness.networkStatus = { state: "unavailable", error: "anonymous fetch failed" };
+    const emit = harness.initialOptions!.onPoolEvent as (event: unknown) => void;
+    emit({ type: "attempt", endpoint: "bootstrap", attempt: 1, at: 1_000 });
+    emit({ type: "network-unavailable", endpoint: "bootstrap", attempt: 1, at: 2_000 });
+    harness.onStatus?.(harness.getStatus!());
+    expect(document.querySelector("#pool-events li")!.className).toBe("warn");
+    expect(document.querySelector("#pool-events li")!.textContent).toContain("no operator verdict");
+    expect(document.getElementById("pool")!.textContent).toContain("0 rejected · 0 unavailable");
+    expect(document.getElementById("pool")!.textContent).not.toContain("Read unavailable");
+    expect(document.getElementById("pool")!.textContent).not.toContain("Checking a selected read");
+    expect(document.getElementById("network-status")!.textContent).toContain("Anonymous request failed");
+  });
+
   it("selects every endpoint under one operator checkbox and restricts automatic routing by operator identity", async () => {
     const endpoints = pluralOperators();
     await refreshOperators(endpoints);
