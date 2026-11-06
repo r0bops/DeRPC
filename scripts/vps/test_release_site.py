@@ -203,7 +203,7 @@ class ReleaseTests(unittest.TestCase):
             self.publish()
         self.assertFalse((self.state / "publication.json").exists())
 
-    def test_watermark_is_persisted_before_publish_and_exact_success_retry_is_idempotent(self):
+    def test_watermark_is_persisted_before_publish_and_exact_retry_republishes(self):
         self.pin()
         def inspect_pending():
             state = self.state_record()
@@ -214,7 +214,7 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(result["status"], "published")
         self.assertFalse(result["httpsVerified"])
         self.assertTrue(self.publish()["exactRetry"])
-        self.assertEqual(len(self.fake.published), 1)
+        self.assertEqual(len(self.fake.published), 2)
         self.assertEqual((self.state / "publication.json").stat().st_mode & 0o777, 0o600)
 
     def test_timeout_keeps_watermark_and_allows_only_exact_or_newer_release(self):
@@ -240,6 +240,13 @@ class ReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(release.ReleaseError, "stale or conflicting"):
             self.publish(source=OTHER_SOURCE)
         self.assertEqual(self.state_record()["accepted"]["sourceSha"], SOURCE)
+
+    def test_newer_run_number_does_not_require_ordered_run_ids(self):
+        self.pin()
+        self.publish(10, 100)
+        result = self.publish(11, 99)
+        self.assertEqual(result["accepted"]["runId"], 99)
+        self.assertEqual(result["accepted"]["runNumber"], 11)
 
     def test_mismatching_publish_response_is_uncertain_not_rolled_back(self):
         self.pin()

@@ -176,7 +176,10 @@ class ReleaseSite:
     @staticmethod
     def json_output(result):
         try:
-            return json.loads(result.stdout)
+            value = json.loads(result.stdout)
+            if not isinstance(value, dict):
+                raise ValueError("expected an object")
+            return value
         except (ValueError, TypeError) as error:
             raise ReleaseError("IPFS returned invalid JSON") from error
 
@@ -287,8 +290,10 @@ class ReleaseSite:
         proposed = request.release_tuple()
         if proposed == accepted:
             return True
+        # GitHub run_number increases for this workflow; run_id is unique but
+        # is not documented as ordered. Reuse of a run ID is only an exact retry.
         if (request.run_number <= accepted["runNumber"]
-                or request.run_id <= accepted["runId"]):
+                or request.run_id == accepted["runId"]):
             raise ReleaseError("stale or conflicting release; accepted watermark is retained")
         return False
 
@@ -306,12 +311,11 @@ class ReleaseSite:
             raise ReleaseError("matching validated pin receipt is required before publication")
         self.check_identity()
         self.check_pin(request.cid)
-        if exact_retry and previous.get("status") == "published":
-            return {**previous, "exactRetry": True}
         state = {"schemaVersion": 1, "ipnsName": IPNS_NAME,
                  "accepted": request.release_tuple(), "status": "pending",
-                 "acceptedAt": previous["acceptedAt"] if exact_retry else now(),
+                 "acceptedAt": previous.get("acceptedAt", now()) if exact_retry else now(),
                  "attemptedAt": now(), "httpsVerified": False,
+                 "exactRetry": exact_retry,
                  "lastSuccessful": previous.get("lastSuccessful") if previous else None}
         # Persist before network publication. Kubo can save and subsequently
         # republish this target even if the SSH connection or publish call fails.
