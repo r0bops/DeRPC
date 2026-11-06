@@ -1,0 +1,36 @@
+{
+  "started": "2026-11-06T11:34:17.759Z",
+  "localOnly": true,
+  "testChain": 31337,
+  "stages": [
+    "paid image started as unprivileged node with read-only root and mounted durable state",
+    "real mainnet account proof checked against the earlier browser-authenticated state root before voucher10",
+    "container restart preserved accepted voucher and recovered single-writer state lock",
+    "one local-chain closing transaction paid10wei and refunded9990wei"
+  ],
+  "ok": true,
+  "escrow": "0xcce2ddd2cd9835ffd301ab9671e839b40b7e129d",
+  "sessionId": "1",
+  "unauthenticatedStatus": 400,
+  "mainnetProofBlock": 26355418,
+  "provenBalance": "2100461875393149801634459",
+  "settlement": {
+    "highestAmount": "10",
+    "settlement": {
+      "state": "confirmed",
+      "transactionHash": "0x8dc4942cf835d258cc1b437854582b3c7c0f3f7b08d02eca110782d13c807e67",
+      "paid": "10",
+      "refunded": "9990"
+    }
+  },
+  "closedEvent": {
+    "paid": "10",
+    "refunded": "9990"
+  },
+  "limits": [
+    "The settlement chain is an ephemeral local Ganache chain31337, not a public deployment.",
+    "The wrapper was exercised over local loopback for container packaging, not an anonymous browser paid-session run.",
+    "The mainnet proof root came from the separate successful browser light-client observation; this test does not establish a new header.",
+    "Temporary container, durable-state volume, settlement key, and local chain were removed after the test."
+  ]
+}

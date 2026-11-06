@@ -1,0 +1,218 @@
+{
+  "recordedAt": "2026-11-06T11:24:56.399Z",
+  "kind": "live-browser-integration-observation",
+  "runtime": "headless Firefox through pinned tor-js 0.4.4",
+  "operator": {
+    "mode": "demo-proxy",
+    "executionUpstream": "https://rpc.mevblocker.io",
+    "beaconUpstream": "https://ethereum-beacon-api.publicnode.com",
+    "identityName": "check.derpc.eth",
+    "identitySource": "local configuration only; no ENS registration claimed",
+    "samePartyGatewayAndProxy": true
+  },
+  "browserNetwork": {
+    "pageAssetRequestCount": 52,
+    "externalRequests": [
+      "https://cdn.jsdelivr.net/npm/tor-js@0.4.4/dist/anon-rpc-worker.js"
+    ],
+    "noDirectRpcOrBeacon": true
+  },
+  "result": {
+    "ok": true,
+    "syncedMs": 20091,
+    "readMs": 19067,
+    "balance": "2100461875393149801634459",
+    "block": {
+      "network": "mainnet",
+      "slot": 15594944,
+      "blockNumber": 26355418,
+      "blockHash": "0xd4732709695a425e826a0d489c06a4a400d990126ced254d80285edb7684f4b9",
+      "stateRoot": "0xe8a92867df74788d8ad54cc67105ca8b98543790cd0dfdb81b3f29dbd3f4e465",
+      "timestamp": 1793963351,
+      "execution": {
+        "feeRecipient": "0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97",
+        "prevRandao": "0xb1617807d63ce1bed68d3c3194a1339c62cb540873931173fd0d0ba35939d4f2",
+        "gasLimit": "60000000",
+        "baseFeePerGas": "135417621",
+        "excessBlobGas": "185787051"
+      }
+    },
+    "benchmark": [
+      {
+        "route": "onion",
+        "ok": true,
+        "durationMs": 5831
+      },
+      {
+        "route": "exit",
+        "ok": true,
+        "durationMs": 818
+      }
+    ],
+    "personal": {
+      "unauthenticatedStatus": 401,
+      "ownReadVerified": true,
+      "unavailableFallbackVerified": true
+    },
+    "failedClosed": true,
+    "callsAfterClose": 0,
+    "events": [
+      {
+        "type": "attempt",
+        "endpoint": "onion-demo-proxy",
+        "attempt": 1,
+        "at": 1793964319249
+      },
+      {
+        "type": "success",
+        "endpoint": "onion-demo-proxy",
+        "attempt": 1,
+        "at": 1793964332774
+      },
+      {
+        "type": "attempt",
+        "endpoint": "onion-demo-proxy",
+        "attempt": 1,
+        "at": 1793964332774
+      },
+      {
+        "type": "success",
+        "endpoint": "onion-demo-proxy",
+        "attempt": 1,
+        "at": 1793964338318
+      },
+      {
+        "type": "attempt",
+        "endpoint": "personal-node",
+        "attempt": 1,
+        "at": 1793964355971
+      },
+      {
+        "type": "success",
+        "endpoint": "personal-node",
+        "attempt": 1,
+        "at": 1793964361272
+      },
+      {
+        "type": "attempt",
+        "endpoint": "personal-node",
+        "attempt": 1,
+        "at": 1793964361273
+      },
+      {
+        "type": "transient-failure",
+        "endpoint": "personal-node",
+        "attempt": 1,
+        "detail": "Failed to connect: tor: remote stream closed: Protocol error while launching a data stream: Problem building circuit 0.10, while begin stream: Received an END cell with reason DONE",
+        "at": 1793964361854
+      },
+      {
+        "type": "attempt",
+        "endpoint": "onion-demo-proxy",
+        "attempt": 2,
+        "at": 1793964361854
+      },
+      {
+        "type": "success",
+        "endpoint": "onion-demo-proxy",
+        "attempt": 2,
+        "at": 1793964369275
+      },
+      {
+        "type": "attempt",
+        "endpoint": "onion-demo-proxy",
+        "attempt": 1,
+        "at": 1793964369717
+      },
+      {
+        "type": "success",
+        "endpoint": "onion-demo-proxy",
+        "attempt": 1,
+        "at": 1793964391054
+      }
+    ],
+    "workerHash": "0x5b62f358ce7a2b94ee9bc3a0e6a08757db68fa08fc348276f31eda788aec818b",
+    "mismatchedIdentityRejected": true,
+    "verifiedCall": {
+      "value": "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000",
+      "block": {
+        "network": "mainnet",
+        "slot": 15594944,
+        "blockNumber": 26355418,
+        "blockHash": "0xd4732709695a425e826a0d489c06a4a400d990126ced254d80285edb7684f4b9",
+        "stateRoot": "0xe8a92867df74788d8ad54cc67105ca8b98543790cd0dfdb81b3f29dbd3f4e465",
+        "timestamp": 1793963351,
+        "execution": {
+          "feeRecipient": "0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97",
+          "prevRandao": "0xb1617807d63ce1bed68d3c3194a1339c62cb540873931173fd0d0ba35939d4f2",
+          "gasLimit": "60000000",
+          "baseFeePerGas": "135417621",
+          "excessBlobGas": "185787051"
+        }
+      },
+      "durationMs": 21779,
+      "record": {
+        "name": "derpc.eth",
+        "key": "url",
+        "value": ""
+      },
+      "resolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59"
+    }
+  },
+  "limits": [
+    "One latency sample per route; no general performance claim.",
+    "The operator proxies a public node; it is not independent.",
+    "Gateway and wrapper run by the same tester; no gateway/operator separation claim.",
+    "A local wrapper name claim is tested, not a live operator ENS deployment. The existing mainnet ENSv2 resolver is read through verified local execution.",
+    "Payment settlement is outside this run."
+  ],
+  "additionalVerifiedCall": {
+    "recordedAt": "2026-11-06T11:33:34.849Z",
+    "result": {
+      "value": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000001c000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000",
+      "block": {
+        "network": "mainnet",
+        "slot": 15594976,
+        "blockNumber": 26355450,
+        "blockHash": "0x2bcb6fc225dd55acc484061d4844573d9dc25490f366b4fb1738d0f5d8fefa7a",
+        "stateRoot": "0x8b73c0d3b0679689173e26396331bc7ad5e1bebf9159dd948aeb64fd2117e865",
+        "timestamp": 1793963735,
+        "execution": {
+          "feeRecipient": "0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97",
+          "prevRandao": "0x88df225f0e8ca32c3e88406477ff624d89b7a362ffe3f8288bca719b722fcbcf",
+          "gasLimit": "60000000",
+          "baseFeePerGas": "94209483",
+          "excessBlobGas": "182641315"
+        }
+      },
+      "durationMs": 25294,
+      "rpcMethods": {
+        "eth_getProof": 9,
+        "eth_getCode": 3
+      },
+      "records": [
+        {
+          "name": "derpc.eth",
+          "key": "url",
+          "value": ""
+        },
+        {
+          "name": "derpc.eth",
+          "key": "description",
+          "value": ""
+        },
+        {
+          "name": "derpc.eth",
+          "key": "derpc.operators",
+          "value": ""
+        }
+      ],
+      "resolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59"
+    },
+    "externalBrowserRequests": [
+      "https://cdn.jsdelivr.net/npm/tor-js@0.4.4/dist/anon-rpc-worker.js"
+    ],
+    "noDirectRpcOrBeacon": true,
+    "note": "Three text keys batched using the real resolver resolve(multicall) entry point. All records were empty; no published operator directory is claimed."
+  }
+}

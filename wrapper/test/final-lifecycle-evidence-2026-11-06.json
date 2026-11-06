@@ -1,0 +1,48 @@
+{
+  "started": "2026-11-06T12:10:40.115Z",
+  "kind": "final-lifecycle-browser-smoke",
+  "routes": {
+    "consensus": "onion demo proxy via pinned Tor worker",
+    "execution": "MEVBlocker HTTPS via pinned Tor worker and exit"
+  },
+  "runtime": "Firefox with fresh isolated Vite dependency cache",
+  "source": {
+    "lodestarVersion": "1.43.0",
+    "installedPatchHash": "a0da4dcf9be9e10813ec2f8f1715c1585e52aa0a3acef83758c480ba944b775d",
+    "installedLodestarSha256": "178d862e9021c3cd8b9c42b4b62e7d05a2a278269cff569c01268955aadd0704",
+    "patchSha256": "a0da4dcf9be9e10813ec2f8f1715c1585e52aa0a3acef83758c480ba944b775d",
+    "providerApiSha256": "69579dd3865eb4b3568c8f743241581507bb27b3950d72f8d0ab7c39fa332edc",
+    "headerSourceSha256": "64ec68f4cb018b3c8702f839594ee4e7e27c0b35edf32d9c5caab11981861af7"
+  },
+  "loadedBundle": {
+    "sha256": "27568d53adab60e52f2e01a1b69342bdafd60f1d43175cd41335e7c77dd7b193",
+    "lifecycleController": true,
+    "abortGuard": true,
+    "stopAbort": true
+  },
+  "result": {
+    "ok": true,
+    "startupMs": 21147,
+    "readMs": 2473,
+    "blockNumber": 26355641,
+    "blockHash": "0xf2b39b1c6fb94c93fe8928bee93b412246698472567a60ef749b264a4b401729",
+    "stateRoot": "0xe4f9d6e6e7d30aca2eab687b88f284fe59e71b5257c8edb91a7d92b4ea7d1d3a",
+    "balance": "2099631530833508014764969",
+    "pinVerified": true,
+    "closedState": "closed",
+    "closedReadError": "TransportUnavailableError",
+    "callsAfterClose": 0,
+    "postCloseObservationMs": 1000
+  },
+  "externalBrowserRequests": [
+    "https://cdn.jsdelivr.net/npm/tor-js@0.4.4/dist/anon-rpc-worker.js"
+  ],
+  "noDirectRpcOrBeacon": true,
+  "ok": true,
+  "limits": [
+    "One focused startup/read/close observation using the current patched dependency; no full integration battery was repeated.",
+    "Same-party local demo proxy and gateway; no independent operator/privacy claim.",
+    "An earlier attempt using onion execution timed out on identity/proof requests. This final check selected MEVBlocker through the Tor exit explicitly and retained onion consensus; it does not claim final-source onion execution availability.",
+    "The existing user Vite cache was stale, so this check used a temporary isolated server/cache. The user server was not restarted."
+  ]
+}

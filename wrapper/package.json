@@ -7,7 +7,10 @@
     "start": "node src/main.ts",
     "setup": "node src/setup.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p .",
+    "test:live": "node test/live-browser.mjs",
+    "test:restore": "node test/backup-restore.mjs",
+    "test:container": "node test/paid-container.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

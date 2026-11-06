@@ -1,0 +1,67 @@
+{
+  "started": "2026-11-06T11:55:10.725Z",
+  "kind": "encrypted-backup-restore-drill",
+  "stages": [
+    "original Tor volume snapshotted read-only through an age encryption pipe; original Tor restarted",
+    "both onion names regenerated from restored keys with Tor networking disabled; ownership and permissions match",
+    "restored proxy started with recovered configuration; missing/wrong token refused and recovered token accepted",
+    "separate archives retained outside the repository under the owner SSH public recipient; no owner private key was accessed"
+  ],
+  "ageVersion": "1.1.1",
+  "sourceSnapshotStopMs": 1277,
+  "encryptedBytes": {
+    "onion": 8388792,
+    "personalConfiguration": 10440
+  },
+  "wrongRecoveryIdentityRejected": true,
+  "onionRecovery": {
+    "publicHostnameSha256": "89e542514231b4aa69a398afeeb610446fcb9719302f1c7cbf52b87add7f4478",
+    "publicNameRegenerated": true,
+    "personalNameRegenerated": true,
+    "permissionsPreserved": true,
+    "disableNetwork": true,
+    "dockerNetwork": "none"
+  },
+  "proxyRecovery": {
+    "publicIdentitySha256": "88384ff37c83d27ec13015777506bb0d65445f14be4fee1855d19bb3a7b36bb1",
+    "identityMatches": true,
+    "configurationMatches": true,
+    "tokenMatches": true,
+    "tokenMode": "0600",
+    "missingTokenStatus": 401,
+    "wrongTokenStatus": 401,
+    "authenticatedChain": "0x1"
+  },
+  "retainedBackup": {
+    "recipientType": "ssh-ed25519",
+    "recipientFingerprint": "SHA256:BYDHSmwVDG6NkAPvYQz7S5xUVAR7hjIHy98lJ6+IBLk",
+    "artifacts": [
+      {
+        "bytes": 8388804,
+        "sha256": "a4b8e964f20373a30419e93b932fb9078d15c3dc3394d8521bac6e89298c39ab",
+        "mode": "0600",
+        "file": "onion-keys-20261106T115521362Z-1204279.tar.age"
+      },
+      {
+        "bytes": 10452,
+        "sha256": "cc8f0085f3da27c4af3ff7042d7f03df8e84d7c85351aa7fe3d487ae2545d554",
+        "mode": "0600",
+        "file": "personal-config-20261106T115521362Z-1204279.tar.age"
+      }
+    ],
+    "directoryMode": "0700",
+    "ownerPrivateKeyRead": false,
+    "ownerRecipientDecryptionTested": false
+  },
+  "ok": true,
+  "cleanup": {
+    "completed": true
+  },
+  "limits": [
+    "The owner-recipient archives are retained locally, not off-device. Decryption with the owner SSH private key was not attempted; the agent never accessed that key.",
+    "The isolated restore used a disposable age recipient. Its temporary private identity, ciphertext archives and restored plaintext files were deleted afterward.",
+    "Restored Tor ran with DisableNetwork=1 and Docker network none; no descriptor publication or remote onion reachability was tested.",
+    "The recovered proxy used loopback for identity/token checks and its configured public execution upstream for eth_chainId; no new anonymous browser proof was established.",
+    "Payment settlement keys, payment journals and funded delegation ledgers are outside this backup/restore drill."
+  ]
+}

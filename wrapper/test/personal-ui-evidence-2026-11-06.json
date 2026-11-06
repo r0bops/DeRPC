@@ -1,0 +1,25 @@
+{
+  "started": "2026-11-06T11:59:18.493Z",
+  "kind": "live-personal-ui-token-review",
+  "fieldsCleared": true,
+  "verifiedPersonalReads": 3,
+  "workerPinVerified": true,
+  "rawCallRefused": true,
+  "noSecretInDom": true,
+  "noSecretInStorage": true,
+  "noSecretInConsole": true,
+  "noSecretInWorkerLog": true,
+  "noSecretInBrowserHttp": true,
+  "noDevLogAfterPersonalSelection": true,
+  "personalForgottenAfterReload": true,
+  "externalBrowserRequests": [
+    "https://cdn.jsdelivr.net/npm/tor-js@0.4.4/dist/anon-rpc-worker.js"
+  ],
+  "noDirectRpcOrBeacon": true,
+  "ok": true,
+  "limits": [
+    "This observes one Firefox UI session and its browser HTTP/log/storage surfaces; it is not a general memory, browser-extension or infrastructure logging audit.",
+    "The personal token is intentionally delivered inside encrypted worker traffic to its endpoint; the untrusted worker receives request headers.",
+    "The wrapper and gateway belong to the same tester, so this does not establish independent operator/gateway privacy."
+  ]
+}
