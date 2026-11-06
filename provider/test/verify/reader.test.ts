@@ -105,6 +105,26 @@ describe("createVerifiedReader", () => {
     expect(endpoint.calls).toEqual([]);
   });
 
+  it("rejects when the header goes stale after the response arrives", async () => {
+    const endpoint = recordedEndpoint();
+    let fresh = true;
+    const headers = {
+      finalized: () => VERIFIED,
+      assertFresh: () => {
+        if (!fresh) throw new StaleHeaderError("stale after response");
+      },
+    };
+    const send: JsonRpcSend = async (method, params, opts) => {
+      const result = await endpoint.send(method, params, opts);
+      fresh = false;
+      return result;
+    };
+    const reader = createVerifiedReader({ headers, send });
+
+    await expect(reader.getBalance(HOLDER as Hex)).rejects.toBeInstanceOf(StaleHeaderError);
+    expect(endpoint.calls.length).toBeGreaterThan(0);
+  });
+
   it("rejects caller input as InputError without sending a request", async () => {
     const endpoint = recordedEndpoint();
     const reader = createVerifiedReader({ headers: verifiedHeaders, send: endpoint.send });
