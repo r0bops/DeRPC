@@ -107,7 +107,7 @@ export function createVerifiedReader(deps: { headers: HeaderView; send: JsonRpcS
     getStorageAt(address, slot) {
       return getStorageFor(address, slot, address);
     },
-    getTokenBalance(token, holder) {
+    async getTokenBalance(token, holder) {
       assertToken(token);
       assertAddress(holder);
       return getStorageFor(token.address, mappingSlot(holder, token.balanceSlot), holder);

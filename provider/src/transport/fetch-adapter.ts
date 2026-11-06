@@ -47,10 +47,15 @@ async function readBody(res: Response, timeoutMs: number, signal: AbortSignal | 
   const chunks: Uint8Array[] = [];
   let total = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  // cancel() can settle a pending read() with {done:true} before the reject is observed;
+  // reject first, then cancel, and keep a flag so a cancelled empty read still times out.
+  let timedOut = false;
+  const timeoutError = () => new Error(`response body did not finish within ${timeoutMs} ms`);
   const deadline = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
+      timedOut = true;
+      reject(timeoutError());
       void reader.cancel().catch(() => {});
-      reject(new Error(`response body did not finish within ${timeoutMs} ms`));
     }, timeoutMs);
   });
   const aborted = new Promise<never>((_, reject) => {
@@ -66,6 +71,7 @@ async function readBody(res: Response, timeoutMs: number, signal: AbortSignal | 
   try {
     for (;;) {
       const { done, value } = await Promise.race([reader.read(), deadline, aborted]);
+      if (timedOut) throw timeoutError();
       if (done) break;
       total += value.byteLength;
       if (total > maxBytes) {
@@ -74,6 +80,7 @@ async function readBody(res: Response, timeoutMs: number, signal: AbortSignal | 
       }
       chunks.push(value);
     }
+    if (timedOut) throw timeoutError();
   } finally {
     if (timer !== undefined) clearTimeout(timer);
   }

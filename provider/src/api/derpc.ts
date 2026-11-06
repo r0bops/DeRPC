@@ -35,7 +35,7 @@ export type DeRPCOperator = PoolEndpoint & {
 
 export interface DeRPCOptions {
   /** The operators the user chose. Without any, nothing is read until `setOperators`. */
-  operators?: DeRPCOperator[];
+  operators?: readonly DeRPCOperator[];
   /** tor-js gateway (KPS) addresses. Default: the pinned demo gateway. */
   gateways?: string[];
   /** The pinned anonymity worker. Default: tor-js 0.4.4. */
@@ -69,7 +69,7 @@ export interface DeRPC {
   /** Resolves when the worker runs and the light client has verified a fresh header. Rejects for good on failure. */
   readonly ready: Promise<void>;
   /** Replace the user's choice of operators. Exclusions from this session carry over. */
-  setOperators(operators: DeRPCOperator[]): void;
+  setOperators(operators: readonly DeRPCOperator[]): void;
   status(): DeRPCStatus;
   /** Stop the worker. Every pending and later read fails as disconnected (4900); nothing goes direct. */
   close(): void;
@@ -213,7 +213,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     return gateReader(pooledReader(pool, headers), pinCheck!);
   }
 
-  function setOperators(operators: DeRPCOperator[]) {
+  function setOperators(operators: readonly DeRPCOperator[]) {
     pool = operators.length
       ? createPool({
           endpoints: operators.map((o) => ({ ...o })),

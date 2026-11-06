@@ -43,8 +43,9 @@ async function readBody(res: Response, timeoutMs: number, signal?: AbortSignal):
   signal?.addEventListener("abort", onAbort, { once: true });
   const deadline = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
-      void res.body?.cancel().catch(() => {});
+      // Reject before cancel: cancel can settle res.text() and hide the timeout.
       reject(new Error(`response body did not finish within ${timeoutMs} ms`));
+      void res.body?.cancel().catch(() => {});
     }, timeoutMs);
   });
   try {
