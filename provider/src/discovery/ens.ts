@@ -16,7 +16,8 @@ export const registryAbi = parseAbi([
 ]);
 export const resolverAbi = parseAbi(["function resolve(bytes name,bytes data) view returns (bytes)", "function text(bytes32 node,string key) view returns (string)", "function multicall(bytes[] calls) view returns (bytes[])"]);
 export const RECORD_KEYS = ["derpc.endpoints", "derpc.endpoint", "derpc.beacon", "derpc.signer", "derpc.caps", "derpc.gateways", "derpc.price", "derpc.payee", "derpc.paymentChain", "derpc.escrow"] as const;
-const LABEL = /^[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/;
+// Matches the registrar's rule: no hyphens in both the third and fourth places (ENS normalization refuses them).
+const LABEL = /^(?!..--)[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/;
 const MAX_UINT256 = (1n << 256n) - 1n;
 const ISOLATION_KEY = "derpc:operator-discovery";
 export class DiscoveryBlockChangedError extends Error {

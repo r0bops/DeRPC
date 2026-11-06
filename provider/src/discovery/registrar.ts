@@ -51,7 +51,8 @@ export async function readProvenOperators(options: {
     const end = labelBytes.indexOf(0);
     if (end < 1 || end > 31 || labelBytes.slice(end).some(b => b !== 0)) throw new Error("invalid registrar label");
     const label = new TextDecoder("utf-8", { fatal: true }).decode(labelBytes.slice(0, end));
-    if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label)) throw new Error("invalid registrar label");
+    // The registrar refuses hyphens in both the third and fourth places, as ENS normalization does.
+    if (!/^(?!..--)[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label)) throw new Error("invalid registrar label");
     if (labels.has(label)) throw new Error("duplicate registrar label");
     labels.add(label);
     const packed = values[i + 1]!;

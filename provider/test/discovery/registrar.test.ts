@@ -48,6 +48,9 @@ describe("storage-proven operator list", () => {
     await expect(readProvenOperators({ ...options, send: async () => ({ ...fixture.proof(["0x0"]), storageProof: [] }) })).rejects.toThrow("incomplete");
     await expect(readProvenOperators(setup([entry()], { malformed: new Map([[fixture.base, BigInt(toHex("bad.name", { size: 32 }))]]) }).options)).rejects.toThrow("invalid registrar label");
     await expect(readProvenOperators(setup([entry(), entry()]).options)).rejects.toThrow("duplicate");
+    // ENS normalization refuses hyphens in the third and fourth places, and the registrar never lists such a label.
+    await expect(readProvenOperators(setup([entry("ab--cd")]).options)).rejects.toThrow("invalid registrar label");
+    expect((await readProvenOperators(setup([entry("a--b")]).options)).value[0]!.label).toBe("a--b");
   });
   it("checks cancellation before making a request and freshness after receiving proofs", async () => {
     const { options, sent } = setup();
