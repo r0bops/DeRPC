@@ -4,6 +4,7 @@ import {
   assertSlot,
   assertToken,
   createVerifiedReader,
+  type HeaderView,
   type VerifiedReader,
   type VerifiedValue,
 } from "../verify/reader.ts";
@@ -16,7 +17,7 @@ const CACHE_LIMIT = 256;
  * when an answer fails verification or an attempt fails. Verified results are cached by the verified
  * block's hash and the request, on the device only.
  */
-export function createPooledReader(deps: { headers: { finalized(): VerifiedHeader }; pool: Pool }): VerifiedReader {
+export function createPooledReader(deps: { headers: HeaderView; pool: Pool }): VerifiedReader {
   const { headers, pool } = deps;
   const cache = new Map<string, VerifiedValue<unknown>>();
 
@@ -33,7 +34,10 @@ export function createPooledReader(deps: { headers: { finalized(): VerifiedHeade
       const key = `${block.blockHash}|${name}|${JSON.stringify(args).toLowerCase()}`;
       const hit = cache.get(key);
       if (hit) return hit as VerifiedValue<T>;
-      const result = await pool.run((send) => read(createVerifiedReader({ headers, send }), ...args), { account: accountOf(...args) });
+      // Every attempt proves against the same block, so a retry can't silently move the value's
+      // block away from the cache key (#24).
+      const pinned: HeaderView = { finalized: () => block, assertFresh: (header) => headers.assertFresh?.(header) };
+      const result = await pool.run((send) => read(createVerifiedReader({ headers: pinned, send }), ...args), { account: accountOf(...args) });
       if (cache.size >= CACHE_LIMIT) cache.delete(cache.keys().next().value!);
       cache.set(key, result);
       return result;

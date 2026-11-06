@@ -47,11 +47,17 @@ export class MalformedAnswerError extends ProofVerificationError {
   override name = "MalformedAnswerError";
 }
 
+export interface HeaderView {
+  finalized(): VerifiedHeader;
+  /** Throws StaleHeaderError when the block is no longer fresh. */
+  assertFresh?(header: VerifiedHeader): void;
+}
+
 /**
  * Reads that only return values proven against the light client's verified finalized block.
  * Each request names that exact block, and runs under an isolation key for the account it reveals.
  */
-export function createVerifiedReader(deps: { headers: { finalized(): VerifiedHeader }; send: JsonRpcSend }): VerifiedReader {
+export function createVerifiedReader(deps: { headers: HeaderView; send: JsonRpcSend }): VerifiedReader {
   const { headers, send } = deps;
 
   async function proveAccount(address: Hex, slots: Hex[], isolationFor: Hex) {
@@ -71,6 +77,7 @@ export function createVerifiedReader(deps: { headers: { finalized(): VerifiedHea
     const entry = response.storageProof?.[0];
     if (!entry) throw new MalformedAnswerError("eth_getProof returned no storage proof for the requested slot");
     const value = verify(() => verifyStorageProof({ storageRoot: account.storageRoot, slot, proof: entry }));
+    headers.assertFresh?.(block);
     return { value, block };
   }
 
@@ -78,11 +85,13 @@ export function createVerifiedReader(deps: { headers: { finalized(): VerifiedHea
     async getBalance(address) {
       assertAddress(address);
       const { block, account } = await proveAccount(address, [], address);
+      headers.assertFresh?.(block);
       return { value: account.balance, block };
     },
     async getTransactionCount(address) {
       assertAddress(address);
       const { block, account } = await proveAccount(address, [], address);
+      headers.assertFresh?.(block);
       return { value: account.nonce, block };
     },
     async getCode(address) {
@@ -92,6 +101,7 @@ export function createVerifiedReader(deps: { headers: { finalized(): VerifiedHea
       if (code === null || code === undefined) throw new EmptyAnswerError("eth_getCode returned no code");
       if (typeof code !== "string") throw new MalformedAnswerError("eth_getCode returned a non-string code");
       verify(() => verifyCode({ codeHash: account.codeHash, code }));
+      headers.assertFresh?.(block);
       return { value: code, block };
     },
     getStorageAt(address, slot) {
