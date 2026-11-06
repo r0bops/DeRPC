@@ -8,7 +8,10 @@
   },
   "scripts": {
     "dev": "pnpm --filter frontend dev",
+    "dev:web": "pnpm --filter web dev",
     "build": "pnpm --filter frontend build",
+    "build:web": "pnpm --filter web build",
+    "build:site": "pnpm build:web && pnpm build && node scripts/assemble-site.mjs",
     "typecheck": "pnpm -r typecheck"
   }
 }
