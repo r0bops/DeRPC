@@ -48,7 +48,7 @@ export interface DeRPCOptions {
   beaconUrls?: readonly string[];
   /** Startup attempts across the beacon endpoints. Default 4. */
   startupAttempts?: number;
-  /** Timeout for one attempt on one operator. Default 20 s. */
+  /** Timeout for one attempt on one operator. Default 8 s so a slow fallback (Blast) can't stall the budget (#15). */
   attemptTimeoutMs?: number;
   onStatus?: (status: DeRPCStatus) => void;
   onPoolEvent?: (event: PoolEvent) => void;
@@ -102,7 +102,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   const basePin = options.worker ?? TOR_JS_PIN;
   const pin = options.gateways?.length ? withGateways(basePin, options.gateways) : basePin;
   const checkpoint = options.checkpoint ?? MAINNET_CHECKPOINT;
-  const attemptTimeoutMs = options.attemptTimeoutMs ?? 20_000;
+  const attemptTimeoutMs = options.attemptTimeoutMs ?? 8_000;
 
   let transportError: string | undefined;
   let network: DeRPCStatus["network"] = { state: "ok" };
