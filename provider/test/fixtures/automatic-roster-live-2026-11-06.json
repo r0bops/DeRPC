@@ -1,0 +1,316 @@
+{
+  "started": "2026-11-06T14:22:59.443Z",
+  "finished": "2026-11-06T14:23:35.303Z",
+  "kind": "five-public-bootstrap-operator-live-proof-check",
+  "fixtureAccount": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+  "ensNamesAreMock": true,
+  "limits": {
+    "workerStartupMs": 45000,
+    "lightClientStartupMs": 75000,
+    "perOperatorMs": 35000,
+    "perRpcMs": 12000,
+    "onePass": true
+  },
+  "sourcesBefore": {
+    "provider/src/config/mainnet.ts": "411030131139204d1d954ec3ea545caa258ff2dba8fc8e3ab6c9b90ec2639ef9",
+    "provider/src/api/derpc.ts": "e828aa9f814c3141d6a3d5f1e87ded46f2f320e92fd0d5e24123be26a0438785",
+    "provider/src/pool/pool.ts": "560fdf901f0c1bcb83e6755d11d46ea5e32823ab1580b121807ca58ecb5ed9b8",
+    "provider/src/light-client/header-source.ts": "64ec68f4cb018b3c8702f839594ee4e7e27c0b35edf32d9c5caab11981861af7"
+  },
+  "operators": [
+    {
+      "id": "drpc.derpc.eth",
+      "operator": "dRPC",
+      "url": "https://eth.drpc.org",
+      "mockEns": "drpc.derpc.eth",
+      "outcome": "verified",
+      "balance": "2098107098084030561791280",
+      "blockNumber": 26356307,
+      "blockHash": "0xd451a00e547c02a40e0d2c267e9d74f6d6e051f7fa2ce7c344910356a01dfa4f",
+      "stateRoot": "0x8ee8ab048573518d41b28d8b4ecf4eabf04846006f51bba1a68d132c54bfb5fb",
+      "pinState": "verified",
+      "durationMs": 9550,
+      "events": [
+        {
+          "type": "attempt",
+          "endpoint": "drpc.derpc.eth",
+          "attempt": 1,
+          "at": 1793974993027
+        },
+        {
+          "type": "success",
+          "endpoint": "drpc.derpc.eth",
+          "attempt": 1,
+          "at": 1793975000279
+        },
+        {
+          "type": "attempt",
+          "endpoint": "drpc.derpc.eth",
+          "attempt": 1,
+          "at": 1793975000280
+        },
+        {
+          "type": "success",
+          "endpoint": "drpc.derpc.eth",
+          "attempt": 1,
+          "at": 1793975002578
+        }
+      ],
+      "requests": [
+        {
+          "operator": "drpc.derpc.eth",
+          "url": "https://eth.drpc.org",
+          "startedMs": 10984,
+          "method": "eth_getProof",
+          "status": 200,
+          "durationMs": 6998
+        },
+        {
+          "operator": "drpc.derpc.eth",
+          "url": "https://eth.drpc.org",
+          "startedMs": 18237,
+          "method": "eth_getProof",
+          "status": 200,
+          "durationMs": 1894
+        }
+      ],
+      "onlySelectedExecutionEndpoint": true,
+      "state": "eligible",
+      "durationIncludesInitialPinCheck": true
+    },
+    {
+      "id": "mevblocker.derpc.eth",
+      "operator": "MEV Blocker",
+      "url": "https://rpc.mevblocker.io",
+      "mockEns": "mevblocker.derpc.eth",
+      "outcome": "verified",
+      "balance": "2098107098084030561791280",
+      "blockNumber": 26356307,
+      "blockHash": "0xd451a00e547c02a40e0d2c267e9d74f6d6e051f7fa2ce7c344910356a01dfa4f",
+      "stateRoot": "0x8ee8ab048573518d41b28d8b4ecf4eabf04846006f51bba1a68d132c54bfb5fb",
+      "pinState": "verified",
+      "durationMs": 5072,
+      "events": [
+        {
+          "type": "attempt",
+          "endpoint": "mevblocker.derpc.eth",
+          "attempt": 1,
+          "at": 1793975002586
+        },
+        {
+          "type": "success",
+          "endpoint": "mevblocker.derpc.eth",
+          "attempt": 1,
+          "at": 1793975007657
+        }
+      ],
+      "requests": [
+        {
+          "operator": "mevblocker.derpc.eth",
+          "url": "https://rpc.mevblocker.io",
+          "startedMs": 20543,
+          "method": "eth_getProof",
+          "status": 200,
+          "durationMs": 4206
+        }
+      ],
+      "onlySelectedExecutionEndpoint": true,
+      "state": "eligible",
+      "durationIncludesInitialPinCheck": false
+    },
+    {
+      "id": "blockrazor.derpc.eth",
+      "operator": "BlockRazor",
+      "url": "https://eth.blockrazor.xyz",
+      "mockEns": "blockrazor.derpc.eth",
+      "outcome": "verified",
+      "balance": "2098107098084030561791280",
+      "blockNumber": 26356307,
+      "blockHash": "0xd451a00e547c02a40e0d2c267e9d74f6d6e051f7fa2ce7c344910356a01dfa4f",
+      "stateRoot": "0x8ee8ab048573518d41b28d8b4ecf4eabf04846006f51bba1a68d132c54bfb5fb",
+      "pinState": "verified",
+      "durationMs": 2183,
+      "events": [
+        {
+          "type": "attempt",
+          "endpoint": "blockrazor.derpc.eth",
+          "attempt": 1,
+          "at": 1793975007665
+        },
+        {
+          "type": "success",
+          "endpoint": "blockrazor.derpc.eth",
+          "attempt": 1,
+          "at": 1793975009847
+        }
+      ],
+      "requests": [
+        {
+          "operator": "blockrazor.derpc.eth",
+          "url": "https://eth.blockrazor.xyz",
+          "startedMs": 25622,
+          "method": "eth_getProof",
+          "status": 200,
+          "durationMs": 2034
+        }
+      ],
+      "onlySelectedExecutionEndpoint": true,
+      "state": "eligible",
+      "durationIncludesInitialPinCheck": false
+    },
+    {
+      "id": "blast.derpc.eth",
+      "operator": "Blast API",
+      "url": "https://eth-mainnet.public.blastapi.io",
+      "mockEns": "blast.derpc.eth",
+      "outcome": "verified",
+      "balance": "2098107098084030561791280",
+      "blockNumber": 26356307,
+      "blockHash": "0xd451a00e547c02a40e0d2c267e9d74f6d6e051f7fa2ce7c344910356a01dfa4f",
+      "stateRoot": "0x8ee8ab048573518d41b28d8b4ecf4eabf04846006f51bba1a68d132c54bfb5fb",
+      "pinState": "verified",
+      "durationMs": 2898,
+      "events": [
+        {
+          "type": "attempt",
+          "endpoint": "blast.derpc.eth",
+          "attempt": 1,
+          "at": 1793975009861
+        },
+        {
+          "type": "success",
+          "endpoint": "blast.derpc.eth",
+          "attempt": 1,
+          "at": 1793975012757
+        }
+      ],
+      "requests": [
+        {
+          "operator": "blast.derpc.eth",
+          "url": "https://eth-mainnet.public.blastapi.io",
+          "startedMs": 27818,
+          "method": "eth_getProof",
+          "status": 200,
+          "durationMs": 2754
+        }
+      ],
+      "onlySelectedExecutionEndpoint": true,
+      "state": "eligible",
+      "durationIncludesInitialPinCheck": false
+    },
+    {
+      "id": "publicnode.derpc.eth",
+      "operator": "PublicNode",
+      "url": "https://ethereum-rpc.publicnode.com",
+      "mockEns": "publicnode.derpc.eth",
+      "outcome": "verified",
+      "balance": "2098107098084030561791280",
+      "blockNumber": 26356307,
+      "blockHash": "0xd451a00e547c02a40e0d2c267e9d74f6d6e051f7fa2ce7c344910356a01dfa4f",
+      "stateRoot": "0x8ee8ab048573518d41b28d8b4ecf4eabf04846006f51bba1a68d132c54bfb5fb",
+      "pinState": "verified",
+      "durationMs": 2110,
+      "events": [
+        {
+          "type": "attempt",
+          "endpoint": "publicnode.derpc.eth",
+          "attempt": 1,
+          "at": 1793975012768
+        },
+        {
+          "type": "transient-failure",
+          "endpoint": "publicnode.derpc.eth",
+          "attempt": 1,
+          "detail": "ethereum-rpc.publicnode.com: distance to target block exceeds maximum proof window (4444)",
+          "at": 1793975013811
+        },
+        {
+          "type": "attempt",
+          "endpoint": "publicnode.derpc.eth",
+          "attempt": 2,
+          "at": 1793975013811
+        },
+        {
+          "type": "success",
+          "endpoint": "publicnode.derpc.eth",
+          "attempt": 2,
+          "at": 1793975014878
+        }
+      ],
+      "requests": [
+        {
+          "operator": "publicnode.derpc.eth",
+          "url": "https://ethereum-rpc.publicnode.com",
+          "startedMs": 30726,
+          "method": "eth_getProof",
+          "status": 200,
+          "durationMs": 1041
+        },
+        {
+          "operator": "publicnode.derpc.eth",
+          "url": "https://ethereum-rpc.publicnode.com",
+          "startedMs": 31768,
+          "method": "eth_getProof",
+          "status": 200,
+          "durationMs": 914
+        }
+      ],
+      "onlySelectedExecutionEndpoint": true,
+      "state": "eligible",
+      "durationIncludesInitialPinCheck": false
+    }
+  ],
+  "worker": {
+    "ready": true,
+    "durationMs": 3677,
+    "workerHash": "0x5b62f358ce7a2b94ee9bc3a0e6a08757db68fa08fc348276f31eda788aec818b"
+  },
+  "header": {
+    "ready": true,
+    "durationMs": 10974,
+    "header": {
+      "network": "mainnet",
+      "slot": 15595840,
+      "blockNumber": 26356307,
+      "blockHash": "0xd451a00e547c02a40e0d2c267e9d74f6d6e051f7fa2ce7c344910356a01dfa4f",
+      "stateRoot": "0x8ee8ab048573518d41b28d8b4ecf4eabf04846006f51bba1a68d132c54bfb5fb",
+      "timestamp": 1793974103,
+      "execution": {
+        "feeRecipient": "0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97",
+        "prevRandao": "0x2a719805a0a4860df0e16cd9031ea40a093c75cedadda976fa6858adc43feb2a",
+        "gasLimit": "60000000",
+        "baseFeePerGas": "141075998",
+        "excessBlobGas": "185874216"
+      }
+    }
+  },
+  "result": {
+    "completed": true,
+    "closedReadError": "TransportUnavailableError",
+    "requestsAfterClose": 0,
+    "workerPin": "verified"
+  },
+  "noDirectRpcOrBeacon": true,
+  "sourcesAfter": {
+    "provider/src/config/mainnet.ts": "411030131139204d1d954ec3ea545caa258ff2dba8fc8e3ab6c9b90ec2639ef9",
+    "provider/src/api/derpc.ts": "e828aa9f814c3141d6a3d5f1e87ded46f2f320e92fd0d5e24123be26a0438785",
+    "provider/src/pool/pool.ts": "560fdf901f0c1bcb83e6755d11d46ea5e32823ab1580b121807ca58ecb5ed9b8",
+    "provider/src/light-client/header-source.ts": "64ec68f4cb018b3c8702f839594ee4e7e27c0b35edf32d9c5caab11981861af7"
+  },
+  "sourceChangesDuringRun": [],
+  "qualifications": [
+    "One bounded pass from this client through its configured LAN gateway; failures do not establish universal endpoint downtime.",
+    "Only public fixture state (worker specifier and WETH) was requested; each operator was the sole selected execution endpoint during its probe.",
+    "A balance is returned only after the shared worker pin is proven against authenticated mainnet state; later probes reuse a successful pin check but make fresh endpoint-specific proof reads.",
+    "Mock ENS-shaped labels are curated display labels, not registered ENS identities or independently verified ownership.",
+    "Same account/circuit conditions and small sample size do not establish rankings, global reliability, independence or unlinkability.",
+    "No direct RPC or beacon fallback was added; worker bundle acquisition remains a direct CDN request.",
+    "The first endpoint duration includes the initial on-chain worker-pin proof, so endpoint durations are not directly comparable as latency rankings."
+  ],
+  "runtime": {
+    "browser": "Firefox",
+    "transport": "Pinned tor-js worker through the existing local development gateway",
+    "network": "Ethereum mainnet"
+  },
+  "scope": "Endpoint capability observation during automatic-routing integration; endpoints were selected individually. This is not the final automatic-policy runtime test."
+}

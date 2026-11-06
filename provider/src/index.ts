@@ -76,6 +76,7 @@ export {
   type PoolOperationContext,
   type PoolRunOptions,
   type PoolAttemptLifecycle,
+  type SelectionMode,
 } from "./pool/pool.ts";
 export { createPooledReader } from "./pool/pooled-reader.ts";
 export { operatorUrl, checkOperatorIdentity, assertSeparateGateway, type OperatorIdentity } from "./operators/endpoint.ts";
@@ -92,6 +93,8 @@ export {
   type VerifiedCallInput,
   type RefreshDirectoryOptions,
   type PaymentSettlement,
+  type RoutingOptions,
+  type RoutingStatus,
 } from "./api/derpc.ts";
 export {
   createEip1193Provider,
