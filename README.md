@@ -231,7 +231,7 @@ The automated tests use recorded fixtures, generated cryptographic proofs, test 
 
 ### Validation
 
-The November 6 final default workspace run passed **1,004 tests** in the working tree: 65 contracts, 68 payments, 576 provider, 58 wrapper and 237 frontend. Five opt-in ENS fork tests were skipped by that command; affected contract/provider suites also passed in focused follow-up checks. Workspace type checking, the combined static-site build and the offline 46-file release check passed. The [QA report](specs/QA_REPORT.md#local-release-completion--november-6-1612-utc) records scope, live checks and remaining gates. These checks extend the earlier 656-test committed snapshot at `96439b4`; the new work remains uncommitted.
+The November 6 final default workspace run passed **1,004 tests** in the working tree: 65 contracts, 68 payments, 576 provider, 58 wrapper and 237 frontend. Five opt-in ENS fork tests were skipped by that command; affected contract/provider suites also passed in focused follow-up checks. Workspace type checking, the combined static-site build and the offline 46-file release check passed. The [QA report](specs/QA_REPORT.md#local-release-completion--november-6-1612-utc) records scope, live checks and remaining gates. These checks extend the earlier 656-test committed snapshot at `96439b4`; the follow-up implementation is now recorded in local commits.
 
 | Evidence | What was observed |
 |---|---|
