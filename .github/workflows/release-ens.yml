@@ -1,0 +1,124 @@
+name: Release site to IPFS for derpc.eth
+
+# Manual only. Builds and packages the site, pins it on the team's IPFS node and checks public
+# retrieval. It never sends a transaction: the derpc.eth owner sets the contenthash afterwards.
+on:
+  workflow_dispatch:
+    inputs:
+      pin:
+        description: Pin the package on the team IPFS node and check public retrieval
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-ens
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      cid: ${{ steps.site.outputs.cid }}
+      contenthash: ${{ steps.site.outputs.contenthash }}
+    steps:
+      - name: Require the release gateway setting
+        env:
+          TOR_GATEWAYS: ${{ vars.DERPC_TOR_GATEWAYS }}
+        run: |
+          if [ -z "$TOR_GATEWAYS" ]; then
+            echo "::error::Set the repository variable DERPC_TOR_GATEWAYS to the public gateway address(es) for visitors (ip:port:certhash)."
+            exit 1
+          fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - id: site
+        uses: ./.github/actions/site-package
+        with:
+          tor-gateways: ${{ vars.DERPC_TOR_GATEWAYS }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: site-ipfs-release
+          path: web/out/ipfs-release
+          retention-days: 90
+          if-no-files-found: error
+
+  pin:
+    needs: package
+    if: inputs.pin
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Holds the deploy key. Add required reviewers to this environment to approve each release.
+    environment: ens-production
+    env:
+      CID: ${{ needs.package.outputs.cid }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: site-ipfs-release
+          path: release
+      - name: Check the package before sending it
+        run: |
+          expected=$(node -p "require('./release/manifest.json').car.sha256")
+          echo "$expected  release/site.car" | sha256sum --check --strict
+          test "$(node -p "require('./release/manifest.json').cid")" = "$CID"
+      - name: Pin on the team IPFS node
+        env:
+          PIN_HOST: ${{ vars.DERPC_PIN_HOST }}
+          PIN_KNOWN_HOSTS: ${{ vars.DERPC_PIN_KNOWN_HOSTS }}
+          PIN_SSH_KEY: ${{ secrets.DERPC_PIN_SSH_KEY }}
+        run: |
+          for name in PIN_HOST PIN_KNOWN_HOSTS PIN_SSH_KEY; do
+            if [ -z "${!name}" ]; then echo "::error::$name is not configured for the ens-production environment."; exit 1; fi
+          done
+          if ! [[ $PIN_HOST =~ ^[a-z_][a-z0-9_-]*@[A-Za-z0-9.-]+$ ]]; then echo "::error::DERPC_PIN_HOST must look like user@host."; exit 1; fi
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$PIN_SSH_KEY" > ~/.ssh/derpc_pin
+          chmod 600 ~/.ssh/derpc_pin
+          printf '%s\n' "$PIN_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # The key is bound to scripts/vps/pin-car.sh on the host: it accepts one CAR and its root CID.
+          ssh -i ~/.ssh/derpc_pin -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 "$PIN_HOST" "$CID" < release/site.car
+      - name: Remove the deploy key
+        if: always()
+        run: rm -f ~/.ssh/derpc_pin
+      - name: Check public retrieval against the manifest
+        run: node scripts/verify-ipfs.mjs release/manifest.json
+
+  summary:
+    needs: [package, pin]
+    if: always() && needs.package.result == 'success'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Write the owner's next step
+        env:
+          CID: ${{ needs.package.outputs.cid }}
+          CONTENTHASH: ${{ needs.package.outputs.contenthash }}
+          PIN_RESULT: ${{ needs.pin.result }}
+        run: |
+          {
+            echo "## Site packaged for derpc.eth"
+            echo
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Content URI | \`ipfs://$CID\` |"
+            echo "| Contenthash | \`$CONTENTHASH\` |"
+            echo "| Pin and public retrieval | $PIN_RESULT |"
+            echo
+            if [ "$PIN_RESULT" = "success" ]; then
+              echo "Next, by the derpc.eth owner: set the contenthash to \`ipfs://$CID\` on Ethereum mainnet, read it back, then load https://derpc.eth.limo/ and /demo/ in a fresh browser."
+            else
+              echo "Not pinned or not retrievable yet. Do not change the ENS record for this CID."
+            fi
+            echo
+            echo "No transaction was sent by this workflow."
+          } >> "$GITHUB_STEP_SUMMARY"
