@@ -1,0 +1,1536 @@
+{
+  "started": "2026-11-06T16:21:38.686Z",
+  "kind": "local-multiendpoint-onion-failover",
+  "mockEns": true,
+  "paymentsEnabled": false,
+  "publicFixture": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+  "stages": [
+    {
+      "name": "header-verified",
+      "ok": true,
+      "durationMs": 31541,
+      "blockNumber": 26356914
+    },
+    {
+      "name": "warmup-node-a",
+      "ok": true,
+      "endpoint": "multi.derpc.eth#node-a",
+      "value": "2109822848693643701391285",
+      "blockNumber": 26356914,
+      "blockHash": "0x41275a1adb7efb8dd0e1683886f1bf547df8688eafac1df02034fe9375f35050",
+      "observations": [
+        {
+          "id": "multi.derpc.eth#node-a",
+          "operatorId": "multi.derpc.eth",
+          "endpointId": "node-a",
+          "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+          "priority": 0,
+          "operator": "Local multi-node demo proxy",
+          "ens": "multi.derpc.eth",
+          "state": "eligible",
+          "observations": {
+            "attempts": 2,
+            "successes": 2,
+            "failures": 0,
+            "meanVerifiedMs": 11122,
+            "lastObservedAt": 1793982383398
+          },
+          "operatorObservations": {
+            "attempts": 2,
+            "successes": 2,
+            "failures": 0,
+            "meanVerifiedMs": 11122,
+            "lastObservedAt": 1793982383398
+          }
+        }
+      ],
+      "durationMs": 22245,
+      "events": [
+        {
+          "type": "success",
+          "endpoint": "multi.derpc.eth#node-a",
+          "attempt": 1,
+          "at": 1793982374489
+        },
+        {
+          "type": "attempt",
+          "endpoint": "multi.derpc.eth#node-a",
+          "attempt": 1,
+          "at": 1793982374489
+        },
+        {
+          "type": "success",
+          "endpoint": "multi.derpc.eth#node-a",
+          "attempt": 1,
+          "at": 1793982383398
+        }
+      ],
+      "requests": [
+        {
+          "phase": "warmup-node-a",
+          "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+          "atMs": 37118,
+          "method": "eth_getProof",
+          "account": "0x700dA3193D35fA54Cd3fBf29B66f2a2A0385659e",
+          "status": 200,
+          "headersMs": 7377
+        },
+        {
+          "phase": "warmup-node-a",
+          "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+          "atMs": 44918,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "headersMs": 8465
+        }
+      ]
+    },
+    {
+      "name": "warmup-node-b",
+      "ok": true,
+      "endpoint": "multi.derpc.eth#node-b",
+      "value": "2109822848693643701391285",
+      "blockNumber": 26356914,
+      "blockHash": "0x41275a1adb7efb8dd0e1683886f1bf547df8688eafac1df02034fe9375f35050",
+      "observations": [
+        {
+          "id": "multi.derpc.eth#node-b",
+          "operatorId": "multi.derpc.eth",
+          "endpointId": "node-b",
+          "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/rpc",
+          "priority": 0,
+          "operator": "Local multi-node demo proxy",
+          "ens": "multi.derpc.eth",
+          "state": "eligible",
+          "observations": {
+            "attempts": 2,
+            "successes": 1,
+            "failures": 1,
+            "meanVerifiedMs": 9887,
+            "lastObservedAt": 1793982403315
+          },
+          "operatorObservations": {
+            "attempts": 2,
+            "successes": 1,
+            "failures": 1,
+            "meanVerifiedMs": 9887,
+            "lastObservedAt": 1793982403315
+          }
+        }
+      ],
+      "durationMs": 19890,
+      "events": [
+        {
+          "type": "attempt",
+          "endpoint": "multi.derpc.eth#node-b",
+          "attempt": 1,
+          "at": 1793982383426
+        },
+        {
+          "type": "transient-failure",
+          "endpoint": "multi.derpc.eth#node-b",
+          "attempt": 1,
+          "detail": "The operation timed out.",
+          "at": 1793982393428
+        },
+        {
+          "type": "attempt",
+          "endpoint": "multi.derpc.eth#node-b",
+          "attempt": 2,
+          "at": 1793982393428
+        },
+        {
+          "type": "success",
+          "endpoint": "multi.derpc.eth#node-b",
+          "attempt": 2,
+          "at": 1793982403315
+        }
+      ],
+      "requests": [
+        {
+          "phase": "warmup-node-b",
+          "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/rpc",
+          "atMs": 65280,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "headersMs": 7992
+        }
+      ]
+    },
+    {
+      "name": "first-operator-node",
+      "ok": true,
+      "endpoint": "multi.derpc.eth#node-b",
+      "value": "2109822848693643701391285",
+      "blockNumber": 26356914,
+      "blockHash": "0x41275a1adb7efb8dd0e1683886f1bf547df8688eafac1df02034fe9375f35050",
+      "observations": [
+        {
+          "id": "multi.derpc.eth#node-a",
+          "operatorId": "multi.derpc.eth",
+          "endpointId": "node-a",
+          "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+          "priority": 0,
+          "operator": "Local multi-node demo proxy",
+          "ens": "multi.derpc.eth",
+          "state": "eligible",
+          "operatorObservations": {
+            "attempts": 3,
+            "successes": 2,
+            "failures": 1,
+            "meanVerifiedMs": 9938,
+            "lastObservedAt": 1793982413340
+          }
+        },
+        {
+          "id": "multi.derpc.eth#node-b",
+          "operatorId": "multi.derpc.eth",
+          "endpointId": "node-b",
+          "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/rpc",
+          "priority": 0,
+          "operator": "Local multi-node demo proxy",
+          "ens": "multi.derpc.eth",
+          "state": "eligible",
+          "observations": {
+            "attempts": 3,
+            "successes": 2,
+            "failures": 1,
+            "meanVerifiedMs": 9938,
+            "lastObservedAt": 1793982413340
+          },
+          "operatorObservations": {
+            "attempts": 3,
+            "successes": 2,
+            "failures": 1,
+            "meanVerifiedMs": 9938,
+            "lastObservedAt": 1793982413340
+          }
+        }
+      ],
+      "durationMs": 9991,
+      "events": [
+        {
+          "type": "attempt",
+          "endpoint": "multi.derpc.eth#node-b",
+          "attempt": 1,
+          "at": 1793982403351
+        },
+        {
+          "type": "success",
+          "endpoint": "multi.derpc.eth#node-b",
+          "attempt": 1,
+          "at": 1793982413340
+        }
+      ],
+      "requests": [
+        {
+          "phase": "first-operator-node",
+          "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/rpc",
+          "atMs": 73780,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "headersMs": 9359
+        }
+      ]
+    },
+    {
+      "name": "failed-node-to-sibling",
+      "ok": true,
+      "endpoint": "multi.derpc.eth#node-a",
+      "value": "1",
+      "blockNumber": 26356914,
+      "blockHash": "0x41275a1adb7efb8dd0e1683886f1bf547df8688eafac1df02034fe9375f35050",
+      "observations": [
+        {
+          "id": "multi.derpc.eth#node-a",
+          "operatorId": "multi.derpc.eth",
+          "endpointId": "node-a",
+          "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+          "priority": 0,
+          "operator": "Local multi-node demo proxy",
+          "ens": "multi.derpc.eth",
+          "state": "eligible",
+          "observations": {
+            "attempts": 1,
+            "successes": 1,
+            "failures": 0,
+            "meanVerifiedMs": 13282,
+            "lastObservedAt": 1793982428074
+          },
+          "operatorObservations": {
+            "attempts": 5,
+            "successes": 3,
+            "failures": 2,
+            "meanVerifiedMs": 11052.666666666666,
+            "lastObservedAt": 1793982428074
+          }
+        },
+        {
+          "id": "multi.derpc.eth#node-b",
+          "operatorId": "multi.derpc.eth",
+          "endpointId": "node-b",
+          "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/rpc",
+          "priority": 0,
+          "operator": "Local multi-node demo proxy",
+          "ens": "multi.derpc.eth",
+          "state": "cooldown",
+          "until": 1793982474791,
+          "observations": {
+            "attempts": 4,
+            "successes": 2,
+            "failures": 2,
+            "meanVerifiedMs": 9938,
+            "lastObservedAt": 1793982414791
+          },
+          "operatorObservations": {
+            "attempts": 5,
+            "successes": 3,
+            "failures": 2,
+            "meanVerifiedMs": 11052.666666666666,
+            "lastObservedAt": 1793982428074
+          }
+        }
+      ],
+      "durationMs": 14605,
+      "events": [
+        {
+          "type": "attempt",
+          "endpoint": "multi.derpc.eth#node-b",
+          "attempt": 1,
+          "at": 1793982413470
+        },
+        {
+          "type": "transient-failure",
+          "endpoint": "multi.derpc.eth#node-b",
+          "attempt": 1,
+          "detail": "tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion answered HTTP 503: {\"error\":\"controlled test endpoint unavailability\"}",
+          "at": 1793982414791
+        },
+        {
+          "type": "attempt",
+          "endpoint": "multi.derpc.eth#node-a",
+          "attempt": 2,
+          "at": 1793982414791
+        },
+        {
+          "type": "success",
+          "endpoint": "multi.derpc.eth#node-a",
+          "attempt": 2,
+          "at": 1793982428074
+        }
+      ],
+      "requests": [
+        {
+          "phase": "failed-node-to-sibling",
+          "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/rpc",
+          "atMs": 83899,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 503,
+          "headersMs": 1318
+        },
+        {
+          "phase": "failed-node-to-sibling",
+          "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+          "atMs": 85220,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "headersMs": 12828
+        }
+      ]
+    },
+    {
+      "name": "same-account-retains-sibling",
+      "ok": true,
+      "endpoint": "multi.derpc.eth#node-a",
+      "value": "39553310892875263560936207548857176834471854732421237974622739861269930573850",
+      "blockNumber": 26356914,
+      "blockHash": "0x41275a1adb7efb8dd0e1683886f1bf547df8688eafac1df02034fe9375f35050",
+      "observations": [
+        {
+          "id": "multi.derpc.eth#node-a",
+          "operatorId": "multi.derpc.eth",
+          "endpointId": "node-a",
+          "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+          "priority": 0,
+          "operator": "Local multi-node demo proxy",
+          "ens": "multi.derpc.eth",
+          "state": "eligible",
+          "observations": {
+            "attempts": 2,
+            "successes": 2,
+            "failures": 0,
+            "meanVerifiedMs": 13543,
+            "lastObservedAt": 1793982441901
+          },
+          "operatorObservations": {
+            "attempts": 6,
+            "successes": 4,
+            "failures": 2,
+            "meanVerifiedMs": 11740.5,
+            "lastObservedAt": 1793982441901
+          }
+        },
+        {
+          "id": "multi.derpc.eth#node-b",
+          "operatorId": "multi.derpc.eth",
+          "endpointId": "node-b",
+          "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/rpc",
+          "priority": 0,
+          "operator": "Local multi-node demo proxy",
+          "ens": "multi.derpc.eth",
+          "state": "cooldown",
+          "until": 1793982474791,
+          "observations": {
+            "attempts": 4,
+            "successes": 2,
+            "failures": 2,
+            "meanVerifiedMs": 9938,
+            "lastObservedAt": 1793982414791
+          },
+          "operatorObservations": {
+            "attempts": 6,
+            "successes": 4,
+            "failures": 2,
+            "meanVerifiedMs": 11740.5,
+            "lastObservedAt": 1793982441901
+          }
+        }
+      ],
+      "durationMs": 13805,
+      "events": [
+        {
+          "type": "attempt",
+          "endpoint": "multi.derpc.eth#node-a",
+          "attempt": 1,
+          "at": 1793982428096
+        },
+        {
+          "type": "success",
+          "endpoint": "multi.derpc.eth#node-a",
+          "attempt": 1,
+          "at": 1793982441901
+        }
+      ],
+      "requests": [
+        {
+          "phase": "same-account-retains-sibling",
+          "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+          "atMs": 98525,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "headersMs": 13391
+        }
+      ]
+    },
+    {
+      "name": "explicit-fallback-added",
+      "ok": true,
+      "selectedOperatorIds": [
+        "multi.derpc.eth",
+        "mevblocker.derpc.eth"
+      ]
+    },
+    {
+      "name": "operator-unavailable-to-explicit-fallback",
+      "ok": true,
+      "endpoint": "mevblocker.derpc.eth",
+      "value": "39473711962023174749424659199615060097653232135126263878786656434573155500040",
+      "blockNumber": 26356914,
+      "blockHash": "0x41275a1adb7efb8dd0e1683886f1bf547df8688eafac1df02034fe9375f35050",
+      "observations": [
+        {
+          "id": "multi.derpc.eth#node-a",
+          "operatorId": "multi.derpc.eth",
+          "endpointId": "node-a",
+          "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+          "priority": 0,
+          "operator": "Local multi-node demo proxy",
+          "ens": "multi.derpc.eth",
+          "state": "cooldown",
+          "until": 1793982503931,
+          "observations": {
+            "attempts": 3,
+            "successes": 2,
+            "failures": 1,
+            "meanVerifiedMs": 13543,
+            "lastObservedAt": 1793982443931
+          },
+          "operatorObservations": {
+            "attempts": 7,
+            "successes": 4,
+            "failures": 3,
+            "meanVerifiedMs": 11740.5,
+            "lastObservedAt": 1793982443931
+          }
+        },
+        {
+          "id": "multi.derpc.eth#node-b",
+          "operatorId": "multi.derpc.eth",
+          "endpointId": "node-b",
+          "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/rpc",
+          "priority": 0,
+          "operator": "Local multi-node demo proxy",
+          "ens": "multi.derpc.eth",
+          "state": "cooldown",
+          "until": 1793982474791,
+          "observations": {
+            "attempts": 4,
+            "successes": 2,
+            "failures": 2,
+            "meanVerifiedMs": 9938,
+            "lastObservedAt": 1793982414791
+          },
+          "operatorObservations": {
+            "attempts": 7,
+            "successes": 4,
+            "failures": 3,
+            "meanVerifiedMs": 11740.5,
+            "lastObservedAt": 1793982443931
+          }
+        },
+        {
+          "id": "mevblocker.derpc.eth",
+          "operatorId": "mevblocker.derpc.eth",
+          "url": "https://rpc.mevblocker.io",
+          "priority": 2,
+          "operator": "MEV Blocker",
+          "ens": "mevblocker.derpc.eth",
+          "state": "eligible",
+          "observations": {
+            "attempts": 1,
+            "successes": 1,
+            "failures": 0,
+            "meanVerifiedMs": 1290,
+            "lastObservedAt": 1793982445221
+          },
+          "operatorObservations": {
+            "attempts": 1,
+            "successes": 1,
+            "failures": 0,
+            "meanVerifiedMs": 1290,
+            "lastObservedAt": 1793982445221
+          }
+        }
+      ],
+      "durationMs": 3103,
+      "events": [
+        {
+          "type": "attempt",
+          "endpoint": "multi.derpc.eth#node-a",
+          "attempt": 1,
+          "at": 1793982442120
+        },
+        {
+          "type": "transient-failure",
+          "endpoint": "multi.derpc.eth#node-a",
+          "attempt": 1,
+          "detail": "epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion answered HTTP 503: {\"error\":\"controlled test endpoint unavailability\"}",
+          "at": 1793982443931
+        },
+        {
+          "type": "attempt",
+          "endpoint": "mevblocker.derpc.eth",
+          "attempt": 2,
+          "at": 1793982443931
+        },
+        {
+          "type": "success",
+          "endpoint": "mevblocker.derpc.eth",
+          "attempt": 2,
+          "at": 1793982445222
+        }
+      ],
+      "requests": [
+        {
+          "phase": "operator-unavailable-to-explicit-fallback",
+          "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+          "atMs": 112548,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 503,
+          "headersMs": 1807
+        },
+        {
+          "phase": "operator-unavailable-to-explicit-fallback",
+          "url": "https://rpc.mevblocker.io",
+          "atMs": 114360,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "headersMs": 1106
+        }
+      ]
+    },
+    {
+      "name": "optional-generic-verified-ens",
+      "ok": true,
+      "value": {
+        "normalizedName": "derpc.eth",
+        "resolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59",
+        "record": {
+          "type": "text",
+          "key": "url"
+        },
+        "value": "",
+        "block": {
+          "network": "mainnet",
+          "slot": 15596448,
+          "blockNumber": 26356914,
+          "blockHash": "0x41275a1adb7efb8dd0e1683886f1bf547df8688eafac1df02034fe9375f35050",
+          "stateRoot": "0x01504055a262f372346e2f457b73409975fcd54fb35983d7f473d6f7d0af8902",
+          "timestamp": 1793981399,
+          "execution": {
+            "feeRecipient": "0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97",
+            "prevRandao": "0x32c25a555ee731962290c6788b5d798aacf3fea470515d0323b7e68840b28419",
+            "gasLimit": "60000000",
+            "baseFeePerGas": "290403986",
+            "excessBlobGas": "196054031"
+          }
+        }
+      },
+      "durationMs": 26489,
+      "rpcMethods": {
+        "eth_getProof": 14,
+        "eth_getCode": 6
+      },
+      "allRpcViaSelectedFallback": true,
+      "noRemoteEthCall": true
+    }
+  ],
+  "faults": [
+    {
+      "endpointId": "node-b",
+      "at": "2026-11-06T16:26:53.466Z",
+      "behavior": "test-only ingress gate returns503 for /rpc; identity/beacon continue to the actual wrapper"
+    },
+    {
+      "endpointId": "node-a",
+      "at": "2026-11-06T16:27:22.017Z",
+      "behavior": "test-only ingress gate returns503 for /rpc; identity/beacon continue to the actual wrapper"
+    }
+  ],
+  "productionTimeoutOverrides": false,
+  "wrapperSourcesAtStart": {
+    "wrapper/src/main.ts": "266ba617cb419a4bb24a29952b97fda710276057694ee8aa63b9cbe31c6855be",
+    "wrapper/src/payment-chain.ts": "24e1738282f6fa43413e6fa06a7f060aba232149d86bbdd9e3a50a7f96744f8d",
+    "wrapper/src/payment-store.ts": "143b456588ebf74f9c0fb8716febf2f2b26b5321e47b1fe70731960f12ece07c",
+    "wrapper/src/payment.ts": "cfacf0557580ca6b1ed814b92ac74be2135516e205069ad6683bf2ea28975932",
+    "wrapper/src/proxy.ts": "bacf8188ab524a00bff7cef7ce105a4a1f26767d07a21b57cff310bd5423a7ca",
+    "wrapper/src/server.ts": "db8861851cdbcfccc54623b0818a9cd73b59cf1571b54524682390fdc925b5d9",
+    "wrapper/src/setup.ts": "e4349ad278133e1bc27bdfa4e609a9964e610042cdcee10f1b8b16f0d8837d7a"
+  },
+  "torImageId": "sha256:c2de0c95bb894c45bce8f7ff8e9cd9353964a866e113e1be587de6c3586778e0",
+  "setup": {
+    "identities": [
+      {
+        "ens": "multi.derpc.eth",
+        "signer": "0x1111111111111111111111111111111111111111",
+        "chains": [
+          1
+        ],
+        "version": "1",
+        "endpointId": "node-a",
+        "service": "demo-proxy"
+      },
+      {
+        "ens": "multi.derpc.eth",
+        "signer": "0x1111111111111111111111111111111111111111",
+        "chains": [
+          1
+        ],
+        "version": "1",
+        "endpointId": "node-b",
+        "service": "demo-proxy"
+      }
+    ],
+    "candidates": [
+      {
+        "id": "multi.derpc.eth#node-a",
+        "operatorId": "multi.derpc.eth",
+        "endpointId": "node-a",
+        "ens": "multi.derpc.eth",
+        "operator": "Local multi-node demo proxy",
+        "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+        "beaconUrl": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion",
+        "priority": 0,
+        "wrapperIdentity": {
+          "signer": "0x1111111111111111111111111111111111111111"
+        }
+      },
+      {
+        "id": "multi.derpc.eth#node-b",
+        "operatorId": "multi.derpc.eth",
+        "endpointId": "node-b",
+        "ens": "multi.derpc.eth",
+        "operator": "Local multi-node demo proxy",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/rpc",
+        "beaconUrl": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion",
+        "priority": 0,
+        "wrapperIdentity": {
+          "signer": "0x1111111111111111111111111111111111111111"
+        }
+      }
+    ],
+    "otherOperatorForLaterExplicitSelection": {
+      "id": "mevblocker.derpc.eth",
+      "operatorId": "mevblocker.derpc.eth",
+      "ens": "mevblocker.derpc.eth",
+      "operator": "MEV Blocker",
+      "url": "https://rpc.mevblocker.io",
+      "priority": 2
+    },
+    "upstreams": {
+      "execution": "https://rpc.mevblocker.io",
+      "beacon": "https://ethereum-beacon-api.publicnode.com"
+    },
+    "keysInDisposableTmpfs": true
+  },
+  "optionalEnsRequested": true,
+  "sourcesBefore": {
+    "patches/@lodestar__light-client@1.43.0.patch": "a0da4dcf9be9e10813ec2f8f1715c1585e52aa0a3acef83758c480ba944b775d",
+    "pnpm-lock.yaml": "5a40aa9609c6b6c6b5fd061cae020af82c5b336a84efd3e35c94b8a80a705b8a",
+    "provider/src/api/derpc.ts": "e163893601d37c8e3438bdf3a9a2706b79ac26bc8f9b350535f80de58b130a38",
+    "provider/src/api/directory-snapshot.ts": "57dd2f7ee9a4a1fb12efae1661e89c07b09f580043ffc53656524512bc4f069d",
+    "provider/src/api/eip1193.ts": "6a6f59f1a6ee6d877ee53a4ca909983f9345f1b28e61bc107e0c4365770e9e44",
+    "provider/src/api/viem.ts": "d3de0977312a6c0c426e8641f268e22fdc61098aa6a4b20b66765e3a61c3cd00",
+    "provider/src/config/mainnet.ts": "b64e2640a015fa83c3fe12550016f47c4e7f5023b3526fa8be1e9b00feef7ede",
+    "provider/src/discovery/ens.ts": "7cb88d7a3e32ac690a8bee01bf321de3ebc0df27c14dedd179ab80a710c85ac3",
+    "provider/src/discovery/registrar.ts": "f5c37e44434814f930a669b53b6860d5762ec08befdf69e52b362c8539f750d5",
+    "provider/src/execution/index.ts": "61ddd27262533b38b2bc43ebf384ea3206ecb94602d7eaa9287faa71d9eced1d",
+    "provider/src/execution/verified-call.ts": "0c73889387a5fcf7e5f48ebbda236b555465c9048bca09c877b4630568a4fbf8",
+    "provider/src/execution/verified-ens.ts": "d40bf013901bbe0d0c964f30a9ac8ee6332f5af945b40aa6ed296e00c816e0b0",
+    "provider/src/index.ts": "4fd0ed545e9148f9b526db9cdc2432e9254485bcd75c2c1cf925a1587871a647",
+    "provider/src/light-client/header-source.ts": "64ec68f4cb018b3c8702f839594ee4e7e27c0b35edf32d9c5caab11981861af7",
+    "provider/src/light-client/polling-transport.ts": "9b89022bb50eebc6828c368d3aa337a12e0b61e8aadc73b7865eecfb8d309bbe",
+    "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+    "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6",
+    "provider/src/pool/pool.ts": "e97f10c9bf1af5c0df5161194f72c42e1d4de604865cfa1c2917ca995ea863ad",
+    "provider/src/pool/pooled-reader.ts": "84105a315318cc420c11743467c8483b2775655ab765ddce64e87eb387d89318",
+    "provider/src/runtime/node-globals.ts": "1116c2620fae0ff23c93712c35adfc8df3580c9fb3e0284d930708d255d1544f",
+    "provider/src/transport/anon-transport.ts": "23354ea462c3bc793f774376adc7f97343f764cedb4f59ab841b96d2fe7af3e7",
+    "provider/src/transport/fetch-adapter.ts": "b15dd8b0bff219141cdca960248aeb73a96a644662a6b2bd4a785138cd74a944",
+    "provider/src/transport/json-rpc.ts": "427616e720bf80d963f76aab7d14b2883fad03487993551c522b4140b73757d6",
+    "provider/src/transport/pinned-bootstrap.ts": "0a2f13fe7a9dac7b9ea6d21b6dee62463164962c9171b129525a195e61736b86",
+    "provider/src/transport/response-body.ts": "a0b3d4692e81cee31137bc67c8a9c85dad2732422080053e7917d6c0c810711a",
+    "provider/src/verify/hex.ts": "232116283b53158689e5c54639fc1117c50e15aa6269d8df20b95b432ad1aebd",
+    "provider/src/verify/index.ts": "01ab8cf6e96b699a901eeae381c2f709a5a2a7e0a11a8d64755de9d40a8d3e8c",
+    "provider/src/verify/mpt.ts": "9286c91b2e7789e5b48c976b0580d629f15640be0a6c93b0e900245e2fa1ca71",
+    "provider/src/verify/reader.ts": "6ee290ab8e432e5dc94ea9b77f67dfa238c42d5a5e47a74eb8334ce03cfe8946",
+    "provider/src/verify/rlp.ts": "e300c90787737f64e2587573b6771919caf69719f6ac9121383d75d57fd4e3fa",
+    "provider/src/verify/worker-pin.ts": "e3e0b02c5ee6ec36117e86a806e8232591253679246551d26ccb7b135505b94e",
+    "wrapper/src/main.ts": "266ba617cb419a4bb24a29952b97fda710276057694ee8aa63b9cbe31c6855be",
+    "wrapper/src/payment-chain.ts": "24e1738282f6fa43413e6fa06a7f060aba232149d86bbdd9e3a50a7f96744f8d",
+    "wrapper/src/payment-store.ts": "143b456588ebf74f9c0fb8716febf2f2b26b5321e47b1fe70731960f12ece07c",
+    "wrapper/src/payment.ts": "cfacf0557580ca6b1ed814b92ac74be2135516e205069ad6683bf2ea28975932",
+    "wrapper/src/proxy.ts": "bacf8188ab524a00bff7cef7ce105a4a1f26767d07a21b57cff310bd5423a7ca",
+    "wrapper/src/server.ts": "db8861851cdbcfccc54623b0818a9cd73b59cf1571b54524682390fdc925b5d9",
+    "wrapper/src/setup.ts": "e4349ad278133e1bc27bdfa4e609a9964e610042cdcee10f1b8b16f0d8837d7a",
+    "wrapper/test/multiendpoint-live.mjs": "f44aa3f6de4f0e677290859435b956ed05bd0ec3bd08752f0dde3272b56efc7f"
+  },
+  "sourceTreeHashBefore": "2a36bdd13303c0633507a94dffa31d48788080c4ff515e29ce8af8b123ae7e86",
+  "browserVersion": "firefox/156.0.1",
+  "loadedLodestar": {
+    "sha256": "f106b23e42cc07f486ca382500c366c36998f1d2ffb14ef7ae5a0c2c794a592a",
+    "lifecycleGuard": true
+  },
+  "result": {
+    "ok": true,
+    "startupMs": 31541,
+    "firstEndpoint": "multi.derpc.eth#node-b",
+    "siblingEndpoint": "multi.derpc.eth#node-a",
+    "fallbackEndpoint": "mevblocker.derpc.eth",
+    "pinVerified": true,
+    "operatorIds": [
+      "multi.derpc.eth",
+      "mevblocker.derpc.eth"
+    ],
+    "selection": {
+      "selection": "manual",
+      "source": "explicit"
+    },
+    "executionStayedWithinChoices": true,
+    "consensusStayedOnOwnedOnions": true,
+    "ensResolution": {
+      "ok": true,
+      "value": {
+        "normalizedName": "derpc.eth",
+        "resolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59",
+        "record": {
+          "type": "text",
+          "key": "url"
+        },
+        "value": "",
+        "block": {
+          "network": "mainnet",
+          "slot": 15596448,
+          "blockNumber": 26356914,
+          "blockHash": "0x41275a1adb7efb8dd0e1683886f1bf547df8688eafac1df02034fe9375f35050",
+          "stateRoot": "0x01504055a262f372346e2f457b73409975fcd54fb35983d7f473d6f7d0af8902",
+          "timestamp": 1793981399,
+          "execution": {
+            "feeRecipient": "0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97",
+            "prevRandao": "0x32c25a555ee731962290c6788b5d798aacf3fea470515d0323b7e68840b28419",
+            "gasLimit": "60000000",
+            "baseFeePerGas": "290403986",
+            "excessBlobGas": "196054031"
+          }
+        }
+      },
+      "durationMs": 26489,
+      "rpcMethods": {
+        "eth_getProof": 14,
+        "eth_getCode": 6
+      },
+      "allRpcViaSelectedFallback": true,
+      "noRemoteEthCall": true
+    },
+    "close": {
+      "refused": true,
+      "errorName": "TransportUnavailableError",
+      "callsAfterClose": 0,
+      "observationMs": 1000
+    },
+    "events": [
+      {
+        "type": "attempt",
+        "endpoint": "multi.derpc.eth#node-a",
+        "attempt": 1,
+        "at": 1793982361153
+      },
+      {
+        "type": "success",
+        "endpoint": "multi.derpc.eth#node-a",
+        "attempt": 1,
+        "at": 1793982374489
+      },
+      {
+        "type": "attempt",
+        "endpoint": "multi.derpc.eth#node-a",
+        "attempt": 1,
+        "at": 1793982374489
+      },
+      {
+        "type": "success",
+        "endpoint": "multi.derpc.eth#node-a",
+        "attempt": 1,
+        "at": 1793982383398
+      },
+      {
+        "type": "attempt",
+        "endpoint": "multi.derpc.eth#node-b",
+        "attempt": 1,
+        "at": 1793982383426
+      },
+      {
+        "type": "transient-failure",
+        "endpoint": "multi.derpc.eth#node-b",
+        "attempt": 1,
+        "detail": "The operation timed out.",
+        "at": 1793982393428
+      },
+      {
+        "type": "attempt",
+        "endpoint": "multi.derpc.eth#node-b",
+        "attempt": 2,
+        "at": 1793982393428
+      },
+      {
+        "type": "success",
+        "endpoint": "multi.derpc.eth#node-b",
+        "attempt": 2,
+        "at": 1793982403315
+      },
+      {
+        "type": "attempt",
+        "endpoint": "multi.derpc.eth#node-b",
+        "attempt": 1,
+        "at": 1793982403351
+      },
+      {
+        "type": "success",
+        "endpoint": "multi.derpc.eth#node-b",
+        "attempt": 1,
+        "at": 1793982413340
+      },
+      {
+        "type": "attempt",
+        "endpoint": "multi.derpc.eth#node-b",
+        "attempt": 1,
+        "at": 1793982413470
+      },
+      {
+        "type": "transient-failure",
+        "endpoint": "multi.derpc.eth#node-b",
+        "attempt": 1,
+        "detail": "tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion answered HTTP 503: {\"error\":\"controlled test endpoint unavailability\"}",
+        "at": 1793982414791
+      },
+      {
+        "type": "attempt",
+        "endpoint": "multi.derpc.eth#node-a",
+        "attempt": 2,
+        "at": 1793982414791
+      },
+      {
+        "type": "success",
+        "endpoint": "multi.derpc.eth#node-a",
+        "attempt": 2,
+        "at": 1793982428074
+      },
+      {
+        "type": "attempt",
+        "endpoint": "multi.derpc.eth#node-a",
+        "attempt": 1,
+        "at": 1793982428096
+      },
+      {
+        "type": "success",
+        "endpoint": "multi.derpc.eth#node-a",
+        "attempt": 1,
+        "at": 1793982441901
+      },
+      {
+        "type": "attempt",
+        "endpoint": "multi.derpc.eth#node-a",
+        "attempt": 1,
+        "at": 1793982442120
+      },
+      {
+        "type": "transient-failure",
+        "endpoint": "multi.derpc.eth#node-a",
+        "attempt": 1,
+        "detail": "epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion answered HTTP 503: {\"error\":\"controlled test endpoint unavailability\"}",
+        "at": 1793982443931
+      },
+      {
+        "type": "attempt",
+        "endpoint": "mevblocker.derpc.eth",
+        "attempt": 2,
+        "at": 1793982443931
+      },
+      {
+        "type": "success",
+        "endpoint": "mevblocker.derpc.eth",
+        "attempt": 2,
+        "at": 1793982445222
+      },
+      {
+        "type": "attempt",
+        "endpoint": "mevblocker.derpc.eth",
+        "attempt": 1,
+        "at": 1793982446282
+      },
+      {
+        "type": "success",
+        "endpoint": "mevblocker.derpc.eth",
+        "attempt": 1,
+        "at": 1793982471737
+      }
+    ],
+    "traffic": [
+      {
+        "phase": "startup",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/bootstrap/0x35bd26d77ecef24031f37b86d4be488fd66c472eb68c11595ca1f327a9a54f24",
+        "atMs": 4817,
+        "status": 200,
+        "headersMs": 19575
+      },
+      {
+        "phase": "startup",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/optimistic_update",
+        "atMs": 27099,
+        "status": 200,
+        "headersMs": 1555
+      },
+      {
+        "phase": "startup",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/optimistic_update",
+        "atMs": 28689,
+        "status": 200,
+        "headersMs": 1293
+      },
+      {
+        "phase": "startup",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/finality_update",
+        "atMs": 29990,
+        "status": 200,
+        "headersMs": 1338
+      },
+      {
+        "phase": "warmup-node-a",
+        "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/.well-known/derpc.json",
+        "atMs": 31583,
+        "status": 200,
+        "headersMs": 5533
+      },
+      {
+        "phase": "warmup-node-a",
+        "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+        "atMs": 37118,
+        "method": "eth_getProof",
+        "account": "0x700dA3193D35fA54Cd3fBf29B66f2a2A0385659e",
+        "status": 200,
+        "headersMs": 7377
+      },
+      {
+        "phase": "warmup-node-a",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/optimistic_update",
+        "atMs": 43621,
+        "status": 200,
+        "headersMs": 1745
+      },
+      {
+        "phase": "warmup-node-a",
+        "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+        "atMs": 44918,
+        "method": "eth_getProof",
+        "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "status": 200,
+        "headersMs": 8465
+      },
+      {
+        "phase": "warmup-node-a",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/finality_update",
+        "atMs": 45407,
+        "status": 200,
+        "headersMs": 1374
+      },
+      {
+        "phase": "warmup-node-b",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/.well-known/derpc.json",
+        "atMs": 53855,
+        "error": {
+          "name": "TimeoutError",
+          "message": "The operation timed out.",
+          "code": 23
+        },
+        "headersMs": 10000
+      },
+      {
+        "phase": "warmup-node-b",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/optimistic_update",
+        "atMs": 58986,
+        "status": 200,
+        "headersMs": 2765
+      },
+      {
+        "phase": "warmup-node-b",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/finality_update",
+        "atMs": 61780,
+        "status": 200,
+        "headersMs": 1920
+      },
+      {
+        "phase": "warmup-node-b",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/.well-known/derpc.json",
+        "atMs": 63856,
+        "status": 200,
+        "headersMs": 1423
+      },
+      {
+        "phase": "warmup-node-b",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/rpc",
+        "atMs": 65280,
+        "method": "eth_getProof",
+        "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "status": 200,
+        "headersMs": 7992
+      },
+      {
+        "phase": "first-operator-node",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/rpc",
+        "atMs": 73780,
+        "method": "eth_getProof",
+        "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "status": 200,
+        "headersMs": 9359
+      },
+      {
+        "phase": "first-operator-node",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/optimistic_update",
+        "atMs": 75888,
+        "status": 200,
+        "headersMs": 1412
+      },
+      {
+        "phase": "first-operator-node",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/finality_update",
+        "atMs": 77337,
+        "status": 200,
+        "headersMs": 1357
+      },
+      {
+        "phase": "failed-node-to-sibling",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/rpc",
+        "atMs": 83899,
+        "method": "eth_getProof",
+        "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "status": 503,
+        "headersMs": 1318
+      },
+      {
+        "phase": "failed-node-to-sibling",
+        "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+        "atMs": 85220,
+        "method": "eth_getProof",
+        "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "status": 200,
+        "headersMs": 12828
+      },
+      {
+        "phase": "failed-node-to-sibling",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/optimistic_update",
+        "atMs": 90900,
+        "status": 200,
+        "headersMs": 3280
+      },
+      {
+        "phase": "failed-node-to-sibling",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/finality_update",
+        "atMs": 94224,
+        "status": 200,
+        "headersMs": 2818
+      },
+      {
+        "phase": "same-account-retains-sibling",
+        "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+        "atMs": 98525,
+        "method": "eth_getProof",
+        "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "status": 200,
+        "headersMs": 13391
+      },
+      {
+        "phase": "same-account-retains-sibling",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/optimistic_update",
+        "atMs": 109374,
+        "status": 200,
+        "headersMs": 3518
+      },
+      {
+        "phase": "operator-unavailable-to-explicit-fallback",
+        "url": "http://epzhwldtwphj2weun6h44ftwv4rojvdiwi2nmacdmsu4vido52s7cfid.onion/rpc",
+        "atMs": 112548,
+        "method": "eth_getProof",
+        "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "status": 503,
+        "headersMs": 1807
+      },
+      {
+        "phase": "operator-unavailable-to-explicit-fallback",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/finality_update",
+        "atMs": 112932,
+        "status": 200,
+        "headersMs": 1499
+      },
+      {
+        "phase": "operator-unavailable-to-explicit-fallback",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 114360,
+        "method": "eth_getProof",
+        "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "status": 200,
+        "headersMs": 1106
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 116726,
+        "method": "eth_getProof",
+        "account": "0x0000000000000000000000000000000000000000",
+        "status": 200,
+        "headersMs": 861
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 117755,
+        "method": "eth_getProof",
+        "account": "0x06fdd07f007adac667177b46ab2eb9a75132cfd5",
+        "status": 200,
+        "headersMs": 786
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 118692,
+        "method": "eth_getCode",
+        "account": "0x06fdd07f007adac667177b46ab2eb9a75132cfd5",
+        "status": 200,
+        "headersMs": 809
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 119740,
+        "method": "eth_getProof",
+        "account": "0x2553c09be6447beffdb86fa622ad41fb8f77a91e",
+        "status": 200,
+        "headersMs": 1314
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 121210,
+        "method": "eth_getCode",
+        "account": "0x2553c09be6447beffdb86fa622ad41fb8f77a91e",
+        "status": 200,
+        "headersMs": 856
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 122260,
+        "method": "eth_getProof",
+        "account": "0x2553c09be6447beffdb86fa622ad41fb8f77a91e",
+        "status": 200,
+        "headersMs": 1049
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 123499,
+        "method": "eth_getProof",
+        "account": "0x2553c09be6447beffdb86fa622ad41fb8f77a91e",
+        "status": 200,
+        "headersMs": 1123
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 124818,
+        "method": "eth_getProof",
+        "account": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+        "status": 200,
+        "headersMs": 825
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 125829,
+        "method": "eth_getCode",
+        "account": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+        "status": 200,
+        "headersMs": 940
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/optimistic_update",
+        "atMs": 126731,
+        "status": 200,
+        "headersMs": 1706
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 127084,
+        "method": "eth_getProof",
+        "account": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+        "status": 200,
+        "headersMs": 1021
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 128290,
+        "method": "eth_getProof",
+        "account": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+        "status": 200,
+        "headersMs": 1461
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/finality_update",
+        "atMs": 128474,
+        "status": 200,
+        "headersMs": 1447
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 129929,
+        "method": "eth_getProof",
+        "account": "0xf645ba7c7ae2a6915d0b904f39d4aadd7d899b59",
+        "status": 200,
+        "headersMs": 1127
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 131208,
+        "method": "eth_getCode",
+        "account": "0xf645ba7c7ae2a6915d0b904f39d4aadd7d899b59",
+        "status": 200,
+        "headersMs": 1040
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 132250,
+        "method": "eth_getProof",
+        "account": "0x8e77da0dab32efcc1c75e0bd0e17680ebe0b1414",
+        "status": 200,
+        "headersMs": 1059
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 133510,
+        "method": "eth_getCode",
+        "account": "0x8e77da0dab32efcc1c75e0bd0e17680ebe0b1414",
+        "status": 200,
+        "headersMs": 917
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 134587,
+        "method": "eth_getProof",
+        "account": "0xf645ba7c7ae2a6915d0b904f39d4aadd7d899b59",
+        "status": 200,
+        "headersMs": 999
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 135751,
+        "method": "eth_getProof",
+        "account": "0x565b0f456a04ac9b48758190e90030623cff57c5",
+        "status": 200,
+        "headersMs": 979
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 136890,
+        "method": "eth_getCode",
+        "account": "0x565b0f456a04ac9b48758190e90030623cff57c5",
+        "status": 200,
+        "headersMs": 1268
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 138699,
+        "method": "eth_getProof",
+        "account": "0xf645ba7c7ae2a6915d0b904f39d4aadd7d899b59",
+        "status": 200,
+        "headersMs": 1589
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "https://rpc.mevblocker.io",
+        "atMs": 140756,
+        "method": "eth_getProof",
+        "account": "0xf645ba7c7ae2a6915d0b904f39d4aadd7d899b59",
+        "status": 200,
+        "headersMs": 1220
+      },
+      {
+        "phase": "optional-generic-verified-ens",
+        "url": "http://tttafd5tl242jwp6rhqobrnscahzcbsjybi3wx4e5fx3alkgkcuhmrid.onion/eth/v1/beacon/light_client/optimistic_update",
+        "atMs": 142090,
+        "error": {
+          "name": "TransportUnavailableError",
+          "message": "DeRPC: anonymous transport is closed; refusing to send (no direct fallback)"
+        },
+        "headersMs": 106
+      }
+    ]
+  },
+  "externalBrowserRequests": [],
+  "noDirectRpcOrBeacon": true,
+  "servedModules": [
+    {
+      "path": "provider/src/api/derpc.ts",
+      "sha256": "24f8db26dbc5abdf4b01693b937e8cda543bbd1249b74c158caf102b14bb3afd"
+    },
+    {
+      "path": "provider/src/api/directory-snapshot.ts",
+      "sha256": "02cd783deff862bb4834827e1dc270f33590e6225e21ac578d19fa921f5b4784"
+    },
+    {
+      "path": "provider/src/api/eip1193.ts",
+      "sha256": "b5c8114715411c1683a82f2e13e37b61d4ea111b6a0c5bed9e7f2834694ca0df"
+    },
+    {
+      "path": "provider/src/config/mainnet.ts",
+      "sha256": "0bcad8e6cecbe75a6552733194008da75e7a6a1d37d622124ba5b83cbb50ffd1"
+    },
+    {
+      "path": "provider/src/execution/index.ts",
+      "sha256": "84a823705d39113dabe576f9dd5e67f98b1b92622642aec822c67cbf47e7faf7"
+    },
+    {
+      "path": "provider/src/execution/verified-call.ts",
+      "sha256": "861c3270442054d1352aac27b58eef18b0cc2afd84ad9de362cbefdd86cf8157"
+    },
+    {
+      "path": "provider/src/execution/verified-ens.ts",
+      "sha256": "1c2045fbf44fea1150fa7e3678cb0237833eb3642a1556834f88ff0ff013da5e"
+    },
+    {
+      "path": "provider/src/index.ts",
+      "sha256": "c457af54e98a91c88a0bbdc761a294e2098069e62ffdcc50d316b343c5c01db5"
+    },
+    {
+      "path": "provider/src/light-client/header-source.ts",
+      "sha256": "61dbf52dc298c2eb6e6f12635f0502fb8cc76754c2ced08af8d688df823bf4a8"
+    },
+    {
+      "path": "provider/src/light-client/polling-transport.ts",
+      "sha256": "9b0df283e191383ba37857c5e1ecfe4e7540dedf01abeaff1273f4d8dee7ec35"
+    },
+    {
+      "path": "provider/src/operators/endpoint.ts",
+      "sha256": "71df18830627978dd27c1010368f16735a89a459c009d3297ad724c5c2251c65"
+    },
+    {
+      "path": "provider/src/operators/endpoints.ts",
+      "sha256": "d3f35f0935f95c9f2da01d83084f50cb3702449e0d30869f86651a02b2b64c01"
+    },
+    {
+      "path": "provider/src/pool/pool.ts",
+      "sha256": "6f259794d45c8209dc8017c6219662f6176ca863f0c9b5e9931eb8c206d0f313"
+    },
+    {
+      "path": "provider/src/pool/pooled-reader.ts",
+      "sha256": "c234d91b5b24edc6898063d29e6cc187f9effb4d3c3f7b3aa8539f4e67c5c208"
+    },
+    {
+      "path": "provider/src/runtime/node-globals.ts",
+      "sha256": "5d255c344900712d338e0c7d4a2a08415eab8f8719fd834612f41c52879baa92"
+    },
+    {
+      "path": "provider/src/transport/anon-transport.ts",
+      "sha256": "dea1f560aa8551dfab83c53a34dc4ddfdb0612884e35fb246eee2d9073bc4d42"
+    },
+    {
+      "path": "provider/src/transport/fetch-adapter.ts",
+      "sha256": "77a2853d8378b677fed4706ebed8523bb83aa9239298e0ee86e5e21742ae666d"
+    },
+    {
+      "path": "provider/src/transport/json-rpc.ts",
+      "sha256": "48806ad955cd494d7c3cebb751585b2452810200cfa083add12b1855dd909075"
+    },
+    {
+      "path": "provider/src/transport/pinned-bootstrap.ts",
+      "sha256": "240b099006b695b9df6e8e1ca8e7442bdc8667ac050474429334329e2e92379e"
+    },
+    {
+      "path": "provider/src/transport/response-body.ts",
+      "sha256": "1c0ab3de51b29f05c4dc40893f5ab3e44239cec3467e2b3153f67fc10b7737dc"
+    },
+    {
+      "path": "provider/src/verify/hex.ts",
+      "sha256": "036c65c4d902f9c6fb29ae2c7891da7fad92ab42eb2f8f97078dbb1caf7670cb"
+    },
+    {
+      "path": "provider/src/verify/index.ts",
+      "sha256": "5402c5c413575b7ef703ed13fb69a4447ca6f08b6311eacdccdc9f2b9d30795a"
+    },
+    {
+      "path": "provider/src/verify/mpt.ts",
+      "sha256": "24d50f30b8b841482f27b200577774789b3814c8f9ab918e036cd08c04ea96a8"
+    },
+    {
+      "path": "provider/src/verify/reader.ts",
+      "sha256": "db859ea6ab1747f07e05474dfdf0771bc542686ca80e8ece48b6e48d3d32850b"
+    },
+    {
+      "path": "provider/src/verify/rlp.ts",
+      "sha256": "4b19da8474e794fcf6eb2b0d8874e974e3ab4ac64868e8d984b5ffd870c7e72a"
+    },
+    {
+      "path": "provider/src/verify/worker-pin.ts",
+      "sha256": "0e34bc87bfa9914198d1f9c4fafe47d8169e5a9e6053e3905ec58bc0e2e40a85"
+    }
+  ],
+  "ok": true,
+  "maxObservedExecutionConcurrencyAtOwnedGates": 1,
+  "controlled503Counts": {
+    "node-a": 1,
+    "node-b": 1
+  },
+  "cleanedUp": true,
+  "sourceTreeHashAfter": "2a36bdd13303c0633507a94dffa31d48788080c4ff515e29ce8af8b123ae7e86",
+  "changedSources": [],
+  "finished": "2026-11-06T16:27:53.721Z",
+  "limits": [
+    "Same-party test wrappers and gateway, public-node upstreams and mock ENS identities: no public ENS registration or independent-operator claim.",
+    "Both onions are disposable and removed after this check; the private keys never leave container tmpfs.",
+    "Controlled unavailability is an actual HTTP503 returned by a test-only /rpc ingress gate; the actual wrapper identity and beacon routes remain available.",
+    "Initial selection is explicitly limited to one operator; this functional check is not evidence of global ranking or random-selection fairness.",
+    "Sequential public-fixture warmups verify node-a and node-b individually before the group/outage stages; these are reported separately. The additional operator is explicitly selected only for the later cross-operator stage.",
+    "No production timeouts, proof verification, isolation policy or existing service are changed.",
+    "This check does not exercise finalized operator-directory discovery, rotation, delisting or permission changes. Optional generic ENS resolution is a separate result and cannot convert a failed operator test into a pass."
+  ],
+  "evidenceScope": {
+    "gatewayOwnership": "Existing same-party local WebRTC gateway; endpoint and certificate are omitted from this artifact.",
+    "identity": "multi.derpc.eth and mevblocker.derpc.eth are explicit mock labels, not demonstrated public ENS registrations. The two onion wrappers share one configured mock signer.",
+    "upstreams": "Both local wrappers proxy the same public execution and beacon upstreams. The later explicit MEVBlocker fallback reaches the same execution service through a Tor exit.",
+    "networkObservation": "Host transport dispatches plus Firefox page request events; not an operating-system packet capture or an anonymity proof. No external browser HTTP request was observed. Current source includes same-origin content-addressed worker acquisition hints.",
+    "controlledFailure": "HTTP503 at a test-only ingress gate for /rpc; beacon and identity remained live. This models endpoint RPC unavailability, not destruction of the onion service.",
+    "resourceCleanup": "The runner closed its browser, both wrapper processes and ingress gates, and removed the owned Tor container and tmpfs onion keys. Its separate isolated Vite server was stopped after the run; original project services were preserved."
+  },
+  "earlierAttempts": [
+    {
+      "started": "2026-11-06T16:02:32.992Z",
+      "finished": "2026-11-06T16:05:19.755Z",
+      "ok": false,
+      "phase": "startup",
+      "cause": "Worker startup failed before any execution or consensus dispatch because the configured LAN gateway address belonged to the previous network interface. The later run used the existing gateway at the current interface address; no gateway restart.",
+      "transportDispatchCount": 0,
+      "stages": [],
+      "close": {
+        "refused": true,
+        "errorName": "TransportUnavailableError",
+        "callsAfterClose": 0,
+        "observationMs": 1000
+      },
+      "changedSources": [],
+      "cleanedUp": true
+    },
+    {
+      "started": "2026-11-06T16:11:38.936Z",
+      "finished": "2026-11-06T16:14:37.003Z",
+      "ok": false,
+      "phase": "failed-node-to-sibling",
+      "cause": "An initial node-a identity timeout put that endpoint into cooldown. After node-b was deliberately made unavailable, the pool correctly used the already explicitly selected MEVBlocker endpoint. The old harness incorrectly required an unhealthy sibling. The final harness first verifies both siblings independently and adds the external fallback only at the later stage.",
+      "transportDispatchCount": 18,
+      "stages": [
+        {
+          "name": "header-verified",
+          "ok": true,
+          "durationMs": 64691
+        },
+        {
+          "name": "first-operator-node",
+          "ok": true,
+          "endpoint": "multi.derpc.eth#node-b",
+          "durationMs": 29102
+        },
+        {
+          "name": "failed-node-to-sibling",
+          "ok": false,
+          "endpoint": "mevblocker.derpc.eth",
+          "durationMs": 3395
+        }
+      ],
+      "close": {
+        "refused": true,
+        "errorName": "TransportUnavailableError",
+        "callsAfterClose": 0,
+        "observationMs": 1000
+      },
+      "changedSources": [],
+      "cleanedUp": true
+    }
+  ]
+}
