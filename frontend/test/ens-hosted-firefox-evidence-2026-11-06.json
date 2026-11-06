@@ -1,0 +1,995 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-11-06T20:32:02.062Z",
+  "base": "https://derpc.eth.limo",
+  "checker": {
+    "path": "frontend/test/public-gateway-firefox.mjs",
+    "sha256": "dc0597978a9c6a7452a68c970e4f4a4dd8c9c45bbb924c4db372167f915687b3"
+  },
+  "scope": "Fresh Firefox visiting the assembled production site; public WETH/Uniswap fixtures only; no wallet or transaction.",
+  "siteDelivery": "Remote site delivery; record the exact base URL and do not infer ENS publication from a generic IPFS gateway.",
+  "productionTimeoutOverrides": false,
+  "observationLimitMs": 180000,
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "sameDocumentNavigation": false,
+      "title": "Private, verified RPC for Ethereum — DeRPC",
+      "headings": [
+        "Choose your operators.Verify their answers.",
+        "Choice, privacy and proof.",
+        "Add verified reads to your app.",
+        "One operator. A home for your nodes."
+      ],
+      "overflow": false
+    },
+    {
+      "route": "/#/directory",
+      "status": 200,
+      "sameDocumentNavigation": true,
+      "title": "Directory — DeRPC",
+      "headings": [
+        "Choose who serves your reads."
+      ],
+      "overflow": false
+    },
+    {
+      "route": "/#/operate",
+      "status": 200,
+      "sameDocumentNavigation": true,
+      "title": "Run an operator — DeRPC",
+      "headings": [
+        "One operator. Your nodes.",
+        "Choose your operator identity",
+        "Add your node endpoints",
+        "Review the free configuration",
+        "Prepare deployment inputs",
+        "Review your draft",
+        "Review the deployment fragment",
+        "Private routing. Verified answers.",
+        "Run a wrapper on each node host"
+      ],
+      "overflow": false
+    }
+  ],
+  "observations": [
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:11.991Z",
+      "worker": "booting tor-js 0.4.4 via configured gateway (1)… 0.6 s",
+      "lightClient": "waiting for the worker…",
+      "header": "—",
+      "pin": "waiting for the light client…",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+      "poolEvents": "",
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "verifying…",
+            "class": "muted"
+          },
+          {
+            "text": "",
+            "class": ""
+          },
+          {
+            "text": "",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": true,
+      "cutDisabled": true,
+      "liarDisabled": true,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:27.355Z",
+      "worker": "booting tor-js 0.4.4 via configured gateway (1)… 15.9 s",
+      "lightClient": "waiting for the worker…",
+      "header": "—",
+      "pin": "waiting for the light client…",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+      "poolEvents": "",
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "verifying…",
+            "class": "muted"
+          },
+          {
+            "text": "",
+            "class": ""
+          },
+          {
+            "text": "",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": true,
+      "cutDisabled": true,
+      "liarDisabled": true,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:42.839Z",
+      "worker": "ready — tor-js 0.4.4 via configured gateway (1), after 16.3 s",
+      "lightClient": "verified — sync-committee signatures checked, 13.2 s after the worker · pinned checkpoint epoch 487173 (1.1 days old)",
+      "header": "26358155 (13.1 min ago) · hash 0x99eaa292… · state root 0x233873c0…",
+      "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26358155",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+      "poolEvents": "20:32:41 · attempt · mevblocker.derpc.eth · attempt 120:32:41 · success · mevblocker.derpc.eth · attempt 120:32:40 · attempt · mevblocker.derpc.eth · attempt 1",
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "verifying…",
+            "class": "muted"
+          },
+          {
+            "text": "",
+            "class": ""
+          },
+          {
+            "text": "",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": true,
+      "cutDisabled": false,
+      "liarDisabled": true,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    }
+  ],
+  "rtcObservations": [
+    {
+      "label": "before-selection",
+      "at": "2026-11-06T20:32:11.411Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": []
+        }
+      ]
+    },
+    {
+      "label": "boot-and-read",
+      "at": "2026-11-06T20:32:12.034Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "connecting",
+              "iceConnectionState": "checking",
+              "selectedRemotePairs": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "boot-and-read",
+      "at": "2026-11-06T20:32:27.398Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "5ae1bf77",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259727,
+                  "bytesSent": 207428
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "connected",
+              "iceConnectionState": "connected",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "e55b9ad2",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 1548077,
+                  "bytesSent": 57389
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "frameUrl": "about:srcdoc",
+          "instrumented": true,
+          "peers": []
+        }
+      ]
+    },
+    {
+      "label": "boot-and-read",
+      "at": "2026-11-06T20:32:42.884Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "5ae1bf77",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259727,
+                  "bytesSent": 207428
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "connected",
+              "iceConnectionState": "connected",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "e55b9ad2",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 1820446,
+                  "bytesSent": 110391
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "frameUrl": "about:srcdoc",
+          "instrumented": true,
+          "peers": []
+        }
+      ]
+    },
+    {
+      "label": "after-proven-reads",
+      "at": "2026-11-06T20:32:50.659Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "5ae1bf77",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259727,
+                  "bytesSent": 207428
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "connected",
+              "iceConnectionState": "connected",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "e55b9ad2",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 1886459,
+                  "bytesSent": 129048
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "frameUrl": "about:srcdoc",
+          "instrumented": true,
+          "peers": []
+        }
+      ]
+    },
+    {
+      "label": "after-shutdown",
+      "at": "2026-11-06T20:32:52.335Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "5ae1bf77",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259727,
+                  "bytesSent": 207428
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "e55b9ad2",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 1886459,
+                  "bytesSent": 129478
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "httpRequests": [
+    {
+      "phase": "site:/",
+      "at": "2026-11-06T20:32:05.321Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-06T20:32:06.466Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/assets/index-SDb7JX1G.js"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-06T20:32:06.468Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/assets/index-Dp5B9GpU.css"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-06T20:32:07.091Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/derpc-lockup.svg"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-06T20:32:07.156Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/assets/inter-latin-wght-normal-Dx4kXJAl.woff2"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-06T20:32:07.374Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/derpc-logo-512.png"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-06T20:32:07.377Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/favicon.svg"
+    },
+    {
+      "phase": "site:/#/operate",
+      "at": "2026-11-06T20:32:07.681Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/derpc-lockup.svg"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:08.044Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.008Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/demo-El2EPWdN.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.009Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/rolldown-runtime-XKyaHtl9.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.013Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/utils-Bpv4vmSW.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.016Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/sha3-CixuFzsY.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.018Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/endpoints-CRJPe_u7.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.020Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/verify-BrqvWFSp.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.021Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/reader-BwyP6nOv.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.062Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/dist-CM5luU_N.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.062Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/preload-helper-CRzLMJPS.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.063Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/sha2-CsZgHejA.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.063Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/__vite-browser-external-TtGlo6oh.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.063Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/src-C6_sT36k.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.064Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/decodeFunctionResult-DcsPYciO.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.064Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/encodeFunctionResult-32HQ9o_H.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.064Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/localBatchGatewayRequest-BJhp8X5H.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.064Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/secp256k1-DTgEC2Fy.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.065Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/address-CYA4zBVK.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.065Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/mainnet-BJbUCflL.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.065Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/direct-connections-DJicyUPm.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.065Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/src-B3Gfg644.css"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.974Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/derpc-lockup-CiJcctT3.svg"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:09.987Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/inter-latin-wght-normal-Dx4kXJAl.woff2"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:11.254Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/favicon-Try9hxE_.svg"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:11.341Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/dist-DOxWJp2w.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-06T20:32:49.689Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/ccip-B6i2UnlS.js"
+    }
+  ],
+  "httpErrors": [],
+  "requestFailures": [],
+  "pageErrors": [],
+  "console": [],
+  "gates": {
+    "workerReady": true,
+    "lightClientVerified": true,
+    "workerPinVerified": true,
+    "provenRows": true,
+    "rawEthCallRefused": true,
+    "paymentsOff": true,
+    "productionBuild": true,
+    "secureBrowserContext": true,
+    "shutdownRefusal": true,
+    "noHttpAfterClose": true,
+    "noDirectRpcOrBeaconHttp": true,
+    "onlyAllowedExternalHttp": true,
+    "noPageErrors": true,
+    "pagesLoaded": true,
+    "noFailedSiteAssets": true,
+    "vpsGatewayConnected": true,
+    "noCompetingGatewayObserved": true
+  },
+  "qualifications": [
+    "Production timeout settings and worker configuration are unchanged; 180 seconds bounds this observation, not the application.",
+    "External HTTP requests are observed through Firefox/Puppeteer events. This is not a packet capture or proof of all browser background traffic.",
+    "The intended release configures only the VPS gateway. This checker requires its succeeded WebRTC candidate and refuses to pass if another working gateway is observed.",
+    "Test-only RTCPeerConnection observation retains native peer references and inspects selected/nominated candidate-pair statistics in every accessible frame. It does not change ICE options, certificates, gateway configuration, or application deadlines.",
+    "A successful candidate with received traffic proves the gateway connection. Sampled stats are not a complete packet capture; competing observed gateways prevent exclusive gateway attribution.",
+    "Shutdown is checked through real UI refusal and an HTTP observation window; encrypted KPS packet counts are not exposed by this UI."
+  ],
+  "browser": "firefox/156.0.1",
+  "demoHttpStatus": 200,
+  "initialState": {
+    "worker": "booting tor-js 0.4.4 via configured gateway (1)… 0.0 s",
+    "lightClient": "waiting for the worker…",
+    "header": "—",
+    "pin": "proven through your operators once you choose them (the check is a read too)",
+    "choice": "Active: manual · no operators; reads are stopped",
+    "poolEvents": "",
+    "reads": [
+      [
+        {
+          "text": "No reads: apply a nonempty manual choice or automatic routing above.",
+          "class": "muted"
+        }
+      ]
+    ],
+    "paymentsEnabled": false,
+    "paymentControlsDisabled": true,
+    "readDisabled": true,
+    "cutDisabled": true,
+    "liarDisabled": true,
+    "developmentHandlePresent": false,
+    "secureContext": true,
+    "selectedOperators": []
+  },
+  "lastState": {
+    "worker": "closed — anonymous network cut; DeRPC never falls back to a direct request",
+    "lightClient": "stale — DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+    "header": "26358155 (13.3 min ago) · hash 0x99eaa292… · state root 0x233873c0…",
+    "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26358155",
+    "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+    "poolEvents": "20:32:49 · success · mevblocker.derpc.eth · attempt 120:32:45 · attempt · mevblocker.derpc.eth · attempt 120:32:45 · success · blockrazor.derpc.eth · attempt 120:32:43 · attempt · blockrazor.derpc.eth · attempt 120:32:43 · success · mevblocker.derpc.eth · attempt 120:32:41 · attempt · mevblocker.derpc.eth · attempt 120:32:41 · success · mevblocker.derpc.eth · attempt 120:32:40 · attempt · mevblocker.derpc.eth · attempt 1",
+    "reads": [
+      [
+        {
+          "text": "ETH balance of the WETH contract · viem getBalance",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balance of the Uniswap V2 USDC/WETH pair · proven storage slot",
+          "class": ""
+        },
+        {
+          "text": "TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH contract code · viem getCode",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balanceOf through eth_call · viem readContract",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ]
+    ],
+    "paymentsEnabled": false,
+    "paymentControlsDisabled": true,
+    "readDisabled": true,
+    "cutDisabled": true,
+    "liarDisabled": true,
+    "developmentHandlePresent": false,
+    "secureContext": true,
+    "selectedOperators": [
+      "mevblocker.derpc.eth",
+      "blockrazor.derpc.eth"
+    ]
+  },
+  "workerLog": "[warn] [00.190] [tor_memquota::config] Unable to get the total available memory. Using a constant max instead: total available memory is unavailable\n[warn] [00.190] [tor_memquota::config] Unable to get the total available memory. Using a constant max instead: total available memory is unavailable\n[warn] [02.916] Gateway 45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg reports itself as a demo instance: limited capacity, and it may disappear at any time. Run your own gateway for anything real: https://github.com/ethereum/tor-js/tree/main/crates/tor-js-gateway\n",
+  "readState": {
+    "worker": "ready — tor-js 0.4.4 via configured gateway (1), after 16.3 s",
+    "lightClient": "verified — sync-committee signatures checked, 13.2 s after the worker · pinned checkpoint epoch 487173 (1.1 days old)",
+    "header": "26358155 (13.3 min ago) · hash 0x99eaa292… · state root 0x233873c0…",
+    "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26358155",
+    "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+    "poolEvents": "20:32:49 · success · mevblocker.derpc.eth · attempt 120:32:45 · attempt · mevblocker.derpc.eth · attempt 120:32:45 · success · blockrazor.derpc.eth · attempt 120:32:43 · attempt · blockrazor.derpc.eth · attempt 120:32:43 · success · mevblocker.derpc.eth · attempt 120:32:41 · attempt · mevblocker.derpc.eth · attempt 120:32:41 · success · mevblocker.derpc.eth · attempt 120:32:40 · attempt · mevblocker.derpc.eth · attempt 1",
+    "reads": [
+      [
+        {
+          "text": "ETH balance of the WETH contract · viem getBalance",
+          "class": ""
+        },
+        {
+          "text": "2,111,203.1405 ETH · verified at block 26358155",
+          "class": "ok"
+        },
+        {
+          "text": "mevblocker.derpc.eth",
+          "class": ""
+        },
+        {
+          "text": "31.2 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balance of the Uniswap V2 USDC/WETH pair · proven storage slot",
+          "class": ""
+        },
+        {
+          "text": "4,303.0084 WETH · verified at block 26358155",
+          "class": "ok"
+        },
+        {
+          "text": "blockrazor.derpc.eth",
+          "class": ""
+        },
+        {
+          "text": "2.1 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH contract code · viem getCode",
+          "class": ""
+        },
+        {
+          "text": "3124 bytes, matching the proven code hash · verified at block 26358155",
+          "class": "ok"
+        },
+        {
+          "text": "mevblocker.derpc.eth",
+          "class": ""
+        },
+        {
+          "text": "4.5 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balanceOf through eth_call · viem readContract",
+          "class": ""
+        },
+        {
+          "text": "refused as expected — 4200 · ProviderRpcError: eth_call results carry no proof: enable local verified execution explicitly before using this method",
+          "class": "warn"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.8 s",
+          "class": ""
+        }
+      ]
+    ],
+    "paymentsEnabled": false,
+    "paymentControlsDisabled": true,
+    "readDisabled": false,
+    "cutDisabled": false,
+    "liarDisabled": false,
+    "developmentHandlePresent": false,
+    "secureContext": true,
+    "selectedOperators": [
+      "mevblocker.derpc.eth",
+      "blockrazor.derpc.eth"
+    ]
+  },
+  "screenshot": "/tmp/derpc-ens-live-browser.png",
+  "afterClose": {
+    "worker": "closed — anonymous network cut; DeRPC never falls back to a direct request",
+    "lightClient": "stale — DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+    "header": "26358155 (13.3 min ago) · hash 0x99eaa292… · state root 0x233873c0…",
+    "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26358155",
+    "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+    "poolEvents": "20:32:49 · success · mevblocker.derpc.eth · attempt 120:32:45 · attempt · mevblocker.derpc.eth · attempt 120:32:45 · success · blockrazor.derpc.eth · attempt 120:32:43 · attempt · blockrazor.derpc.eth · attempt 120:32:43 · success · mevblocker.derpc.eth · attempt 120:32:41 · attempt · mevblocker.derpc.eth · attempt 120:32:41 · success · mevblocker.derpc.eth · attempt 120:32:40 · attempt · mevblocker.derpc.eth · attempt 1",
+    "reads": [
+      [
+        {
+          "text": "ETH balance of the WETH contract · viem getBalance",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balance of the Uniswap V2 USDC/WETH pair · proven storage slot",
+          "class": ""
+        },
+        {
+          "text": "TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH contract code · viem getCode",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balanceOf through eth_call · viem readContract",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ]
+    ],
+    "paymentsEnabled": false,
+    "paymentControlsDisabled": true,
+    "readDisabled": true,
+    "cutDisabled": true,
+    "liarDisabled": true,
+    "developmentHandlePresent": false,
+    "secureContext": true,
+    "selectedOperators": [
+      "mevblocker.derpc.eth",
+      "blockrazor.derpc.eth"
+    ]
+  },
+  "httpRequestsAfterClose": [],
+  "shutdownObservationMs": 1000,
+  "ownedBrowserClosed": true,
+  "timedOut": false,
+  "externalHttpRequests": [],
+  "observedDirectRpcOrBeaconRequests": [],
+  "unexpectedExternalHttpRequests": [],
+  "gatewayDiagnosticLines": [
+    "[warn] [02.916] Gateway 45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg reports itself as a demo instance: limited capacity, and it may disappear at any time. Run your own gateway for anything real: https://github.com/ethereum/tor-js/tree/main/crates/tor-js-gateway"
+  ],
+  "gatewayAttribution": {
+    "vpsAddressMentioned": true,
+    "demoAddressMentioned": false,
+    "connectedGatewayAddresses": [
+      "45.76.81.48"
+    ],
+    "vpsConnectionProvenByRtcStats": true,
+    "noCompetingGatewayObserved": true,
+    "qualification": "Only succeeded selected/nominated pairs with received bytes count. Native getStats observations establish live gateway connections; warning/configuration log mentions alone do not. Sampling is not exhaustive packet accounting."
+  },
+  "ok": true,
+  "outcome": "Production browser completed proven finalized reads, refused raw eth_call, and refused reads after shutdown.",
+  "finishedAt": "2026-11-06T20:32:52.980Z",
+  "elapsedMs": 50918
+}
