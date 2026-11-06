@@ -1,2 +1,3 @@
 export { queryEscrowAbi, paymentDomain, voucherTypedData, readAuthorizationTypedData, closeAuthorizationTypedData, createSessionKey, assertTestPaymentChain, TEST_PAYMENT_CHAIN_IDS, type PaymentDomain, type ReadKind, type SignedVoucher, type ReadAuthorization } from "./protocol.ts";
 export { PaymentClient, verifyVoucher, type PaymentSessionOptions, type PaymentSessionSnapshot, type PaymentAttempt } from "./client.ts";
+export { CappedDelegationSigner, MemoryDelegationStore, delegatedReadTypedData, type DelegationSession, type DelegatedRead, type DelegationOptions, type DelegationStore, type DelegationState, type DelegationGrant, type DelegationReservation, type DelegationVoucher } from "./delegation.ts";
