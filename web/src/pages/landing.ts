@@ -11,7 +11,7 @@ export function landingPage(): PageResult {
           <div>
             <span class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>Private reads. Verified answers.</span>
             <h1 class="display">Choose your operators.<br /><span class="lime">Verify their answers.</span></h1>
-            <p class="lead">DeRPC routes supported reads through Anon-RPC and checks answers against authenticated Ethereum state. The route hides your IP from the RPC endpoint; the endpoint still sees the query. If the route or proof is missing, the read fails closed.</p>
+            <p class="lead">DeRPC routes supported reads through Anon-RPC and checks answers against authenticated Ethereum state. The route hides your IP from the RPC endpoint; the endpoint still sees the query. If the route or proof is missing, the read fails closed. Ethereum mainnet only; experimental and not ready for production.</p>
             <div class="hero__actions">
               <a class="btn btn--lime" href="#/directory">Browse operators ${icon("arrow")}</a>
               <a class="btn btn--ghost" href="#/operate">Run an operator</a>
@@ -78,11 +78,11 @@ export function landingPage(): PageResult {
             <article class="panel panel--dark">
               <p class="panel__kicker">For app builders</p>
               <h2 class="panel__title">Add verified reads to your app.</h2>
-              <p class="panel__text">Use the local DeRPC provider with viem for supported finalized mainnet reads. Anonymous routing and verification run on the user's device.</p>
+              <p class="panel__text">Use the <code>@derpc/provider</code> workspace package with viem for finalized mainnet reads. It is not published to npm; integrate from the repository. Anonymous routing and verification run on the user's device.</p>
               <ul class="panel__list">
                 <li>${icon("check")}No direct fallback. Ever.</li>
-                <li>${icon("check")}Choose operators and inspect proof results.</li>
                 <li>${icon("check")}Free reads with no wallet connection.</li>
+                <li>${icon("check")}Supported: <code>eth_getBalance</code>, <code>eth_getCode</code>, <code>eth_getStorageAt</code>, <code>eth_getTransactionCount</code>, <code>eth_blockNumber</code>. Pass <code>blockTag: "finalized"</code>; <code>latest</code> is refused.</li>
               </ul>
               <div class="panel__actions">
                 <a class="btn btn--ghost" href="#/directory">Open directory ${icon("arrow")}</a>

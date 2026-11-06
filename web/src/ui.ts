@@ -80,7 +80,7 @@ export function footer(): string {
         <div class="footer__brand">
           <img src="${asset("derpc-lockup.svg")}" alt="DeRPC" width="152" height="36" />
           <p class="footer__desc">Private, verified RPC for Ethereum. Reads through an anonymity network, answers checked by a light client, no direct fallback.</p>
-          <p class="footer__event">ETHGlobal Mumbai 2026 · Interface preview</p>
+          <p class="footer__event">ETHGlobal Mumbai 2026 · Free alpha · Experimental</p>
         </div>
         <nav class="footer__links" aria-label="Footer">
           <a href="${escapeHtml(demoHref())}">Live dashboard</a>
