@@ -51,6 +51,18 @@ describe("createJsonRpcSend", () => {
     await expect(createJsonRpcSend(transport, "https://rpc.test/")("eth_getProof", [], { isolationKey: "k" })).rejects.toThrow("429");
   });
 
+  it("cancels a hanging body when the caller aborts", async () => {
+    const controller = new AbortController();
+    const call = createJsonRpcSend(transportWithHangingBody(), "https://rpc.test/", { timeoutMs: 10_000 })("eth_blockNumber", [], {
+      isolationKey: "k",
+      signal: controller.signal,
+    });
+
+    controller.abort(new Error("caller cancelled"));
+
+    await expect(call).rejects.toThrow("caller cancelled");
+  });
+
   it("times out when the response body never finishes", async () => {
     const send = createJsonRpcSend(transportWithHangingBody(), "https://rpc.test/", { timeoutMs: 25 });
 

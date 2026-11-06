@@ -1,6 +1,6 @@
 // The DeRPC wiring: worker → light client → the user's operators → worker-pin check → reads.
 // The worker and light client are fakes; proofs and the worker pin are real mainnet recordings.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createDeRPCWith, simulatedLyingOperator, type DeRPCOperator, type DeRPCStatus } from "../../src/api/derpc.ts";
 import { ProviderRpcError } from "../../src/api/eip1193.ts";
 import { MAINNET_BEACON_ENDPOINTS, TOR_JS_PIN, type WorkerPin } from "../../src/config/mainnet.ts";
@@ -26,7 +26,7 @@ const balanceOfSpecifier = { method: "eth_getBalance", params: [SPECIFIER, "fina
  * A worker that answers the recorded specifier proofs (slot 1, or no slots) at the recorded block.
  * Like the real transport, it reports "booting" before it returns.
  */
-function fakeTransport(start: StartOptions, opts: { bootError?: Error; pinGate?: Promise<void> } = {}) {
+function fakeTransport(start: StartOptions, opts: { bootError?: Error; pinGate?: Promise<void>; readGate?: Promise<void> } = {}) {
   let state: TransportState = "booting";
   const sent: { url: string; method: string; params: any[] }[] = [];
   const ready = opts.bootError ? Promise.reject(opts.bootError) : Promise.resolve();
@@ -54,6 +54,10 @@ function fakeTransport(start: StartOptions, opts: { bootError?: Error; pinGate?:
         await opts.pinGate;
       }
       if (url.includes("down.example")) throw new NetworkUnavailableError("tor: operation timed out at exit");
+      if (opts.readGate && method === "eth_getProof" && params[1].length === 0) {
+        await opts.readGate;
+        if (state === "failed" || state === "closed") throw new TransportUnavailableError(state);
+      }
       const result = answer(method, params);
       const body = result === undefined ? { jsonrpc: "2.0", id, error: { code: -32000, message: "no recorded answer" } } : { jsonrpc: "2.0", id, result };
       return new Response(JSON.stringify(body), { status: 200 });
@@ -63,7 +67,11 @@ function fakeTransport(start: StartOptions, opts: { bootError?: Error; pinGate?:
       start.onState?.("closed");
     },
   };
-  return { transport, sent };
+  const crash = (error = new Error("worker crashed")) => {
+    state = "failed";
+    start.onState?.("failed", error.message);
+  };
+  return { transport, sent, crash };
 }
 
 function setup(opts: {
@@ -73,6 +81,7 @@ function setup(opts: {
   headersError?: Error;
   headersAfter?: Promise<void>;
   pinGate?: Promise<void>;
+  readGate?: Promise<void>;
   beaconUrls?: string[];
   startupAttempts?: number;
   onStatus?: (s: DeRPCStatus) => void;
@@ -83,7 +92,7 @@ function setup(opts: {
   const headers: VerifiedHeaderSource = { finalized: () => HEADER, assertFresh: () => {}, close: () => {} };
   const derpc = createDeRPCWith(
     {
-      startTransport: (start) => (fake = fakeTransport(start, { bootError: opts.bootError, pinGate: opts.pinGate })).transport,
+      startTransport: (start) => (fake = fakeTransport(start, { bootError: opts.bootError, pinGate: opts.pinGate, readGate: opts.readGate })).transport,
       startHeaders: async (headerOptions) => {
         headerOpts = headerOptions;
         await opts.headersAfter;
@@ -101,7 +110,7 @@ function setup(opts: {
     },
   );
   derpc.ready.catch(() => {});
-  return { derpc, sent: fake.sent, headerOpts: () => headerOpts };
+  return { derpc, sent: fake.sent, headerOpts: () => headerOpts, crash: (error?: Error) => fake.crash(error) };
 }
 
 async function rpcError(promise: Promise<unknown>): Promise<ProviderRpcError> {
@@ -216,6 +225,40 @@ describe("createDeRPC", () => {
     release();
 
     expect(await pending).toBe("0x0");
+  });
+
+  it("fails a read already in flight when close() runs", async () => {
+    let release!: () => void;
+    const readGate = new Promise<void>((resolve) => (release = resolve));
+    const { derpc, sent } = setup({ operators: [A], readGate });
+    await derpc.ready;
+
+    const pending = derpc.provider.request(balanceOfSpecifier);
+    await vi.waitFor(() => expect(sent.some((s) => s.params[1].length === 0)).toBe(true));
+    derpc.close();
+    release();
+
+    const error = await rpcError(pending);
+    expect(error.code).toBe(4900);
+    expect(derpc.status().transport.state).toBe("closed");
+    expect((await rpcError(derpc.provider.request(balanceOfSpecifier))).code).toBe(4900);
+  });
+
+  it("fails a read already in flight when the worker crashes", async () => {
+    let release!: () => void;
+    const readGate = new Promise<void>((resolve) => (release = resolve));
+    const { derpc, sent, crash } = setup({ operators: [A], readGate });
+    await derpc.ready;
+
+    const pending = derpc.provider.request(balanceOfSpecifier);
+    await vi.waitFor(() => expect(sent.some((s) => s.params[1].length === 0)).toBe(true));
+    crash();
+    release();
+
+    const error = await rpcError(pending);
+    expect(error.code).toBe(4900);
+    expect(derpc.status().transport.state).toBe("failed");
+    expect((await rpcError(derpc.provider.request(balanceOfSpecifier))).code).toBe(4900);
   });
 
   it("stops every read once closed, and tells listeners it disconnected", async () => {
