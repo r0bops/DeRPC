@@ -2,7 +2,6 @@
 import {
   createDeRPC,
   simulatedLyingOperator,
-  ENS_NAMES_ARE_MOCK,
   MAINNET_BEACON_ENDPOINTS,
   MAINNET_OPERATORS,
   MAINNET_TOKENS,
@@ -10,16 +9,35 @@ import {
   type DeRPCStatus,
   type PoolEvent,
   type WorkerPin,
+  type DeRPCOperator,
+  operatorUrl,
 } from "@derpc/provider";
 import { derpcTransport } from "@derpc/provider/viem";
-import { createPublicClient, erc20Abi, formatUnits } from "viem";
+import type { PaymentTerms } from "@derpc/provider/discovery";
+import { PaymentClient } from "@derpc/payments";
+import { createPublicClient, erc20Abi, formatUnits, isAddress, type Hex } from "viem";
 import { mainnet } from "viem/chains";
 import { renderStatus as setText, tableRow, textCell, type StatusPart } from "./render.ts";
+import { mountPaymentPanel } from "./payment-panel.ts";
+import { OperatorObservations, renderOperatorDashboard } from "./operator-dashboard.ts";
+import { defaultRouting, eligibleForAutomatic, parseRoutingPreferences, routingOptions, type RoutingMode, type RoutingPreferences } from "./routing-preferences.ts";
 
-type Operator = (typeof MAINNET_OPERATORS)[number];
+type Operator = DeRPCOperator & {
+  source: "bootstrap" | "ens" | "personal"; website?: string; payment?: PaymentTerms; expiry?: number;
+  listVerification?: "proven" | "unverified"; recordVerification?: "proven" | "unverified";
+};
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const pageStarted = performance.now();
 const seconds = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
+
+// The directory and demo share a path in the release bundle, but use separate Vite ports in development.
+document.querySelectorAll<HTMLAnchorElement>("[data-product-page]").forEach(link => {
+  const target = new URL("../", location.href);
+  if (import.meta.env.DEV) { target.port = "5174"; target.pathname = "/"; }
+  target.search = "";
+  target.hash = `#/${link.dataset.productPage}`;
+  link.href = target.href;
+});
 
 // Gateways come from VITE_TOR_GATEWAYS (frontend/.env.local, comma-separated KPS addresses);
 // without it, the tor-js demo gateway pinned in the provider config is used.
@@ -38,41 +56,74 @@ if (fault) document.title = `DeRPC — fault: ${fault}`;
 
 // ---- The user's choice of operators, kept on this device only ----
 const CHOICE_KEY = "derpc:chosen-operators";
+const ROUTING_KEY = "derpc:routing";
+const choiceId = (operator: Operator) => operator.ens ?? operator.id ?? operator.url;
+let available: Operator[] = MAINNET_OPERATORS.map(o => ({ ...o, source: "bootstrap" }));
+let directorySource: "bootstrap" | "ens" = "bootstrap";
+let personalNode: Operator | undefined;
+let sensitiveSession = false;
 function loadChoice(): Operator[] {
   try {
     const saved: unknown = JSON.parse(localStorage.getItem(CHOICE_KEY) ?? "[]");
-    return Array.isArray(saved) ? MAINNET_OPERATORS.filter((o) => saved.includes(o.ens)) : [];
+    return Array.isArray(saved) ? available.filter((o) => saved.includes(choiceId(o))) : [];
   } catch {
     return [];
   }
 }
 function saveChoice(chosen: Operator[]) {
   try {
-    localStorage.setItem(CHOICE_KEY, JSON.stringify(chosen.map((o) => o.ens)));
+    // ENS choices require a fresh proven directory, never a mock bootstrap entry with the same name.
+    localStorage.setItem(CHOICE_KEY, JSON.stringify(chosen.filter(o => o.source === "bootstrap").map(choiceId)));
   } catch {
     // Storage blocked (private window): the choice lasts for this page only.
   }
 }
-let chosen: Operator[] = loadChoice();
+function loadRouting(): RoutingPreferences {
+  try { return parseRoutingPreferences(localStorage.getItem(ROUTING_KEY)); } catch { return defaultRouting(); }
+}
+function persistRouting() {
+  try { localStorage.setItem(ROUTING_KEY, JSON.stringify(activeRouting)); } catch { /* session-only choice */ }
+}
+function automaticOperators(preferences: RoutingPreferences): Operator[] {
+  return available.filter(operator => eligibleForAutomatic(operator) &&
+    (preferences.scope === "all" || preferences.allowedOperators.includes(choiceId(operator))));
+}
+const savedRouting = loadRouting();
+const needsVerifiedRestore = savedRouting.source === "ens";
+let activeRouting = needsVerifiedRestore ? defaultRouting() : savedRouting;
+let chosen: Operator[] = needsVerifiedRestore ? [] : activeRouting.selection === "manual" ? loadChoice() : automaticOperators(activeRouting);
+if (activeRouting.selection === "manual") activeRouting.allowedOperators = chosen.filter(o => o.source !== "personal").map(choiceId);
+// A directory link can suggest a known bootstrap operator. It never changes the live pool or stored choice.
+const requestedOperator = new URLSearchParams(location.search).get("operator");
+let suggestedOperator = MAINNET_OPERATORS.find(operator => operator.ens === requestedOperator)?.ens;
 
 // ---- DeRPC itself ----
 let workerReadyAt: number | undefined;
 let lightClientReadyAt: number | undefined;
 let servedBy: string[] = [];
+let paymentPanel: ReturnType<typeof mountPaymentPanel> | undefined;
+const observations = new OperatorObservations();
+const payments = new PaymentClient({ onChange: () => paymentPanel?.render() });
 
 const derpc = createDeRPC({
   gateways,
   worker,
-  operators: chosen,
+  operators: activeRouting.selection === "manual" ? chosen : available.filter(operator => eligibleForAutomatic(operator)),
+  ...(activeRouting.selection !== "manual" ? { selection: activeRouting.selection, ...(activeRouting.scope === "selected" ? { allowedOperators: activeRouting.allowedOperators } : {}) } : {}),
+  chainId: 1,
+  payments,
+  verifiedCalls: true,
   onStatus: (s) => {
     devLog("status", statusSummary(s));
     renderStatus(s);
   },
   onPoolEvent: (e) => {
+    observations.record(e);
     devLog("pool", { ...e, endpoint: e.endpoint ? label(e.endpoint) : undefined });
     logEvent(e);
   },
   onWorkerLog: (line) => {
+    if (sensitiveSession) return; // personal credentials or paid requests must not enter the development log
     devLog("worker", line);
     const log = $("worker-log");
     log.textContent += `[${line.level}] ${line.text}\n`;
@@ -80,6 +131,12 @@ const derpc = createDeRPC({
   },
 });
 const client = createPublicClient({ chain: mainnet, transport: derpcTransport(derpc) });
+paymentPanel = mountPaymentPanel({
+  payments,
+  settle: (operatorId, close) => derpc.settlePayment(operatorId, { close }),
+  onEnabledChange: (enabled) => { if (enabled) sensitiveSession = true; applyChoice(); },
+  onFunded: (operator) => { if (operator) derpc.registerPaymentOperator(operator.endpoint); applyChoice(); },
+});
 // Dev-only handle for the browser console and automated checks. Not in production builds.
 if (import.meta.env.DEV) (globalThis as Record<string, unknown>).__derpc = { derpc, client };
 
@@ -120,17 +177,7 @@ function renderStatus(s: DeRPCStatus) {
     : p.state === "mismatch" ? [tag("rejected", "bad"), plain(` — ${p.error ?? ""}`)]
     : [tag("not verified yet", "warn"), plain(` — ${p.error ?? ""}; it runs again with the next read`)]);
 
-  $("pool").replaceChildren(
-    ...s.operators.map((o) => {
-      const tier = o.priority < 0 ? "demo" : o.priority === 0 ? "preferred" : "fallback";
-      const css = o.state === "eligible" ? "ok" : o.state === "excluded" ? "bad" : "warn";
-      const name = textCell(label(o.id));
-      if (o.operator) name.append(" ", Object.assign(document.createElement("span"), { className: "muted", textContent: `(${o.operator})` }));
-      const row = tableRow([{ text: tier }, { text: o.state === "excluded" ? "excluded locally" : o.state, className: css }]);
-      row.prepend(name);
-      return row;
-    }),
-  );
+  renderOperatorDashboard({ body: $("pool"), summary: $("pool-summary"), available, chosen, status: s, observations });
 }
 setInterval(() => renderStatus(derpc.status()), 1000);
 
@@ -139,34 +186,213 @@ const operatorsEl = $("operators");
 const useOperatorsBtn = $<HTMLButtonElement>("use-operators");
 const choiceStatusEl = $("choice-status");
 
-operatorsEl.innerHTML = MAINNET_OPERATORS.map((op) => {
-  const id = `op-${op.ens}`;
-  return `<tr>
-    <td><input type="checkbox" id="${id}" value="${op.ens}"${chosen.includes(op) ? " checked" : ""}></td>
-    <td><label for="${id}">${op.ens}</label>${ENS_NAMES_ARE_MOCK ? '<span class="badge" title="placeholder name, not registered on ENS yet">mock</span>' : ""}</td>
-    <td><a href="${op.website}" target="_blank" rel="noopener noreferrer">${op.operator}</a></td>
-    <td>${new URL(op.url).host}</td>
-    <td>${op.priority === 0 ? "proofs worked in every run" : "slower or intermittent"}</td>
-  </tr>`;
-}).join("");
+function renderOperators() {
+  const selected = new Set(chosen.map(choiceId));
+  const suggestion = available.find(operator => operator.source === "bootstrap" && operator.ens === suggestedOperator);
+  if (suggestion) selected.add(choiceId(suggestion));
+  $("operator-suggestion").textContent = suggestion ? `Suggested from the directory: ${suggestion.ens}. Review the choices and press Apply. Your active operators have not changed.` : "";
+  operatorsEl.replaceChildren(...available.map((op, index) => {
+    const id = `operator-${index}`;
+    const checkbox = Object.assign(document.createElement("input"), { type: "checkbox", id, value: choiceId(op), checked: selected.has(choiceId(op)) });
+    const check = document.createElement("td"); check.append(checkbox);
+    const name = document.createElement("td");
+    name.append(Object.assign(document.createElement("label"), { htmlFor: id, textContent: op.ens ?? "My own node" }));
+    if (op.source === "bootstrap") name.append(Object.assign(document.createElement("span"), { className: "badge", textContent: "mock", title: "Bootstrap name; not read from ENS" }));
+    if (op.source === "personal") name.append(Object.assign(document.createElement("span"), { className: "badge", textContent: "private" }));
+    const price = op.payment ? `${op.payment.price} wei · test chain ${op.payment.chainId}` : "Free";
+    const row = document.createElement("tr");
+    row.append(check, name, textCell(op.operator ?? "operator"), textCell(op.source === "personal" ? "Unpublished onion" : new URL(op.url).host), textCell(price));
+    return row;
+  }));
+  updateChoiceButton();
+}
 
 const ticked = () => {
   const names = [...operatorsEl.querySelectorAll<HTMLInputElement>("input:checked")].map((i) => i.value);
-  return MAINNET_OPERATORS.filter((o) => names.includes(o.ens));
+  return available.filter((o) => names.includes(choiceId(o)));
 };
+const routingMode = $<HTMLSelectElement>("routing-mode");
+routingMode.value = activeRouting.selection;
+$<HTMLInputElement>(`routing-scope-${activeRouting.selection === "manual" ? "all" : activeRouting.scope}`).checked = true;
+if (needsVerifiedRestore) $("routing-restore").textContent = "Your saved ENS routing is paused. Select a bootstrap operator to load a proven directory, then apply your routing strategy again. No mock operator replaces a saved ENS identity.";
+
+const MODE_HELP: Record<RoutingMode, string> = {
+  manual: "Manual uses only checked operators. Changes take effect when you press Apply.",
+  balanced: "Balanced weighs recent successful reads and latency on this device. Existing assignments stay with their operator until failure.",
+  fastest: "Fastest prefers lower latency observed on this device. It learns from verified reads and does not race your query across operators.",
+  reliable: "Reliable prefers successful verified reads observed on this device. It learns from reads; no global reputation score is implied.",
+};
+function proposedRouting(): RoutingPreferences {
+  const selection = routingMode.value as RoutingMode;
+  const scope = selection === "manual" ? "selected" : $<HTMLInputElement>("routing-scope-selected").checked ? "selected" : "all";
+  return { version: 1, selection, scope, source: directorySource, allowedOperators: scope === "selected" ? ticked().filter(o => o.source !== "personal").map(choiceId) : [] };
+}
+function pendingOperators(preferences: RoutingPreferences): Operator[] {
+  return preferences.selection === "manual" ? ticked() : automaticOperators(preferences);
+}
 function updateChoiceButton() {
-  const n = ticked().length;
-  useOperatorsBtn.disabled = n === 0;
-  useOperatorsBtn.textContent = n === 0 ? "Choose at least one operator" : `Use these ${n} operator${n === 1 ? "" : "s"}`;
+  const proposed = proposedRouting();
+  const next = pendingOperators(proposed);
+  $("routing-scope").hidden = proposed.selection === "manual";
+  operatorsEl.querySelectorAll<HTMLInputElement>("input[type=checkbox]").forEach(input => {
+    input.disabled = proposed.selection !== "manual" && proposed.scope === "all";
+  });
+  $("routing-help").textContent = MODE_HELP[proposed.selection];
+  const freeCount = available.filter(operator => eligibleForAutomatic(operator)).length;
+  $("routing-source").textContent = directorySource === "bootstrap"
+    ? `Source: curated bootstrap list · mock ENS names. ${freeCount} eligible free operator(s), Ethereum mainnet only.`
+    : `Source: ENS directory. ${freeCount} free operator(s) have proven list and records; unverified records cannot enter automatic selection.`;
+  const same = proposed.selection === activeRouting.selection && proposed.scope === activeRouting.scope &&
+    (proposed.scope === "all" || proposed.allowedOperators.join("\n") === activeRouting.allowedOperators.join("\n")) &&
+    (proposed.selection !== "manual" || next.map(choiceId).join("\n") === chosen.map(choiceId).join("\n"));
+  $("routing-pending").textContent = same ? "Showing the active routing settings." : `Pending: ${proposed.selection}, ${next.length} eligible operator(s). Press Apply to change active routing.`;
+  useOperatorsBtn.disabled = proposed.selection === "manual" && next.length === 0 && chosen.length === 0;
+  useOperatorsBtn.textContent = next.length === 0 ? "Apply empty list — stop reads" : `Apply ${proposed.selection} · ${next.length} operator${next.length === 1 ? "" : "s"}`;
 }
 operatorsEl.addEventListener("change", updateChoiceButton);
-updateChoiceButton();
+routingMode.addEventListener("change", updateChoiceButton);
+$("routing-scope").addEventListener("change", updateChoiceButton);
+renderOperators();
+function effectiveOperators(): Operator[] {
+  return activeRouting.selection === "manual"
+    ? chosen.filter(o => !o.payment || paymentPanel?.enabled() && payments.has(o.id ?? o.url))
+    : automaticOperators(activeRouting);
+}
+function showActiveChoice() {
+  const active = effectiveOperators();
+  const waiting = chosen.length - active.length;
+  choiceStatusEl.textContent = `Active: ${activeRouting.selection} · ${active.length ? `using ${active.map(o => o.ens ?? "My own node").join(", ")}` : "no operators; reads are stopped"}${waiting > 0 ? ` · ${waiting} paid operator(s) wait for an enabled, funded test session.` : ""}`;
+  paymentPanel?.setOperators(activeRouting.selection === "manual" ? chosen.flatMap(o => o.payment ? [{ id: o.id ?? o.url, name: o.ens ?? o.operator ?? "operator", payment: o.payment, endpoint: o }] : []) : []);
+}
+function applyChoice() {
+  if (activeRouting.selection === "manual") derpc.setOperators(effectiveOperators());
+  // Automatic payment/personal UI callbacks must not replace a proven directory or activate paid reads.
+  showActiveChoice();
+}
 useOperatorsBtn.addEventListener("click", () => {
-  chosen = ticked();
-  saveChoice(chosen);
-  derpc.setOperators(chosen);
-  choiceStatusEl.textContent = `using: ${chosen.map((o) => o.ens).join(", ")}`;
-  void readAll();
+  const proposed = proposedRouting();
+  const nextChosen = pendingOperators(proposed);
+  try {
+    const manualCandidates = nextChosen.filter(o => !o.payment || paymentPanel?.enabled() && payments.has(o.id ?? o.url));
+    // The provider validates and replaces routing atomically, before a worker-pin read can start.
+    const automaticDirectory = proposed.selection !== "manual" && directorySource === "ens";
+    if (automaticDirectory && derpc.status().routing?.source !== "verified-ens") throw new Error("Prove the ENS operator list and records before enabling automatic routing. Refresh with the registrar pin and proven execution enabled.");
+    const retainedProvenDirectory = automaticDirectory;
+    derpc.setRouting(routingOptions(proposed), retainedProvenDirectory ? undefined : proposed.selection === "manual" ? manualCandidates : available.filter(operator => eligibleForAutomatic(operator)));
+    chosen = nextChosen;
+    activeRouting = proposed;
+    suggestedOperator = undefined;
+    $("operator-suggestion").textContent = "";
+    $("routing-error").textContent = "";
+    $("routing-restore").textContent = "";
+    saveChoice(chosen); persistRouting(); showActiveChoice(); renderOperators();
+    renderStatus(derpc.status());
+    void readAll();
+  } catch (error) {
+    $("routing-error").textContent = `Routing was not changed: ${rootError(error).text}`;
+  }
+});
+
+// A full refresh removes revoked/expired choices. Manual routing retains only prior choices; automatic routing adopts the proven eligible roster.
+$("directory-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const button = $<HTMLButtonElement>("refresh-directory");
+  const state = $("directory-status");
+  if (button.disabled) return;
+  const ethRegistry = $<HTMLInputElement>("ens-registry").value.trim();
+  const registrar = $<HTMLInputElement>("ens-registrar").value.trim();
+  const codeHash = $<HTMLInputElement>("ens-code-hash").value.trim();
+  if (!isAddress(ethRegistry) || registrar && (!isAddress(registrar) || !/^0x[\da-fA-F]{64}$/.test(codeHash))) {
+    state.textContent = "Enter a valid .eth registry address. A registrar also needs its trusted 32-byte runtime hash."; state.className = "bad"; return;
+  }
+  button.disabled = true; button.textContent = "Reading the full directory…";
+  state.textContent = "Reading every operator through Anon-RPC. This can take a few minutes over Tor."; state.className = "muted";
+  try {
+    const previous = new Set(chosen.map(choiceId));
+    const result = await derpc.refreshDirectory({ ethRegistry, ...(registrar ? { registrar: { address: registrar as Hex, codeHash: codeHash as Hex } } : {}), verifiedRecords: $<HTMLInputElement>("ens-verified-records").checked });
+    const refreshed = result.operators.map(o => ({ ...o, source: "ens" as const, listVerification: result.listVerification, recordVerification: result.recordVerification }));
+    // An ENS name can rotate its URL. Observations about the old endpoint do not prove the new one.
+    for (const old of available) {
+      const replacement = refreshed.find(o => (o.id ?? o.url) === (old.id ?? old.url));
+      if (old.source !== "personal" && (!replacement || replacement.url !== old.url || replacement.ens !== old.ens || replacement.wrapperIdentity?.signer !== old.wrapperIdentity?.signer)) observations.forget(old.id ?? old.url);
+    }
+    available = [...refreshed, ...(personalNode ? [personalNode] : [])];
+    directorySource = "ens";
+    chosen = activeRouting.selection === "manual" ? available.filter(o => previous.has(choiceId(o))) : automaticOperators(activeRouting);
+    const removed = [...previous].filter(id => !chosen.some(o => choiceId(o) === id)).length;
+    activeRouting = { ...activeRouting, source: "ens", ...(activeRouting.selection === "manual" ? { allowedOperators: chosen.filter(o => o.source !== "personal").map(choiceId) } : {}) };
+    // refreshDirectory already applied revocation and, in automatic mode, the full proven roster.
+    // Replacing candidates here would erase its authenticated directory provenance.
+    saveChoice(chosen); persistRouting(); renderOperators(); showActiveChoice();
+    state.textContent = `${result.operators.length} operators at block ${result.blockNumber}. List: ${result.listVerification}; records: ${result.recordVerification}.${result.recordVerification === "unverified" ? " Unverified discovery can change who sees your queries; answers still require proofs." : ""}${removed ? ` ${removed} previous choice(s) removed.` : ""}${!result.operators.length ? " No active operators remain; no public endpoint was selected automatically." : ""}`;
+    state.className = result.recordVerification === "proven" ? "ok" : "warn";
+    $("directory-rejected").replaceChildren(...result.rejected.map(entry => Object.assign(document.createElement("li"), { textContent: `${entry.name}: ${entry.reason}` })));
+  } catch (error) { state.textContent = `Directory refresh failed: ${rootError(error).text}. Check the deployment addresses and retry.`; state.className = "bad"; }
+  finally { button.disabled = false; button.textContent = "Refresh ENS directory"; }
+});
+
+$("personal-form").addEventListener("submit", event => {
+  event.preventDefault();
+  const state = $("personal-status");
+  try {
+    if (activeRouting.selection !== "manual") throw new Error("Apply Manual routing before adding a personal node. Automatic routing uses public free operators only.");
+    const url = operatorUrl($<HTMLInputElement>("personal-endpoint").value.trim());
+    const token = $<HTMLInputElement>("personal-token").value.trim();
+    if (!url.hostname.endsWith(".onion") || !/^[a-f0-9]{64}$/.test(token)) throw new Error("Use a valid v3 onion URL and the 64-character token printed by your wrapper setup.");
+    const node: Operator = { id: "my-personal-node", url: url.href, priority: -1, operator: "My own node", personalToken: token, source: "personal" };
+    // Validate with the provider before changing the visible choice.
+    sensitiveSession = true;
+    derpc.setOperators([...effectiveOperators().filter(o => o.source !== "personal"), node]);
+    personalNode = node;
+    observations.forget("my-personal-node");
+    available = [...available.filter(o => o.source !== "personal"), node];
+    chosen = [...chosen.filter(o => o.source !== "personal"), node];
+    $<HTMLInputElement>("personal-token").value = "";
+    $<HTMLInputElement>("personal-endpoint").value = "";
+    state.textContent = "Your node is selected for this page. Its address and token are not saved or published."; state.className = "ok";
+    $<HTMLButtonElement>("remove-personal").disabled = false;
+    renderOperators(); applyChoice();
+  } catch (error) { state.textContent = rootError(error).text; state.className = "bad"; }
+});
+$("remove-personal").addEventListener("click", () => {
+  observations.forget("my-personal-node");
+  personalNode = undefined; available = available.filter(o => o.source !== "personal"); chosen = chosen.filter(o => o.source !== "personal");
+  $<HTMLButtonElement>("remove-personal").disabled = true; $("personal-status").textContent = "Personal node removed. The page forgot its token.";
+  renderOperators(); applyChoice();
+});
+
+setInterval(() => {
+  const now = Date.now() / 1000;
+  const expired = new Set(available.filter(o => o.expiry !== undefined && o.expiry <= now).map(choiceId));
+  if (!expired.size) return;
+  available = available.filter(o => !expired.has(choiceId(o))); chosen = chosen.filter(o => !expired.has(choiceId(o)));
+  if (activeRouting.selection !== "manual") {
+    try { derpc.setRouting(routingOptions(activeRouting)); }
+    catch (error) {
+      derpc.close(); chosen = [];
+      $("routing-error").textContent = `Routing stopped while removing expired listings: ${rootError(error).text}. Reload and refresh the directory.`;
+    }
+  }
+  else activeRouting.allowedOperators = chosen.filter(o => o.source !== "personal").map(choiceId);
+  saveChoice(chosen); persistRouting(); renderOperators(); applyChoice();
+  $("directory-status").textContent = `${expired.size} expired operator(s) removed. Refresh ENS to discover renewed listings.`;
+}, 1000);
+
+$("verified-call-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const button = $<HTMLButtonElement>("run-verified-call");
+  const result = $("verified-call-result");
+  const to = $<HTMLInputElement>("call-address").value.trim();
+  const data = $<HTMLInputElement>("call-data").value.trim();
+  if (!isAddress(to) || !/^0x(?:[\da-fA-F]{2})*$/.test(data)) { result.textContent = "Enter a contract address and even-length hex call data."; result.className = "bad"; return; }
+  if (button.disabled) return;
+  button.disabled = true; button.textContent = "Executing against proven state…";
+  result.textContent = "Fetching and verifying the state needed by the call…"; result.className = "muted";
+  try {
+    const response = await derpc.verifiedCall({ to, data: data as Hex });
+    result.textContent = `${response.value} · verified at block ${response.block.blockNumber}`; result.className = "ok";
+  } catch (error) { result.textContent = `Call refused: ${rootError(error).text}`; result.className = "bad"; }
+  finally { button.disabled = false; button.textContent = "Run verified call"; }
 });
 
 // ---- 3 · Verified reads ----
@@ -216,8 +442,8 @@ function readAll(): Promise<void> {
 }
 
 async function runReads() {
-  if (!chosen.length) {
-    const empty = textCell("No reads yet: choose at least one operator above.", "muted");
+  if (!effectiveOperators().length) {
+    const empty = textCell("No reads: apply a nonempty manual choice or automatic routing above.", "muted");
     empty.colSpan = 4;
     const tr = document.createElement("tr");
     tr.append(empty);
@@ -253,14 +479,17 @@ async function runReads() {
   const transportOk = derpc.status().transport.state === "ready";
   readAgainBtn.disabled = false;
   cutNetworkBtn.disabled = !transportOk;
-  injectLiarBtn.disabled = !transportOk || derpc.status().operators.some((o) => o.priority < 0);
+  injectLiarBtn.disabled = activeRouting.selection !== "manual" || !transportOk || derpc.status().operators.some((o) => o.id.startsWith("simulated-liar:"));
   renderDirectConnections();
 }
 
 readAgainBtn.addEventListener("click", () => void readAll());
 injectLiarBtn.addEventListener("click", () => {
   injectLiarBtn.disabled = true;
-  derpc.setOperators([simulatedLyingOperator(chosen[0]!), ...chosen]);
+  if (activeRouting.selection !== "manual") return;
+  const active = effectiveOperators();
+  if (!active.length) return;
+  derpc.setOperators([simulatedLyingOperator(active[0]!), ...active]);
   void readAll();
 });
 cutNetworkBtn.addEventListener("click", () => {
@@ -272,10 +501,13 @@ cutNetworkBtn.addEventListener("click", () => {
 // ---- 4 · Your operators, live ----
 function label(id: string): string {
   if (id.startsWith("simulated-liar:")) return "simulated lying operator";
-  return MAINNET_OPERATORS.find((o) => o.url === id)?.ens ?? new URL(id).host;
+  const operator = [...available, ...chosen].find(o => o.id === id || o.url === id || o.ens === id);
+  if (operator) return operator.ens ?? operator.operator ?? "operator";
+  try { return new URL(id).host; } catch { return id; }
 }
 
 function logEvent(e: PoolEvent) {
+  if (e.type === "invalid-proof") paymentPanel?.rejection(e.endpoint ? label(e.endpoint) : "Operator");
   if (e.type === "success" && e.endpoint) servedBy.push(label(e.endpoint));
   const li = document.createElement("li");
   li.className = e.type === "success" ? "ok" : e.type === "transient-failure" ? "warn" : e.type === "attempt" ? "" : "bad";
@@ -315,7 +547,7 @@ setInterval(renderDirectConnections, 3000);
 /** Dev server only: mirror events to .dev-logs/calls.log (scripts/show-logs.sh). Changed statuses only. */
 let lastStatus = "";
 function devLog(kind: string, data: unknown) {
-  if (!import.meta.env.DEV) return;
+  if (!import.meta.env.DEV || sensitiveSession) return;
   const line = JSON.stringify({ at: new Date().toISOString(), kind, data });
   if (kind === "status") {
     const key = JSON.stringify(data);
@@ -355,6 +587,8 @@ function rootError(error: unknown): { code?: number; text: string } {
 }
 
 // Read as soon as DeRPC is ready if the user already chose operators on this device; otherwise wait for a choice.
-if (chosen.length) choiceStatusEl.textContent = `your saved choice: ${chosen.map((o) => o.ens).join(", ")}`;
+if (chosen.length && activeRouting.selection === "manual") applyChoice();
+else showActiveChoice();
+renderStatus(derpc.status());
 void readAll();
 derpc.ready.catch(() => {}); // shown in the start-up table and in every read

@@ -1,39 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PaymentClient } from "@derpc/payments";
+import page from "../index.html?raw";
 import { mountPaymentPanel } from "../src/payment-panel.ts";
 import { openTestSession, confirmSettlement, confirmOpenedSession } from "../src/wallet-payments.ts";
 import type { Hex } from "viem";
-
-const page = `<body>
-    <details id="payment-panel" class="advanced-panel">
-      <summary>Later rollout · advanced test-payment controls</summary>
-      <p class="muted">The free demo does not require these controls. Operator identity stake, traffic-based stake per node,
-        and operator-set prices are planned for the later rollout. Staking is not implemented.</p>
-      <p class="muted">Pay only after a read verifies. Cached answers and rejected proofs add nothing to the signed total.
-        <strong>Paid queries are linkable to the paying account.</strong> Deposits and receipt checks use your wallet's
-        connection outside Anon-RPC. Session signing keys stay in this page's memory; reloading loses them.</p>
-      <label class="check-label"><input id="enable-payments" type="checkbox" /> Enable test payments for this page</label>
-      <fieldset id="payment-controls" disabled>
-        <legend>Fund one selected operator</legend>
-        <form id="payment-open-form" class="form-grid">
-          <label for="payment-manifest">Verified test escrow deployment record (JSON)</label>
-          <input id="payment-manifest" type="file" accept="application/json,.json" aria-describedby="payment-status" />
-          <label for="payment-operator">Operator</label>
-          <select id="payment-operator"><option value="">Choose a paid operator above first</option></select>
-          <p id="payment-terms" class="muted">No paid operator selected.</p>
-          <label for="payment-deposit">Deposit in test ETH</label>
-          <input id="payment-deposit" type="text" inputmode="decimal" autocomplete="off" required value="0.001" />
-          <div class="controls"><button id="open-payment" type="submit">Open test session in wallet</button></div>
-        </form>
-      </fieldset>
-      <p id="payment-status" class="muted" role="status" aria-live="polite">Test payments are off. Free reads do not need a wallet.</p>
-      <table>
-        <thead><tr><th>Operator / session</th><th>Verified reads</th><th>Signed / deposited</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody id="payment-sessions"><tr><td colspan="5" class="muted">No sessions opened.</td></tr></tbody>
-      </table>
-      <p id="payment-rejection" class="muted" role="status">The simulated corruption step never authorizes payment for the rejected answer.</p>
-    </details>
-</body>`;
 
 vi.mock("../src/wallet-payments.ts", async importOriginal => ({
   ...await importOriginal<typeof import("../src/wallet-payments.ts")>(),

@@ -3,16 +3,22 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>DeRPC demo</title>
+    <title>DeRPC operator dashboard</title>
     <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>
     <header>
-      <h1>DeRPC <span class="muted">private, verified Ethereum reads</span></h1>
+      <nav class="dashboard-nav" aria-label="DeRPC navigation">
+        <a href="../#/directory" data-product-page="directory">Operator directory</a>
+        <a href="../#/operate" data-product-page="operate">Run an operator</a>
+        <a href="#operator-dashboard">Live checks</a>
+      </nav>
+      <p class="eyebrow">Free demo · Ethereum mainnet</p>
+      <h1>Your operators. Your verified reads.</h1>
       <p class="muted">
         Every read goes through Anon-RPC (the tor-js worker) to operators you choose, and is checked against a
         light client before it is shown. Reads that can't be proven are refused, and nothing ever falls back to a
-        direct connection. This page uses only the public provider API, through viem.
+        direct connection. No wallet or deposit is needed for free reads. Operators still see the query content.
         Also: <a href="./example.html">integrator example</a> · <a href="./network-check.html">network check</a>.
       </p>
     </header>
@@ -33,26 +39,100 @@
       </details>
     </section>
 
-    <section>
-      <h2>2 · Choose your operators</h2>
-      <p class="muted">
-        DeRPC never picks operators for you: reads use only the ones you tick. Every answer is verified, so a
-        poor choice costs availability, never correctness. Each account's reads stay with one of your operators.
-        <strong>ENS names are mock placeholders</strong>; operators will mint real <code>derpc.eth</code> subnames
-        in a later milestone.
-      </p>
-      <table>
-        <thead><tr><th></th><th>ENS name</th><th>Operator</th><th>Endpoint</th><th>Through Tor (our tests)</th></tr></thead>
-        <tbody id="operators"></tbody>
-      </table>
-      <div class="controls">
-        <button id="use-operators" disabled>Use the selected operators</button>
-        <span id="choice-status" class="muted"></span>
+    <section id="operator-dashboard" aria-labelledby="operator-health-title">
+      <h2 id="operator-health-title">2 · Operator health on this device</h2>
+      <p id="pool-summary" class="dashboard-summary" role="status">No observations yet.</p>
+      <p class="muted">Checks come from reads you choose to send. An untested endpoint stays unobserved.
+        A checked proof establishes that response's correctness; ENS identity and stake do not prove an operator is safe.
+        Checks include bootstrap and directory proofs. Latency is the latest unambiguous verified attempt, including the anonymous route and verification.</p>
+      <div class="table-scroll" role="region" aria-label="Operator health table; scroll horizontally on small screens" tabindex="0">
+        <table class="dashboard-table">
+          <caption class="sr-only">Local operator observations. No global uptime or safety score.</caption>
+          <thead><tr><th scope="col">Operator / choice</th><th scope="col">Observed state</th><th scope="col">Last proof checked</th><th scope="col">Endpoint</th><th scope="col">Identity source</th><th scope="col">Local latency</th><th scope="col">Local failures</th></tr></thead>
+          <tbody id="pool"></tbody>
+        </table>
       </div>
+      <p class="muted">Scroll the table for endpoint and identity details. Choose operators below to begin. Several endpoints under one operator is planned;
+        they will share one identity, rather than count as independent operators.</p>
+      <details><summary>Read events and rejected responses</summary><ul id="pool-events" class="events"></ul></details>
     </section>
 
     <section>
-      <h2>3 · Verified reads</h2>
+      <h2>3 · Choose how reads are routed</h2>
+      <p class="muted">
+        Pick operators manually, or explicitly let DeRPC select from eligible free operators on Ethereum mainnet.
+        Every supported answer still needs a proof. Each account stays with its assigned operator until it fails.
+        The initial list is a bootstrap list with <strong>mock ENS names</strong>. Load the registry below to
+        replace it with real records. Discovery affects who receives a query; supported answers still need proofs.
+      </p>
+      <div class="routing-controls">
+        <div class="field">
+          <label for="routing-mode">Selection strategy</label>
+          <select id="routing-mode" aria-describedby="routing-help">
+            <option value="manual">Manual — only the operators I choose</option>
+            <option value="balanced">Balanced — weigh reliability and latency</option>
+            <option value="fastest">Fastest — prefer lower observed latency</option>
+            <option value="reliable">Reliable — prefer successful verified reads</option>
+          </select>
+          <p id="routing-help" class="muted">Manual uses only checked operators. Changes take effect when you press Apply.</p>
+        </div>
+        <fieldset id="routing-scope" hidden>
+          <legend>Automatic selection can use</legend>
+          <label class="check-label"><input type="radio" id="routing-scope-all" name="routing-scope" value="all" checked /> All eligible free operators in this list</label>
+          <label class="check-label"><input type="radio" id="routing-scope-selected" name="routing-scope" value="selected" /> Only the operators checked below</label>
+          <p class="muted">An empty restricted list stops reads. Paid, personal, expired and unverified ENS entries are excluded.</p>
+        </fieldset>
+        <p id="routing-source" class="muted"></p>
+        <p id="routing-restore" class="warn" role="status"></p>
+        <p id="routing-pending" class="muted" role="status">No changes applied.</p>
+        <p id="routing-error" class="bad" role="alert"></p>
+      </div>
+      <details id="directory-panel">
+        <summary>Load operators from ENS</summary>
+        <p class="muted">The <code>derpc.eth</code> owner curates this list. Choose a bootstrap operator first.
+          Refresh after an operator is removed or its name expires; removed choices stop receiving reads.</p>
+        <form id="directory-form" class="form-grid">
+          <label for="ens-registry">Mainnet ENSv2 .eth registry <span class="muted">(required)</span></label>
+          <input id="ens-registry" type="text" autocomplete="off" spellcheck="false" required placeholder="0x…" />
+          <label for="ens-registrar">DeRPC registrar <span class="muted">(optional)</span></label>
+          <input id="ens-registrar" type="text" autocomplete="off" spellcheck="false" placeholder="0x…" />
+          <label for="ens-code-hash">Trusted registrar runtime hash <span class="muted">(required with registrar)</span></label>
+          <input id="ens-code-hash" type="text" autocomplete="off" spellcheck="false" placeholder="0x…" />
+          <label class="check-label"><input id="ens-verified-records" type="checkbox" /> Prove ENS execution locally (more requests)</label>
+          <div class="controls"><button id="refresh-directory" type="submit">Refresh ENS directory</button></div>
+        </form>
+        <p id="directory-status" class="muted" role="status" aria-live="polite">No registry loaded. Enter the addresses from the deployment record.</p>
+        <ul id="directory-rejected" class="events"></ul>
+      </details>
+      <p id="operator-suggestion" class="muted" role="status"></p>
+      <table>
+        <thead><tr><th></th><th>Name</th><th>Operator</th><th>Endpoint</th><th>Price per verified read</th></tr></thead>
+        <tbody id="operators"></tbody>
+      </table>
+      <div class="controls">
+        <button id="use-operators" disabled>Apply routing</button>
+        <span id="choice-status" class="muted"></span>
+      </div>
+      <details>
+        <summary>Use my own node</summary>
+        <p class="muted">Add the unpublished onion address from your wrapper. The token stays in memory for this page,
+          and your other selected operators are fallbacks. Proofs are still checked. The Tor gateway sees your IP.</p>
+        <form id="personal-form" class="form-grid">
+          <label for="personal-endpoint">Private onion RPC URL</label>
+          <input id="personal-endpoint" type="url" autocomplete="off" spellcheck="false" required placeholder="http://…onion/rpc" />
+          <label for="personal-token">Personal access token</label>
+          <input id="personal-token" type="password" autocomplete="off" spellcheck="false" required aria-describedby="personal-status" />
+          <div class="controls">
+            <button id="add-personal" type="submit">Add my node</button>
+            <button id="remove-personal" type="button" disabled>Remove my node</button>
+          </div>
+        </form>
+        <p id="personal-status" class="muted" role="status">No personal node added. It is never published in the directory.</p>
+      </details>
+    </section>
+
+    <section>
+      <h2>4 · Verified reads</h2>
       <p class="muted">
         Each value is proven with <code>eth_getProof</code> at the verified finalized block, through the worker and
         your operators. A repeat at the same block comes from the on-device cache. Public addresses only.
@@ -70,22 +150,56 @@
         The simulated lying operator is part of this demo, not a real operator: it makes a real request through Tor
         to one of your chosen operators, then inflates the balances it returns. Rejecting it is local evidence only.
       </p>
+      <details>
+        <summary>Verified contract call</summary>
+        <p class="muted">Explicit opt-in: execute a call locally against proven account, code and storage data at one
+          finalized block. Calls exceeding the limits or requiring off-chain data fail closed.</p>
+        <form id="verified-call-form" class="form-grid">
+          <label for="call-address">Contract address</label>
+          <input id="call-address" type="text" autocomplete="off" spellcheck="false" required placeholder="0x…" />
+          <label for="call-data">Call data</label>
+          <input id="call-data" type="text" autocomplete="off" spellcheck="false" required value="0x" />
+          <div class="controls"><button id="run-verified-call" type="submit">Run verified call</button></div>
+        </form>
+        <p id="verified-call-result" class="muted" role="status">No call run.</p>
+      </details>
     </section>
 
-    <section>
-      <h2>4 · Your operators, live</h2>
+    <details id="payment-panel" class="advanced-panel">
+      <summary>Later rollout · advanced test-payment controls</summary>
+      <p class="muted">The free demo does not require these controls. Operator identity stake, traffic-based stake per node,
+        and operator-set prices are planned for the later rollout. Staking is not implemented.</p>
+      <p class="muted">Pay only after a read verifies. Cached answers and rejected proofs add nothing to the signed total.
+        <strong>Paid queries are linkable to the paying account.</strong> Deposits and receipt checks use your wallet's
+        connection outside Anon-RPC. Session signing keys stay in this page's memory; reloading loses them.</p>
+      <label class="check-label"><input id="enable-payments" type="checkbox" /> Enable test payments for this page</label>
+      <fieldset id="payment-controls" disabled>
+        <legend>Fund one selected operator</legend>
+        <form id="payment-open-form" class="form-grid">
+          <label for="payment-manifest">Verified test escrow deployment record (JSON)</label>
+          <input id="payment-manifest" type="file" accept="application/json,.json" aria-describedby="payment-status" />
+          <label for="payment-operator">Operator</label>
+          <select id="payment-operator"><option value="">Choose a paid operator above first</option></select>
+          <p id="payment-terms" class="muted">No paid operator selected.</p>
+          <label for="payment-deposit">Deposit in test ETH</label>
+          <input id="payment-deposit" type="text" inputmode="decimal" autocomplete="off" required value="0.001" />
+          <div class="controls"><button id="open-payment" type="submit">Open test session in wallet</button></div>
+        </form>
+      </fieldset>
+      <p id="payment-status" class="muted" role="status" aria-live="polite">Test payments are off. Free reads do not need a wallet.</p>
       <table>
-        <thead><tr><th>Operator</th><th>Tier</th><th>State</th></tr></thead>
-        <tbody id="pool"></tbody>
+        <thead><tr><th>Operator / session</th><th>Verified reads</th><th>Signed / deposited</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="payment-sessions"><tr><td colspan="5" class="muted">No sessions opened.</td></tr></tbody>
       </table>
-      <ul id="pool-events" class="events"></ul>
-    </section>
+      <p id="payment-rejection" class="muted" role="status">The simulated corruption step never authorizes payment for the rejected answer.</p>
+    </details>
 
     <section>
       <h2>5 · Direct connections made by this page</h2>
       <p class="muted">
         From the browser's resource timing. Expected: page assets and the worker bundle download.
-        Not listed by the browser: the WebRTC connection to the Tor gateway.
+        Not listed by the browser: the WebRTC connection to the Tor gateway and requests made by your wallet
+        for optional test-payment transactions and receipts.
       </p>
       <table>
         <thead><tr><th>Host</th><th>Kind</th><th>Count</th></tr></thead>
