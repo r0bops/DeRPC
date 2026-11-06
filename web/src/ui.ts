@@ -79,14 +79,14 @@ export function footer(): string {
       <div class="container footer__inner">
         <div class="footer__brand">
           <img src="${asset("derpc-lockup.svg")}" alt="DeRPC" width="152" height="36" />
-          <p class="footer__desc">Private, verified RPC for Ethereum. Reads through an anonymity network, answers checked by a light client, no direct fallback.</p>
+          <p class="footer__desc">Private, verified RPC for Ethereum. Anon-RPC hides the caller's IP. A Lodestar light client checks the proof. No direct RPC fallback.</p>
           <p class="footer__event">ETHGlobal Mumbai 2026 · Interface preview</p>
         </div>
         <nav class="footer__links" aria-label="Footer">
           <a href="${escapeHtml(demoHref())}">Live dashboard</a>
           <a href="#/directory">Directory</a>
           <a href="#/operate">Run an operator</a>
-          <a href="https://github.com/r0bops/DeRPC" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://github.com/r0bops/DeRPC" target="_blank" rel="noreferrer">github.com/r0bops/DeRPC</a>
         </nav>
       </div>
     </footer>
@@ -133,7 +133,7 @@ export function scoreMarkup(score: number): string {
 }
 
 export function demoNote(): string {
-  return `<p class="demo-note"><span class="demo-note__square" aria-hidden="true"></span><span>Free demo. ENS names are placeholders; staking and operator pricing are planned. Current health observations appear in the live dashboard.</span></p>`;
+  return `<p class="demo-note"><span class="demo-note__square" aria-hidden="true"></span><span>Free demo. ENS names are mock labels. Health observations appear in the live dashboard, on your device.</span></p>`;
 }
 
 export function copyButton(text: string): string {
@@ -152,32 +152,81 @@ export function snippet(label: string, code: string): string {
   `;
 }
 
+const INTEGRATOR_SNIPPET = `import {
+  createDeRPC,
+  MAINNET_OPERATORS,
+} from "@derpc/provider";
+import { derpcTransport }
+  from "@derpc/provider/viem";
+import { createPublicClient }
+  from "viem";
+import { mainnet } from "viem/chains";
+
+// .derpc.eth names are mock.
+// Pass the operators the user chose.
+// derpc.provider is EIP-1193.
+const choice = [
+  "mevblocker.derpc.eth",
+  "blockrazor.derpc.eth",
+];
+const derpc = createDeRPC({
+  operators: MAINNET_OPERATORS.filter((op) =>
+    choice.includes(op.ens)),
+});
+const client = createPublicClient({
+  chain: mainnet,
+  transport: derpcTransport(derpc),
+});
+
+await client.getBalance({
+  address:
+    "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+  blockTag: "finalized",
+});
+// Lodestar finalized block, or it fails closed.`;
+
 export function codeCard(): string {
   return `
     <div class="code-card">
       <div class="code-card__header">
         <span class="code-card__dots" aria-hidden="true"><span class="code-card__dot"></span><span class="code-card__dot"></span><span class="code-card__dot"></span></span>
         <span class="code-card__file">client.ts</span>
-        <span class="code-card__tag">API preview</span>
+        <span class="code-card__tag">Working API</span>
+        ${copyButton(INTEGRATOR_SNIPPET)}
       </div>
       <div class="code-card__body">
-        <pre class="code"><code><span class="tok-com">// private, verified reads</span>
-<span class="tok-key">import</span> { createDeRPC, MAINNET_OPERATORS } <span class="tok-key">from</span> <span class="tok-str">"@derpc/provider"</span>
-<span class="tok-key">import</span> { derpcTransport } <span class="tok-key">from</span> <span class="tok-str">"@derpc/provider/viem"</span>
-<span class="tok-key">import</span> { createPublicClient } <span class="tok-key">from</span> <span class="tok-str">"viem"</span>
+        <pre class="code"><code><span class="tok-com">// .derpc.eth names are mock.</span>
+<span class="tok-com">// Pass the operators the user chose.</span>
+<span class="tok-com">// derpc.provider is EIP-1193.</span>
+<span class="tok-key">import</span> {
+  createDeRPC,
+  MAINNET_OPERATORS,
+} <span class="tok-key">from</span> <span class="tok-str">"@derpc/provider"</span>
+<span class="tok-key">import</span> { derpcTransport }
+  <span class="tok-key">from</span> <span class="tok-str">"@derpc/provider/viem"</span>
+<span class="tok-key">import</span> { createPublicClient }
+  <span class="tok-key">from</span> <span class="tok-str">"viem"</span>
 <span class="tok-key">import</span> { mainnet } <span class="tok-key">from</span> <span class="tok-str">"viem/chains"</span>
 
-<span class="tok-key">const</span> derpc = <span class="tok-fn">createDeRPC</span>({ operators: MAINNET_OPERATORS })
+<span class="tok-key">const</span> choice = [
+  <span class="tok-str">"mevblocker.derpc.eth"</span>,
+  <span class="tok-str">"blockrazor.derpc.eth"</span>,
+]
+<span class="tok-key">const</span> derpc = <span class="tok-fn">createDeRPC</span>({
+  operators: MAINNET_OPERATORS.<span class="tok-fn">filter</span>((op) =>
+    choice.<span class="tok-fn">includes</span>(op.ens)),
+})
 <span class="tok-key">const</span> client = <span class="tok-fn">createPublicClient</span>({
   chain: mainnet,
   transport: <span class="tok-fn">derpcTransport</span>(derpc),
 })
 
 <span class="tok-key">await</span> client.<span class="tok-fn">getBalance</span>({
-  address: <span class="tok-str">"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"</span>,
+  address:
+    <span class="tok-str">"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"</span>,
   blockTag: <span class="tok-str">"finalized"</span>,
 })
-<span class="tok-com">// verified by the light client, or it fails closed</span></code></pre>
+<span class="tok-com">// Lodestar finalized block, or it fails closed.</span></code></pre>
       </div>
       <div class="code-card__diagram">${routeDiagram()}</div>
     </div>
@@ -188,7 +237,7 @@ export function routeDiagram(): string {
   return `
     <svg class="route-diagram" viewBox="0 0 320 128" role="img" aria-labelledby="route-title route-desc">
       <title id="route-title">Private route to a verified answer</title>
-      <desc id="route-desc">Your app connects through a private route to an operator. A light client verifies the answer before it is returned.</desc>
+      <desc id="route-desc">Your app connects through Anon-RPC to an operator. A Lodestar light client checks the proof before the answer is returned.</desc>
       <path class="route-line route-line--dash" d="M50 46h48" />
       <path class="route-line" d="M134 46h48" />
       <path class="route-line" d="M218 46h46" />

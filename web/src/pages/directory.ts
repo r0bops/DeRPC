@@ -58,7 +58,12 @@ export function netChip(id: NetworkId): string {
 }
 
 export function tierChip(tier: 1 | 2): string {
-  return `<span class="tier t${tier}">Tier ${tier}</span>`;
+  const priority = tier - 1;
+  const title =
+    priority === 0
+      ? "Priority 0 in MAINNET_OPERATORS. Finalized proofs were fast and reliable through Tor on Nov 5, 2026."
+      : "Priority 1 in MAINNET_OPERATORS. Slower, or proof-window errors through some Tor exits, on Nov 5, 2026.";
+  return `<span class="tier t${tier}" title="${title}">Priority ${priority}</span>`;
 }
 
 export const mockBadge =
@@ -108,7 +113,7 @@ function operatorRows(state: DirectoryState): string {
           </td>
           <td data-label="Networks"><div class="chip-row">${networks.map((entry) => netChip(entry.network)).join("")}</div></td>
           <td data-label="Live health"><a class="check-link" href="${escapeHtml(demoHref())}?operator=${encodeURIComponent(operator.ens)}#routing">Check in dashboard</a></td>
-          <td data-label="Tor tier" class="hide-m">${tierChip(operator.tier)}</td>
+          <td data-label="Priority" class="hide-m">${tierChip(operator.tier)}</td>
           <td data-label="Endpoint" class="mono hide-m">${escapeHtml(host(operator.endpoint))}</td>
           <td class="col-chevron hide-m">${icon("chevron")}</td>
         </tr>
@@ -187,7 +192,7 @@ function resultsMarkup(state: DirectoryState): string {
             <th scope="col">Operator</th>
             <th scope="col">Networks</th>
             <th scope="col">Live health</th>
-            <th scope="col" class="hide-m">Tor tier</th>
+            <th scope="col" class="hide-m">Priority</th>
             <th scope="col" class="hide-m">Endpoint</th>
             <th scope="col"><span class="sr-only">Open</span></th>
           </tr>
@@ -250,11 +255,11 @@ export function directoryPage(params: URLSearchParams): PageResult {
           <p class="legend">
             <span><span class="net-chip v">ETH</span> reads proven by DeRPC</span>
             <span><span class="net-chip l">BASE</span> listed by the operator, not verified</span>
-            <span>${tierChip(1)} ${tierChip(2)} reliability through Tor, measured Nov 5</span>
+            <span>${tierChip(1)} preferred · ${tierChip(2)} fallback. Measured through Tor on Nov 5, 2026.</span>
           </p>
 
           <div id="directory-results">${resultsMarkup(state)}</div>
-          <p class="demo-note"><span class="demo-note__square" aria-hidden="true"></span><span>Free reads need no wallet. ENS names are placeholders. Staking and operator-set query prices come later; a stake will not replace response verification.</span></p>
+          <p class="demo-note"><span class="demo-note__square" aria-hidden="true"></span><span>Free reads need no wallet. ENS names are mock labels; registered names are roadmap. Health is observed on your device, in the dashboard.</span></p>
         </div>
       </div>
     `,

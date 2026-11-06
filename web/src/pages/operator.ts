@@ -26,9 +26,16 @@ import { derpcTransport } from "@derpc/provider/viem";
 import { createPublicClient } from "viem";
 import { mainnet } from "viem/chains";
 
-const derpc = createDeRPC({ operators: MAINNET_OPERATORS.filter((o) => o.ens === "${ens}") });
-const client = createPublicClient({ chain: mainnet, transport: derpcTransport(derpc) });
-// Pass blockTag: "finalized". DeRPC proves state at the verified finalized block only.`;
+// "${ens}" is a mock label (ENS_NAMES_ARE_MOCK), not a registered name.
+const derpc = createDeRPC({
+  operators: MAINNET_OPERATORS.filter((op) => op.ens === "${ens}"),
+});
+const client = createPublicClient({
+  chain: mainnet,
+  transport: derpcTransport(derpc),
+});
+// derpc.provider is the EIP-1193 provider.
+// Pass blockTag: "finalized". Other block tags are refused.`;
 }
 
 export function operatorPage(ens: string): PageResult {
@@ -76,8 +83,8 @@ export function operatorPage(ens: string): PageResult {
               <div class="metric__caption">Ethereum mainnet only</div>
             </div>
             <div class="metric">
-              <div class="metric__label">Tor reliability</div>
-              <div class="metric__value">Tier ${operator.tier}</div>
+              <div class="metric__label">Pool priority</div>
+              <div class="metric__value">Priority ${operator.tier - 1}</div>
               <div class="metric__caption">measured Nov 5</div>
             </div>
             <div class="metric">
@@ -150,14 +157,12 @@ export function operatorPage(ens: string): PageResult {
                   <dd class="mono">${escapeHtml(operator.endpoint)}</dd>
                   <dt>Website</dt>
                   <dd><a class="src" href="${escapeHtml(operator.website)}" target="_blank" rel="noopener">${escapeHtml(host(operator.website))}</a></dd>
-                  <dt>Tor tier</dt>
+                  <dt>Priority</dt>
                   <dd>${tierChip(operator.tier)}<span class="row-hint">${escapeHtml(TIER_TEXT[operator.tier])}</span></dd>
                   <dt>Current health</dt>
                   <dd>Not checked on this page. Open the dashboard for observations from your reads.</dd>
-                  <dt>Query price</dt>
-                  <dd>Free in this demo. Operator-set pricing comes later.</dd>
-                  <dt>Operator stake</dt>
-                  <dd>Planned; no stake required by the current registrar.</dd>
+                  <dt>ENS name</dt>
+                  <dd>Mock label. Registered names are roadmap.</dd>
                 </dl>
               </div>
               <div>

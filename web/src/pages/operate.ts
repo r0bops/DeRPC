@@ -43,9 +43,9 @@ export function operatePage(): PageResult {
     html: `
       <section class="facts" aria-label="Running an operator at a glance">
         <dl class="container facts__grid">
-          <div class="facts__item"><dt>Cost today</dt><dd>Free · no deposit or stake</dd></div>
+          <div class="facts__item"><dt>Cost today</dt><dd>Free · no deposit</dd></div>
           <div class="facts__item"><dt>What you run</dt><dd>Your own mainnet nodes, plus the wrapper on each</dd></div>
-          <div class="facts__item"><dt>How callers reach you</dt><dd>One Tor onion address per node</dd></div>
+          <div class="facts__item"><dt>How callers reach you</dt><dd>Through Anon-RPC, not a direct browser request</dd></div>
           <div class="facts__item"><dt>This page</dt><dd>A local draft · nothing is registered</dd></div>
         </dl>
       </section>
@@ -55,7 +55,7 @@ export function operatePage(): PageResult {
             <div>
               <p class="kicker">Run an operator · Free demo</p>
               <h1 class="page-title">One operator. Your nodes.</h1>
-              <p class="page-lead">Prepare an operator identity and its public endpoints. This draft stays in your browser until you download it. Registration, staking and payments come later.</p>
+              <p class="page-lead">Prepare an operator identity and its public endpoints. This draft stays in your browser until you download it. It does not register a name. Directory names are mock labels; registered names are roadmap.</p>
             </div>
           </div>
 
@@ -99,14 +99,14 @@ export function operatePage(): PageResult {
                     <div class="step__num" aria-hidden="true">3</div>
                     <div>
                       <h2 class="step__title">Review the free configuration</h2>
-                      <p class="step__desc">Ethereum mainnet reads. No deposit, mint or payment is requested by this page.</p>
+                      <p class="step__desc">Ethereum mainnet reads. This page does not request a deposit, a signature, or a network call.</p>
                       <dl class="operator-draft-terms">
-                        <div><dt>Current pricing</dt><dd>Free</dd></div>
-                        <div><dt>Identity stake</dt><dd>Planned for registration</dd></div>
-                        <div><dt>Stake per node</dt><dd>Planned; required amount changes with network traffic</dd></div>
-                        <div><dt>Price per query</dt><dd>Planned; set by the operator</dd></div>
+                        <div><dt>Reads</dt><dd>Ethereum mainnet, finalized block</dd></div>
+                        <div><dt>Deposit on this page</dt><dd>None</dd></div>
+                        <div><dt>Name</dt><dd>Not registered from this page</dd></div>
+                        <div><dt>Directory labels</dt><dd>Mock. Real names are roadmap.</dd></div>
                       </dl>
-                      <p class="field__hint">Stake amounts, currency, traffic measurement, adjustment formula and withdrawal rules are undecided. A stake does not prove that an operator is honest. Future price changes apply to new sessions.</p>
+                      <p class="field__hint">Reviewing this draft does not publish it, check ownership, or prove that an endpoint answers.</p>
                     </div>
                   </section>
 
@@ -123,7 +123,7 @@ export function operatePage(): PageResult {
                         ${field("operator-hot-key", "Endpoint-update hot key", "0x…")}
                         <p class="field__hint">May update only the endpoint-list record. Use a different address from operator owners, resolver cold owners, the curator and other hot keys.</p>
                         ${field("operator-payee", "Public registrar payee", "0x…")}
-                        <p class="field__hint">Required by the registrar layout even for a free listing. This does not activate payments.</p>
+                        <p class="field__hint">A registrar field on the draft. This page does not move funds or request a deposit.</p>
                         ${field("operator-expiry", "Fixed listing expiry (UTC)", "", "datetime-local")}
                         <p class="field__hint">Choose a specific UTC time within the next 30 days. The deployment preflight must check chain time and the parent name's expiry again.</p>
                       </details>
@@ -167,8 +167,8 @@ export function operatePage(): PageResult {
                 <h2 class="panel__title">Private routing. Verified answers.</h2>
                 <p class="panel__text">The caller uses DeRPC and Anon-RPC to reach your wrapper through Tor. DeRPC checks supported answers against authenticated Ethereum state on the caller's device.</p>
                 <ul class="panel__list operator-plain-list">
-                  <li>Your node sees the query content. Tor aims to hide the caller's IP.</li>
-                  <li>An onion endpoint alone does not make an ordinary HTTP wallet private.</li>
+                  <li>Your node sees the query content. Tor hides the caller's IP from the node. That is not query privacy.</li>
+                  <li>DeRPC holds no keys and does not submit transactions. It is not a wallet.</li>
                   <li>Health checks describe recent observations, not a permanent safety guarantee.</li>
                 </ul>
                 <a class="btn btn--lime" href="${escapeHtml(demoHref())}">Open the free dashboard</a>
@@ -182,7 +182,7 @@ export function operatePage(): PageResult {
                   <p>From the repository root, replace the name, public signer address and node ID with your own values. Each host's DERPC_ENDPOINT_ID must match its ID in the endpoint list. Adjust the local node ports if needed.</p>
                   ${snippet("On each node host", setup)}
                   <p>Setup starts Tor and the filtering proxy, checks local finalized proof availability and a beacon finality update, then prints this node's endpoint proposal. Merge all sibling endpoints into the reviewed list before publishing; replacing the list with one node's output would remove its siblings.</p>
-                  <p>It does not publish ENS records, check ownership, authenticate the proof against a light client, or prove public onion reachability. Test the route through DeRPC separately.</p>
+                  <p>It does not publish ENS records, check ownership, or check the proof against the light client. Test the route through DeRPC separately.</p>
                   <a class="text-link" href="https://github.com/r0bops/DeRPC/blob/main/wrapper/README.md" target="_blank" rel="noreferrer">Read the operator guide</a>
                 </details>
               </section>

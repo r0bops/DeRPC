@@ -263,7 +263,7 @@ Ink with the pixel grid. Left: eyebrow pill, display headline with the key word 
 
 ### Code card
 
-Radius 22, `--ink-raised` fill, 1 px `--line-on-ink` border, header row with three muted dots, a filename and a lime "API preview" tag. Code is 13.5 px / 1.75. Syntax colors: keywords `--cobalt-300`, strings lime, comments `#6D6D80`, function names white at weight 600. Below the code: the route diagram.
+Radius 22, `--ink-raised` fill, 1 px `--line-on-ink` border, header row with three muted dots, a filename, a lime "Working API" tag, and a copy control. Code is 13.5 px / 1.75. Syntax colors: keywords `--cobalt-300`, strings lime, comments `#6D6D80`, function names white at weight 600. Below the code: the route diagram.
 
 ### Stat strip
 
@@ -342,7 +342,7 @@ Two columns (140 px label in `--mute`, value), 14 px, 10 × 16 gaps. Values that
 
 ### Snippet
 
-Ink fill, radius 14, 18 × 20 padding, 13 px / 1.7 mono, scrolls horizontally. Always labeled "API preview" until the transport ships.
+Ink fill, radius 14, 18 × 20 padding, 13 px / 1.7 mono, scrolls horizontally. The label names the file. The transport ships, so the hero card is tagged "Working API" rather than "API preview".
 
 ### Form fields
 
@@ -481,9 +481,9 @@ Every page is reachable in two clicks from the landing. The nav is the same ever
 
 ### Pages
 
-**Landing.** An ink hero states the promise ("RPC you can trust and nobody can watch."), explains it in one paragraph, and offers two actions. The code card shows the working API (`createDeRPC`, `derpcTransport`, `blockTag: "finalized"`) with the route diagram underneath. A stat strip gives three facts: operators you can choose, listed networks that are verified, and zero direct fallbacks. A white section explains three guarantees (private by route, verified by proof, chosen by you). Two panels address the two audiences: app builders and operators; the operator panel is marked roadmap.
+**Landing.** An ink hero states the promise ("Choose your operators. Verify their answers."), explains it in one paragraph, and offers two actions. The code card shows the working API (`createDeRPC`, `derpcTransport`, `blockTag: "finalized"`) with a copy control and the route diagram underneath. A stat strip gives operators you can choose, listed networks, verified networks, and zero direct fallbacks. A marked slot holds the interactive explainer. A white section explains three guarantees (private by route, verified by proof, chosen by you), then the operator directory and the limits. Two panels address app builders and operators. ENS names are mock.
 
-**Directory.** A segmented control switches between *By operator* and *By network*; one search field filters the active view, and a checkbox limits it to verified networks. *By operator* lists each operator with its network chips (a filled ETH chip for verified, dashed chips for listed) and its Tor tier. *By network* lists networks with their verification status and the operators that list them. The view, query and filter live in the URL.
+**Directory.** A segmented control switches between *By operator* and *By network*; one search field filters the active view, and a checkbox limits it to verified networks. *By operator* lists each operator with its network chips (a filled ETH chip for verified, dashed chips for listed) and its pool priority (0 preferred, 1 fallback). *By network* lists networks with their verification status and the operators that list them. The view, query and filter live in the URL.
 
 **Network detail.** Chain ID and verification status. For an unverified network, a notice says DeRPC cannot verify reads there yet. A table of operators listing the network, with their Tor tier, whether DeRPC tested them there, and a source link. For Ethereum, a note about the finalized-block lag.
 
