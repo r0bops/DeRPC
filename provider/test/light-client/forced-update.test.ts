@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { Lightclient } from "@lodestar/light-client";
 import { LightclientSpec, toLightClientUpdateSummary } from "@lodestar/light-client/spec";
-import { computeSyncPeriodAtSlot, getChainForkConfigFromNetwork } from "@lodestar/light-client/utils";
+import { computeSyncPeriodAtSlot, getChainForkConfigFromNetwork, serializeSyncCommittee } from "@lodestar/light-client/utils";
 import { createBeaconConfig } from "@lodestar/config";
 import { sszTypesFor } from "@lodestar/types";
 import { fromHex } from "@lodestar/utils";
@@ -73,6 +73,45 @@ describe("light client: forced sync committee updates", () => {
     forceUpdate(spec, farFuture);
 
     expect(spec.store.syncCommittees.has(period + 1)).toBe(true);
+  });
+
+  it("verifies a genuine signed update before installing its exact next committee", () => {
+    const spec = productionSpec();
+    const update = types.LightClientUpdate.fromJson(updateJson);
+    const period = computeSyncPeriodAtSlot(update.signatureSlot);
+
+    spec.onUpdate(update.signatureSlot, update);
+    const accepted = spec.store.bestValidUpdates.get(period)!;
+    expect(accepted.summary.activeParticipants).toBeGreaterThanOrEqual(SAFE_PARTICIPANTS);
+    expect(accepted.summary.isFinalityUpdate).toBe(true);
+    expect(accepted.summary.isSyncCommitteeUpdate).toBe(true);
+    spec.forceUpdate(update.signatureSlot + 100_000);
+
+    expect(serializeSyncCommittee(spec.store.syncCommittees.get(period + 1)!)).toEqual(update.nextSyncCommittee);
+  });
+
+  it.each(["signature", "finality branch"] as const)("does not store a candidate with a corrupted %s", corruption => {
+    const spec = productionSpec();
+    const update = types.LightClientUpdate.fromJson(updateJson);
+    const period = computeSyncPeriodAtSlot(update.signatureSlot);
+    if (corruption === "signature") update.syncAggregate.syncCommitteeSignature = new Uint8Array(96);
+    else update.finalityBranch[0] = new Uint8Array(32);
+
+    expect(() => spec.onUpdate(update.signatureSlot, update)).toThrow();
+    expect(spec.store.bestValidUpdates.has(period)).toBe(false);
+    forceUpdate(spec, update.signatureSlot + 100_000);
+    expect(spec.store.syncCommittees.has(period + 1)).toBe(false);
+  });
+
+  it("does not install a supermajority candidate without finality", () => {
+    const spec = productionSpec();
+    const { period, farFuture } = storeCandidate(spec, 512);
+    // Exercise the adoption policy independently of signature/branch validation above.
+    spec.store.bestValidUpdates.get(period)!.summary.isFinalityUpdate = false;
+
+    forceUpdate(spec, farFuture);
+
+    expect(spec.store.syncCommittees.has(period + 1)).toBe(false);
   });
 
   it("would adopt the unsafe committee with forced updates on (the hole being closed)", () => {
