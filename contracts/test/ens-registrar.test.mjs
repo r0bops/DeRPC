@@ -73,3 +73,76 @@ describe('registrar lease lifecycle', () => {
     expect((await read(registrar, 'OperatorRegistrar', 'operators', [0n]))[2]).toBe(before[2]);
   });
 });
+
+describe('registrar curation rules', () => {
+  let reg, ens;
+  const curator = () => wallets[0], alice = () => wallets[1], bob = () => wallets[2];
+  const now = async () => Number((await client.getBlock()).timestamp);
+  const skip = async seconds => { await rpc.request({ method: 'evm_increaseTime', params: [seconds] }); await rpc.request({ method: 'evm_mine', params: [] }); };
+  const call = (wallet, functionName, args) => write(wallet, reg, 'OperatorRegistrar', functionName, args);
+  const list = (label, who, expiry, from = curator()) => call(from, 'register', [label, who.account.address, ens, who.account.address, expiry]);
+  const entry = index => read(reg, 'OperatorRegistrar', 'operators', [BigInt(index)]);
+  const fresh = async () => { ens = await deploy('ENSLeaseTest'); reg = await deploy('OperatorRegistrar', [ens, curator().account.address]); };
+
+  it('lets only the curator revive a lapsed listing', async () => {
+    await fresh();
+    await list('alice', alice(), await now() + 3600);
+    await skip(86400);
+    await expect(call(alice(), 'renew', [0n, await now() + 3600])).rejects.toThrow();
+    const expiry = await now() + 3600;
+    await call(curator(), 'renew', [0n, expiry]);
+    expect(Number((await entry(0))[2])).toBe(expiry);
+    await call(alice(), 'renew', [0n, expiry + 3600]); // running again, so the operator may extend it
+  });
+
+  it('lets the curator reinstate a removed listing', async () => {
+    await fresh();
+    await list('alice', alice(), await now() + 3600);
+    await expect(call(curator(), 'reinstate', [0n])).rejects.toThrow(); // already active
+    await call(curator(), 'remove', [0n, alice().account.address]);
+    await expect(call(alice(), 'reinstate', [0n])).rejects.toThrow();
+    await call(curator(), 'reinstate', [0n]);
+    expect((await entry(0))[3]).toBe(true);
+    await call(alice(), 'renew', [0n, await now() + 7200]);
+  });
+
+  it('removes an entry only while it is active and held by the expected operator', async () => {
+    await fresh();
+    await list('alice', alice(), await now() + 3600);
+    await expect(call(curator(), 'remove', [0n, bob().account.address])).rejects.toThrow();
+    expect((await entry(0))[3]).toBe(true);
+    await call(curator(), 'remove', [0n, alice().account.address]);
+    expect((await entry(0))[3]).toBe(false);
+    await expect(call(curator(), 'remove', [0n, alice().account.address])).rejects.toThrow();
+  });
+
+  it('refuses labels that ENS normalization rejects for hyphens in the third and fourth places', async () => {
+    await fresh();
+    const expiry = await now() + 3600;
+    for (const label of ['ab--cd', 'xn--foo', 'ab--']) await expect(list(label, alice(), expiry)).rejects.toThrow();
+    for (const label of ['a--b', 'abc--d', 'team-a']) await list(label, alice(), expiry);
+    expect(await read(reg, 'OperatorRegistrar', 'operatorCount')).toBe(3n);
+  });
+
+  it('gives an expired slot to a new label once the list is full', async () => {
+    await fresh();
+    const expiry = await now() + 3600;
+    for (let i = 0; i < 128; i++) await list(`op${i}`, alice(), expiry);
+    const inSlot = (slot, label, who, until, from = curator()) => call(from, 'registerInSlot', [BigInt(slot), label, who.account.address, ens, who.account.address, until]);
+    await expect(list('newcomer', bob(), expiry)).rejects.toThrow(); // full
+    await expect(inSlot(5, 'newcomer', bob(), expiry)).rejects.toThrow(); // slot 5 is still running
+    await skip(7200);
+    const later = await now() + 3600;
+    await expect(inSlot(5, 'newcomer', bob(), later, bob())).rejects.toThrow(); // curator only
+    await expect(inSlot(128, 'newcomer', bob(), later)).rejects.toThrow(); // no such slot
+    await inSlot(5, 'newcomer', bob(), later);
+    expect(await read(reg, 'OperatorRegistrar', 'operatorCount')).toBe(128n);
+    const taken = await entry(5);
+    expect(taken[0]).toBe(toHex('newcomer', { size: 32 })); expect(taken[1].toLowerCase()).toBe(bob().account.address.toLowerCase()); expect(taken[3]).toBe(true);
+    await expect(inSlot(6, 'newcomer', bob(), later)).rejects.toThrow(); // a label never occupies two slots
+    await inSlot(6, 'op5', alice(), later); // the displaced label returns through another expired slot
+    expect((await entry(6))[0]).toBe(toHex('op5', { size: 32 }));
+    await list('op7', bob(), later); // an existing label still reuses its own slot through register
+    expect((await entry(7))[1].toLowerCase()).toBe(bob().account.address.toLowerCase());
+  }, 120000);
+});
