@@ -16,6 +16,42 @@ function render(observations: OperatorObservations, options: { selected?: boolea
 }
 
 describe("local operator dashboard", () => {
+  it("groups sibling endpoints once and keeps proof and failure observations on their own endpoint", () => {
+    const endpoints = ["east", "west"].map(endpointId => ({ ...operator, id: `alice.derpc.eth#${endpointId}`, operatorId: "alice.derpc.eth", endpointId, url: `https://${endpointId}.example/rpc` }));
+    const tracker = new OperatorObservations();
+    tracker.record({ type: "success", endpoint: endpoints[0]!.id, at: 4_000 });
+    tracker.record({ type: "transient-failure", endpoint: endpoints[1]!.id, at: 4_100 });
+    const body = document.createElement("tbody"), summary = document.createElement("p");
+    renderOperatorDashboard({ body, summary, available: endpoints, chosen: endpoints, observations: tracker, now: 5_000,
+      status: { transport: { state: "ready" }, operators: endpoints.map(endpoint => ({ ...endpoint, state: "eligible" })) } as DeRPCStatus });
+    expect(body.querySelectorAll(".dashboard-operator-row")).toHaveLength(1);
+    const rows = body.querySelectorAll(".dashboard-endpoint-row");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]!.textContent).toContain("Proof checked on this page");
+    expect(rows[0]!.textContent).not.toContain("Read unavailable");
+    expect(rows[1]!.textContent).toContain("Read unavailable");
+    expect(rows[1]!.textContent).toContain("No verified response");
+    expect(summary.textContent).toContain("1 operators · 2 endpoints · 1 operators selected");
+    expect(summary.textContent).toContain("1 endpoints with a proof checked");
+  });
+
+  it("keeps a simulated liar separate even when it shares the real endpoint URL and ENS name", () => {
+    const tracker = new OperatorObservations();
+    tracker.record({ type: "invalid-proof", endpoint: "simulated-liar:alice", at: 4_000 });
+    const body = document.createElement("tbody"), summary = document.createElement("p");
+    renderOperatorDashboard({ body, summary, available: [operator], chosen: [operator], observations: tracker, now: 5_000,
+      status: { transport: { state: "ready" }, operators: [
+        { ...operator, state: "eligible" }, { ...operator, id: "simulated-liar:alice", state: "excluded" },
+      ] } as DeRPCStatus });
+    expect(body.querySelectorAll(".dashboard-operator-row")).toHaveLength(2);
+    const rows = body.querySelectorAll(".dashboard-endpoint-row");
+    expect(rows[0]!.textContent).toContain("Ready to try · no result yet");
+    expect(rows[0]!.textContent).not.toContain("Proof rejected");
+    expect(rows[1]!.textContent).toContain("Proof rejected");
+    expect(summary.textContent).toContain("1 operators · 1 endpoints");
+    expect(summary.textContent).toContain("1 simulated endpoint");
+  });
+
   it("never treats listing or selection as proof of health", () => {
     const tracker = new OperatorObservations();
     const idle = render(tracker);
@@ -39,7 +75,7 @@ describe("local operator dashboard", () => {
     expect(view.body.textContent).toContain("Read unavailable");
     expect(view.body.textContent).toContain("0 rejected · 1 unavailable");
     expect(view.body.textContent).toContain("1.40 s");
-    expect(view.summary.textContent).toContain("1 with a proof checked this session");
+    expect(view.summary.textContent).toContain("1 endpoints with a proof checked this session");
   });
 
   it("does not fabricate latency for overlapping or unmatched events", () => {
@@ -72,7 +108,7 @@ describe("local operator dashboard", () => {
     expect(view.body.textContent).toContain("Listing expired · unavailable");
     expect(view.body.textContent).not.toContain("Proof checked on this page");
     expect(view.body.querySelector(".ok")).toBeNull();
-    expect(view.summary.textContent).toContain("1 with a proof checked this session");
+    expect(view.summary.textContent).toContain("1 endpoints with a proof checked this session");
   });
 
   it("does not blame an operator for a cancelled read and forgets evidence after an endpoint rotation", () => {
@@ -103,5 +139,14 @@ describe("local operator dashboard", () => {
     });
     expect(body.innerHTML).not.toContain("private.example");
     expect(body.textContent).toContain("Unpublished onion");
+  });
+
+  it("does not assign bootstrap or proven ENS provenance to a route before directory records are installed", () => {
+    const body = document.createElement("tbody"), summary = document.createElement("p");
+    renderOperatorDashboard({ body, summary, available: [], chosen: [], observations: new OperatorObservations(),
+      status: { transport: { state: "ready" }, operators: [{ ...operator, id: "new.derpc.eth", ens: "new.derpc.eth", priority: 0, state: "eligible" }] } as DeRPCStatus });
+    expect(body.textContent).toContain("identity provenance not loaded");
+    expect(body.textContent).not.toContain("Mock ENS");
+    expect(body.textContent).not.toContain("ENS list proven");
   });
 });
