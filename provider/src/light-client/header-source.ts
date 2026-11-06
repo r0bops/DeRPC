@@ -61,11 +61,19 @@ export interface HeaderSourceOptions {
   onLog?: (level: "error" | "warn" | "info" | "debug", message: string) => void;
 }
 
+export interface PollHealth {
+  /** Worst consecutive failure count across optimistic and finality polling. */
+  consecutiveFailures: number;
+  lastError?: string;
+}
+
 export interface VerifiedHeaderSource {
   /** The latest verified finalized header. Throws StaleHeaderError instead of returning stale data. */
   finalized(): VerifiedHeader;
   /** Throws StaleHeaderError when `header` is older than the freshness limit. */
   assertFresh(header: VerifiedHeader): void;
+  /** Poll failures remain visible until the affected update kind recovers. */
+  pollHealth(): PollHealth;
   close(): void;
 }
 
@@ -121,6 +129,10 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
       // the beacon endpoint returned. A rejected high-slot update must not hide a later valid one.
       getVerifiedHeadSlot: () => client?.getHead().beacon.slot ?? -1,
       getVerifiedFinalizedSlot: () => client?.getFinalized().beacon.slot ?? -1,
+      onPollError: (error, consecutiveFailures) => {
+        const message = error instanceof Error ? error.message : String(error);
+        log("warn", `head poll failed (${consecutiveFailures} in a row): ${message}`);
+      },
     });
     const closeAttempt = () => {
       client?.stop();
@@ -162,6 +174,7 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
           return header;
         },
         assertFresh,
+        pollHealth: () => transport.pollHealth(),
         close: closeAttempt,
       };
     } catch (error) {

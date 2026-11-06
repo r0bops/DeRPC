@@ -74,6 +74,6 @@ describe("createJsonRpcSend", () => {
   it("times out when the response body never finishes", async () => {
     const send = createJsonRpcSend(transportWithHangingBody(), "https://rpc.test/", { timeoutMs: 25 });
 
-    await expect(send("eth_blockNumber", [], { isolationKey: "k" })).rejects.toThrow("response body did not finish within 25 ms");
+    await expect(send("eth_blockNumber", [], { isolationKey: "k" })).rejects.toThrow("response body did not finish within the request deadline");
   });
 });

@@ -28,7 +28,7 @@ vi.mock("@derpc/provider/viem", () => ({ derpcTransport: () => ({}) }));
 vi.mock("viem", () => ({ createPublicClient: () => ({}), erc20Abi: [], formatUnits: () => "0" }));
 vi.mock("viem/chains", () => ({ mainnet: {} }));
 
-const IDS = ["worker-status", "lc-status", "lc-header", "pin-status", "worker-log", "operators", "choice-status", "reads", "pool", "pool-events", "direct"];
+const IDS = ["worker-status", "network-status", "lc-status", "lc-header", "pin-status", "worker-log", "operators", "choice-status", "reads", "pool", "pool-events", "direct"];
 const BUTTONS = ["use-operators", "read-again", "inject-liar", "cut-network"];
 const PAYLOAD = '<img src=x onerror="window.__pwned = true"><script>window.__pwned = true</script>';
 
@@ -57,17 +57,18 @@ function expectPlainText(id: string) {
 }
 
 describe("demo page status rendering", () => {
-  it("shows HTML in worker, light-client, pin and operator text as plain text", () => {
+  it("shows HTML in worker, network, light-client, pin and operator text as plain text", () => {
     harness.onStatus?.({
       worker: { name: "tor" },
       checkpoint: { epoch: 1 },
       transport: { state: "failed", error: PAYLOAD },
+      network: { state: "unavailable", error: PAYLOAD },
       lightClient: { state: "failed", error: PAYLOAD },
       pin: { state: "mismatch", error: PAYLOAD },
       operators: [{ id: "https://rpc.example/", priority: 0, state: "eligible", operator: PAYLOAD }],
     });
 
-    for (const id of ["worker-status", "lc-status", "pin-status", "pool"]) expectPlainText(id);
+    for (const id of ["worker-status", "network-status", "lc-status", "pin-status", "pool"]) expectPlainText(id);
     expect(document.getElementById("worker-status")!.querySelector(".bad")?.textContent).toBe("failed");
     expect((globalThis as { __pwned?: boolean }).__pwned).toBeUndefined();
   });

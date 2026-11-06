@@ -3,6 +3,7 @@ import {
   startVerifiedHeaderSource,
   type HeaderSourceOptions,
   type VerifiedHeader,
+  type PollHealth,
   type VerifiedHeaderSource,
 } from "../light-client/header-source.ts";
 import { createPool, NoOperatorsChosenError, type EndpointStatus, type Pool, type PoolEndpoint, type PoolEvent } from "../pool/pool.ts";
@@ -62,7 +63,7 @@ export interface DeRPCStatus {
   transport: { state: TransportState; error?: string };
   /** The anonymity network's last observed state, separate from the worker's lifecycle. */
   network: { state: "ok" | "unavailable"; error?: string };
-  lightClient: { state: "waiting" | "syncing" | "verified" | "stale" | "failed"; header?: VerifiedHeader; error?: string };
+  lightClient: { state: "waiting" | "syncing" | "verified" | "stale" | "failed"; header?: VerifiedHeader; error?: string; poll?: PollHealth };
   pin: { state: "waiting-for-operators" | "waiting-for-light-client" | "checking" | "verified" | "mismatch" | "failed"; workerHash?: Hex; block?: number; error?: string };
   operators: EndpointStatus[];
 }
@@ -295,6 +296,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
         lc = { state: "stale", error: message(error) };
       }
     }
+    if (headerSource) lc = { ...lc, poll: headerSource.pollHealth() };
     return {
       chainId: CHAIN_ID,
       worker: { name: pin.name, workerHash: pin.workerHash },

@@ -75,7 +75,7 @@ describe("asFetch", () => {
   it("times out when the response body never finishes", async () => {
     const fetchFn = asFetch(transportWithHangingBody(), { isolationKey: "k", timeoutMs: 25 });
 
-    await expect(fetchFn("https://beacon.test/x")).rejects.toThrow("response body did not finish within 25 ms");
+    await expect(fetchFn("https://beacon.test/x")).rejects.toThrow("response body did not finish within the request deadline");
   });
 
   it("refuses a response body larger than the configured limit", async () => {

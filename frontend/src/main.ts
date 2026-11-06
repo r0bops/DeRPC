@@ -64,9 +64,16 @@ const derpc = createDeRPC({
   gateways,
   worker,
   operators: chosen,
-  onStatus: renderStatus,
-  onPoolEvent: logEvent,
+  onStatus: (s) => {
+    devLog("status", statusSummary(s));
+    renderStatus(s);
+  },
+  onPoolEvent: (e) => {
+    devLog("pool", { ...e, endpoint: e.endpoint ? label(e.endpoint) : undefined });
+    logEvent(e);
+  },
   onWorkerLog: (line) => {
+    devLog("worker", line);
     const log = $("worker-log");
     log.textContent += `[${line.level}] ${line.text}\n`;
     log.scrollTop = log.scrollHeight;
@@ -97,11 +104,13 @@ function renderStatus(s: DeRPCStatus) {
   const checkpointDays = ((Date.now() / 1000 - (MAINNET_GENESIS + s.checkpoint.epoch * 384)) / 86400).toFixed(1);
   const checkpoint = `pinned checkpoint epoch ${s.checkpoint.epoch} (${checkpointDays} days old)`;
   if (lc.state === "verified") lightClientReadyAt ??= now;
-  setText($("lc-status"),
-    lc.state === "waiting" ? [plain("waiting for the worker…")]
+  setText($("lc-status"), [
+    ...(lc.state === "waiting" ? [plain("waiting for the worker…")]
     : lc.state === "syncing" ? [plain(`syncing from the ${checkpoint}…`)]
     : lc.state === "verified" ? [tag("verified", "ok"), plain(` — sync-committee signatures checked, ${seconds(lightClientReadyAt! - (workerReadyAt ?? pageStarted))} after the worker · ${checkpoint}`)]
-    : [tag(lc.state, "bad"), plain(` — ${lc.error ?? ""}`)]);
+    : [tag(lc.state, "bad"), plain(` — ${lc.error ?? ""}`)]),
+    ...(lc.poll?.consecutiveFailures ? [plain(" · "), tag(`head poll failing ×${lc.poll.consecutiveFailures}`, "bad"), plain(` — ${lc.poll.lastError ?? "unknown error"}`)] : []),
+  ]);
   if (lc.header) {
     const ageMin = ((Date.now() / 1000 - lc.header.timestamp) / 60).toFixed(1);
     $("lc-header").textContent = `${lc.header.blockNumber} (${ageMin} min ago) · hash ${short(lc.header.blockHash)} · state root ${short(lc.header.stateRoot)}`;
@@ -244,6 +253,7 @@ async function runReads() {
       via.textContent = servedBy.at(-1) ?? "nothing sent";
     }
     time.textContent = seconds(performance.now() - t);
+    devLog("read", { read: read.label, result: result.textContent, via: via.textContent, time: time.textContent });
   }
   const transportOk = derpc.status().transport.state === "ready";
   readAgainBtn.disabled = false;
@@ -307,6 +317,27 @@ renderDirectConnections();
 setInterval(renderDirectConnections, 3000);
 
 // ---- helpers ----
+/** Dev server only: mirror events to .dev-logs/calls.log (scripts/show-logs.sh). Changed statuses only. */
+let lastStatus = "";
+function devLog(kind: string, data: unknown) {
+  if (!import.meta.env.DEV) return;
+  const line = JSON.stringify({ at: new Date().toISOString(), kind, data });
+  if (kind === "status") {
+    const key = JSON.stringify(data);
+    if (key === lastStatus) return;
+    lastStatus = key;
+  }
+  void fetch("/__derpc-log", { method: "POST", body: line }).catch(() => {});
+}
+function statusSummary(s: DeRPCStatus) {
+  return {
+    transport: s.transport.state + (s.transport.error ? `: ${s.transport.error}` : ""),
+    lightClient: s.lightClient.state + (s.lightClient.error ? `: ${s.lightClient.error}` : ""),
+    block: s.lightClient.header?.blockNumber,
+    pin: s.pin.state + (s.pin.error ? `: ${s.pin.error}` : ""),
+    operators: s.operators.map((o) => `${label(o.id)}=${o.state}`).join(" "),
+  };
+}
 function amount(value: bigint, decimals: number): string {
   const [whole, frac = ""] = formatUnits(value, decimals).split(".");
   return `${BigInt(whole!).toLocaleString("en-US")}.${frac.padEnd(4, "0").slice(0, 4)}`;

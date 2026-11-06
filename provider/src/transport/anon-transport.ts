@@ -62,11 +62,8 @@ export class TransportUnavailableError extends Error {
   }
 }
 
-// Errors the harness uses when the whole worker dies (signalFailed, crash, bundle load, close).
-function isWorkerFailure(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  if (error.name === "WorkerFailedError") return true;
-  return /^worker (error:|bundle failed to load:|closed$)/.test(error.message);
+function logToConsole(line: WorkerLogLine): void {
+  console[line.level]("[worker]", line.text);
 }
 
 /** Start one long-lived anonymity worker. Calls made before it is ready are buffered by the harness. */
@@ -101,8 +98,8 @@ export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonT
   );
   onState?.("booting");
 
-  // The log queue closes only when the worker dies, so it also reports failures after startup.
-  if (onLog) void pumpLogs(worker, onLog).then((error) => markFailed(error));
+  // The log queue reports worker death even when the app has no log callback.
+  void pumpLogs(worker, onLog ?? logToConsole).then((error) => markFailed(error));
 
   return {
     pin,
@@ -125,10 +122,11 @@ export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonT
       } catch (error) {
         // close() may have run while the call was in flight.
         if (state() === "closed") throw new TransportUnavailableError("closed", { cause: error });
-        if (isWorkerFailure(error)) {
-          markFailed(error);
-          throw new TransportUnavailableError("failed", { cause: error });
-        }
+        if (error instanceof Error && error.name === "WorkerFailedError") markFailed(error);
+        if (state() === "failed") throw new TransportUnavailableError("failed", { cause: error });
+        // Only the caller's cancellation is rethrown. An expired timeout stays a network failure below,
+        // so a stalled anonymity network doesn't cool down the operators it never reached (#35).
+        if (options.signal?.aborted) throw options.signal.reason;
         // A request-level failure while the worker stays up: the anonymity network, not the operator.
         if (error instanceof NetworkUnavailableError) throw error;
         throw new NetworkUnavailableError(error instanceof Error ? error.message : String(error), { cause: error, ...detailsOf(error) });

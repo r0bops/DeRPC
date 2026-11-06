@@ -83,6 +83,8 @@ describe("startVerifiedHeaderSource", () => {
     expect(header.blockNumber).toBe(EXPECTED.blockNumber);
     expect(header.blockHash).toBe(EXPECTED.blockHash);
     expect(header.stateRoot).toBe(EXPECTED.stateRoot);
+    expect(source.pollHealth()).toEqual({ consecutiveFailures: 0 });
+    expect(() => source!.assertFresh(header)).not.toThrow();
   });
 
   it("applies a valid head update after the beacon sends an invalid high-slot update", async () => {
@@ -148,9 +150,11 @@ describe("startVerifiedHeaderSource", () => {
     const { pending } = start("mainnet", mainnet, mainnetResponses);
     source = await pending;
 
+    const readStartedAt = source.finalized();
     vi.setSystemTime(mainnet.capturedAt + 60 * MINUTE);
 
     expect(() => source!.finalized()).toThrow(StaleHeaderError);
+    expect(() => source!.assertFresh(readStartedAt)).toThrow(StaleHeaderError);
   });
 
   it("does not become ready when no head update carries a valid sync-committee signature", async () => {
