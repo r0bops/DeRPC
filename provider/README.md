@@ -46,9 +46,9 @@ const result = await derpc.verifiedCall({ to: contract, data: calldata, signal }
 
 The supported input is `to`, optional `data`, `from`, `gas` and `signal`; value transfers and transaction overrides are not supported. Defaults bound gas to 1,000,000, steps to 100,000, accounts to 24, storage slots to 64, remote round trips to 128, memory to 4 MiB and execution time to 60 seconds. The pool uses that same call deadline, including retries. Configure `verifiedCalls: { limits: { ... } }` to change executor limits. The executor refuses unsupported forks/context, `BLOCKHASH`, `BLOBBASEFEE`, and CCIP-Read/off-chain resolution. A limit failure or revert returns no verified value and earns no payment. This is an experimental bounded executor, not a claim of compatibility with every contract.
 
-The executor adds about 99 KB gzipped (319 KB raw) to the page. In [one Chrome measurement](test/execution/browser-measure-evidence-2026-11-06.json) it loaded and finished a first small call in about 45 ms, not counting network or Tor time.
+In [one Chrome measurement](test/execution/browser-measure-evidence-2026-11-06.json), a separate benchmark build of the executor was about 99 KB gzipped (319 KB raw). That figure includes the benchmark's own setup code; what the executor adds to a production page was not measured. It loaded and finished a first small call in a median of 45 ms over five runs, using generated proofs and no network or Tor time.
 
-Local execution does not hide what a call reads. Each account, storage slot and contract the call touches is requested with `eth_getProof` or `eth_getCode`, so the operator can see them even though it never sees the call itself.
+Local execution does not hide what a call reads. Each account, storage slot and contract the call touches is requested with `eth_getProof` or `eth_getCode`, so the operator sees them. The calldata is not sent to the operator, but it may be able to infer the call from the accounts and slots requested.
 
 The same explicit option enables fully on-chain ENS resolution:
 
