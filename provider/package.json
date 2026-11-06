@@ -9,7 +9,8 @@
     ".": "./src/index.ts",
     "./viem": "./src/api/viem.ts",
     "./discovery": "./src/discovery/ens.ts",
-    "./execution": "./src/execution/index.ts"
+    "./execution": "./src/execution/index.ts",
+    "./ens": "./src/execution/verified-ens.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p .",
