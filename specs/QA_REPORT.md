@@ -52,6 +52,14 @@ The committee-authenticity regressions and manual cold-start harness already app
 
 At the time of this earlier read-only continuation, no staging, commits, push, merge, deployment or issue/PR updates occurred. Its integration recommendations were subsequently implemented and validated in the later branch integration section below.
 
+## Completed pending-work commits — November 6
+
+At the team's subsequent request, the completed pending work was captured separately from the active release-automation task and committed by topic: explicit-only release gateways, VPS service templates, public gateway/browser evidence, ENS/IPNS publication records, publishing/recovery instructions and release-status documentation. All 36 project files in the final captured snapshot are present; local security-report/cache metadata was excluded. The teammate's node-configuration documentation commit was also retained.
+
+The final frontend suite passed **275 tests** after the gateway and IPFS-checker changes. Together with the unchanged provider/contracts/payments/wrapper runs above, that is **1,068 passing default tests**, with five opt-in ENS fork tests skipped. All package typechecks passed, the final single-gateway build passed, and the offline release check accepted all **63 files**. The read-only IPFS checker now rejects symlinks/special files and conflicting or incomplete CLI modes before checking files/network results; delegated provider listings are explicitly narrower than retrieval proof. VPS scripts passed syntax checks and service-unit validation reported only absent local deployment binaries.
+
+Previously recorded publication evidence describes the deployed CID, not this newly integrated source. Committing and merging this work does not republish that site or execute the VPS installer. The separate new release-automation implementation remains with its owning agent.
+
 ## Reviewed branch integration — November 6, 21:52 UTC
 
 The six divergent branch heads were reviewed against main `c183ecd86a9f906fcf0983c518d6441e98ad851b` in an isolated checkout. Useful changes were reconciled in scoped commits before recording the branch ancestry; older implementations already superseded by main were retained as history, not restored over the current code. The shared checkout's separate deployment changes were not included. Before the final integration, main advanced to `ec37572c` by merging PR #64 at `0149c90a`; that merge was incorporated, preserving its gateway implementation and additional mixed-socket regression.
