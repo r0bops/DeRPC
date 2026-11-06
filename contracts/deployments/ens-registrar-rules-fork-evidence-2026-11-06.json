@@ -1,0 +1,49 @@
+{
+  "kind": "derpc-ens-registrar-rules-fork-evidence",
+  "checkedAt": "2026-11-06T22:16:58.773Z",
+  "localOnly": true,
+  "publicTransactionsSent": false,
+  "scope": "Actual ENSv2 mainnet bytecode on a disposable local Anvil fork, with the registrar source after the November 6 review fixes. Fixture operators are local test accounts, not public enrollments.",
+  "fork": {
+    "blockNumber": 26358691,
+    "blockHash": "0xa239c74d597e924881bfcb742fba73aa5c3f3c488137d7c2e286348c84b48df1",
+    "clientVersion": "anvil/v1.4.3"
+  },
+  "upstreamSourceCommit": "4f47cbcc11462fb413196e6b5c0f8090247a6c08",
+  "registrarSourceHash": "0xc8396064c3351efaf761575fbf643ad968c6013836d37fc902bc6f693251b5f2",
+  "compiler": {
+    "version": "0.8.30+commit.73712a01.Emscripten.clang",
+    "optimizerRuns": 200,
+    "evmVersion": "shanghai"
+  },
+  "testResult": "5 of 5 tests in contracts/test/ens-fork.test.mjs passed",
+  "checks": {
+    "registrarAndPlanner": [
+      "UserRegistry factory provenance and parent/subregistry attachment",
+      "Registrar register+renew root roles only; zero owner role bitmap accepted; transfer/resolver replacement refused",
+      "grantSetterRoles authorizes endpoint rotation only, not payee writes or another operator resolver",
+      "Authorized renewal, immediate registrar delisting naming the operator, curator-only reinstatement, revoked renewal refusal, and ENS expiry resolution removal",
+      "Lapsed operator cannot renew itself; an expired label is re-registered to a new owner through the registrar in the same slot, with the previous owner losing registrar rights",
+      "Unmodified staged planner gas estimates, exact root/name role counts, canonical receipt verification with 12 local confirmations",
+      "Deployment verifier rejects a genuine extra hot-key grant for an unknown text resource",
+      "Real fork registrar/resolver discovery using one injected local proof root per refresh; exact direct reference equality; altered proofs and identity mismatch rejected; renewal/removal/expiry applied"
+    ],
+    "lifecycle": [
+      "Exact reviewed sender/destination/calldata/value, manifest provenance, block preconditions, chain and unknown hot-key grants fail closed; signer/payee and cross-operator writes denied by actual ENS code",
+      "Allowed hot-key endpoint rotation has canonical before/receipt/current state evidence; twelve confirmations stay separate from an injected pending-finality tag; inconsistent receipt-block hashes rejected",
+      "Another managed-contract write in the same receipt block is rejected instead of being hidden by an end-of-block state match",
+      "Expired-but-active lease recovers through the registrar only by the curator, retaining owner/token/dedicated resolver; the operator cannot revive it; expiry bounds and unauthorized renewal reject; expired endpoint rotation refuses",
+      "Curator renewal and registrar delisting verified; delisting preserves token/owner/resolver/expiry, clears admission, and prevents renewal or implicit relisting"
+    ],
+    "endpoints": [
+      "Cold-owner migration is atomic: later inner-call failure rolls back revocation and records; paid and non-atomic/unreviewed migration evidence are rejected",
+      "Verified migration preserves original initialization history and limits the hot key to the entire plural record; singular/beacon/signer/payee and cross-operator writes deny",
+      "Post-audit reorg of the final observation rejects deployment verification",
+      "Plural lifecycle binds the full old/new list including beacon URLs; a concurrent edit to the other node, a forged old manifest observation and a head reorg during the finalized read are refused",
+      "Operator-wide delisting retains the plural record/token but clears admission; explicit reverse migration removes plural authority and restores only legacy authority",
+      "Fresh plural operator deployment completes every unsigned stage and canonical receipt/role verification with one dedicated resolver per operator"
+    ]
+  },
+  "supersedes": "The registrar behaviour described in ens-fork-evidence.json and ens-lifecycle-fork-evidence.json, which were recorded with the earlier registrar source: an operator could then renew its own lapsed lease, and removal took only an index.",
+  "reproduction": "Start Anvil as a loopback mainnet fork, then run contracts/test/ens-fork.test.mjs with DERPC_ENS_FORK_RPC set. These checks do not establish a public deployment."
+}

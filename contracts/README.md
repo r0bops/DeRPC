@@ -32,11 +32,18 @@ Paid queries are linkable to the paying account. Wallet deposits, top-ups and re
 
 ## OperatorRegistrar
 
-`OperatorRegistrar` is a curated, free registrar in front of an ENSv2 UserRegistry. It accepts lowercase ASCII labels of 1–31 bytes, with an internal hyphen allowed, for `<operator>.derpc.eth`. Leases last at most 30 days from registration or renewal. There are at most 128 entries, and existing labels reuse their slot after expiry.
+`OperatorRegistrar` is a curated, free registrar in front of an ENSv2 UserRegistry. It accepts lowercase ASCII labels of 1–31 bytes, with internal hyphens allowed, for `<operator>.derpc.eth`. A label with hyphens in both the third and fourth places, such as `ab--cd` or `xn--name`, is refused, because ENS name normalization rejects it. Leases last at most 30 days from registration or renewal. The list holds at most 128 entries. A label listed before reuses its own slot once its lease has expired, and the curator can give any expired slot to a new label with `registerInSlot(slot, …)`, so the limit bounds the list, not every label ever used.
 
-The curator admits operators. The curator or the listed operator can renew an active listing; a removed operator cannot renew itself. Operators may update their own proven payee while active. The registrar registers names with a zero role bitmap: no transfer, resolver-change or subregistry privilege is granted to the token owner. Resolver permissions are granted separately and must be scoped to that operator's dedicated resolver.
+The curator admits operators. A listed operator can extend its own lease while that lease is still running. Once the lease has lapsed, only the curator can renew it, so an operator cannot bring back a lapsed listing by itself. A removed operator cannot renew at all. Operators may update their own proven payee while active. The registrar registers names with a zero role bitmap: no transfer, resolver-change or subregistry privilege is granted to the token owner. Resolver permissions are granted separately and must be scoped to that operator's dedicated resolver.
 
-`remove(index)` delists the operator from the registrar immediately. It does not burn the ENS token; the name remains subject to its own expiry. This avoids granting a person registry-wide unregister authority. Discovery must consult the registrar's active flag rather than treating the continued existence of an ENS token as active admission.
+`remove(index, operator)` delists the operator from the registrar immediately. The call names the operator it expects in that slot and reverts if the entry is already removed or belongs to someone else, so a late transaction cannot delist the slot's next occupant. It does not burn the ENS token; the name remains subject to its own expiry. This avoids granting a person registry-wide unregister authority. Discovery must consult the registrar's active flag rather than treating the continued existence of an ENS token as active admission. `reinstate(index)` lets the curator undo a removal; the lease is unchanged.
+
+Known limits of the registrar:
+
+- **No key rotation during a lease.** The ENS name is not transferable, so an operator cannot move to a new address while its lease runs. After a key compromise, the curator removes the entry and registers the label to the new address once the lease has expired, at most 30 days later.
+- **The curator is fixed at deployment.** Changing it needs a new registrar, and every client then needs the new address and runtime hash.
+- **The parent lease is not checked on-chain.** The registrar does not read `derpc.eth`'s own expiry. The planner and lifecycle tool refuse a lease beyond it, and ENS discovery uses the earlier of the two.
+- **Renew only through the registrar.** Renewing an operator name directly in the ENS registry leaves the registrar's copy of the expiry behind, and the label can then not be reused until the ENS lease ends.
 
 ### Proof layout
 
@@ -110,6 +117,8 @@ All three ENS commands accept an optional RPC URL as the final argument, or `ENS
 
 The [local fork report](deployments/ens-fork-evidence.json) records the real mainnet contract-code test of the unmodified planner/verifier pipeline, endpoint-only grants, disallowed transfer/record changes, renewal/delisting and expiry. Its transactions and confirmations occurred on a local fork. The reproduction procedure is in `contracts/test/ens-fork.test.mjs`; no public deployment follows from that report.
 
+The registrar's rules were tightened after a review on November 6: curator-only renewal of lapsed leases, removal that names the operator, reinstatement, slot reuse and the hyphen rule. The [fork run with that source](deployments/ens-registrar-rules-fork-evidence-2026-11-06.json) passed all five fork tests against the real ENS bytecode, including giving an expired label to a new owner. The older fork reports linked in this section were recorded with the earlier registrar source.
+
 The [deployment-to-discovery report](deployments/ens-fork-discovery-evidence.json) connects that planner to the real provider: membership/payees, nine-record resolver batches, tampered proofs, identity mismatch and renewal/removal/expiry. Anvil could not supply a mined fork root, so the test materialized the exact traced prestate and injected a common local proof root. It proved ten accounts and 56 slots per refresh and compared 85 direct reference results. This is local integration evidence; consensus and transport anonymity are tested separately. The initial two-operator scan required 87 proof and 20 code requests, so public-network discovery latency still needs measurement.
 
 ### ENS operator lifecycle
@@ -120,8 +129,8 @@ The [deployment-to-discovery report](deployments/ens-fork-discovery-evidence.jso
 | --- | --- | --- |
 | `rotate-endpoint` | `expectedEndpoint`, `newEndpoint` | That resolver's endpoint hot key sets only `derpc.endpoint`; ownership, signer, payee and other records stay fixed. |
 | `rotate-endpoints` | `expectedEndpoints`, `newEndpoints` (complete entry arrays) | That resolver's plural hot key replaces only `derpc.endpoints`, including any beacon URLs within it. The entire canonical prior list must match. |
-| `delist` | None | The curator calls `OperatorRegistrar.remove(index)`, clearing active admission while preserving the ENS token and its lease. |
-| `renew` | `expectedExpiry`, `expiry`, optional `authority` (`operator` by default, or `curator`) | The recorded operator or curator extends the lease to a fixed future Unix-second expiry, within 30 days and the parent lease. Expired-but-active entries may recover; removed entries cannot renew. |
+| `delist` | None | The curator calls `OperatorRegistrar.remove(index, operator)`, clearing active admission while preserving the ENS token and its lease. The tool does not prepare `reinstate`. |
+| `renew` | `expectedExpiry`, `expiry`, optional `authority` (`operator` by default, or `curator`) | The recorded operator or curator extends the lease to a fixed future Unix-second expiry, within 30 days and the parent lease. A lapsed lease that is still active recovers only with `authority: "curator"`; removed entries cannot renew. |
 
 Start from [ens-lifecycle-action.example.json](deployments/ens-lifecycle-action.example.json) or [ens-lifecycle-endpoints-action.example.json](deployments/ens-lifecycle-endpoints-action.example.json), fill its null fields from the intended operator's public configuration, and keep the receipt-checked deployment manifest unchanged:
 

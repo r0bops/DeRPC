@@ -15,9 +15,16 @@ export async function validateForkEndpoints({ config: baselineConfig, stages: ba
   const call = (from, to, abi, functionName, args) => ({ from, to, data: encodeFunctionData({ abi, functionName, args }), value: '0x0', chainId: '0x1' });
   const mine = async () => { for (let i = 0; i < 12; i++) await rpc('evm_mine'); };
   const isolated = async fn => { const snapshot = await rpc('evm_snapshot'); try { return await fn(); } finally { expect(await rpc('evm_revert', [snapshot])).toBe(true); } };
+  // Poll the exact submitted hash: the local node can return it before the transaction is in a block.
+  const receipt = async hash => {
+    for (const deadline = Date.now() + 30000; Date.now() < deadline; await new Promise(resolve => setTimeout(resolve, 100))) {
+      try { return await client.getTransactionReceipt({ hash }); } catch (error) { if (error.name !== 'TransactionReceiptNotFoundError') throw error; }
+    }
+    throw new Error(`no local receipt for ${hash}`);
+  };
   const execute = async plan => {
     const transactionHashes = [];
-    for (const item of plan.transactions) { const hash = await submit(item.walletRequest.params[0]); expect((await client.getTransactionReceipt({ hash })).status).toBe('success'); transactionHashes.push(hash); }
+    for (const item of plan.transactions) { const hash = await submit(item.walletRequest.params[0]); expect((await receipt(hash)).status).toBe('success'); transactionHashes.push(hash); }
     return { plan: structuredClone(plan), transactionHashes };
   };
   const op = baselineConfig.operators[0], other = baselineConfig.operators[1], original = baselineManifest.operators[0], resolver = original.resolver, name = original.name;
@@ -36,7 +43,7 @@ export async function validateForkEndpoints({ config: baselineConfig, stages: ba
       const before = await state();
       const invalid = [...inner]; invalid[4] = '0xdeadbeef';
       const hash = await submit(call(op.coldOwner, resolver, resolverAbi, 'multicall', [invalid]));
-      expect((await client.getTransactionReceipt({ hash })).status).toBe('reverted');
+      expect((await receipt(hash)).status).toBe('reverted');
       expect(await state()).toEqual(before);
     });
     await isolated(async () => {
