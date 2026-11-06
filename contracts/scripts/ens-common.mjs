@@ -132,7 +132,7 @@ export function validateConfig(input) {
   const labels = new Set(); const hotKeys = new Set();
   for (const op of c.operators) {
     only(op, ['label', 'operator', 'coldOwner', 'hotKey', 'signer', 'payee', 'endpoint', 'beacon', 'endpoints', 'caps', 'expiry', 'gateways', 'payment']);
-    if (typeof op.label !== 'string' || !/^[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/.test(op.label) || labels.has(op.label)) fail('Operator labels must be unique, lowercase ASCII, 1–31 characters with no edge hyphen');
+    if (typeof op.label !== 'string' || !/^(?!..--)[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/.test(op.label) || labels.has(op.label)) fail('Operator labels must be unique, lowercase ASCII, 1–31 characters with no edge hyphen and no hyphens in both the third and fourth places');
     labels.add(op.label);
     for (const key of ['operator', 'coldOwner', 'hotKey', 'signer', 'payee']) op[key] = address(op[key], `${op.label}.${key}`);
     if (sameAddress(op.hotKey, op.coldOwner) || sameAddress(op.hotKey, op.operator) || sameAddress(op.hotKey, c.curator) || hotKeys.has(op.hotKey.toLowerCase())) fail('Each hot key must be distinct from operator owners, cold owners, curator and other hot keys');

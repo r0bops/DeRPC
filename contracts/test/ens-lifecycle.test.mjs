@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { decodeFunctionData, toHex } from 'viem';
+import { decodeFunctionData, getAddress, toHex } from 'viem';
 import { UPSTREAM, addresses, dnsEncode, resolverAbi } from '../scripts/ens-common.mjs';
 import { registrarBuild } from '../scripts/ens-plan.mjs';
-import { lifecycleManifestHash, lifecycleTransaction, prepareLifecycle, validateLifecycleAction, validateLifecycleManifest, verifyLifecycle } from '../scripts/ens-lifecycle.mjs';
+import { lifecycleManifestHash, lifecycleTransaction, prepareLifecycle, requireLifecyclePreconditions, validateLifecycleAction, validateLifecycleManifest, verifyLifecycle } from '../scripts/ens-lifecycle.mjs';
 
 const addr = n => toHex(n, { size: 20 }), hash = n => toHex(n, { size: 32 });
 let build;
@@ -27,13 +27,23 @@ describe('unsigned ENS lifecycle review', () => {
     const manifest = fixture(), before = { index: 7 };
     const remove = lifecycleTransaction(manifest, { type: 'delist', label: 'alice' }, before, build);
     expect(remove.from).toBe(manifest.curator); expect(remove.to).toBe(manifest.registrar.address);
-    expect(decodeFunctionData({ abi: build.artifact.abi, data: remove.data })).toEqual({ functionName: 'remove', args: [7n] });
+    // Removal names the operator, so a late transaction cannot delist the slot's next occupant.
+    expect(decodeFunctionData({ abi: build.artifact.abi, data: remove.data })).toEqual({ functionName: 'remove', args: [7n, getAddress(manifest.operators[0].operator)] });
     for (const authority of ['operator', 'curator']) {
       const action = validateLifecycleAction({ type: 'renew', label: 'alice', expectedExpiry: 100, expiry: 200, authority }, manifest);
       const tx = lifecycleTransaction(manifest, action, before, build);
       expect(tx.from).toBe(authority === 'operator' ? manifest.operators[0].operator : manifest.curator);
       expect(decodeFunctionData({ abi: build.artifact.abi, data: tx.data })).toEqual({ functionName: 'renew', args: [7n, 200n] });
     }
+  });
+
+  it('leaves the renewal of a lapsed lease to the curator', () => {
+    const manifest = fixture();
+    const before = lapsed => ({ entry: { active: true, expiry: 1000 }, block: { timestamp: lapsed ? 2000 : 500 }, parentState: { expiry: '9999999' } });
+    const renew = authority => validateLifecycleAction({ type: 'renew', label: 'alice', expectedExpiry: 1000, expiry: 5000, authority }, manifest);
+    expect(() => requireLifecyclePreconditions(renew('operator'), before(true))).toThrow(/curator/);
+    expect(() => requireLifecyclePreconditions(renew('curator'), before(true))).not.toThrow();
+    expect(() => requireLifecyclePreconditions(renew('operator'), before(false))).not.toThrow();
   });
 
   it('refuses arbitrary permissions, labels, senders, keys and invalid endpoints', () => {

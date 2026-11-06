@@ -278,7 +278,7 @@ async function validateForkDiscovery(config, plan, build) {
   const renewed = await discoverOperators(options);
   expect(renewed.operators.find(op => op.ens === 'alice.derpc.eth').expiry).toBe(renewedExpiry);
   const owner = createWalletClient({ account: config.curator, transport: http(forkRpc, { retryCount: 0 }) });
-  await write(owner, registrarPin.address, build.artifact.abi, 'remove', [0n]);
+  await write(owner, registrarPin.address, build.artifact.abi, 'remove', [0n, config.operators[0].operator]);
   await materializeExactPrestate();
   const removed = await discoverOperators(options);
   expect(retainChosenOperators(removed, initial.operators.map(op => op.ens)).map(op => op.ens)).toEqual(['bob.derpc.eth']);
@@ -384,20 +384,39 @@ describe.sequential.skipIf(!forkRpc)('actual ENSv2 contracts on a local mainnet 
     evidence.checks.push('grantSetterRoles authorizes endpoint rotation only, not payee writes or another operator resolver');
   }, 60000);
 
-  it('renews through the registrar, delists without global unregister, and stops resolving expired names', async () => {
+  it('renews, delists and reinstates through the registrar, stops resolving expired names, and gives an expired label to a new owner', async () => {
     const expiry = Number((await client.getBlock()).timestamp) + 7200;
     await write(alice, registrar, registrarAbi, 'renew', [0n, expiry]);
     expect((await read(registry, registryAbi, 'getState', [labelHash('alice')])).expiry).toBe(BigInt(expiry));
-    await write(curator, registrar, registrarAbi, 'remove', [0n]);
+    // Removal names the operator, so it cannot hit another occupant of the slot.
+    await expect(write(curator, registrar, registrarAbi, 'remove', [0n, bob.account.address])).rejects.toThrow(/revert/i);
+    await write(curator, registrar, registrarAbi, 'remove', [0n, alice.account.address]);
     expect((await read(registrar, registrarAbi, 'operators', [0n]))[3]).toBe(false);
     await expect(write(alice, registrar, registrarAbi, 'renew', [0n, expiry + 3600])).rejects.toThrow(/revert/i);
     // Delisting removes the provable pool entry immediately; the ENS name itself keeps its lease.
     expect((await read(registry, registryAbi, 'getResolver', ['alice'])).toLowerCase()).toBe(resolverAlice.toLowerCase());
-    await rpc('evm_increaseTime', [7201]);
+    // Only the curator undoes a removal; the operator can then extend its running lease again.
+    await expect(write(alice, registrar, registrarAbi, 'reinstate', [0n])).rejects.toThrow(/revert/i);
+    await write(curator, registrar, registrarAbi, 'reinstate', [0n]);
+    await write(alice, registrar, registrarAbi, 'renew', [0n, expiry + 3600]);
+    expect((await read(registry, registryAbi, 'getState', [labelHash('alice')])).expiry).toBe(BigInt(expiry + 3600));
+    await rpc('evm_increaseTime', [10801]);
     await rpc('evm_mine');
     expect(await read(registry, registryAbi, 'getResolver', ['alice'])).toBe(zeroAddress);
     expect((await read(registry, registryAbi, 'getState', [labelHash('alice')])).status).toBe(0);
-    evidence.checks.push('Authorized renewal, immediate registrar delisting, revoked renewal refusal, and ENS expiry resolution removal');
+    evidence.checks.push('Authorized renewal, immediate registrar delisting naming the operator, curator-only reinstatement, revoked renewal refusal, and ENS expiry resolution removal');
+    // A lapsed operator cannot revive itself. The curator can give the expired label to a new owner,
+    // and the real registry accepts that registration while the old token still exists.
+    const later = Number((await client.getBlock()).timestamp) + 3600;
+    await expect(write(alice, registrar, registrarAbi, 'renew', [0n, later])).rejects.toThrow(/revert/i);
+    await write(curator, registrar, registrarAbi, 'register', ['alice', outsider.account.address, resolverAlice, outsider.account.address, later]);
+    const reused = await read(registry, registryAbi, 'getState', [labelHash('alice')]);
+    expect(reused.status).toBe(2); expect(reused.expiry).toBe(BigInt(later)); expect(reused.latestOwner.toLowerCase()).toBe(outsider.account.address.toLowerCase());
+    const entry = await read(registrar, registrarAbi, 'operators', [0n]);
+    expect(entry[1].toLowerCase()).toBe(outsider.account.address.toLowerCase()); expect(entry[3]).toBe(true);
+    expect((await read(registry, registryAbi, 'getResolver', ['alice'])).toLowerCase()).toBe(resolverAlice.toLowerCase());
+    await expect(write(alice, registrar, registrarAbi, 'setPayee', [0n, alice.account.address])).rejects.toThrow(/revert/i);
+    evidence.checks.push('Lapsed operator cannot renew itself; an expired label is re-registered to a new owner through the registrar in the same slot, with the previous owner losing registrar rights');
   }, 60000);
 
   it('executes every planner stage locally and verifies genuine receipts and hot-key role history', async () => {

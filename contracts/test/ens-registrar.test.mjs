@@ -52,7 +52,7 @@ describe('registrar lease lifecycle', () => {
 
   it('cannot reuse a removed name until its actual ENS lease expires', async () => {
     const expiry = Number((await client.getBlock()).timestamp) + 7200;
-    await write(wallets[0], registrar, 'OperatorRegistrar', 'remove', [0n]);
+    await write(wallets[0], registrar, 'OperatorRegistrar', 'remove', [0n, wallets[1].account.address]);
     await expect(write(wallets[0], registrar, 'OperatorRegistrar', 'register', ['alice', wallets[2].account.address, registry, wallets[2].account.address, expiry])).rejects.toThrow();
     await expect(write(wallets[1], registrar, 'OperatorRegistrar', 'setPayee', [0n, wallets[2].account.address])).rejects.toThrow();
     await rpc.request({ method: 'evm_increaseTime', params: [3601] }); await rpc.request({ method: 'evm_mine', params: [] });

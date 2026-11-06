@@ -33,6 +33,7 @@ describe('ENS deployment review', () => {
     for (const mutate of [
       c => { c.curator = null; }, c => { c.privateKey = 'not-accepted'; },
       c => { c.operators[1].label = c.operators[0].label; },
+      c => { c.operators[0].label = 'ab--cd'; }, // ENS normalization refuses hyphens in the third and fourth places
       c => { c.operators[0].hotKey = c.operators[1].coldOwner; },
       c => { c.operators[0].hotKey = c.operators[0].operator; },
       c => { c.operators[0].endpoint = 'https://user:secret@rpc.example'; },

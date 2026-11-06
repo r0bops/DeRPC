@@ -25,7 +25,7 @@ export function validateLifecycleManifest(manifest, build) {
   if (!Array.isArray(manifest.operators) || manifest.operators.length < 2 || manifest.operators.length > 3 || !Array.isArray(manifest.transactions)) fail('Manifest must contain the verified 2–3 operator deployment and receipts');
   const names = new Set(), resolvers = new Set(), hotKeys = new Set();
   for (const op of manifest.operators) {
-    if (!/^[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?\.derpc\.eth$/.test(op.name) || names.has(op.name) || ![op.operator, op.resolver, op.coldOwner, op.hotKey, op.payee].every(publicAddress) || resolvers.has(op.resolver.toLowerCase()) || hotKeys.has(op.hotKey.toLowerCase())) fail('Manifest has conflicting operator identities or resolvers');
+    if (!/^(?!..--)[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?\.derpc\.eth$/.test(op.name) || names.has(op.name) || ![op.operator, op.resolver, op.coldOwner, op.hotKey, op.payee].every(publicAddress) || resolvers.has(op.resolver.toLowerCase()) || hotKeys.has(op.hotKey.toLowerCase())) fail('Manifest has conflicting operator identities or resolvers');
     names.add(op.name); resolvers.add(op.resolver.toLowerCase()); hotKeys.add(op.hotKey.toLowerCase());
     if (!op.records || PAID.some(key => op.records[key])) fail('Lifecycle tooling supports free operators only');
     if (endpointRecordKey(op) === 'derpc.endpoints') {
@@ -41,7 +41,7 @@ export function validateLifecycleManifest(manifest, build) {
 export function validateLifecycleAction(input, manifest) {
   const keys = input?.type === 'rotate-endpoint' ? ['type', 'label', 'expectedEndpoint', 'newEndpoint'] : input?.type === 'rotate-endpoints' ? ['type', 'label', 'expectedEndpoints', 'newEndpoints'] : input?.type === 'delist' ? ['type', 'label'] : input?.type === 'renew' ? ['type', 'label', 'expectedExpiry', 'expiry', 'authority'] : [];
   only(input, keys);
-  if (!keys.length || !/^[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/.test(input.label)) fail('Choose rotate-endpoint, rotate-endpoints, delist or renew and a canonical operator label');
+  if (!keys.length || !/^(?!..--)[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/.test(input.label)) fail('Choose rotate-endpoint, rotate-endpoints, delist or renew and a canonical operator label');
   const op = manifest.operators.find(op => op.name === `${input.label}.derpc.eth`);
   if (!op) fail('Operator is absent from the trusted deployment manifest');
   const action = { ...input };
@@ -160,7 +160,7 @@ async function snapshotState({ manifest, client, build, block, action }) {
   return { block: { number: block.number.toString(), hash: block.hash, timestamp: Number(block.timestamp) }, index, entry: { label: action.label, operator: entry[1], expiry: Number(entry[2]), active: entry[3], payee: entry[4] }, ens, activeResource: originalEns.resource, dedicatedResolver: op.resolver, resolved, records, registryCount: count, parentState, parentResolver, permissions: permissionSnapshots, upstream: Object.fromEntries(upstream) };
 }
 
-function requireBefore(action, before) {
+export function requireLifecyclePreconditions(action, before) {
   if (!before.entry.active) fail('Operator is already delisted; lifecycle tooling never relists it');
   if (action.type === 'rotate-endpoint' || action.type === 'rotate-endpoints') {
     if (before.entry.expiry <= before.block.timestamp) fail('Renew an expired listing before rotating its endpoint');
@@ -168,6 +168,8 @@ function requireBefore(action, before) {
     if (action.type === 'rotate-endpoints' && before.records['derpc.endpoints'] !== serializeOperatorEndpoints(action.expectedEndpoints)) fail('Endpoint list changed since the reviewed expectedEndpoints');
   }
   if (action.type === 'renew' && (before.entry.expiry !== action.expectedExpiry || action.expiry <= before.block.timestamp || action.expiry > before.block.timestamp + 30 * 86400 || BigInt(action.expiry) > BigInt(before.parentState.expiry))) fail('Renewal requires the expected current lease and a future expiry within 30 days and the parent lease');
+  // The registrar lets an operator extend a running lease only; a lapsed one comes back through the curator.
+  if (action.type === 'renew' && action.authority !== 'curator' && before.entry.expiry <= before.block.timestamp) fail('A lapsed lease can be renewed only by the curator');
 }
 
 export function lifecycleTransaction(manifest, action, before, build) {
@@ -175,7 +177,7 @@ export function lifecycleTransaction(manifest, action, before, build) {
   if (action.type === 'rotate-endpoint') return { from: op.hotKey, to: op.resolver, data: encodeFunctionData({ abi: resolverAbi, functionName: 'setText', args: [dnsEncode(op.name), 'derpc.endpoint', action.newEndpoint] }), value: '0x0', chainId: '0x1' };
   if (action.type === 'rotate-endpoints') return { from: op.hotKey, to: op.resolver, data: encodeFunctionData({ abi: resolverAbi, functionName: 'setText', args: [dnsEncode(op.name), 'derpc.endpoints', serializeOperatorEndpoints(action.newEndpoints)] }), value: '0x0', chainId: '0x1' };
   const from = action.type === 'delist' || action.authority === 'curator' ? manifest.curator : op.operator;
-  return { from, to: manifest.registrar.address, data: encodeFunctionData({ abi: build.artifact.abi, functionName: action.type === 'delist' ? 'remove' : 'renew', args: action.type === 'delist' ? [BigInt(before.index)] : [BigInt(before.index), BigInt(action.expiry)] }), value: '0x0', chainId: '0x1' };
+  return { from, to: manifest.registrar.address, data: encodeFunctionData({ abi: build.artifact.abi, functionName: action.type === 'delist' ? 'remove' : 'renew', args: action.type === 'delist' ? [BigInt(before.index), op.operator] : [BigInt(before.index), BigInt(action.expiry)] }), value: '0x0', chainId: '0x1' };
 }
 
 async function context(manifest, client, build) {
@@ -190,7 +192,7 @@ export async function prepareLifecycle({ manifest, action: input, client, build 
   await context(manifest, client, build);
   const action = validateLifecycleAction(input, manifest), block = await client.getBlock({ blockTag: 'latest' });
   const before = await snapshotState({ manifest, client, build, block, action });
-  requireBefore(action, before);
+  requireLifecyclePreconditions(action, before);
   const transaction = lifecycleTransaction(manifest, action, before, build);
   const gas = await client.estimateGas({ account: transaction.from, to: transaction.to, data: transaction.data, value: 0n, blockNumber: block.number });
   await canonicalBlock(client, block.number, block.hash);
@@ -204,7 +206,7 @@ async function reviewedPlan({ manifest, plan, client, build }) {
   const block = await canonicalBlock(client, plan.before.block.number, plan.before.block.hash);
   const before = await snapshotState({ manifest, client, build, block, action });
   if (!equal(before, plan.before) || plan.reviewExpiresAt !== Number(block.timestamp) + MAX_REVIEW_SECONDS) fail('Reviewed preconditions differ from their canonical block');
-  requireBefore(action, before);
+  requireLifecyclePreconditions(action, before);
   const transaction = lifecycleTransaction(manifest, action, before, build);
   if (plan.walletRequest?.method !== 'eth_sendTransaction' || plan.walletRequest.params?.length !== 1 || !equal(plan.walletRequest.params[0], transaction)) fail('Wallet request differs from the narrowly scoped lifecycle action');
   return { action, before, transaction };
@@ -217,7 +219,7 @@ export async function checkLifecyclePlan({ manifest, plan, client, build = regis
   const block = await client.getBlock({ blockTag: 'latest' });
   if (Number(block.timestamp) > plan.reviewExpiresAt) fail('Plan review window expired; prepare a fresh plan');
   const current = await snapshotState({ manifest, client, build, block, action: reviewed.action });
-  requireBefore(reviewed.action, current);
+  requireLifecyclePreconditions(reviewed.action, current);
   if (!equal(comparable(current), comparable(reviewed.before))) fail('Lifecycle preconditions changed; prepare a fresh plan');
   await canonicalBlock(client, block.number, block.hash);
   return { schemaVersion: 1, kind: 'derpc-ens-lifecycle-recheck', localOnly: plan.localOnly, manifestHash: plan.manifestHash, checkedBlock: current.block, stateStillMatches: true, noTransactionSent: true };
@@ -257,7 +259,7 @@ export async function verifyLifecycle({ manifest, plan, transactionHash, client,
   if (blockEvents.some(event => event.transactionIndex !== receipt.transactionIndex)) fail('Another managed-contract mutation occurred in the receipt block; cannot establish isolated lifecycle preconditions');
   const parent = await canonicalBlock(client, receipt.blockNumber - 1n, block.parentHash);
   const preceding = await snapshotState({ manifest, client, build, block: parent, action });
-  requireBefore(action, preceding);
+  requireLifecyclePreconditions(action, preceding);
   if (!equal(comparable(before), comparable(preceding))) fail('Lifecycle state changed between review and the receipt parent block');
   const after = await snapshotState({ manifest, client, build, block, action });
   if (!equal(after, expectedAfter(before, action, after))) fail(`Receipt-block state does not match the exact intended lifecycle change: ${differencePaths(after, expectedAfter(before, action, after)).join(', ')}`);

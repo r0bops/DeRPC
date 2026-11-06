@@ -74,7 +74,10 @@ export async function validateForkLifecycle({ manifest, client, rpc, forkRpc, bu
       const expiry = Number((await client.getBlock()).timestamp) + 3600;
       await expect(prepare({ type: 'renew', label, expectedExpiry: rotate.before.entry.expiry, expiry: expiry + 31 * 86400 })).rejects.toThrow(/30 days/);
       await expect(prepare({ type: 'renew', label, expectedExpiry: rotate.before.entry.expiry + 1, expiry })).rejects.toThrow(/expected current lease/);
-      const renew = await prepare({ type: 'renew', label, expectedExpiry: rotate.before.entry.expiry, expiry, authority: 'operator' });
+      // An operator may not revive its own lapsed lease: the tool refuses to prepare it and the registrar reverts it.
+      await expect(prepare({ type: 'renew', label, expectedExpiry: rotate.before.entry.expiry, expiry, authority: 'operator' })).rejects.toThrow(/curator/);
+      const renew = await prepare({ type: 'renew', label, expectedExpiry: rotate.before.entry.expiry, expiry, authority: 'curator' });
+      await expect(client.call({ account: op.operator, to: manifest.registrar.address, data: renew.walletRequest.params[0].data })).rejects.toThrow();
       expect(renew.before.entry.active).toBe(true); expect(renew.before.ens.status).toBe(0); expect(renew.before.resolved).toBe(zeroAddress);
       await expect(client.call({ account: other.operator, to: manifest.registrar.address, data: renew.walletRequest.params[0].data })).rejects.toThrow();
       const hash = await submit(renew.walletRequest.params[0]); await mine();
@@ -83,7 +86,7 @@ export async function validateForkLifecycle({ manifest, client, rpc, forkRpc, bu
       expect(renewed.after.ens.latestOwner).toBe(renewed.before.ens.latestOwner); expect(renewed.after.ens.tokenId).toBe(renewed.before.ens.tokenId);
       expect(renewed.after.entry.active).toBe(true); keep(renew, renewed);
     });
-    report.checks.push('Expired-but-active lease recovers through the existing registrar, retaining owner/token/dedicated resolver; expiry bounds and unauthorized renewal reject; expired endpoint rotation refuses');
+    report.checks.push('Expired-but-active lease recovers through the registrar only by the curator, retaining owner/token/dedicated resolver; the operator cannot revive it; expiry bounds and unauthorized renewal reject; expired endpoint rotation refuses');
 
     const renew = await prepare({ type: 'renew', label, expectedExpiry: rotate.before.entry.expiry, expiry: rotate.before.entry.expiry + 3600, authority: 'curator' });
     expect(renew.walletRequest.params[0].from).toBe(manifest.curator);

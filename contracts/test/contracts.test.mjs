@@ -157,7 +157,7 @@ describe('OperatorRegistrar', () => {
     await expect(write(outsider, registrar, 'OperatorRegistrar', 'setPayee', [0n, outsider.account.address])).rejects.toThrow();
     await write(operator, registrar, 'OperatorRegistrar', 'setPayee', [0n, outsider.account.address]);
     expect((await read(registrar, 'OperatorRegistrar', 'operators', [0n]))[4].toLowerCase()).toBe(outsider.account.address.toLowerCase());
-    await write(payer, registrar, 'OperatorRegistrar', 'remove', [0n]);
+    await write(payer, registrar, 'OperatorRegistrar', 'remove', [0n, operator.account.address]);
     expect((await read(registrar, 'OperatorRegistrar', 'operators', [0n]))[3]).toBe(false);
     await expect(write(operator, registrar, 'OperatorRegistrar', 'renew', [0n, now + 10800])).rejects.toThrow();
   });
