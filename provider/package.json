@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./viem": "./src/api/viem.ts",
+    "./discovery": "./src/discovery/ens.ts",
     "./execution": "./src/execution/index.ts"
   },
   "scripts": {

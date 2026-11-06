@@ -75,6 +75,7 @@ export {
   type EndpointStatus,
 } from "./pool/pool.ts";
 export { createPooledReader } from "./pool/pooled-reader.ts";
+export { operatorUrl, checkOperatorIdentity, assertSeparateGateway, type OperatorIdentity } from "./operators/endpoint.ts";
 
 // The integrator API: one call for private, verified reads (viem helper: "@derpc/provider/viem").
 export {

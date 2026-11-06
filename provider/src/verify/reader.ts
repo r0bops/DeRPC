@@ -7,7 +7,7 @@ import { ProofVerificationError, verifyAccountProof, verifyCode, verifyStoragePr
 export type JsonRpcSend = (
   method: string,
   params: unknown[],
-  opts: { isolationKey: string; signal?: AbortSignal },
+  opts: { isolationKey: string; signal?: AbortSignal; headers?: Record<string, string> },
 ) => Promise<unknown>;
 
 /** A token whose balances live in a documented `mapping(address => uint256)` storage slot. */
