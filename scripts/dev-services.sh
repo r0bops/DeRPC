@@ -12,7 +12,19 @@ GATEWAY="${TOR_JS_GATEWAY:-$ROOT/reference/tor-js/target/release/tor-js-gateway}
 LOG_DIR="$ROOT/.dev-logs"
 mkdir -p "$LOG_DIR"
 
-gateway_up() { ss -uln 2>/dev/null | grep -q ':12298\b'; }
+# ss and ip are Linux tools; macOS has lsof and ifconfig instead.
+# lsof also lists a client socket that is only connected to port 12298 ("local->remote"),
+# so compare the local side of each socket name: the gateway is the one bound to the port.
+gateway_up() {
+  ss -uln 2>/dev/null | grep -q ':12298\b' && return 0
+  local names
+  names="$(lsof -nP -iUDP:12298 -Fn 2>/dev/null | sed -n '/^n/{s/^n//;s/->.*//;p;}')" || true
+  grep -q ':12298$' <<< "$names"
+}
+local_addresses() {
+  ip -o -4 address show 2>/dev/null | awk '{ sub(/\/.*/, "", $4); print $4 }' || true
+  ifconfig 2>/dev/null | awk '$1 == "inet" { print $2 }' || true
+}
 
 started_gateway=""
 cleanup() {
@@ -46,7 +58,7 @@ addr="$(sed 's/\x1b\[[0-9;]*m//g' "$LOG_DIR/gateway.log" 2>/dev/null | grep -oE 
 if [ -n "${VITE_TOR_GATEWAYS:-}" ]; then
   echo "using VITE_TOR_GATEWAYS from the shell; leaving frontend/.env.local unchanged"
 elif [ -n "$addr" ]; then
-  local_ipv4="$(ip -o -4 address show 2>/dev/null | awk '{ sub(/\/.*/, "", $4); print $4 }' || true)"
+  local_ipv4="$(local_addresses)"
   if grep -Fxq -- "${addr%%:*}" <<< "$local_ipv4"; then
     env_file="$ROOT/frontend/.env.local"
     if ! grep -Fxq "VITE_TOR_GATEWAYS=$addr" "$env_file" 2>/dev/null; then

@@ -46,6 +46,10 @@ const result = await derpc.verifiedCall({ to: contract, data: calldata, signal }
 
 The supported input is `to`, optional `data`, `from`, `gas` and `signal`; value transfers and transaction overrides are not supported. Defaults bound gas to 1,000,000, steps to 100,000, accounts to 24, storage slots to 64, remote round trips to 128, memory to 4 MiB and execution time to 60 seconds. The pool uses that same call deadline, including retries. Configure `verifiedCalls: { limits: { ... } }` to change executor limits. The executor refuses unsupported forks/context, `BLOCKHASH`, `BLOBBASEFEE`, and CCIP-Read/off-chain resolution. A limit failure or revert returns no verified value and earns no payment. This is an experimental bounded executor, not a claim of compatibility with every contract.
 
+In [one Chrome measurement](test/execution/browser-measure-evidence-2026-11-06.json), a separate benchmark build of the executor was about 99 KB gzipped (319 KB raw). That figure includes the benchmark's own setup code; what the executor adds to a production page was not measured. It loaded and finished a first small call in a median of 45 ms over five runs, using generated proofs and no network or Tor time.
+
+Local execution does not hide what a call reads. Each account, storage slot and contract the call touches is requested with `eth_getProof` or `eth_getCode`, so the operator sees them. The calldata is not sent to the operator, but it may be able to infer the call from the accounts and slots requested.
+
 The same explicit option enables fully on-chain ENS resolution:
 
 ```ts
@@ -203,6 +207,7 @@ For a server coordinator, `@derpc/payments/node` provides the Linux/Node 24 dura
 ## How a read is routed
 
 - Each account's reads retain their assigned operator while it remains eligible, limiting disclosure to other operators. Failover and explicit changes can expose that account to another operator. Each account also gets its own isolation key; whether separate keys give separate Tor circuits depends on the worker.
+- Onion endpoints use the same isolation keys as exit connections; there is no onion-specific key. The key selects the worker's circuit, and whether two onion reads stay unlinkable to their operator is unproven, as it is for exits.
 - An answer that fails proof verification excludes that operator for the session. This is local evidence only: the worker could also have altered the answer.
 - A timeout, rate limit or Tor exit failure rests the operator for 60 s. The read moves to another chosen operator on a fresh circuit. When none is left, it gives a resting one another try on a fresh circuit. An excluded operator is never retried.
 - Ordinary proof/code reads allow at most 3 attempts and 30 s total, with a 20 s fetch timeout. Verified local calls use their executor's configured total deadline (60 s by default); directory refresh defaults to 120 s for the whole scan. Verified basic-read results are cached per verified block, on the device.
