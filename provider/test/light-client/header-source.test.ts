@@ -126,6 +126,22 @@ describe("startVerifiedHeaderSource", () => {
     await expect(pending).rejects.toThrow();
   });
 
+  it("refuses a pinned root that resolves to a different epoch than the configured checkpoint", async () => {
+    at(mainnet.capturedAt);
+    const served = fixtureFetch(BEACON, mainnetResponses);
+    const pending = startVerifiedHeaderSource({
+      network: "mainnet",
+      checkpoint: { root: mainnet.checkpoint.root as `0x${string}`, epoch: mainnet.checkpoint.epoch + 1 },
+      beaconUrl: BEACON,
+      fetch: served.fetch,
+      pollIntervalMs: 5,
+      readyTimeoutMs: 1_500,
+    });
+
+    await expect(pending).rejects.toBeInstanceOf(StaleCheckpointError);
+    expect(served.requested.length).toBeGreaterThan(0);
+  });
+
   it("never returns a finalized header older than 30 minutes", async () => {
     at(mainnet.capturedAt);
     const { pending } = start("mainnet", mainnet, mainnetResponses);

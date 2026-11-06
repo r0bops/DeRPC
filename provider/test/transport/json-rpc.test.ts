@@ -2,6 +2,16 @@ import { describe, expect, it } from "vitest";
 import { createJsonRpcSend } from "../../src/transport/json-rpc.ts";
 import type { AnonFetchOptions, AnonTransport } from "../../src/transport/anon-transport.ts";
 
+function transportWithHangingBody() {
+  return {
+    fetch: async () =>
+      new Response(new ReadableStream<Uint8Array>({ start() {} }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+  } as unknown as AnonTransport;
+}
+
 function transportAnswering(status: number, body: string) {
   const calls: { url: string; options: AnonFetchOptions }[] = [];
   const transport = {
@@ -39,5 +49,11 @@ describe("createJsonRpcSend", () => {
     const { transport } = transportAnswering(429, "rate limited");
 
     await expect(createJsonRpcSend(transport, "https://rpc.test/")("eth_getProof", [], { isolationKey: "k" })).rejects.toThrow("429");
+  });
+
+  it("times out when the response body never finishes", async () => {
+    const send = createJsonRpcSend(transportWithHangingBody(), "https://rpc.test/", { timeoutMs: 25 });
+
+    await expect(send("eth_blockNumber", [], { isolationKey: "k" })).rejects.toThrow("response body did not finish within 25 ms");
   });
 });

@@ -5,6 +5,22 @@ import { describe, expect, it } from "vitest";
 import { asFetch } from "../../src/transport/fetch-adapter.ts";
 import type { AnonFetchOptions, AnonTransport } from "../../src/transport/anon-transport.ts";
 
+function transportWithBody(body: BodyInit) {
+  return {
+    fetch: async () => new Response(body, { status: 200, headers: { "content-type": "application/json" } }),
+  } as unknown as AnonTransport;
+}
+
+function transportWithHangingBody() {
+  return {
+    fetch: async () =>
+      new Response(new ReadableStream<Uint8Array>({ start() {} }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+  } as unknown as AnonTransport;
+}
+
 function recordingTransport() {
   const calls: { url: string; options: AnonFetchOptions }[] = [];
   const transport = {
@@ -54,5 +70,17 @@ describe("asFetch", () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({});
+  });
+
+  it("times out when the response body never finishes", async () => {
+    const fetchFn = asFetch(transportWithHangingBody(), { isolationKey: "k", timeoutMs: 25 });
+
+    await expect(fetchFn("https://beacon.test/x")).rejects.toThrow("response body did not finish within 25 ms");
+  });
+
+  it("refuses a response body larger than the configured limit", async () => {
+    const fetchFn = asFetch(transportWithBody(new Uint8Array(64)), { isolationKey: "k", maxBodyBytes: 16 });
+
+    await expect(fetchFn("https://beacon.test/x")).rejects.toThrow("response body exceeded 16 bytes");
   });
 });

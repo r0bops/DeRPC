@@ -53,7 +53,11 @@ const harness = vi.hoisted(() => {
 
 vi.mock("@anon-rpc/browser-harness", () => ({ AnonRpcWorker: harness.FakeWorker }));
 
-import { startAnonTransport, TransportUnavailableError } from "../../src/transport/anon-transport.ts";
+import {
+  NetworkUnavailableError,
+  startAnonTransport,
+  TransportUnavailableError,
+} from "../../src/transport/anon-transport.ts";
 import type { TransportState } from "../../src/transport/anon-transport.ts";
 import type { WorkerPin } from "../../src/config/mainnet.ts";
 
@@ -126,13 +130,15 @@ describe("startAnonTransport", () => {
     await vi.waitFor(() => expect(transport.state()).toBe("failed"));
   });
 
-  it("keeps ordinary request errors retryable", async () => {
+  it("keeps ordinary request errors retryable and classifies them as network failures", async () => {
     const { transport, worker } = start();
     worker.resolveReady();
     await transport.ready;
 
-    worker.nextError = new Error("exit circuit closed");
-    await expect(transport.fetch("https://rpc.test/")).rejects.toThrow("exit circuit closed");
+    worker.nextError = Object.assign(new Error("exit circuit closed"), { code: 7, kind: "circuit", torKind: "exit" });
+    const attempt = transport.fetch("https://rpc.test/");
+    await expect(attempt).rejects.toBeInstanceOf(NetworkUnavailableError);
+    await expect(attempt).rejects.toMatchObject({ message: "exit circuit closed", code: 7, kind: "circuit", torKind: "exit" });
     expect(transport.state()).toBe("ready");
     await expect(transport.fetch("https://rpc.test/")).resolves.toBeInstanceOf(Response);
   });

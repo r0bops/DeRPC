@@ -1,7 +1,14 @@
 // Verified reads: every value comes from a proof checked against the light client's verified
 // finalized block. Expected values come from independent RPC calls recorded with the fixture.
 import { describe, expect, it } from "vitest";
-import { createVerifiedReader, type JsonRpcSend } from "../../src/verify/reader.ts";
+import {
+  createVerifiedReader,
+  mappingSlot,
+  EmptyAnswerError,
+  InputError,
+  MalformedAnswerError,
+  type JsonRpcSend,
+} from "../../src/verify/reader.ts";
 import { ProofVerificationError } from "../../src/verify/index.ts";
 import { StaleHeaderError, type VerifiedHeader } from "../../src/light-client/header-source.ts";
 import fixture from "../fixtures/mainnet-proofs.json" with { type: "json" };
@@ -96,5 +103,64 @@ describe("createVerifiedReader", () => {
 
     await expect(reader.getBalance(HOLDER as Hex)).rejects.toBeInstanceOf(StaleHeaderError);
     expect(endpoint.calls).toEqual([]);
+  });
+
+  it("rejects caller input as InputError without sending a request", async () => {
+    const endpoint = recordedEndpoint();
+    const reader = createVerifiedReader({ headers: verifiedHeaders, send: endpoint.send });
+
+    await expect(reader.getBalance("0x123" as Hex)).rejects.toBeInstanceOf(InputError);
+    await expect(reader.getStorageAt(HOLDER as Hex, "0xnot-hex" as Hex)).rejects.toBeInstanceOf(InputError);
+    await expect(
+      reader.getTokenBalance({ symbol: "WETH", address: "0x123" as Hex, balanceSlot: 3, decimals: 18 }, HOLDER as Hex),
+    ).rejects.toBeInstanceOf(InputError);
+    expect(endpoint.calls).toEqual([]);
+  });
+
+  it("treats an empty proof answer as retryable, not as an invalid proof", async () => {
+    const empty = recordedEndpoint((method) => (method === "eth_getProof" ? null : undefined));
+    const reader = createVerifiedReader({ headers: verifiedHeaders, send: empty.send });
+
+    await expect(reader.getBalance(HOLDER as Hex)).rejects.toBeInstanceOf(EmptyAnswerError);
+  });
+
+  it("treats an empty code answer as retryable, not as invalid code", async () => {
+    const empty = recordedEndpoint((method, result) => (method === "eth_getCode" ? null : result));
+    const reader = createVerifiedReader({ headers: verifiedHeaders, send: empty.send });
+
+    await expect(reader.getCode(WETH as Hex)).rejects.toBeInstanceOf(EmptyAnswerError);
+  });
+
+  it("treats a structurally malformed proof as an invalid answer", async () => {
+    const malformed = recordedEndpoint((method) => (method === "eth_getProof" ? "not an object" : undefined));
+    const reader = createVerifiedReader({ headers: verifiedHeaders, send: malformed.send });
+
+    const attempt = reader.getBalance(HOLDER as Hex);
+    await expect(attempt).rejects.toBeInstanceOf(MalformedAnswerError);
+    await expect(attempt).rejects.toBeInstanceOf(ProofVerificationError);
+  });
+
+  it("treats missing storage proof data as an invalid answer", async () => {
+    const malformed = recordedEndpoint((method, result) =>
+      method === "eth_getProof" ? { ...result, storageProof: [] } : result,
+    );
+    const reader = createVerifiedReader({ headers: verifiedHeaders, send: malformed.send });
+
+    await expect(reader.getStorageAt(WETH as Hex, holderSlot as Hex)).rejects.toBeInstanceOf(MalformedAnswerError);
+  });
+
+  it("treats non-string code as an invalid answer", async () => {
+    const malformed = recordedEndpoint((method, result) => (method === "eth_getCode" ? 42 : result));
+    const reader = createVerifiedReader({ headers: verifiedHeaders, send: malformed.send });
+
+    await expect(reader.getCode(WETH as Hex)).rejects.toBeInstanceOf(MalformedAnswerError);
+  });
+
+  it("matches the recorded mapping slot for a small balance slot", () => {
+    expect(mappingSlot(HOLDER as Hex, 3)).toBe(holderSlot);
+  });
+
+  it("derives a mapping slot for a large odd-length slot number", () => {
+    expect(mappingSlot(HOLDER as Hex, 0x12345)).toMatch(/^0x[0-9a-f]{64}$/);
   });
 });

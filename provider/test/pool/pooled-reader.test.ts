@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { createPool } from "../../src/pool/pool.ts";
 import { createPooledReader } from "../../src/pool/pooled-reader.ts";
-import type { JsonRpcSend } from "../../src/verify/reader.ts";
+import { InputError, type JsonRpcSend } from "../../src/verify/reader.ts";
 import type { VerifiedHeader } from "../../src/light-client/header-source.ts";
 import fixture from "../fixtures/mainnet-proofs.json" with { type: "json" };
 
@@ -17,10 +17,11 @@ const header = (blockNumber: number): VerifiedHeader => ({
   timestamp: Math.floor(fixture.capturedAt / 1000),
 });
 
-function endpoints(behaviour: Record<string, "honest" | "liar">) {
+function endpoints(behaviour: Record<string, "honest" | "liar" | "down">) {
   const calls: { url: string; params: unknown[] }[] = [];
   const sendFor = ({ url }: { url: string }): JsonRpcSend => async (method, params) => {
     calls.push({ url, params });
+    if (behaviour[url] === "down") throw new Error("exit circuit closed");
     if (method !== "eth_getProof" || JSON.stringify(params).toLowerCase() !== JSON.stringify([HOLDER, [], tagOf(fixture.block.number)]).toLowerCase()) {
       throw new Error(`no recorded answer for ${method} ${JSON.stringify(params)}`);
     }
@@ -79,5 +80,29 @@ describe("createPooledReader", () => {
     await reader.getBalance(HOLDER as Hex).catch(() => {}); // no recorded proof for the next block
 
     expect(eps.calls.map((c) => c.params[2])).toEqual([tagOf(fixture.block.number), tagOf(fixture.block.number + 1)]);
+  });
+
+  it("keeps every retry of one read pinned to the block the read started at", async () => {
+    const eps = endpoints({ down: "down", honest: "honest" });
+    const pool = createPool({ endpoints: [{ url: "down", priority: 0 }, { url: "honest", priority: 0 }], sendFor: eps.sendFor, random: () => 0 });
+    let finalizedCalls = 0;
+    const moving = {
+      finalized: () => header(finalizedCalls++ === 0 ? fixture.block.number : fixture.block.number + 1),
+    };
+    const reader = createPooledReader({ headers: moving, pool });
+
+    const result = await reader.getBalance(HOLDER as Hex);
+
+    expect(result.block.blockNumber).toBe(fixture.block.number);
+    expect(eps.calls.filter((c) => c.url === "honest").map((c) => c.params[2])).toEqual([tagOf(fixture.block.number)]);
+  });
+
+  it("rejects caller input before any operator is asked", async () => {
+    const eps = endpoints({ honest: "honest" });
+    const pool = createPool({ endpoints: [{ url: "honest", priority: 0 }], sendFor: eps.sendFor });
+    const reader = createPooledReader({ headers: { finalized: () => header(fixture.block.number) }, pool });
+
+    await expect(reader.getBalance("0x123" as Hex)).rejects.toBeInstanceOf(InputError);
+    expect(eps.calls).toEqual([]);
   });
 });
