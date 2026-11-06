@@ -33,14 +33,39 @@ Multi-endpoint wrappers are free-only. Startup and setup refuse `DERPC_ENDPOINT_
 
 ## Node configuration
 
-The settings below were checked against client documentation on Nov 6. The self-test remains the acceptance check for a particular node and version.
+The wrapper needs two things from the node behind it:
+
+- **Execution client:** `eth_getProof` and `eth_getCode` at the node's own finalized block, plus `eth_getBlockByNumber("finalized")`. The finalized block is normally about 65–95 blocks behind the head, and further behind when finality is delayed, so the node has to keep enough recent state to build proofs that far back.
+- **Consensus client:** the four light-client routes listed under [Exposed routes and limits](#exposed-routes-and-limits).
+
+The settings below were read from each client's own documentation on Nov 6, 2026. None of them was confirmed by running that client here. The self-test remains the acceptance check for a particular node and version: it requests a proof at the finalized block and a finality update through the wrapper, and stops if either fails.
+
+### Execution clients
+
+Keep the HTTP API on `127.0.0.1`. The wrapper reads `DERPC_EXECUTION_URL`, by default `http://127.0.0.1:8545`.
 
 | Client | Configuration |
 | --- | --- |
 | Reth | Enable `--http --http.addr 127.0.0.1 --http.api eth`. Set `--rpc.eth-proof-window 256` initially, and increase if the finalized block falls outside that window. Its default is zero. [Reth node CLI](https://reth.rs/cli/reth/node/) |
-| Lighthouse | Enable `--http --http-address 127.0.0.1 --http-port 5052`. Do not disable light-client serving. Current releases describe `--disable-light-client-server`; check your installed version's help. [Beacon node CLI](https://lighthouse-book.sigmaprime.io/help_bn.html) |
+| Geth | Enable `--http --http.addr 127.0.0.1 --http.api eth` (port 8545 by default). A full node keeps only the most recent 128 block states, which normally includes the finalized block but leaves little room when finality is late. For proofs at older blocks, the archive-mode page describes `--history.trienode=N` with the path-based state scheme, from v1.17; `--history.state` alone keeps state but not the trie nodes a proof needs. [Command-line options](https://geth.ethereum.org/docs/fundamentals/command-line-options), [sync modes](https://geth.ethereum.org/docs/fundamentals/sync-modes), [archive mode](https://geth.ethereum.org/docs/fundamentals/archive) |
+| Nethermind | Enable `--JsonRpc.Enabled true`. It listens on `127.0.0.1:8545` by default, and `eth` is among the default `JsonRpc.EnabledModules`. `Pruning.PruningBoundary`, the number of past states kept before pruning, defaults to 64, which can be less than the distance to the finalized block; raise it (for example `--Pruning.PruningBoundary 256`) and confirm with the self-test. [Configuration](https://docs.nethermind.io/fundamentals/configuration), [JSON-RPC server](https://docs.nethermind.io/interacting/json-rpc-server) |
+| Besu | Enable `--rpc-http-enabled`. The host defaults to `127.0.0.1`, and the default `--rpc-http-api` list includes `ETH`. With Bonsai, the default storage format, `--bonsai-historical-block-limit` sets how many previous blocks' state Besu can reconstruct; the default is 512. The documentation doesn't say separately how far back proofs are served, so rely on the self-test. [Options](https://docs.besu-eth.org/public-networks/reference/options), [data storage formats](https://docs.besu-eth.org/public-networks/concepts/data-storage-formats) |
+| Erigon | The HTTP server is on by default at `localhost:8545`, and `eth` is in the default `--http.api`. Proofs at past blocks need `--prune.include-commitment-history=true`, described as stable from v3.4 and as needing at least 32 GB more RAM. `--prune.commitment-history.distance N` limits how many blocks of that history are kept. [eth API notes](https://docs.erigon.tech/interacting-with-erigon/eth), [CLI reference](https://docs.erigon.tech/fundamentals/configuring-erigon) |
 
-Other client combinations have not been checked. No archive-node claim is made: what matters is retaining enough state to prove the finalized block.
+### Consensus clients
+
+Keep the REST API on `127.0.0.1` and set `DERPC_BEACON_URL` to it. The wrapper's default is `http://127.0.0.1:5052`; several clients use another port.
+
+| Client | Configuration |
+| --- | --- |
+| Lighthouse | Enable `--http --http-address 127.0.0.1 --http-port 5052`. Do not disable light-client serving. Current releases describe `--disable-light-client-server`; check your installed version's help. [Beacon node CLI](https://lighthouse-book.sigmaprime.io/help_bn.html) |
+| Lodestar | The REST API is on by default at `127.0.0.1:9596`, and `lightclient` is in the default `--rest.namespace` list. Do not pass `--disableLightClientServer`, and keep `lightclient` if you set the namespaces yourself. Use `DERPC_BEACON_URL=http://127.0.0.1:9596`. [Beacon CLI reference](https://chainsafe.github.io/lodestar/run/beacon-management/beacon-cli/) |
+| Nimbus | Enable `--rest` (off by default; `127.0.0.1:5052`). `--light-client-data-serve` is on by default. `--light-client-data-import-mode` defaults to `only-new`, which imports new data as it arrives; `full` and `on-demand` also import historic data, which the documentation warns is expensive and can cause missed validator duties. [Options](https://nimbus.guide/options.html), [light client data](https://nimbus.guide/light-client-data.html) |
+| Prysm | Pass `--enable-light-client`; it is off by default. The HTTP API listens on `127.0.0.1:3500` by default (`--http-host`, `--http-port`). Use `DERPC_BEACON_URL=http://127.0.0.1:3500`. [Parameters](https://prysm.offchainlabs.com/docs/configure-prysm/parameters/) |
+| Teku | Not usable as documented. Teku's CLI reference and its published REST API list no light-client routes. [CLI reference](https://docs.teku.consensys.com/reference/cli), [REST API](https://consensys-incorporated.github.io/teku/) |
+| Grandine | Not usable. Its documentation states that the light-client endpoints are not served. [Beacon Node API](https://docs.grandine.io/beacon_node_api.html) |
+
+Erigon's built-in consensus client (Caplin) was not checked: its Beacon API page doesn't mention the light-client routes. No archive-node claim is made for any client: what matters is retaining enough state to prove the finalized block.
 
 ## Exposed routes and limits
 
