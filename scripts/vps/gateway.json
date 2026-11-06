@@ -1,0 +1,15 @@
+{
+  "data_dir": "/var/lib/derpc-gateway/data",
+  "kps_port": 12298,
+  "kps_key_file": "/var/lib/derpc-gateway/kps.key",
+  "keccak_repo": "ethereum/tor-js",
+  "keccak_branch": "keccak",
+  "keccak_poll_interval": 86400,
+  "keccak_manual_sync_min_interval": 1800,
+  "demo": true,
+  "advertised_addresses": ["PUBLIC_IPV4"],
+  "tunnel_max": 1024,
+  "tunnel_per_ip": 16,
+  "tunnel_idle_timeout": 300,
+  "tunnel_max_lifetime": 3600
+}
