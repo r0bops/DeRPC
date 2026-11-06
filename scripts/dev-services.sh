@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Start the local side services for DeRPC development:
+#   1. our own tor-js-gateway (UDP 12298), unless one is already running
+#   2. the Vite dev server (pnpm dev), in the foreground
+# Ctrl-C stops the dev server and the gateway this script started.
+# Usage: scripts/dev-services.sh [--force]   (--force rebuilds Vite's dependency cache)
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+GATEWAY="${TOR_JS_GATEWAY:-$ROOT/reference/tor-js/target/release/tor-js-gateway}"
+LOG_DIR="$ROOT/.dev-logs"
+mkdir -p "$LOG_DIR"
+
+gateway_up() { ss -uln 2>/dev/null | grep -q ':12298\b'; }
+
+started_gateway=""
+cleanup() {
+  if [ -n "$started_gateway" ]; then
+    echo "stopping tor-js-gateway (pid $started_gateway)"
+    kill "$started_gateway" 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT INT TERM
+
+if gateway_up; then
+  echo "tor-js-gateway already listening on UDP 12298, reusing it"
+else
+  if [ ! -x "$GATEWAY" ]; then
+    echo "tor-js-gateway not found at $GATEWAY" >&2
+    echo "Build it from reference/tor-js (cargo build --release -p tor-js-gateway) or set TOR_JS_GATEWAY." >&2
+    exit 1
+  fi
+  [ -f "$HOME/.config/tor-js-gateway/config.json5" ] || "$GATEWAY" init
+  echo "starting tor-js-gateway (log: $LOG_DIR/gateway.log)"
+  "$GATEWAY" run >"$LOG_DIR/gateway.log" 2>&1 &
+  started_gateway=$!
+  for _ in $(seq 1 60); do gateway_up && break; sleep 0.5; done
+  gateway_up || { echo "gateway did not start; see $LOG_DIR/gateway.log" >&2; exit 1; }
+  echo "tor-js-gateway up (it may need ~30 s to sync the Tor directory on first run)"
+fi
+
+# The gateway's address includes this machine's IP, which changes between networks. Take the current
+# IPv4 address from the gateway log and keep frontend/.env.local in sync with it.
+addr="$(sed 's/\x1b\[[0-9;]*m//g' "$LOG_DIR/gateway.log" 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+){3}:12298:[A-Za-z0-9_-]+' | tail -1 || true)"
+if [ -n "$addr" ]; then
+  env_file="$ROOT/frontend/.env.local"
+  if ! grep -qx "VITE_TOR_GATEWAYS=$addr" "$env_file" 2>/dev/null; then
+    touch "$env_file"
+    grep -v '^VITE_TOR_GATEWAYS=' "$env_file" > "$env_file.tmp" || true
+    echo "VITE_TOR_GATEWAYS=$addr" >> "$env_file.tmp"
+    mv "$env_file.tmp" "$env_file"
+    echo "set VITE_TOR_GATEWAYS to this gateway: ${addr%%:*}"
+  fi
+fi
+
+if [ ! -f "$ROOT/frontend/.env.local" ]; then
+  echo "note: frontend/.env.local is missing, so the page uses the tor-js demo gateway."
+  echo "      Copy frontend/.env.example and set VITE_TOR_GATEWAYS to this gateway's KPS address."
+fi
+
+cd "$ROOT"
+[ -d node_modules ] || pnpm install
+if [ "${1:-}" = "--force" ]; then
+  pnpm --filter frontend exec vite --force
+else
+  pnpm dev
+fi
