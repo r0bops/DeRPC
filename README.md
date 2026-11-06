@@ -28,7 +28,7 @@ Wallet integrators are the first audience, demonstrated through a browser app.
 ### What it does not do
 
 - **It hides who is asking, not what is asked.** Endpoints still see query content and timing.
-- **Its verified reader supports balance, nonce, code and storage.** The block number comes from the verified header. There is no public JSON-RPC provider interface yet; generic `eth_call`, logs and transactions are outside this reader. Checking arbitrary execution would need local execution against proven state, which is later work.
+- **Its read-only EIP-1193/viem provider supports balance, nonce, code and storage.** The block number comes from the verified header. Generic `eth_call`, logs and transactions are outside this reader. Checking arbitrary execution would need local execution against proven state, which is later work. The integrator surface is documented in [`provider/README.md`](provider/README.md).
 - **Isolation between accounts depends on the worker.** tor-js 0.4.4 documents a separate circuit per isolation key. We have observed it once but not proven it, so DeRPC makes no unlinkability claim yet.
 - **The endpoint list is curated** for now. Several URLs don't prove several independent operators.
 - **The roots of trust are the pinned checkpoint and the pinned worker hash.** The app refuses a checkpoint older than 7 days.
@@ -50,7 +50,7 @@ Wallet integrators are the first audience, demonstrated through a browser app.
 - **Endpoint failover.** The pool selects among dRPC, MEV Blocker and BlockRazor first, with Blast and PublicNode as fallbacks. Invalid proofs cause local exclusion; timeouts and other transient errors cause cooldowns. Verified values are cached locally. Retry isolation keys are derived from the account key; stronger circuit-isolation guarantees remain unproven.
 - **A demo page** showing worker startup, the verified header, worker-pin status, ETH/WETH balances, verified code and pool events. Controls inject a clearly labeled corrupt response and close the worker. Its resource-timing table shows some direct connections; it does not capture every browser connection or the WebRTC gateway link.
 
-**Still pending:** the EIP-1193/viem provider, complete failure-path coverage, submission materials, and the QA fixes below. The shutdown demo closes the worker; it is not a separate test of every network outage or worker crash.
+**Still pending:** submission materials and the QA fixes below. The telemetry and automated checks cover worker loss, cancellation and network outages, but not every browser or network failure mode.
 
 ### QA checklist — Nov 5
 
@@ -80,6 +80,12 @@ The five reproduced QA issues mean this prototype is not ready for production. T
 | Worker bundle download | No, direct | From jsDelivr. Hash-checked, but it shows the server that this IP is loading tor-js. |
 | Tor gateway connection | No, direct (WebRTC) | The gateway sees the client's IP but only relays encrypted Tor traffic |
 | Page assets | No, direct | Served by whoever hosts the page |
+
+## Integrator API
+
+`createDeRPC()` returns a read-only EIP-1193 provider; `@derpc/provider/viem` wraps it as a viem transport. It serves `eth_chainId`, `net_version`, `eth_accounts`, `eth_blockNumber`, `eth_getBalance`, `eth_getTransactionCount`, `eth_getCode` and `eth_getStorageAt` at the verified finalized block. Everything else is refused rather than forwarded.
+
+The full surface — supported methods, finalized-block rules, initialization, status, cancellation, timeouts and error codes — is in [`provider/README.md`](provider/README.md). The smallest browser integration is [`frontend/src/example.ts`](frontend/src/example.ts), which imports only the public package.
 
 ## CROPS
 
@@ -117,7 +123,7 @@ Progress is tracked in [issue #1](https://github.com/r0bops/DeRPC/issues/1).
 | P1 | A real anonymous network path | **Passed.** Proofs and light-client data arrive through Tor, with no direct RPC. Isolation-key behavior is still unproven. |
 | P2 | One verified read path: ETH balance and one ERC-20 balance checked against verified state, and the worker pin proven on-chain | **Implemented in the demo; QA sign-off pending.** Proofs and the pin gate work. Error rendering, polling recovery and read freshness need fixes. |
 | P3 | A working pool: at least two endpoints, random selection, local exclusion, bounded anonymous failover | **Three-step browser demo passes; QA sign-off pending.** Total-deadline enforcement, stable block binding and remaining failure tests are open. |
-| P4 | An EIP-1193 provider and viem transport, plus a demo screen | **Partial.** Pool demo exists; the integrator interface is not built. |
+| P4 | An EIP-1193 provider and viem transport, plus a demo screen | **Implemented.** Read-only EIP-1193 provider, viem transport and integrator example; browser sign-off pending. |
 | P5 | Threat model, failure tests, docs and demo video | **Partial.** README and QA checklist exist; threat model, full failure coverage and submission materials remain. |
 
 The browser demo shows three things:
