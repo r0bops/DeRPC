@@ -72,7 +72,7 @@ function setup(opts: {
   onStatus?: (s: DeRPCStatus) => void;
 } = {}) {
   let fake!: ReturnType<typeof fakeTransport>;
-  const headers: VerifiedHeaderSource = { finalized: () => HEADER, close: () => {} };
+  const headers: VerifiedHeaderSource = { finalized: () => HEADER, assertFresh: () => {}, pollHealth: () => ({ consecutiveFailures: 0 }), close: () => {} };
   const derpc = createDeRPCWith(
     {
       startTransport: (start) => (fake = fakeTransport(start, { bootError: opts.bootError })).transport,
