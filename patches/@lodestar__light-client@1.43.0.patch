@@ -1,8 +1,7 @@
 diff --git a/lib/index.js b/lib/index.js
-index 535795d0c609adcb8acc7897d986d8ca0a62736d..95dec6a02af1b0fe3cf69b0b62e02bb6f1476145 100644
 --- a/lib/index.js
 +++ b/lib/index.js
-@@ -20,7 +20,9 @@ const LOOKAHEAD_EPOCHS_COMMITTEE_SYNC = Math.min(8, Math.ceil(EPOCHS_PER_SYNC_CO
+@@ -20,7 +20,9 @@
  /** Prevent infinite loops caused by sync errors */
  const ON_ERROR_RETRY_MS = 1000;
  // TODO: Customize with option
@@ -13,6 +12,132 @@ index 535795d0c609adcb8acc7897d986d8ca0a62736d..95dec6a02af1b0fe3cf69b0b62e02bb6
  export { RunStatusCode };
  var RunStatusCode;
  (function (RunStatusCode) {
+@@ -73,6 +75,8 @@
+     transport;
+     lightclientSpec;
+     runStatus = { code: RunStatusCode.stopped };
++    // DeRPC creates a fresh client per attempt: stop is terminal, including during synchronization.
++    lifecycle = new AbortController();
+     constructor({ config, logger, genesisData, bootstrap, transport }) {
+         this.genesisTime = genesisData.genesisTime;
+         this.genesisValidatorsRoot =
+@@ -113,11 +117,15 @@
+      * @returns a `Promise` that will resolve once `runStatus` equals `RunStatusCode.started`
+      */
+     start() {
+-        const startPromise = new Promise((resolve) => {
++        if (this.lifecycle.signal.aborted) return Promise.reject(this.lifecycle.signal.reason);
++        const startPromise = new Promise((resolve, reject) => {
+             const resolveAndStopListening = (status) => {
+                 if (status === RunStatusCode.started) {
+                     this.emitter.off(LightclientEvent.statusChange, resolveAndStopListening);
+                     resolve();
++                } else if (status === RunStatusCode.stopped && this.lifecycle.signal.aborted) {
++                    this.emitter.off(LightclientEvent.statusChange, resolveAndStopListening);
++                    reject(this.lifecycle.signal.reason);
+                 }
+             };
+             this.emitter.on(LightclientEvent.statusChange, resolveAndStopListening);
+@@ -126,13 +134,16 @@
+             resolveAndStopListening(this.runStatus.code);
+         });
+         // Do not block the event loop
+-        void this.runLoop();
++        void this.runLoop().catch((error) => {
++            this.stop();
++            this.logger.error("Light client run loop stopped", {}, error);
++        });
+         return startPromise;
+     }
+     stop() {
+-        if (this.runStatus.code !== RunStatusCode.started)
+-            return;
+-        this.runStatus.controller.abort();
++        if (this.lifecycle.signal.aborted) return;
++        this.lifecycle.abort(new DOMException("light client stopped", "AbortError"));
++        if (this.runStatus.code === RunStatusCode.started) this.runStatus.controller.abort();
+         this.updateRunStatus({ code: RunStatusCode.stopped });
+     }
+     getHead() {
+@@ -144,9 +155,11 @@
+     async sync(fromPeriod, toPeriod) {
+         const periodRanges = chunkifyInclusiveRange(fromPeriod, toPeriod, MAX_PERIODS_PER_REQUEST);
+         for (const [fromPeriodRng, toPeriodRng] of periodRanges) {
++            this.lifecycle.signal.throwIfAborted();
+             const count = toPeriodRng + 1 - fromPeriodRng;
+             const updates = await this.transport.getUpdates(fromPeriodRng, count);
+             for (const update of updates) {
++                this.lifecycle.signal.throwIfAborted();
+                 this.processSyncCommitteeUpdate(update.data);
+                 this.logger.debug("processed sync update", { slot: update.data.attestedHeader.beacon.slot });
+                 // Yield to the macro queue, verifying updates is somewhat expensive and we want responsiveness
+@@ -155,7 +168,7 @@
+         }
+     }
+     async runLoop() {
+-        while (true) {
++        while (!this.lifecycle.signal.aborted) {
+             const currentPeriod = computeSyncPeriodAtSlot(this.currentSlot);
+             // Check if we have a sync committee for the current clock period
+             if (!this.lightclientSpec.store.syncCommittees.has(currentPeriod)) {
+@@ -169,12 +182,15 @@
+                 this.logger.debug("Syncing", { lastPeriod: headPeriod, currentPeriod });
+                 try {
+                     await this.sync(headPeriod, currentPeriod);
++                    if (this.lifecycle.signal.aborted) return;
+                     this.logger.debug("Synced", { currentPeriod });
+                 }
+                 catch (e) {
++                    if (this.lifecycle.signal.aborted) return;
+                     this.logger.error("Error sync", {}, e);
+-                    // Retry in 1 second
+-                    await new Promise((r) => setTimeout(r, ON_ERROR_RETRY_MS));
++                    // Stop must also cancel retry sleep while the client is still syncing.
++                    try { await sleep(ON_ERROR_RETRY_MS, this.lifecycle.signal); }
++                    catch (error) { if (!isErrorAborted(error)) throw error; return; }
+                     continue;
+                 }
+             }
+@@ -187,13 +203,20 @@
+                 // Don't retry, this is a non-critical UX improvement
+                 try {
+                     const update = await this.transport.getOptimisticUpdate();
++                    if (this.lifecycle.signal.aborted) return;
+                     this.processOptimisticUpdate(update.data);
+                 }
+                 catch (e) {
++                    if (this.lifecycle.signal.aborted) return;
+                     this.logger.error("Error fetching getLatestHeadUpdate", { currentPeriod }, e);
+                 }
+-                this.transport.onOptimisticUpdate(this.processOptimisticUpdate.bind(this));
+-                this.transport.onFinalityUpdate(this.processFinalizedUpdate.bind(this));
++                if (this.lifecycle.signal.aborted) return;
++                this.transport.onOptimisticUpdate((update) => {
++                    if (!this.lifecycle.signal.aborted) this.processOptimisticUpdate(update);
++                });
++                this.transport.onFinalityUpdate((update) => {
++                    if (!this.lifecycle.signal.aborted) this.processFinalizedUpdate(update);
++                });
+             }
+             // When close to the end of a sync period poll for sync committee updates
+             // Limit lookahead in case EPOCHS_PER_SYNC_COMMITTEE_PERIOD is configured to be very short
+@@ -206,13 +229,14 @@
+                     await this.sync(period, period);
+                 }
+                 catch (e) {
++                    if (this.lifecycle.signal.aborted) return;
+                     this.logger.error("Error re-syncing period", { period }, e);
+                 }
+             }
+             // Wait for the next epoch
+             try {
+-                const runStatus = this.runStatus; // At this point, client is started
+-                await sleep(timeUntilNextEpoch(this.config, this.genesisTime), runStatus.controller.signal);
++                if (this.lifecycle.signal.aborted) return;
++                await sleep(timeUntilNextEpoch(this.config, this.genesisTime), this.lifecycle.signal);
+             }
+             catch (e) {
+                 if (isErrorAborted(e)) {
 diff --git a/lib/spec/processLightClientUpdate.js b/lib/spec/processLightClientUpdate.js
 index 8907f507d705baff4bed30a98d78492fead69521..84a4004def877d5024ea6c305529cf48796d398b 100644
 --- a/lib/spec/processLightClientUpdate.js

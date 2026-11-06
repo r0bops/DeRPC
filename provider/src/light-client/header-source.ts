@@ -49,14 +49,16 @@ export interface HeaderSourceOptions {
   fetch: typeof fetch;
   /** Per-startup-attempt fetch (for example a fresh isolation key). Defaults to `fetch`. */
   fetchForAttempt?: (attempt: number) => typeof fetch;
+  /** Cancels startup, polling and every fetch belonging to this source. */
+  signal?: AbortSignal;
   /** Refuse to start from an older checkpoint. Default: 7 days. */
   maxCheckpointAgeMs?: number;
   /** Never report a finalized header older than this. Default: 30 minutes (finality normally lags ~13). */
   maxFinalizedAgeMs?: number;
   pollIntervalMs?: number;
-  /** How long to wait for a signature-verified head and a fresh finalized header. Default: 60 s. */
+  /** Total startup budget, including every bootstrap and signature-verified head. Default: 60 s. */
   readyTimeoutMs?: number;
-  /** Startup attempts across the beacon endpoints. Default 4 (two per endpoint). */
+  /** Maximum startup attempts, rounded up to cover every beacon once. Default max(4, beacon count). */
   startupAttempts?: number;
   onLog?: (level: "error" | "warn" | "info" | "debug", message: string) => void;
 }
@@ -83,13 +85,18 @@ export interface VerifiedHeaderSource {
  * trusted only through the pinned root), and the finalized header is fresh.
  */
 export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Promise<VerifiedHeaderSource> {
+  opts.signal?.throwIfAborted();
   const genesis = GENESIS[opts.network];
   const maxCheckpointAgeMs = opts.maxCheckpointAgeMs ?? 7 * DAY_MS;
   const maxFinalizedAgeMs = opts.maxFinalizedAgeMs ?? 30 * MINUTE_MS;
   const readyTimeoutMs = opts.readyTimeoutMs ?? 60_000;
+  if (!Number.isSafeInteger(readyTimeoutMs) || readyTimeoutMs <= 0) throw new Error("readyTimeoutMs must be a positive integer");
+  if (opts.startupAttempts !== undefined && (!Number.isSafeInteger(opts.startupAttempts) || opts.startupAttempts <= 0)) throw new Error("startupAttempts must be a positive integer");
   const deadline = performance.now() + readyTimeoutMs;
   const config = getChainForkConfigFromNetwork(opts.network);
-  const log = opts.onLog ?? (() => {});
+  const log = (level: "error" | "warn" | "info" | "debug", message: string) => {
+    try { opts.onLog?.(level, message); } catch { /* app observer */ }
+  };
   const logger = {
     error: (msg: string) => log("error", msg),
     warn: (msg: string) => log("warn", msg),
@@ -117,11 +124,20 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
   };
 
   let lastError: unknown;
-  const attempts = Math.max(1, opts.startupAttempts ?? 4);
+  const attempts = Math.max(beaconUrls.length, opts.startupAttempts ?? 4);
   for (let attempt = 1; attempt <= attempts; attempt++) {
-    if (attempt > 1 && performance.now() >= deadline) break;
-    const beaconUrl = beaconUrls[Math.min(beaconUrls.length - 1, Math.floor((attempt - 1) / 2))]!;
-    const api = getClient({ urls: [beaconUrl], fetch: fetchForAttempt(attempt) }, { config });
+    opts.signal?.throwIfAborted();
+    const remainingMs = deadline - performance.now();
+    if (remainingMs <= 0) break;
+    // Give each configured endpoint a turn before reusing one. A responsive bootstrap with
+    // unusable updates cannot consume the time reserved for the remaining endpoints in this pass.
+    const index = (attempt - 1) % beaconUrls.length;
+    const turnsLeft = Math.min(beaconUrls.length - index, attempts - attempt + 1);
+    const attemptMs = remainingMs / turnsLeft;
+    const controller = new AbortController();
+    const signal = opts.signal ? AbortSignal.any([controller.signal, opts.signal]) : controller.signal;
+    const beaconUrl = beaconUrls[index]!;
+    const api = getClient({ urls: [beaconUrl], fetch: cancellableFetch(fetchForAttempt(attempt), signal) }, { config });
     let client: Lightclient | undefined;
     const transport = new PollingLightClientTransport(api, {
       intervalMs: opts.pollIntervalMs,
@@ -134,18 +150,30 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
         log("warn", `head poll failed (${consecutiveFailures} in a row): ${message}`);
       },
     });
+    const timeout = setTimeout(() => controller.abort(new HeaderSourceNotReadyError("beacon startup attempt exceeded its time budget")), attemptMs);
+    let closed = false;
     const closeAttempt = () => {
+      if (closed) return;
+      closed = true;
+      clearTimeout(timeout);
+      signal.removeEventListener("abort", closeAttempt);
+      controller.abort(new DOMException("light client attempt closed", "AbortError"));
       client?.stop();
       transport.close();
     };
+    signal.addEventListener("abort", closeAttempt, { once: true });
     try {
-      client = await Lightclient.initializeFromCheckpointRoot({
+      const initializing = Lightclient.initializeFromCheckpointRoot({
         config,
         logger,
         transport,
         genesisData: genesis,
         checkpointRoot: fromHex(opts.checkpoint.root),
       });
+      // Even a caller-supplied fetch that ignores abort cannot keep startup waiting or return
+      // a late light client that outlives the abandoned attempt.
+      initializing.then(late => { if (closed) late.stop(); }, () => {});
+      client = await withSignal(initializing, signal);
       const started = client;
       // #33: trust the age of the root we actually resolved, not the configured epoch.
       const bootstrapSlot = started.getHead().beacon.slot;
@@ -161,14 +189,17 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
           `pinned checkpoint (bootstrap slot ${bootstrapSlot}, epoch ${bootstrapEpoch}) is ${((Date.now() - bootstrapTimeMs) / DAY_MS).toFixed(1)} days old; refresh it`,
         );
       }
-      void started.start();
+      void started.start().catch(error => controller.abort(error));
       await waitFor(
         () => started.getHead().beacon.slot > bootstrapSlot && isFresh(started.getFinalized(), maxFinalizedAgeMs),
-        Math.max(0, deadline - performance.now()),
-        () => new HeaderSourceNotReadyError("no signature-verified head update and fresh finalized header arrived in time"),
+        signal,
       );
+      signal.throwIfAborted();
+      if (performance.now() >= deadline) throw new HeaderSourceNotReadyError("light client startup time budget exhausted");
+      clearTimeout(timeout); // the startup budget must not stop a healthy running source
       return {
         finalized() {
+          signal.throwIfAborted();
           const header = toVerifiedHeader(started.getFinalized());
           assertFresh(header);
           return header;
@@ -180,10 +211,9 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
     } catch (error) {
       closeAttempt();
       lastError = error;
+      opts.signal?.throwIfAborted();
       if (error instanceof StaleCheckpointError) throw error;
       if (performance.now() >= deadline) break;
-      // Give a transient bootstrap failure a moment before the next endpoint/circuit.
-      await new Promise((resolve) => setTimeout(resolve, 100));
     }
   }
   throw lastError instanceof Error
@@ -207,10 +237,36 @@ function toVerifiedHeader(header: LightClientHeader): VerifiedHeader {
   };
 }
 
-async function waitFor(condition: () => boolean, timeoutMs: number, onTimeout: () => Error): Promise<void> {
-  const deadline = performance.now() + timeoutMs;
-  while (!condition()) {
-    if (performance.now() > deadline) throw onTimeout();
-    await new Promise((resolve) => setTimeout(resolve, 25));
+async function waitFor(condition: () => boolean, signal: AbortSignal): Promise<void> {
+  for (;;) {
+    signal.throwIfAborted();
+    if (condition()) return;
+    await new Promise<void>((resolve, reject) => {
+      const abort = () => { clearTimeout(timer); reject(signal.reason); };
+      const timer = setTimeout(() => { signal.removeEventListener("abort", abort); resolve(); }, 25);
+      signal.addEventListener("abort", abort, { once: true });
+    });
   }
+}
+
+function withSignal<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    if (signal.aborted) { work.catch(() => {}); reject(signal.reason); return; }
+    const abort = () => reject(signal.reason);
+    signal.addEventListener("abort", abort, { once: true });
+    work.then(value => { signal.removeEventListener("abort", abort); resolve(value); }, error => { signal.removeEventListener("abort", abort); reject(error); });
+  });
+}
+
+function cancellableFetch(fetch: typeof globalThis.fetch, attemptSignal: AbortSignal): typeof globalThis.fetch {
+  return async (input, init = {}) => {
+    const requestSignal = init.signal ?? (input instanceof Request ? input.signal : undefined);
+    const signal = requestSignal ? AbortSignal.any([attemptSignal, requestSignal]) : attemptSignal;
+    signal.throwIfAborted();
+    const response = fetch(input, { ...init, signal }).then(response => {
+      if (signal.aborted) { void response.body?.cancel().catch(() => {}); throw signal.reason; }
+      return response;
+    });
+    return withSignal(response, signal);
+  };
 }

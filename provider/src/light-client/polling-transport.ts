@@ -39,6 +39,7 @@ export class PollingLightClientTransport implements LightClientTransport {
   };
   private running = false;
   private stopped = false;
+  private wake?: () => void;
 
   constructor(api: ApiClient, opts: PollingTransportOptions = {}) {
     this.rest = new LightClientRestTransport(api);
@@ -65,6 +66,9 @@ export class PollingLightClientTransport implements LightClientTransport {
 
   close(): void {
     this.stopped = true;
+    this.wake?.();
+    this.optimisticHandlers.length = 0;
+    this.finalityHandlers.length = 0;
   }
 
   consecutivePollFailures(): number {
@@ -88,7 +92,12 @@ export class PollingLightClientTransport implements LightClientTransport {
       if (this.optimisticHandlers.length > 0) await this.pollOptimistic();
       if (this.finalityHandlers.length > 0 && !this.stopped) await this.pollFinality();
       if (this.stopped) break;
-      await new Promise((resolve) => setTimeout(resolve, this.intervalMs));
+      await new Promise<void>(resolve => {
+        const timer = setTimeout(done, this.intervalMs);
+        const self = this;
+        function done() { clearTimeout(timer); self.wake = undefined; resolve(); }
+        this.wake = done;
+      });
     }
     this.running = false;
   }
@@ -96,6 +105,7 @@ export class PollingLightClientTransport implements LightClientTransport {
   private async pollOptimistic(): Promise<void> {
     try {
       const { data } = await this.rest.getOptimisticUpdate();
+      if (this.stopped) return;
       const slot = data.attestedHeader.beacon.slot;
       const verifiedSlot = this.getVerifiedHeadSlot?.() ?? this.lastOptimisticSlot;
       if (slot > verifiedSlot) {
@@ -108,13 +118,14 @@ export class PollingLightClientTransport implements LightClientTransport {
       this.health.optimistic = { consecutiveFailures: 0, lastError: undefined };
     } catch (error) {
       // Retried on the next tick; the light client keeps its last verified head.
-      this.reportFailure("optimistic", error);
+      if (!this.stopped) this.reportFailure("optimistic", error);
     }
   }
 
   private async pollFinality(): Promise<void> {
     try {
       const { data } = await this.rest.getFinalityUpdate();
+      if (this.stopped) return;
       const slot = data.finalizedHeader.beacon.slot;
       const verifiedSlot = this.getVerifiedFinalizedSlot?.() ?? this.lastFinalizedSlot;
       if (slot > verifiedSlot) {
@@ -123,7 +134,7 @@ export class PollingLightClientTransport implements LightClientTransport {
       }
       this.health.finality = { consecutiveFailures: 0, lastError: undefined };
     } catch (error) {
-      this.reportFailure("finality", error);
+      if (!this.stopped) this.reportFailure("finality", error);
     }
   }
 
@@ -131,6 +142,6 @@ export class PollingLightClientTransport implements LightClientTransport {
     const state = this.health[kind];
     state.consecutiveFailures += 1;
     state.lastError = `${kind}: ${error instanceof Error ? error.message : String(error)}`;
-    this.onPollError?.(error, state.consecutiveFailures);
+    try { this.onPollError?.(error, state.consecutiveFailures); } catch { /* app observer */ }
   }
 }

@@ -148,7 +148,22 @@ describe("PollingLightClientTransport", () => {
     const countAtClose = served.requested.length;
     await new Promise((r) => setTimeout(r, 50));
 
-    expect(served.requested.length).toBeLessThanOrEqual(countAtClose + 2); // at most in-flight polls finish
+    expect(served.requested.length).toBe(countAtClose);
+  });
+
+  it("does not deliver a poll that finishes after close", async () => {
+    let release!: () => void;
+    const delayed = new Promise<void>(resolve => { release = resolve; });
+    const served = fixtureFetch(BEACON, responses);
+    const api = getClient({ urls: [BEACON], fetch: async (...args) => { await delayed; return served.fetch(...args); } }, { config });
+    transport = new PollingLightClientTransport(api, { intervalMs: 5 });
+    const handler = vi.fn();
+    transport.onOptimisticUpdate(handler);
+    transport.close();
+    release();
+    await new Promise(resolve => setTimeout(resolve, 30));
+    expect(handler).not.toHaveBeenCalled();
+    expect(served.requested).toHaveLength(1);
   });
 
   it.each(["optimistic", "finality"] as const)("counts rejected %s updates until a verified success", async (kind) => {

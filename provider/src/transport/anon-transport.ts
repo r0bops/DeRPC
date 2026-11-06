@@ -14,6 +14,7 @@ export interface AnonFetchOptions {
   method?: string;
   headers?: Record<string, string>;
   body?: string | Uint8Array;
+  redirect?: "follow" | "manual" | "error";
   /** Calls under different keys should not be linkable (worker-dependent, SPEC §9.3). */
   isolationKey?: string;
   /** Abort the call after this many milliseconds. */
@@ -72,7 +73,7 @@ export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonT
   let failure: unknown;
   const setState = (next: TransportState, detail?: string) => {
     current = next;
-    onState?.(next, detail);
+    try { onState?.(next, detail); } catch { /* app observer */ }
   };
   const state = (): TransportState => current;
   const markFailed = (error: unknown) => {
@@ -96,10 +97,10 @@ export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonT
       throw error;
     },
   );
-  onState?.("booting");
+  try { onState?.("booting"); } catch { /* app observer */ }
 
   // The log queue reports worker death even when the app has no log callback.
-  void pumpLogs(worker, onLog ?? logToConsole).then((error) => markFailed(error));
+  void pumpLogs(worker, onLog ?? logToConsole).then((error) => markFailed(error), (error) => markFailed(error));
 
   return {
     pin,
@@ -116,6 +117,7 @@ export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonT
           method: options.method ?? "GET",
           headers: options.headers,
           body: options.body,
+          redirect: options.redirect,
           signal,
           ...(options.isolationKey ? { anonOptions: { isolationKey: options.isolationKey } } : {}),
         } as RequestInit);
@@ -160,6 +162,6 @@ async function pumpLogs(worker: AnonRpcWorker, onLog: (line: WorkerLogLine) => v
     const text = entry.args
       .map((a: unknown) => (typeof a === "string" ? a : a instanceof Uint8Array ? `<${a.length} bytes>` : JSON.stringify(a)))
       .join(" ");
-    onLog({ level: entry.level, text, at: Date.now() });
+    try { onLog({ level: entry.level, text, at: Date.now() }); } catch { /* keep draining worker logs */ }
   }
 }
