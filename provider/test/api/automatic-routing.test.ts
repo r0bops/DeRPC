@@ -43,7 +43,11 @@ function setup(options: DeRPCOptions = {}, headersAfter?: Promise<void>) {
   return { derpc, requests, headers, transport, startTransport };
 }
 
-beforeEach(() => { discovery.scan.mockReset(); discovery.scan.mockResolvedValue(directory()); });
+beforeEach(() => {
+  // Directory authority is bounded by its authenticated block's age, even with fixture headers.
+  vi.spyOn(Date, "now").mockReturnValue(HEADER.timestamp * 1000);
+  discovery.scan.mockReset(); discovery.scan.mockResolvedValue(directory());
+});
 afterEach(() => { providers.splice(0).forEach(provider => provider.close()); vi.restoreAllMocks(); });
 
 describe("explicit automatic routing", () => {
@@ -283,7 +287,7 @@ describe("automatic adoption of ENS directories", () => {
     const result = await derpc.refreshDirectory(request);
     derpc.setRouting({ selection: "manual" }, [result.operators[0]!]);
     headers.assertFresh = () => { throw new StaleHeaderError("cached ENS snapshot stale"); };
-    expect(() => derpc.setRouting({ selection: "balanced" })).toThrow("snapshot stale");
+    expect(() => derpc.setRouting({ selection: "balanced" })).toThrow("authenticated block is stale");
     expect(() => derpc.setRouting({ selection: "manual" }, [])).not.toThrow();
     expect(() => derpc.setRouting({ selection: "balanced", allowedOperators: [] })).not.toThrow();
     expect(derpc.status().operators).toEqual([]);

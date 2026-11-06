@@ -65,6 +65,7 @@ export {
 export { PollingLightClientTransport } from "./light-client/polling-transport.ts";
 export {
   createPool,
+  operatorKey,
   PoolExhaustedError,
   NoOperatorsChosenError,
   type Pool,
@@ -80,6 +81,7 @@ export {
 } from "./pool/pool.ts";
 export { createPooledReader } from "./pool/pooled-reader.ts";
 export { operatorUrl, checkOperatorIdentity, assertSeparateGateway, type OperatorIdentity } from "./operators/endpoint.ts";
+export { parseOperatorEndpoints, serializeOperatorEndpoints, MAX_OPERATOR_ENDPOINTS, MAX_ENDPOINT_RECORD_BYTES, type OperatorEndpointRecord } from "./operators/endpoints.ts";
 
 // The integrator API: one call for private, verified reads (viem helper: "@derpc/provider/viem").
 export {
@@ -91,10 +93,15 @@ export {
   type DeRPCStatus,
   type DeRPCPaymentClient,
   type VerifiedCallInput,
+  type ResolveEnsRequest,
   type RefreshDirectoryOptions,
   type PaymentSettlement,
   type RoutingOptions,
   type RoutingStatus,
+  DIRECTORY_SNAPSHOT_TTL_MS,
+  DIRECTORY_SNAPSHOT_MAX_BLOCK_AGE_MS,
+  DirectorySnapshotExpiredError,
+  type DirectorySnapshotStatus,
 } from "./api/derpc.ts";
 export {
   createEip1193Provider,

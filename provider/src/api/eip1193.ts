@@ -64,6 +64,7 @@ const REFUSALS = new Set([
   "WorkerPinMismatchError",
   "WorkerPinChainError",
   "ProofVerificationError",
+  "DirectorySnapshotExpiredError",
 ]);
 
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;

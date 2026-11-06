@@ -6,7 +6,7 @@ import {
   type PollHealth,
   type VerifiedHeaderSource,
 } from "../light-client/header-source.ts";
-import { assertOperatorActive, createPool, NoOperatorsChosenError, type EndpointStatus, type Pool, type PoolEndpoint, type PoolEvent, type PoolOperationContext, type PoolAttemptLifecycle, type SelectionMode } from "../pool/pool.ts";
+import { assertOperatorActive, createPool, NoOperatorsChosenError, operatorKey, type EndpointStatus, type Pool, type PoolEndpoint, type PoolEvent, type PoolOperationContext, type PoolAttemptLifecycle, type SelectionMode } from "../pool/pool.ts";
 import { createPooledReader } from "../pool/pooled-reader.ts";
 import {
   startAnonTransport,
@@ -18,20 +18,26 @@ import {
 } from "../transport/anon-transport.ts";
 import { asFetch } from "../transport/fetch-adapter.ts";
 import { createJsonRpcSend } from "../transport/json-rpc.ts";
-import type { AccountProof } from "../verify/index.ts";
-import type { HeaderView, JsonRpcSend, VerifiedReader, VerifiedValue } from "../verify/reader.ts";
+import { ProofVerificationError, type AccountProof } from "../verify/index.ts";
+import { InputError, type HeaderView, type JsonRpcSend, type VerifiedReader, type VerifiedValue } from "../verify/reader.ts";
 import { checkWorkerPin, gateReader, WorkerPinChainError, WorkerPinMismatchError } from "../verify/worker-pin.ts";
 import { createEip1193Provider, ProviderRpcError, type Eip1193Provider } from "./eip1193.ts";
 import { assertSeparateGateway, checkOperatorIdentity, operatorUrl } from "../operators/endpoint.ts";
+import { MAX_OPERATOR_ENDPOINTS } from "../operators/endpoints.ts";
 import { readResponseBody } from "../transport/response-body.ts";
 import type { Directory, PaymentTerms } from "../discovery/ens.ts";
 import type { RegistrarPin } from "../discovery/registrar.ts";
 import type { ExecutionLimits } from "../execution/index.ts";
+import type { VerifiedEnsOptions, VerifiedEnsResult } from "../execution/verified-ens.ts";
+import { DirectorySnapshotLease, DirectorySnapshotExpiredError, type DirectorySnapshotStatus } from "./directory-snapshot.ts";
+export { DIRECTORY_SNAPSHOT_TTL_MS, DIRECTORY_SNAPSHOT_MAX_BLOCK_AGE_MS, DirectorySnapshotExpiredError, type DirectorySnapshotStatus } from "./directory-snapshot.ts";
 
 type Hex = `0x${string}`;
 
 /** An operator the user chose. */
 export type DeRPCOperator = PoolEndpoint & {
+  /** Owner proven from the ENS listing. Caller-supplied claims alone do not authorize continuity. */
+  ensOwner?: Hex;
   beaconUrl?: string;
   /** Gateways this operator also runs; pairing is refused. */
   gateways?: string[];
@@ -55,7 +61,7 @@ export interface DeRPCOptions {
   operators?: DeRPCOperator[];
   /** Opt into free automatic routing across the supplied candidates. */
   selection?: SelectionMode;
-  /** Automatic routing only: omitted permits every candidate; [] permits none. Exact ENS names or IDs. */
+  /** Automatic routing only: omitted permits every operator; [] permits none. Group/ENS IDs, never plural endpoint IDs. */
   allowedOperators?: string[];
   /** Only Ethereum mainnet (1) has a configured verifier. */
   chainId?: number;
@@ -96,6 +102,7 @@ export interface DeRPCPaymentClient {
 }
 
 export interface VerifiedCallInput { to: Hex; data?: Hex; from?: Hex; gas?: bigint; signal?: AbortSignal }
+export type ResolveEnsRequest = Pick<VerifiedEnsOptions, "name" | "record" | "signal" | "limits">;
 export interface RefreshDirectoryOptions {
   ethRegistry: Hex;
   registrar?: RegistrarPin;
@@ -118,6 +125,7 @@ export interface RoutingStatus extends RoutingOptions {
   /** Explicit candidates have not acquired ENS provenance merely by carrying an ENS-shaped label. */
   source: "explicit" | "verified-ens" | "unverified-ens";
   directory?: "derpc.eth";
+  directorySnapshot?: DirectorySnapshotStatus;
 }
 
 export interface DeRPCStatus {
@@ -147,6 +155,8 @@ export interface DeRPC {
   refreshDirectory(options: RefreshDirectoryOptions): Promise<Directory>;
   /** Locally execute against proven state; disabled unless verifiedCalls was explicitly enabled. */
   verifiedCall(input: VerifiedCallInput): Promise<VerifiedValue<Hex>>;
+  /** Resolve a fully on-chain ENS record locally at one authenticated block; requires verifiedCalls. */
+  resolveEns(request: ResolveEnsRequest): Promise<VerifiedEnsResult>;
   /** Retain a confirmed session's endpoint for settlement without selecting it for reads. */
   registerPaymentOperator(operator: DeRPCOperator): void;
   /** Deliver the last voucher and optionally authorize one closing transaction, through the worker. */
@@ -191,7 +201,13 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   // Explicit free candidates may recover directory discovery after every listed operator was removed.
   // They are never installed as a fallback for user reads, and the current allowlist still applies.
   let discoveryBootstrap: DeRPCOperator[] = [];
-  let provenDirectory: { operators: DeRPCOperator[]; block: VerifiedHeader } | undefined;
+  let provenDirectory: { operators: DeRPCOperator[]; block: VerifiedHeader; lease: DirectorySnapshotLease } | undefined;
+  const authenticatedGroups = new WeakMap<DirectorySnapshotLease, Set<string>>();
+  let readSnapshot: DirectorySnapshotLease | undefined;
+  // A lease can be reused by a same-block refresh. Keep the selected pool's evidence immutable so
+  // newly discovered groups cannot retroactively authenticate an earlier explicit owner claim.
+  let readAuthenticatedGroups: ReadonlySet<string> = new Set();
+  const knownDirectoryKeys = new Set<string>();
   let refreshGeneration = 0;
   let activeRefresh: AbortController | undefined;
   const knownOperators = new Map<string, DeRPCOperator>();
@@ -209,6 +225,14 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   }
   function validateOperators(operators: DeRPCOperator[], forSettlement = false) {
     if (!Array.isArray(operators)) throw new Error("operators must be an array");
+    const groupCounts = new Map<string, number>();
+    for (const operator of operators) {
+      if (!operator || typeof operator !== "object") throw new Error("invalid operator");
+      if (operator.operatorId !== undefined && (typeof operator.operatorId !== "string" || !operator.operatorId.length || operator.operatorId.length > 255 || /\s/.test(operator.operatorId))) throw new Error("invalid operator group ID");
+      if (operator.endpointId !== undefined && (typeof operator.endpointId !== "string" || !/^[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/.test(operator.endpointId) || !operator.operatorId || !operator.id)) throw new Error("endpoint IDs require an explicit operator group, endpoint key and a 1–31 character lowercase label");
+      const key = operatorKey(operator);
+      groupCounts.set(key, (groupCounts.get(key) ?? 0) + 1);
+    }
     for (const operator of operators) {
       if (!operator || typeof operator !== "object") throw new Error("invalid operator");
       // An expired listing can still receive the final voucher for an existing funded session.
@@ -217,17 +241,22 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
       assertSeparateGateway(operator, gateways, options.gatewayOwners);
       if (operator.beaconUrl) operatorUrl(operator.beaconUrl);
       if (operator.wrapperIdentity && (!operator.ens || !/^0x[\da-fA-F]{40}$/.test(operator.wrapperIdentity.signer))) throw new Error("wrapper requires an ENS name and signer");
+      if (operator.ensOwner !== undefined && (!operator.ens || !/^0x[\da-fA-F]{40}$/.test(operator.ensOwner) || /^0x0{40}$/i.test(operator.ensOwner))) throw new Error("ENS owner requires a name and a nonzero public address");
+      const knownPlural = provenDirectory?.operators.some(record => record.endpointId !== undefined && directoryKeys(record).some(key => directoryKeys(operator).includes(key)));
+      const plural = operator.endpointId !== undefined || (groupCounts.get(operatorKey(operator)) ?? 0) > 1 || knownPlural;
+      if (plural && (operator.payment || operator.paymentOperatorId && !operator.tamper || options.payments?.has(operator.paymentOperatorId ?? operator.id ?? operator.url) || options.payments?.has(operatorKey(operator)))) throw new InputError("paid multi-endpoint operators are not supported; keep funded sessions on their original single endpoint");
       if (operator.personalToken !== undefined) {
         if (!endpoint.hostname.endsWith(".onion") || !/^[a-f0-9]{64}$/.test(operator.personalToken) || operator.ens || operator.wrapperIdentity) throw new Error("personal mode requires an unpublished onion and a 32-byte token");
         if (operator.beaconUrl && new URL(operator.beaconUrl).origin !== endpoint.origin) throw new Error("personal beacon must share the private onion");
         if (operator.payment) throw new Error("personal nodes do not take payments");
       }
     }
+    validateEndpointGroups(operators);
   }
   // Validate the complete candidate source without accepting already-expired manual choices.
   validateOperators(initialOperators, routing.selection !== "manual");
   const initialChosen = permittedOperators(initialOperators, routing);
-  validateAutomaticIdentities(initialChosen, routing);
+  validateAutomaticIdentities(permittedOperators(initialOperators, { selection: routing.selection }), routing);
   const operatorBeacons = initialChosen.flatMap(o => o.beaconUrl ? [o.beaconUrl] : []);
   const beaconUrls = [...new Set([...(options.beaconUrl ? [options.beaconUrl] : []), ...(options.beaconUrls ?? []), ...operatorBeacons])];
   if (!beaconUrls.length) beaconUrls.push(...MAINNET_BEACON_ENDPOINTS);
@@ -243,7 +272,17 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   let headerSource: VerifiedHeaderSource | undefined;
   let pool: Pool | undefined;
   const pooledReaders = new WeakMap<Pool, VerifiedReader>();
-  const excluded = new Set<string>();
+  // Remember rejected destinations, not caller-editable node IDs. A proven URL rotation gets a
+  // fresh observation history, while relabeling an old destination cannot erase its local exclusion.
+  const excludedDestinations = new Set<string>();
+  const destinationKey = (operator: DeRPCOperator) => operatorUrl(operator.url).href;
+  const simulatedKey = (operator: DeRPCOperator) => `simulated:${operator.id ?? operator.url}:${destinationKey(operator)}`;
+  const destinationExcluded = (operator: DeRPCOperator) => excludedDestinations.has(destinationKey(operator)) || !!operator.tamper && excludedDestinations.has(simulatedKey(operator));
+  const excludedIds = (operators: DeRPCOperator[]) => operators.filter(destinationExcluded).map(operator => operator.id ?? operator.url);
+  function excludeDestination(operator: DeRPCOperator): void { excludedDestinations.add(operator.tamper ? simulatedKey(operator) : destinationKey(operator)); }
+  function assertDestinationAllowed(operator: DeRPCOperator): void {
+    if (destinationExcluded(operator)) throw new ProofVerificationError("endpoint destination was excluded locally");
+  }
   let pinCheck: Promise<unknown> | undefined;
   let pinStatus: DeRPCStatus["pin"] = { state: "waiting-for-operators" };
   let disconnected = false;
@@ -253,9 +292,52 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     if (live) { try { options.onStatus?.(status()); } catch { /* app observer */ } }
   };
 
+  function assertDirectoryAuthority(lease = readSnapshot): void {
+    if (!lease) return;
+    lease.assertFresh();
+    try { headerSource?.assertFresh(lease.block); }
+    catch (error) {
+      const expired = new DirectorySnapshotExpiredError("authenticated block is stale", { cause: error });
+      lease.expire(expired);
+      throw expired;
+    }
+  }
+
+  function userReadSignal(): AbortSignal {
+    assertDirectoryAuthority();
+    return AbortSignal.any([lifetime.signal, selection.signal, ...(readSnapshot ? [readSnapshot.controller.signal] : [])]);
+  }
+
+  function assertDirectoryOperator(operator: DeRPCOperator, lease?: DirectorySnapshotLease): void {
+    if (!lease) return; // Administrative pools use only explicit, retained bootstrap authorization.
+    assertDirectoryAuthority(lease);
+    if (provenDirectory?.lease !== lease) throw new DirectorySnapshotExpiredError("was replaced");
+    const record = provenDirectory.operators.find(candidate => operatorUrl(candidate.url).href === operatorUrl(operator.url).href);
+    if (record) assertOperatorActive(record); // Caller-supplied expiry cannot extend an authenticated lease.
+  }
+
+  function authorityForOperators(operators: DeRPCOperator[]): DirectorySnapshotLease | undefined {
+    const known = operators.filter(operator => directoryKeys(operator).some(key => knownDirectoryKeys.has(key)));
+    if (!known.length) return undefined;
+    if (!provenDirectory) throw new DirectorySnapshotExpiredError("is unavailable");
+    for (const operator of known) {
+      const current = provenDirectory.operators.find(record => operatorUrl(record.url).href === operatorUrl(operator.url).href &&
+        (!operator.ens || record.ens?.toLowerCase() === operator.ens.toLowerCase()) &&
+        (!operator.ensOwner || record.ensOwner?.toLowerCase() === operator.ensOwner.toLowerCase()) &&
+        (!operator.wrapperIdentity || record.wrapperIdentity?.signer.toLowerCase() === operator.wrapperIdentity.signer.toLowerCase()) &&
+        (!!operator.tamper || (record.endpointId === undefined
+          ? !operator.operatorId || operatorKey(record) === operatorKey(operator)
+          : operator.id === record.id && operator.operatorId === record.operatorId && operator.endpointId === record.endpointId &&
+            (!record.ensOwner || operator.ensOwner?.toLowerCase() === record.ensOwner.toLowerCase()) &&
+            (!record.wrapperIdentity || operator.wrapperIdentity?.signer.toLowerCase() === record.wrapperIdentity.signer.toLowerCase()))));
+      if (!current) throw new DirectorySnapshotExpiredError("identity was removed or its endpoint changed");
+    }
+    return provenDirectory.lease;
+  }
+
   const { provider, emit } = createEip1193Provider({
     chainId: CHAIN_ID, headers: readyHeaders, reader: readerForReads,
-    requestSignal: () => AbortSignal.any([lifetime.signal, selection.signal]),
+    requestSignal: userReadSignal,
     verifiedCall: typeof options.verifiedCalls === "object" && options.verifiedCalls.eip1193 ? verifiedCall : undefined,
   });
 
@@ -314,46 +396,75 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   })();
   headersReady.catch(() => {}); // reported through `ready`, status and every read
 
-  function sendFor(endpoint: PoolEndpoint): JsonRpcSend {
+  function sendFor(endpoint: PoolEndpoint, authority?: DirectorySnapshotLease): JsonRpcSend {
     const operator = endpoint as DeRPCOperator;
     const rawSend = createJsonRpcSend(transport, endpoint.url, {
       timeoutMs: attemptTimeoutMs,
       headers: operator.personalToken ? { authorization: `Bearer ${operator.personalToken}` } : undefined,
     });
     return async (method, params, opts) => {
+      try {
+      assertDestinationAllowed(operator);
+      assertDirectoryOperator(operator, authority);
       assertOperatorActive(operator);
       if (operator.wrapperIdentity) {
-        const key = `${operator.url}|${operator.ens}|${operator.wrapperIdentity.signer}`;
+        const key = JSON.stringify([operator.url, operator.ens, operator.operatorId, operator.endpointId, operator.wrapperIdentity.signer]);
         let check = checkedIdentities.get(key);
         if (!check) {
-          check = checkOperatorIdentity(transport, endpoint.url, { ens: operator.ens!, signer: operator.wrapperIdentity.signer }, lifetime.signal).then(() => undefined);
+          check = checkOperatorIdentity(transport, endpoint.url, { ens: operator.ens!, signer: operator.wrapperIdentity.signer, endpointId: operator.endpointId }, lifetime.signal).then(() => undefined);
           checkedIdentities.set(key, check);
           check.catch(() => { if (checkedIdentities.get(key) === check) checkedIdentities.delete(key); });
         }
         await abortable(check, opts.signal ?? lifetime.signal);
       }
       // Identity lookup may have crossed the listing deadline while this request was waiting.
+      assertDestinationAllowed(operator);
+      assertDirectoryOperator(operator, authority);
       assertOperatorActive(operator);
       const result = await rawSend(method, params, opts);
+      assertDestinationAllowed(operator);
+      assertDirectoryOperator(operator, authority);
       return operator.tamper ? operator.tamper(method, result) : result;
+      } catch (error) {
+        // A request deadline may report before the lease timer runs. Expired authority is local,
+        // not evidence of an unavailable or dishonest endpoint.
+        assertDirectoryOperator(operator, authority);
+        throw error;
+      }
     };
   }
 
-  async function prepareAttempt(context: PoolOperationContext, send: JsonRpcSend): Promise<PoolAttemptLifecycle> {
+  async function prepareAttempt(context: PoolOperationContext, send: JsonRpcSend, authority?: DirectorySnapshotLease): Promise<PoolAttemptLifecycle> {
     context.signal.throwIfAborted();
     const operator = context.endpoint as DeRPCOperator;
+    assertDestinationAllowed(operator);
+    assertDirectoryOperator(operator, authority);
+    const assertCurrent = () => {
+      context.signal.throwIfAborted();
+      assertDestinationAllowed(operator);
+      assertDirectoryOperator(operator, authority);
+    };
     const id = operator.paymentOperatorId ?? operator.id ?? operator.url;
     // Automatic routing is the free rollout. A previously funded session must not silently activate it.
-    if (routing.selection !== "manual" || !context.paid || operator.personalToken) return { send };
+    if (routing.selection !== "manual" || !context.paid || operator.personalToken) return { send, verified: async () => { assertCurrent(); } };
+    if ((operator.endpointId !== undefined || chosenOperators.filter(candidate => operatorKey(candidate) === operatorKey(operator)).length > 1) &&
+      (options.payments?.has(id) || options.payments?.has(operatorKey(operator)))) throw new InputError("paid multi-endpoint operators are not supported");
     if (!options.payments?.has(id)) {
       if (operator.payment) throw new Error(`open a funded test-payment session for ${operator.ens ?? id} before reading`);
-      return { send };
+      return { send, verified: async () => { assertCurrent(); } };
     }
     pinPaymentEndpoint(id, operator);
     const payment = await options.payments.begin(id, context.kind, { signal: context.signal });
+    try { assertCurrent(); }
+    catch (error) { payment.failed(); throw error; }
     return {
       send: (method, params, opts) => send(method, params, { ...opts, headers: { ...opts.headers, ...payment.headers() } }),
-      verified: () => payment.verified(context.signal),
+      verified: async () => {
+        assertCurrent();
+        const result = await payment.verified(context.signal);
+        assertCurrent();
+        return result;
+      },
       failed: () => payment.failed(),
     };
   }
@@ -404,7 +515,8 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   async function readContext(callerSignal?: AbortSignal): Promise<{ headers: VerifiedHeaderSource; currentPool: Pool; block: VerifiedHeader }> {
     callerSignal?.throwIfAborted();
     const currentSelection = selection;
-    const signal = AbortSignal.any([lifetime.signal, currentSelection.signal, ...(callerSignal ? [callerSignal] : [])]);
+    const authority = readSnapshot;
+    const signal = AbortSignal.any([userReadSignal(), ...(callerSignal ? [callerSignal] : [])]);
     const headers = await abortable(readyHeaders(), signal);
     signal.throwIfAborted();
     if (!pool) throw new NoOperatorsChosenError();
@@ -412,15 +524,18 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     startPinCheck();
     await abortable(pinCheck!, signal);
     currentSelection.signal.throwIfAborted();
+    assertDirectoryAuthority(authority);
     return { headers, currentPool, block: headers.finalized() };
   }
 
   async function verifiedCall(input: VerifiedCallInput): Promise<VerifiedValue<Hex>> {
     if (!options.verifiedCalls) throw new ProviderRpcError(4200, "enable verifiedCalls to execute a call locally against proven state");
     const requestSelection = selection;
+    const authority = readSnapshot;
+    const authoritySignal = userReadSignal();
     const { createVerifiedExecutor, assertVerifiedCallInput } = await import("../execution/index.ts");
     assertVerifiedCallInput(input);
-    const requestSignal = AbortSignal.any([lifetime.signal, requestSelection.signal, ...(input.signal ? [input.signal] : [])]);
+    const requestSignal = AbortSignal.any([authoritySignal, requestSelection.signal, ...(input.signal ? [input.signal] : [])]);
     const { headers, currentPool, block } = await readContext(requestSignal);
     const pinned: HeaderView = { finalized: () => block, assertFresh: header => headers.assertFresh(header) };
     const result = await currentPool.run(async (send, context) => {
@@ -428,7 +543,35 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
       const result = await executor.call({ ...input, signal: context.signal });
       headers.assertFresh(result.block);
       return result;
-    }, { account: input.from ?? input.to, kind: "call", signal: requestSignal, totalTimeoutMs: callTimeoutMs, assertValid: () => headers.assertFresh(block) });
+    }, { account: input.from ?? input.to, kind: "call", signal: requestSignal, totalTimeoutMs: callTimeoutMs, assertValid: () => { assertDirectoryAuthority(authority); headers.assertFresh(block); } });
+    assertDirectoryAuthority(authority);
+    headers.assertFresh(result.block);
+    return result;
+  }
+
+  async function resolveEns(request: ResolveEnsRequest): Promise<VerifiedEnsResult> {
+    if (!options.verifiedCalls) throw new ProviderRpcError(4200, "enable verifiedCalls to resolve ENS against proven state");
+    if (!request || typeof request !== "object" || Array.isArray(request) || Reflect.ownKeys(request).some(key => typeof key !== "string" || !["name", "record", "signal", "limits"].includes(key))) throw new InputError("invalid ENS resolution request");
+    const authority = readSnapshot;
+    // Capture the complete route authorization before importing code or waiting for headers.
+    const signal = AbortSignal.any([userReadSignal(), ...(request.signal ? [request.signal] : [])]);
+    const [{ resolveVerifiedEns }, { createVerifiedExecutor }] = await Promise.all([
+      import("../execution/verified-ens.ts"), import("../execution/index.ts"),
+    ]);
+    signal.throwIfAborted();
+    const { headers, currentPool, block } = await readContext(signal);
+    const pinned: HeaderView = { finalized: () => block, assertFresh: header => { assertDirectoryAuthority(authority); headers.assertFresh(header); } };
+    const result = await resolveVerifiedEns({ ...request, headers: pinned, signal,
+      // The helper validates/normalizes the name before this callback can reserve a paid read.
+      verifiedCall: input => currentPool.run(async (send, context) => {
+        signal.throwIfAborted();
+        const executor = createVerifiedExecutor({ headers: pinned, send, limits: typeof options.verifiedCalls === "object" ? options.verifiedCalls.limits : undefined });
+        return executor.call({ ...input, signal: AbortSignal.any([signal, context.signal, ...(input.signal ? [input.signal] : [])]) });
+      }, { account: "derpc:ens-resolution", kind: "call", signal: input.signal ? AbortSignal.any([signal, input.signal]) : signal, totalTimeoutMs: callTimeoutMs,
+        assertValid: () => { assertDirectoryAuthority(authority); headers.assertFresh(block); } }),
+    });
+    signal.throwIfAborted();
+    assertDirectoryAuthority(authority);
     headers.assertFresh(result.block);
     return result;
   }
@@ -452,6 +595,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     const totalTimeoutMs = request.totalTimeoutMs ?? 120_000;
     const directory = await discoverOperators({
       transport, executionUrl, headers: pinned, ethRegistry: request.ethRegistry,
+      gatewayOwners: options.gatewayOwners,
       registrar: request.registrar, signal, totalTimeoutMs,
       // Raw ENS calls remain internal and unverified. A paid wrapper may refuse these;
       // verifiedRecords uses the local executor below and never sends eth_call upstream.
@@ -463,12 +607,12 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
         const result = await executor.call({ to, data, signal: context.signal });
         headers.assertFresh(result.block);
         return result;
-      }, { kind: "call", account: "derpc:operator-discovery", signal: opts?.signal ?? signal, totalTimeoutMs: callTimeoutMs, assertValid: () => headers.assertFresh(block) }) : undefined,
+      }, { kind: "call", account: "derpc:operator-discovery", paid: false, signal: opts?.signal ?? signal, totalTimeoutMs: callTimeoutMs, assertValid: () => headers.assertFresh(block) }) : undefined,
       readRegistrar: (registrar, opts) => currentPool.run(async (send, context) => {
         const result = await readProvenOperators({ headers: pinned, send, registrar, signal: context.signal });
         headers.assertFresh(result.block);
         return result;
-      }, { kind: "call", account: "derpc:operator-discovery", signal: opts?.signal ?? signal, totalTimeoutMs, assertValid: () => headers.assertFresh(block) }),
+      }, { kind: "call", account: "derpc:operator-discovery", paid: false, signal: opts?.signal ?? signal, totalTimeoutMs, assertValid: () => headers.assertFresh(block) }),
     });
     signal.throwIfAborted();
     headers.assertFresh(block);
@@ -479,17 +623,42 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     // Revalidate before changing either candidates or provenance; callers cannot race a newer policy.
     validateOperators(directory.operators, automatic);
     if (automatic) validateAutomaticIdentities(permittedOperators(directory.operators, routing), routing);
-    if (proven) provenDirectory = { operators: cloneOperators(directory.operators), block };
-    else provenDirectory = undefined;
-    if (activeRefresh === refreshing) activeRefresh = undefined;
-    if (automatic) {
-      replaceCandidates(directory.operators, routing, "verified-ens");
-      return directory;
+    const previousDirectory = provenDirectory;
+    const previousKeys = new Set(knownDirectoryKeys);
+    let previousGroupBindings: Set<string> | undefined;
+    if (proven) {
+      if (previousDirectory && (block.blockNumber < previousDirectory.block.blockNumber ||
+        block.blockNumber === previousDirectory.block.blockNumber && (block.blockHash !== previousDirectory.block.blockHash || block.stateRoot !== previousDirectory.block.stateRoot))) {
+        throw new Error("directory snapshot cannot move backwards or change an authenticated block");
+      }
+      // Re-proving the same finalized block can change availability, but not renew its authority.
+      const lease = previousDirectory?.block.blockHash === block.blockHash ? previousDirectory.lease : new DirectorySnapshotLease({ ...block }, notify);
+      lease.assertFresh();
+      previousGroupBindings = authenticatedGroups.get(lease);
+      authenticatedGroups.set(lease, new Set(directory.operators.map(authenticatedOperatorIdentity).filter((identity): identity is string => identity !== undefined)));
+      provenDirectory = { operators: cloneOperators(directory.operators), block: { ...block }, lease };
+      directory.operators.forEach(operator => directoryKeys(operator).forEach(key => knownDirectoryKeys.add(key)));
     }
-    const retained = retainChosenOperators(directory, chosenOperators.flatMap(o => o.ens ? [o.ens] : []));
-    // Personal endpoints are never published into ENS and are not removed by a public registry.
-    const next = [...chosenOperators.filter(o => !!o.personalToken), ...retained];
-    replaceCandidates(next, routing, proven && !next.some(o => !!o.personalToken) ? "verified-ens" : "unverified-ens");
+    if (activeRefresh === refreshing) activeRefresh = undefined;
+    try {
+      if (automatic) replaceCandidates(directory.operators, routing, "verified-ens");
+      else {
+        const retained = retainChosenOperators(directory, chosenOperators.flatMap(o => o.ens ? [o.ens] : []));
+        // Personal endpoints are never published into ENS and are not removed by a public registry.
+        const next = [...chosenOperators.filter(o => !!o.personalToken), ...retained];
+        replaceCandidates(next, routing, proven && !next.some(o => !!o.personalToken) ? "verified-ens" : "unverified-ens");
+      }
+    } catch (error) {
+      if (provenDirectory) {
+        if (previousGroupBindings) authenticatedGroups.set(provenDirectory.lease, previousGroupBindings);
+        else authenticatedGroups.delete(provenDirectory.lease);
+      }
+      if (provenDirectory?.lease !== previousDirectory?.lease) provenDirectory?.lease.dispose();
+      provenDirectory = previousDirectory;
+      knownDirectoryKeys.clear(); previousKeys.forEach(key => knownDirectoryKeys.add(key));
+      throw error;
+    }
+    if (previousDirectory?.lease !== provenDirectory?.lease) previousDirectory?.lease.dispose();
     return directory;
     } finally {
       if (activeRefresh === refreshing) activeRefresh = undefined;
@@ -498,21 +667,29 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   }
 
   async function directoryReadContext(signal: AbortSignal): Promise<{ headers: VerifiedHeaderSource; currentPool: Pool; block: VerifiedHeader; executionUrl: string }> {
-    if (pool) {
+    let snapshotFresh = true;
+    try { assertDirectoryAuthority(); } catch (error) {
+      if (!(error instanceof DirectorySnapshotExpiredError)) throw error;
+      snapshotFresh = false;
+    }
+    if (pool && snapshotFresh) {
       const context = await readContext(signal);
       return { ...context, executionUrl: chosenOperators[0]!.url };
     }
-    if (routing.selection === "manual") throw new NoOperatorsChosenError();
+    if (routing.selection === "manual" && snapshotFresh && !provenDirectory) throw new NoOperatorsChosenError();
     // Recovery is only reached by this explicitly requested administrative scan. An empty allowlist
     // still denies every endpoint; no bootstrap candidate ever becomes the public reader's pool.
-    const bootstrap = permittedOperators(discoveryBootstrap, routing);
+    const bootstrap = permittedOperators(discoveryBootstrap, routing.selection === "manual" ? { selection: "balanced" } : routing);
     if (!bootstrap.length) throw new NoOperatorsChosenError();
     validateOperators(bootstrap);
     const headers = await abortable(readyHeaders(), signal);
     signal.throwIfAborted();
     if (pinStatus.state === "mismatch") await abortable(pinCheck!, signal);
-    const currentPool = createPool({ endpoints: bootstrap, sendFor, excluded, selection: routing.selection, signal,
-      onEvent: event => { if (event.type === "invalid-proof" && event.endpoint) excluded.add(event.endpoint); },
+    const currentPool = createPool({ endpoints: bootstrap, sendFor: endpoint => sendFor(endpoint), excluded: excludedIds(bootstrap), selection: routing.selection === "manual" ? undefined : routing.selection, signal,
+      onEvent: event => {
+        const endpoint = bootstrap.find(operator => (operator.id ?? operator.url) === event.endpoint);
+        if (event.type === "invalid-proof" && endpoint) excludeDestination(endpoint);
+      },
     });
     try {
       await checkWorkerPin({ pin, network: "mainnet", reader: createPooledReader({ pool: currentPool, headers, paid: false }) });
@@ -561,6 +738,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   function registerPaymentOperator(operator: DeRPCOperator): void {
     lifetime.signal.throwIfAborted();
     validateOperators([operator], true);
+    if (operator.endpointId !== undefined || provenDirectory?.operators.some(record => record.endpointId !== undefined && directoryKeys(record).some(key => directoryKeys(operator).includes(key)))) throw new InputError("paid multi-endpoint operators are not supported");
     const id = operator.paymentOperatorId ?? operator.id ?? operator.url;
     if (operator.personalToken || !options.payments?.has(id)) throw new Error("a confirmed funded payment session is required");
     const prior = paymentEndpoints.get(id);
@@ -572,7 +750,8 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
 
   /** The reader for one request: only once everything before it holds, and never after the transport is gone. */
   async function readerForReads(): Promise<VerifiedReader> {
-    const signal = AbortSignal.any([lifetime.signal, selection.signal]);
+    const authority = readSnapshot;
+    const signal = userReadSignal();
     const headers = await abortable(readyHeaders(), signal);
     signal.throwIfAborted();
     const state = transport.state();
@@ -586,8 +765,10 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     for (const name of ["getBalance", "getTransactionCount", "getCode", "getStorageAt", "getTokenBalance"] as const) {
       guarded[name] = async (...args: never[]) => {
         signal.throwIfAborted();
+        assertDirectoryAuthority(authority);
         const value = await abortable((gated[name] as (...a: never[]) => Promise<unknown>)(...args), signal);
         signal.throwIfAborted();
+        assertDirectoryAuthority(authority);
         return value;
       };
     }
@@ -617,27 +798,40 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     validateOperators(operators, nextRouting.selection !== "manual");
     const candidates = cloneOperators(operators);
     const next = permittedOperators(candidates, nextRouting);
-    validateAutomaticIdentities(next, nextRouting);
-    if (nextSource === "verified-ens" && provenDirectory && next.some(operator => !chosenOperators.some(previous => sameOperator(previous, operator)))) {
-      headerSource!.assertFresh(provenDirectory.block);
-    }
+    validateAutomaticIdentities(permittedOperators(candidates, { selection: nextRouting.selection }), nextRouting);
+    const nextSnapshot = authorityForOperators(next);
+    if (nextSnapshot && next.some(operator => !chosenOperators.some(previous => sameOperatorIdentity(previous, operator)))) assertDirectoryAuthority(nextSnapshot);
     const previousPool = pool;
     const stableIds = next.filter(operator => chosenOperators.some(previous => sameOperatorIdentity(previous, operator))).map(operator => operator.id ?? operator.url);
+    const stableOperatorIds = readSnapshot && nextSnapshot ? [...new Set(next.map(operatorKey))].filter(group => {
+      const before = chosenOperators.filter(operator => operatorKey(operator) === group);
+      const after = next.filter(operator => operatorKey(operator) === group);
+      const identity = before[0] && authenticatedOperatorIdentity(before[0]);
+      return identity !== undefined && readAuthenticatedGroups.has(identity) && authenticatedGroups.get(nextSnapshot)?.has(identity) &&
+        [...before, ...after].every(operator => authenticatedOperatorIdentity(operator) === identity);
+    }) : [];
     const sameCandidates = next.length === chosenOperators.length && next.every((operator, index) => sameOperator(operator, chosenOperators[index]!));
     const sameSourceCandidates = candidates.length === candidateOperators.length && candidates.every((operator, index) => sameOperator(operator, candidateOperators[index]!));
     const samePolicy = routing.selection === nextRouting.selection && sameAllowlist(routing.allowedOperators, nextRouting.allowedOperators);
     const sameSpendingPolicy = (routing.selection === "manual") === (nextRouting.selection === "manual");
-    const unchanged = sameCandidates && sameSourceCandidates && samePolicy && source === nextSource;
+    const sameAuthority = readSnapshot === nextSnapshot;
+    const unchanged = sameCandidates && sameSourceCandidates && samePolicy && source === nextSource && sameAuthority;
     // A fresh manual source is an explicit administrative bootstrap authorization. Never retain secrets.
-    if (nextSource === "explicit") discoveryBootstrap = cloneOperators(permittedOperators(candidates, { selection: "balanced" }));
+    if (nextSource === "explicit") {
+      const explicit = candidates.filter(operator => !directoryKeys(operator).some(key => knownDirectoryKeys.has(key)));
+      // Re-supplying ENS-derived records does not turn them into administrative bootstrap authority.
+      if (explicit.length || !candidates.length) discoveryBootstrap = cloneOperators(permittedOperators(explicit, { selection: "balanced" }));
+    }
     candidateOperators = candidates;
     routing = nextRouting;
     source = nextSource;
+    readSnapshot = nextSnapshot;
+    readAuthenticatedGroups = new Set(nextSnapshot ? authenticatedGroups.get(nextSnapshot) : []);
     if (unchanged) return;
     ++refreshGeneration;
     activeRefresh?.abort(new Error("operator routing changed"));
     // Changing only the category preserves account affinity, cooldowns and local measurements.
-    if (sameCandidates && sameSpendingPolicy && previousPool) {
+    if (sameCandidates && sameSpendingPolicy && sameAuthority && previousPool) {
       previousPool.setSelection(routing.selection === "manual" ? undefined : routing.selection);
       notify();
       return;
@@ -659,14 +853,15 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     pool = next.length
       ? createPool({
           endpoints: next,
-          sendFor,
-          prepareAttempt,
-          signal: AbortSignal.any([lifetime.signal, selection.signal]),
-          excluded,
+          sendFor: endpoint => sendFor(endpoint, nextSnapshot),
+          prepareAttempt: (context, send) => prepareAttempt(context, send, nextSnapshot),
+          signal: AbortSignal.any([lifetime.signal, selection.signal, ...(nextSnapshot ? [nextSnapshot.controller.signal] : [])]),
+          excluded: excludedIds(next),
           selection: routing.selection === "manual" ? undefined : routing.selection,
-          preserveFrom: previousPool ? { pool: previousPool, ids: stableIds } : undefined,
+          preserveFrom: previousPool ? { pool: previousPool, ids: stableIds, operatorIds: stableOperatorIds } : undefined,
           onEvent: (event) => {
-            if (event.type === "invalid-proof" && event.endpoint) excluded.add(event.endpoint);
+            const endpoint = next.find(operator => (operator.id ?? operator.url) === event.endpoint);
+            if (event.type === "invalid-proof" && endpoint) excludeDestination(endpoint);
             options.onPoolEvent?.(event);
             notify();
           },
@@ -695,7 +890,9 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
       lightClient: lc,
       pin: pinStatus,
       operators: pool?.status() ?? [],
-      routing: { ...routing, allowedOperators: routing.allowedOperators ? [...routing.allowedOperators] : undefined, source, ...(source === "verified-ens" ? { directory: "derpc.eth" as const } : {}) },
+      routing: { ...routing, allowedOperators: routing.allowedOperators ? [...routing.allowedOperators] : undefined, source,
+        ...(source === "verified-ens" ? { directory: "derpc.eth" as const } : {}),
+        ...(provenDirectory ? { directorySnapshot: provenDirectory.lease.status(!!readSnapshot) } : {}) },
     };
   }
 
@@ -717,6 +914,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     setRouting,
     refreshDirectory,
     verifiedCall,
+    resolveEns,
     registerPaymentOperator,
     settlePayment,
     status,
@@ -728,7 +926,12 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
       chosenOperators = [];
       candidateOperators = [];
       discoveryBootstrap = [];
+      provenDirectory?.lease.dispose();
       provenDirectory = undefined;
+      readSnapshot = undefined;
+      readAuthenticatedGroups = new Set();
+      knownDirectoryKeys.clear();
+      excludedDestinations.clear();
       activeRefresh?.abort(lifetime.signal.reason);
       pool = undefined;
       notify();
@@ -745,6 +948,7 @@ export function simulatedLyingOperator(base: DeRPCOperator): DeRPCOperator {
   return {
     ...base,
     id: `simulated-liar:${base.id ?? base.url}`,
+    operatorId: `simulated-liar:${base.id ?? base.url}`,
     paymentOperatorId: base.paymentOperatorId ?? base.id ?? base.url,
     url: base.url,
     priority: -1,
@@ -780,25 +984,60 @@ function permittedOperators(operators: DeRPCOperator[], routing: RoutingOptions)
   return operators.filter(operator =>
     !operator.personalToken && !operator.payment && !operator.paymentOperatorId && !operator.tamper &&
     (operator.expiry === undefined || operator.expiry > Date.now() / 1000) &&
-    (allowlist === undefined || allowlist.has(operator.id ?? operator.url) || !!operator.ens && allowlist.has(operator.ens)));
+    (allowlist === undefined || allowlist.has(operatorKey(operator)) || !!operator.ens && allowlist.has(operator.ens) ||
+      operator.endpointId === undefined && allowlist.has(operator.id ?? operator.url)));
+}
+
+function validateEndpointGroups(operators: DeRPCOperator[]): void {
+  const ids = new Set<string>();
+  const urls = new Set<string>();
+  const aliases = new Map<string, string>();
+  const groups = new Map<string, DeRPCOperator[]>();
+  for (const operator of operators) {
+    const id = operator.id ?? operator.url;
+    if (typeof id !== "string" || !id.length || ids.has(id)) throw new Error("endpoint keys must be unique");
+    ids.add(id);
+    if (operator.tamper) continue; // A deliberately simulated operator is its own manual demo group.
+    const key = operatorKey(operator), group = groups.get(key) ?? [];
+    const url = operatorUrl(operator.url).href;
+    if (urls.has(url)) throw new Error("endpoint URLs must be unique");
+    urls.add(url);
+    for (const alias of [key, id, ...(operator.ens ? [operator.ens] : [])]) {
+      const normalized = alias.toLowerCase();
+      if (aliases.has(normalized) && aliases.get(normalized) !== key) throw new Error("one operator identity cannot be split across several groups");
+      aliases.set(normalized, key);
+    }
+    group.push(operator); groups.set(key, group);
+  }
+  for (const group of groups.values()) {
+    if (group.length > MAX_OPERATOR_ENDPOINTS) throw new Error("an operator can publish at most eight endpoints");
+    const first = group[0]!, endpointIds = new Set<string>();
+    for (const operator of group) {
+      if (group.length > 1 && (!operator.operatorId || !operator.endpointId || endpointIds.has(operator.endpointId) ||
+        operator.ens?.toLowerCase() !== first.ens?.toLowerCase() || operator.operator !== first.operator ||
+        operator.wrapperIdentity?.signer.toLowerCase() !== first.wrapperIdentity?.signer.toLowerCase() || operator.ensOwner?.toLowerCase() !== first.ensOwner?.toLowerCase() || operator.expiry !== first.expiry)) {
+        throw new Error("multiple endpoints require distinct node IDs and one consistent operator identity");
+      }
+      if (operator.endpointId) endpointIds.add(operator.endpointId);
+    }
+  }
 }
 
 function validateAutomaticIdentities(operators: DeRPCOperator[], routing: RoutingOptions): void {
   if (routing.selection === "manual") return;
-  // IDs and ENS aliases share one namespace: an alias must not authorize a different endpoint's ID.
-  const identities = new Map<string, DeRPCOperator>();
+  // Group names, node keys and ENS aliases share one namespace, but only group aliases authorize routing.
+  const identities = new Map<string, string>();
   const urls = new Set<string>();
-  const names = new Set<string>();
   for (const operator of operators) {
     const url = operatorUrl(operator.url).href;
-    const name = operator.ens?.toLowerCase();
-    if (urls.has(url) || name && names.has(name)) throw new Error("automatic selection requires one endpoint per operator identity");
+    const group = operatorKey(operator);
+    if (urls.has(url)) throw new Error("automatic selection requires unique endpoint URLs");
     urls.add(url);
-    if (name) names.add(name);
-    for (const identity of [operator.id ?? operator.url, ...(operator.ens ? [operator.ens] : [])]) {
+    for (const identity of [group, operator.id ?? operator.url, ...(operator.ens ? [operator.ens] : [])]) {
       if (typeof identity !== "string" || !identity.length) throw new Error("invalid automatic operator identity");
-      if (identities.has(identity) && identities.get(identity) !== operator) throw new Error("ambiguous or duplicate automatic operator identity");
-      identities.set(identity, operator);
+      const key = identity.toLowerCase();
+      if (identities.has(key) && identities.get(key) !== group) throw new Error("ambiguous or duplicate automatic operator identity");
+      identities.set(key, group);
     }
   }
 }
@@ -813,12 +1052,26 @@ function sameAllowlist(a: string[] | undefined, b: string[] | undefined): boolea
   return a === undefined ? b === undefined : b !== undefined && a.length === b.length && a.every(id => b.includes(id));
 }
 
+function directoryKeys(operator: DeRPCOperator): string[] {
+  const url = operatorUrl(operator.url).href;
+  // IDs and ENS aliases share the allowlist namespace; moving a name between fields cannot erase provenance.
+  return [`url:${url}`, `identity:${url.toLowerCase()}`, ...(operator.id ? [`identity:${operator.id.toLowerCase()}`] : []),
+    ...(operator.operatorId ? [`identity:${operator.operatorId.toLowerCase()}`] : []),
+    ...(operator.endpointId ? [`node:${operatorKey(operator).toLowerCase()}#${operator.endpointId}`] : []),
+    ...(operator.ens ? [`identity:${operator.ens.toLowerCase()}`] : [])];
+}
+
 function sameOperatorIdentity(a: DeRPCOperator, b: DeRPCOperator): boolean {
-  return a.id === b.id && a.url === b.url && a.ens === b.ens && a.operator === b.operator &&
+  return a.id === b.id && a.url === b.url && a.ens === b.ens && a.ensOwner === b.ensOwner && a.operator === b.operator && a.operatorId === b.operatorId && a.endpointId === b.endpointId &&
     a.wrapperIdentity?.signer === b.wrapperIdentity?.signer && a.personalToken === b.personalToken &&
     a.paymentOperatorId === b.paymentOperatorId && a.tamper === b.tamper && a.beaconUrl === b.beaconUrl &&
     (a.gateways ?? []).join("\n") === (b.gateways ?? []).join("\n") &&
     a.payment?.chainId === b.payment?.chainId && a.payment?.escrow === b.payment?.escrow && a.payment?.payee === b.payment?.payee;
+}
+
+function authenticatedOperatorIdentity(operator: DeRPCOperator): string | undefined {
+  if (!operator.operatorId || !operator.ens || !operator.ensOwner || !operator.wrapperIdentity || operator.tamper || operator.personalToken) return undefined;
+  return JSON.stringify([operatorKey(operator), operator.ens.toLowerCase(), operator.ensOwner.toLowerCase(), operator.wrapperIdentity.signer.toLowerCase()]);
 }
 
 function sameOperator(a: DeRPCOperator, b: DeRPCOperator): boolean {
