@@ -47,12 +47,14 @@ export interface PoolAttempt {
 
 export class PoolExhaustedError extends Error {
   override name = "PoolExhaustedError";
-  constructor(readonly attempts: PoolAttempt[]) {
+  readonly attempts: PoolAttempt[];
+  constructor(attempts: PoolAttempt[]) {
     super(
       attempts.length === 0
         ? "no endpoint left: every chosen operator is excluded or expired"
         : `all ${attempts.length} attempts failed: ${attempts.map((a) => `${a.endpoint} (${a.kind})`).join(", ")}`,
     );
+    this.attempts = attempts;
   }
 }
 
