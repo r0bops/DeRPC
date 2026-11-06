@@ -45,7 +45,14 @@ function initials(text: string): string {
     .join("");
 }
 
-function personAvatar(label: string, seed: string): string {
+function personAvatar(label: string, seed: string, logoUrl?: string): string {
+  if (logoUrl) {
+    return `<span class="op-logo-wrap ${avatarTone(seed)}" aria-hidden="true">
+      <img class="op-logo-img" src="${escapeHtml(logoUrl)}" alt="" loading="lazy" width="40" height="40"
+        onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.removeAttribute('hidden')" />
+      <span hidden>${escapeHtml(initials(label))}</span>
+    </span>`;
+  }
   return `<span class="avatar ${avatarTone(seed)}" aria-hidden="true">${escapeHtml(initials(label))}</span>`;
 }
 
@@ -99,7 +106,7 @@ function operatorRows(state: DirectoryState): string {
         <tr data-href="${href}">
           <td>
             <a class="row-link" href="${href}">
-              ${personAvatar(operator.operator, operator.ens)}
+              ${personAvatar(operator.operator, operator.ens, operator.logoUrl)}
               <span>
                 <span class="row-title">${escapeHtml(operator.operator)}</span>
                 <span class="row-hint">${escapeHtml(operator.ens)} ${mockBadge}</span>

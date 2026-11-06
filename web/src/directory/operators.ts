@@ -20,7 +20,7 @@ const BLOCKRAZOR_CHAINS = "https://docs.blockrazor.io/get-started/supported-chai
 
 export const OPERATORS: DirectoryOperator[] = [
   {
-    ens: "drpc.derpc.eth", operator: "dRPC", website: "https://drpc.org", endpoint: "https://eth.drpc.org", tier: 1,
+    ens: "drpc.derpc.eth", operator: "dRPC", website: "https://drpc.org", endpoint: "https://eth.drpc.org", logoUrl: "https://drpc.org/favicon.ico", tier: 1,
     networks: [
       { network: "ethereum-mainnet", tested: true, source: "https://drpc.org/chainlist" },
       { network: "base", tested: false, source: DRPC_BLOG },
@@ -30,11 +30,11 @@ export const OPERATORS: DirectoryOperator[] = [
     warnings: ["dRPC lists 200+ networks. Only the ones with a source link here were checked against its pages."],
   },
   {
-    ens: "mevblocker.derpc.eth", operator: "MEV Blocker", website: "https://mevblocker.io", endpoint: "https://rpc.mevblocker.io", tier: 1,
+    ens: "mevblocker.derpc.eth", operator: "MEV Blocker", website: "https://mevblocker.io", endpoint: "https://rpc.mevblocker.io", logoUrl: "https://mevblocker.io/favicon.ico", tier: 1,
     networks: [{ network: "ethereum-mainnet", tested: true, source: "https://docs.mevblocker.io/", note: "Vendor docs: all features are supported on Ethereum." }],
   },
   {
-    ens: "blockrazor.derpc.eth", operator: "BlockRazor", website: "https://blockrazor.io", endpoint: "https://eth.blockrazor.xyz", tier: 1,
+    ens: "blockrazor.derpc.eth", operator: "BlockRazor", website: "https://blockrazor.io", endpoint: "https://eth.blockrazor.xyz", logoUrl: "https://blockrazor.io/favicon.ico", tier: 1,
     networks: [
       { network: "ethereum-mainnet", tested: true, source: "https://ethereum.org/developers/tools/blockrazor/" },
       { network: "bnb-smart-chain", tested: false, source: BLOCKRAZOR_CHAINS, note: "Service-specific: the docs list a BSC RPC." },
@@ -42,14 +42,14 @@ export const OPERATORS: DirectoryOperator[] = [
     ],
   },
   {
-    ens: "blast.derpc.eth", operator: "Blast API", website: "https://blastapi.io", endpoint: "https://eth-mainnet.public.blastapi.io", tier: 2,
+    ens: "blast.derpc.eth", operator: "Blast API", website: "https://blastapi.io", endpoint: "https://eth-mainnet.public.blastapi.io", logoUrl: "https://blastapi.io/favicon.ico", tier: 2,
     networks: [{ network: "ethereum-mainnet", tested: true, source: "https://blastapi.io/blog/important-blastapi-sunsetting-keep-your-apps-running-on-alchemy" }],
     warnings: [
       "The vendor announced that Blast API would be discontinued on Oct 31, 2025. This public endpoint still answered our proof reads on Nov 5, 2026, but it can disappear without notice.",
     ],
   },
   {
-    ens: "publicnode.derpc.eth", operator: "PublicNode", website: "https://publicnode.com", endpoint: "https://ethereum-rpc.publicnode.com", tier: 2,
+    ens: "publicnode.derpc.eth", operator: "PublicNode", website: "https://publicnode.com", endpoint: "https://ethereum-rpc.publicnode.com", logoUrl: "https://publicnode.com/favicon.ico", tier: 2,
     networks: [
       { network: "ethereum-mainnet", tested: true, source: "https://publicnode.com", note: "Unreliable for proof requests through Tor in our tests." },
       { network: "avalanche-c-chain", tested: false, source: "https://docs.avax.network/tooling/rpc-providers" },

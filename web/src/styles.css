@@ -397,6 +397,8 @@ p {
 
 .code-card__body {
   padding: 20px 22px 8px;
+  position: relative;
+  overflow: hidden;
 }
 
 .code {
@@ -454,6 +456,7 @@ p {
 
 .route-diagram .route-line--dash {
   stroke-dasharray: 4 5;
+  animation: dash-flow 1s linear infinite;
 }
 
 .route-diagram .route-node {
@@ -477,6 +480,48 @@ p {
   stroke-linecap: round;
   stroke-linejoin: round;
   fill: none;
+}
+
+.route-diagram .route-check-mark--draw {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+}
+
+.route-diagram .packet-dot {
+  fill: var(--lime);
+  filter: drop-shadow(0 0 4px rgba(200, 246, 60, 0.8));
+}
+
+.route-diagram .route-node--verified-glow {
+  animation: verified-glow 2.5s ease-in-out 1.8s infinite;
+}
+
+.code-card__body::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2.5em;
+  background: linear-gradient(to bottom, transparent, rgba(200, 246, 60, 0.06) 50%, transparent);
+  pointer-events: none;
+  animation: code-scan-hl 5s ease-in-out 1s infinite;
+}
+
+@keyframes dash-flow {
+  to { stroke-dashoffset: -18; }
+}
+
+@keyframes verified-glow {
+  0%, 100% { filter: drop-shadow(0 0 0px rgba(200, 246, 60, 0)); }
+  50% { filter: drop-shadow(0 0 12px rgba(200, 246, 60, 0.65)); }
+}
+
+@keyframes code-scan-hl {
+  0% { transform: translateY(-100%); opacity: 0; }
+  8% { opacity: 1; }
+  85% { opacity: 0.9; }
+  100% { transform: translateY(1600%); opacity: 0; }
 }
 
 /* Stats */
@@ -618,6 +663,50 @@ p {
   font-size: 14px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+}
+
+.card__icon {
+  width: 44px;
+  height: 44px;
+}
+
+.card__icon svg {
+  display: block;
+  width: 44px;
+  height: 44px;
+}
+
+.op-logo-wrap {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.op-logo-img {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.op-logo-wrap span[hidden] {
+  display: none;
+}
+
+.op-logo-wrap span:not([hidden]) {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
 }
 
 /* Panels */

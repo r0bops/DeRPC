@@ -48,25 +48,51 @@ export function landingPage(): PageResult {
       <section class="section">
         <div class="container">
           <div class="section__head">
-            <p class="kicker">Why it holds</p>
-            <h2 class="h2">Choice, privacy and proof.</h2>
-            <p class="subtitle">Privacy is the route. Trust is the proof. Remove either one and the call fails. Operator stake is on the roadmap.</p>
+            <p class="kicker">How it works</p>
+            <h2 class="h2">Route. Prove. Choose.</h2>
           </div>
           <div class="card-grid">
             <article class="card">
-              <div class="step-num">01</div>
+              <div class="card__icon">
+                <svg viewBox="0 0 44 44" fill="none" aria-hidden="true">
+                  <path d="M22 4 L6 10 v10 c0 9 7 17 16 20 9-3 16-11 16-20V10Z" stroke="#c8f63c" stroke-width="1.5" fill="rgba(200,246,60,0.09)" stroke-linejoin="round"/>
+                  <path d="M14 24 a8 8 0 0 1 16 0" stroke="rgba(200,246,60,0.55)" stroke-width="1.3" stroke-linecap="round"/>
+                  <path d="M17 24 a5 5 0 0 1 10 0" stroke="rgba(200,246,60,0.75)" stroke-width="1.3" stroke-linecap="round"/>
+                  <circle cx="22" cy="24" r="2.5" fill="rgba(200,246,60,0.9)"/>
+                </svg>
+              </div>
               <h3 class="card__title">Private by route</h3>
-              <p class="card__text">Reads travel through Anon-RPC. Tor aims to hide your IP from the endpoint; query contents and timing remain visible. There is no direct RPC fallback.</p>
+              <p class="card__text">Reads go through Anon-RPC. Tor hides your IP from the endpoint. No direct fallback, ever.</p>
             </article>
             <article class="card">
-              <div class="step-num">02</div>
+              <div class="card__icon">
+                <svg viewBox="0 0 44 44" fill="none" aria-hidden="true">
+                  <rect x="4" y="12" width="15" height="12" rx="3" stroke="#8c8cff" stroke-width="1.5" fill="rgba(140,140,255,0.08)"/>
+                  <rect x="25" y="12" width="15" height="12" rx="3" stroke="#c8f63c" stroke-width="1.5" fill="rgba(200,246,60,0.09)"/>
+                  <path d="M19 18h6" stroke="rgba(140,140,255,0.6)" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M28.5 15.5 l2.5 3 4.5-5" stroke="#c8f63c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M4 32h36" stroke="rgba(140,140,255,0.2)" stroke-width="1.2" stroke-linecap="round"/>
+                  <path d="M4 36h22" stroke="rgba(140,140,255,0.15)" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+              </div>
               <h3 class="card__title">Verified by proof</h3>
-              <p class="card__text">The host verifies supported answers against state authenticated by a light client. An invalid proof is rejected before the answer reaches your app.</p>
+              <p class="card__text">Every answer checked against the light client's finalized state. Invalid proofs fail closed before reaching your app.</p>
             </article>
             <article class="card">
-              <div class="step-num">03</div>
+              <div class="card__icon">
+                <svg viewBox="0 0 44 44" fill="none" aria-hidden="true">
+                  <circle cx="22" cy="20" r="6" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="rgba(255,255,255,0.07)"/>
+                  <circle cx="8" cy="36" r="5" stroke="rgba(140,140,255,0.5)" stroke-width="1.5" fill="rgba(140,140,255,0.08)"/>
+                  <circle cx="22" cy="36" r="5" stroke="#c8f63c" stroke-width="1.5" fill="rgba(200,246,60,0.12)"/>
+                  <circle cx="36" cy="36" r="5" stroke="rgba(140,140,255,0.3)" stroke-width="1.5" fill="rgba(140,140,255,0.05)"/>
+                  <path d="M17.5 23.5 L10 32" stroke="rgba(140,140,255,0.35)" stroke-width="1.2"/>
+                  <path d="M22 26v5" stroke="#c8f63c" stroke-width="1.5"/>
+                  <path d="M26.5 23.5 L34 32" stroke="rgba(140,140,255,0.2)" stroke-width="1.2"/>
+                  <circle cx="22" cy="36" r="2" fill="rgba(200,246,60,0.7)"/>
+                </svg>
+              </div>
               <h3 class="card__title">Open by choice</h3>
-              <p class="card__text">You pick the operators and inspect local health observations. Invalid proofs exclude an endpoint locally. ENS enrollment and staking come later.</p>
+              <p class="card__text">You pick the operators and inspect local health. ENS enrollment and staking come in the next milestone.</p>
             </article>
           </div>
         </div>
@@ -78,11 +104,11 @@ export function landingPage(): PageResult {
             <article class="panel panel--dark">
               <p class="panel__kicker">For app builders</p>
               <h2 class="panel__title">Add verified reads to your app.</h2>
-              <p class="panel__text">Use the <code>@derpc/provider</code> workspace package with viem for finalized mainnet reads. It is not published to npm; integrate from the repository. Anonymous routing and verification run on the user's device.</p>
+              <p class="panel__text">Private workspace package — integrate from the repo. EIP-1193 and viem. All verification runs on the user's device.</p>
               <ul class="panel__list">
-                <li>${icon("check")}No direct fallback. Ever.</li>
-                <li>${icon("check")}Free reads with no wallet connection.</li>
-                <li>${icon("check")}Supported: <code>eth_getBalance</code>, <code>eth_getCode</code>, <code>eth_getStorageAt</code>, <code>eth_getTransactionCount</code>, <code>eth_blockNumber</code>. Pass <code>blockTag: "finalized"</code>; <code>latest</code> is refused.</li>
+                <li>${icon("check")}<code>eth_getBalance</code> · <code>eth_getCode</code> · <code>eth_getStorageAt</code></li>
+                <li>${icon("check")}<code>eth_getTransactionCount</code> · <code>eth_blockNumber</code></li>
+                <li>${icon("check")}Pass <code>blockTag: "finalized"</code> — <code>latest</code> is refused.</li>
               </ul>
               <div class="panel__actions">
                 <a class="btn btn--ghost" href="#/directory">Open directory ${icon("arrow")}</a>
@@ -90,12 +116,12 @@ export function landingPage(): PageResult {
             </article>
             <article class="panel panel--lime">
               <p class="panel__kicker">For operators</p>
-              <h2 class="panel__title">One operator. A home for your nodes.</h2>
-              <p class="panel__text">Prepare an operator identity and node endpoints, then run the wrapper beside your node. Multi-endpoint routing is implemented; independent public enrollment and its live lifecycle demonstration remain pending.</p>
+              <h2 class="panel__title">One identity. Up to 8 nodes.</h2>
+              <p class="panel__text">Run the wrapper beside your Ethereum node. Callers reach you through Tor. ENS registration and staking come in the next milestone.</p>
               <ul class="panel__list">
-                <li>${icon("check")}Plan yourname.derpc.eth and its endpoints.</li>
-                <li>${icon("check")}Staking per identity and node is planned.</li>
-                <li>${icon("check")}Set a price per verified read in the later paid rollout.</li>
+                <li>${icon("check")}Free to run today — no deposit or stake.</li>
+                <li>${icon("check")}Each node gets its own Tor onion address.</li>
+                <li>${icon("check")}Draft your operator config locally, no wallet needed.</li>
               </ul>
               <div class="panel__actions">
                 <a class="btn btn--ink" href="#/operate">Run an operator ${icon("arrow")}</a>

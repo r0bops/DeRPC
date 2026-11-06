@@ -34,6 +34,8 @@ export interface DirectoryOperator {
   operator: string;
   website: string;
   endpoint: string;
+  /** Direct favicon/logo URL from the operator's domain. Used as avatar; falls back to initials. */
+  logoUrl?: string;
   /** 1: fast, reliable proofs through Tor in our Nov 5 measurements. 2: slower or proof-window errors. */
   tier: 1 | 2;
   networks: OperatorNetwork[];
