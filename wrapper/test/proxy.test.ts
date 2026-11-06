@@ -18,6 +18,31 @@ function setup(extra: Partial<ProxyOptions> = {}) {
 }
 
 describe("operator filtering proxy", () => {
+  it("publishes each node's stable ID under a shared operator without changing legacy identity", async () => {
+    for (const endpointId of ["a", "node-a", "a".repeat(31)]) {
+      const configuredIdentity = { ...identity, chains: [1], endpointId };
+      const { proxy, upstream } = setup({ identity: configuredIdentity });
+      configuredIdentity.endpointId = "changed-after-start";
+      const response = await proxy(new Request("http://wrapper/.well-known/derpc.json"));
+      expect(await response.json()).toEqual({ ...identity, endpointId });
+      expect(upstream).not.toHaveBeenCalled();
+    }
+    expect(await (await setup().proxy(new Request("http://wrapper/.well-known/derpc.json"))).json()).not.toHaveProperty("endpointId");
+  });
+
+  it.each(["", "UPPER", "two words", "-node", "node-", "node_id", "a".repeat(32), "é", null, 1])("refuses invalid node ID %j before serving", endpointId => {
+    expect(() => setup({ identity: { ...identity, chains: [1], endpointId: endpointId as string } })).toThrow("DERPC_ENDPOINT_ID");
+  });
+
+  it("refuses payment admission on a wrapper with a plural endpoint identity", () => {
+    const admit = vi.fn(async () => {});
+    expect(() => setup({
+      identity: { ...identity, chains: [1], endpointId: "node-a" },
+      payments: { admit, voucher: async () => { throw new Error("not reached"); } },
+    })).toThrow("free-only");
+    expect(admit).not.toHaveBeenCalled();
+  });
+
   it("rejects an entire mixed batch before touching the node", async () => {
     const { proxy, upstream } = setup();
     expect((await proxy(request([rpc(), rpc("eth_sendRawTransaction", ["0xdead"], 2)]))).status).toBe(403);

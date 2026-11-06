@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { createProxy, type Identity } from "./proxy.ts";
+import { createProxy, validateEndpointId, validateOperatorName, type Identity } from "./proxy.ts";
 import { serve } from "./server.ts";
 
 function required(name: string): string {
@@ -17,10 +17,16 @@ function port(name: string, fallback: number): number {
 
 const ens = required("DERPC_ENS_NAME");
 const signer = required("DERPC_SIGNER");
-if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.derpc\.eth$/.test(ens)) throw new Error("expected <operator>.derpc.eth");
+validateOperatorName(ens);
 if (!/^0x[\da-fA-F]{40}$/.test(signer)) throw new Error("expected signer address");
+const endpointId = process.env.DERPC_ENDPOINT_ID || undefined;
+if (endpointId !== undefined) {
+  validateEndpointId(endpointId);
+  if (process.env.DERPC_PAYMENT_ESCROW) throw new Error("multiple-endpoint operators are free-only; remove payment configuration before starting this wrapper");
+}
 const identity: Identity = {
   ens, signer, chains: [1], version: "1",
+  ...(endpointId !== undefined ? { endpointId } : {}),
   service: process.env.DERPC_DEMO_PROXY === "true" ? "demo-proxy" : "node",
 };
 const options = { executionUrl: required("DERPC_EXECUTION_URL"), beaconUrl: required("DERPC_BEACON_URL"), identity };

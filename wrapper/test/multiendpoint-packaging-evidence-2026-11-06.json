@@ -1,0 +1,44 @@
+{
+  "kind": "derpc-wrapper-multiendpoint-packaging-check",
+  "version": 1,
+  "at": "2026-11-06T15:47:38.762Z",
+  "network": "none",
+  "publicTransactions": false,
+  "sourceSha256": {
+    "wrapper/src/main.ts": "266ba617cb419a4bb24a29952b97fda710276057694ee8aa63b9cbe31c6855be",
+    "wrapper/src/proxy.ts": "bacf8188ab524a00bff7cef7ce105a4a1f26767d07a21b57cff310bd5423a7ca",
+    "wrapper/src/setup.ts": "e4349ad278133e1bc27bdfa4e609a9964e610042cdcee10f1b8b16f0d8837d7a",
+    "wrapper/compose.yaml": "f095d296c26b08293bfa655146019133ea229637fbd00dbfcd3da88410670baf",
+    "wrapper/Dockerfile": "71aa9d1d372162481c967c289c2697d67dc041c6e01574aea30d6d0fc4e9497d",
+    "wrapper/test/proxy.test.ts": "d0f3cd3fe7b7f343bf463fa0f7ad0e2f1ba3bbce2f8369ba49051fb39ac072ff",
+    "wrapper/test/setup.test.ts": "26630cf6020714f17dafa8fd88e1336cfd8da36dd334c90c4e89e93201e811e6",
+    "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6"
+  },
+  "checks": {
+    "builtImageIdentity": {
+      "ens": "alice.derpc.eth",
+      "signer": "0x1111111111111111111111111111111111111111",
+      "chains": [
+        1
+      ],
+      "version": "1",
+      "endpointId": "node-a",
+      "service": "demo-proxy"
+    },
+    "paidPluralRefused": true,
+    "malformedIdRefused": true,
+    "oversizeOperatorLabelRefused": true,
+    "composeForwardsEndpointId": true,
+    "ownedContainerRemoved": true
+  },
+  "limits": [
+    "Isolated Docker packaging and identity checks only; no live node, Tor route, ENS registration or public deployment was tested.",
+    "Plural wrappers remain free-only; no payment or staking activation occurred."
+  ],
+  "imageId": "sha256:3b69b19f79aa2167621fcd94665298a628d636af26d7c21391f27902aeedb950",
+  "validation": {
+    "wrapperTestsPassed": 58,
+    "wrapperTypecheck": true,
+    "sharedSchemaCompatibility": true
+  }
+}

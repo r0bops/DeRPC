@@ -3,6 +3,8 @@ import { PaymentError, type PaymentRpc, type PaymentStatus } from "./payment.ts"
 /** Operator-side filtering only. Clients must still verify every supported answer. */
 export interface Identity {
   ens: string;
+  /** Stable node ID in the operator's plural ENS endpoint record; absent for legacy records. */
+  endpointId?: string;
   signer: string;
   chains: number[];
   version: "1";
@@ -42,12 +44,30 @@ const address = /^0x[\da-fA-F]{40}$/;
 const quantity = /^0x(?:0|[1-9a-fA-F][\da-fA-F]*)$/;
 const slot = /^0x[\da-fA-F]{1,64}$/;
 
+export function validateOperatorName(value: unknown): asserts value is string {
+  if (typeof value !== "string" || !/^[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?\.derpc\.eth$/.test(value)) {
+    throw new Error("expected <operator>.derpc.eth with a 1–31 character label");
+  }
+}
+
+export function validateEndpointId(value: unknown): asserts value is string {
+  if (typeof value !== "string" || !/^[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/.test(value)) {
+    throw new Error("DERPC_ENDPOINT_ID must contain 1–31 lowercase letters, digits or hyphens, starting and ending with a letter or digit");
+  }
+}
+
 class Rejection extends Error {
   readonly status: number;
   constructor(status: number, message: string) { super(message); this.status = status; }
 }
 
 export function createProxy(options: ProxyOptions): (request: Request) => Promise<Response> {
+  validateOperatorName(options.identity.ens);
+  if (options.identity.endpointId !== undefined) {
+    validateEndpointId(options.identity.endpointId);
+    if (options.payments) throw new Error("multiple-endpoint operators are free-only; payment sessions cannot be shared across wrappers");
+  }
+  const identity = { ...options.identity, chains: [...options.identity.chains] };
   const limits = { ...DEFAULT_LIMITS, ...options.limits };
   for (const n of Object.values(limits)) {
     if (!Number.isSafeInteger(n) || n <= 0) throw new Error("limits must be positive integers");
@@ -194,7 +214,7 @@ export function createProxy(options: ProxyOptions): (request: Request) => Promis
     try {
       if (options.personalToken && !equalToken(request.headers.get("authorization") ?? "", `Bearer ${options.personalToken}`)) throw new Rejection(401, "personal token required");
       const url = new URL(request.url);
-      if (request.method === "GET" && url.pathname === "/.well-known/derpc.json" && !url.search && !options.personalToken) return json(options.identity);
+      if (request.method === "GET" && url.pathname === "/.well-known/derpc.json" && !url.search && !options.personalToken) return json(identity);
       if (request.method === "POST" && url.pathname === "/rpc" && !url.search) return await execution(request, signal);
       if (request.method === "POST" && url.pathname === "/payments/voucher" && !url.search && options.payments) {
         if (executionActive >= limits.executionConcurrency) throw new Rejection(429, "execution concurrency limit");

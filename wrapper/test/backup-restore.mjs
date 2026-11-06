@@ -152,7 +152,7 @@ try {
   report.stages.push('original Tor volume snapshotted read-only through an age encryption pipe; original Tor restarted');
 
   const stage = join(temporary, 'config-source'); mkdirSync(stage, { mode: 0o700 });
-  const config = Object.fromEntries(['DERPC_ENS_NAME', 'DERPC_SIGNER', 'DERPC_EXECUTION_URL', 'DERPC_BEACON_URL', 'DERPC_DEMO_PROXY'].map(key => [key, sourceEnv[key]]));
+  const config = Object.fromEntries(['DERPC_ENS_NAME', 'DERPC_SIGNER', 'DERPC_ENDPOINT_ID', 'DERPC_EXECUTION_URL', 'DERPC_BEACON_URL', 'DERPC_DEMO_PROXY'].map(key => [key, sourceEnv[key]]));
   writeFileSync(join(stage, 'config.json'), JSON.stringify(config), { mode: 0o600 });
   copyFileSync(tokenMount.Source, join(stage, 'personal-token')); chmodSync(join(stage, 'personal-token'), 0o600);
   await encryptTar(['run', '--rm', '--network', 'none', '--user', '0', '--mount', `type=bind,source=${stage},target=/backup,readonly`, '--entrypoint', 'tar', tor.Image, '-C', '/backup', '-cpf', '-', '.'], configArchive, recipient);

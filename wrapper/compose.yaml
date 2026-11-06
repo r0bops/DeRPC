@@ -11,6 +11,8 @@ services:
       DERPC_BEACON_URL: ${DERPC_BEACON_URL:-http://127.0.0.1:5052}
       DERPC_ENS_NAME: ${DERPC_ENS_NAME:?set the operator ENS name}
       DERPC_SIGNER: ${DERPC_SIGNER:?set the operator signer address}
+      # Stable node ID when this wrapper belongs to a plural derpc.endpoints record.
+      DERPC_ENDPOINT_ID: ${DERPC_ENDPOINT_ID:-}
       DERPC_DEMO_PROXY: ${DERPC_DEMO_PROXY:-false}
     restart: unless-stopped
     read_only: true
