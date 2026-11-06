@@ -1,0 +1,506 @@
+{
+  "started": "2026-11-06T14:30:54.159Z",
+  "kind": "automatic-routing-live-proof-check",
+  "fixtureAccount": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+  "ensNamesAreMock": true,
+  "limits": {
+    "workerStartupMs": 45000,
+    "lightClientStartupMs": 75000,
+    "perReadMs": 35000,
+    "perRpcMs": 12000,
+    "onePass": true
+  },
+  "sourcesBefore": {
+    "provider/src/config/mainnet.ts": "411030131139204d1d954ec3ea545caa258ff2dba8fc8e3ab6c9b90ec2639ef9",
+    "provider/src/api/derpc.ts": "1c888b7097e60e35b85768302f44b2cdef92074c9056ffd2ba100c88ff3bd3da",
+    "provider/src/pool/pool.ts": "560fdf901f0c1bcb83e6755d11d46ea5e32823ab1580b121807ca58ecb5ed9b8",
+    "provider/src/light-client/header-source.ts": "64ec68f4cb018b3c8702f839594ee4e7e27c0b35edf32d9c5caab11981861af7"
+  },
+  "stages": [
+    {
+      "name": "balanced-all-five",
+      "passed": true,
+      "routing": {
+        "selection": "balanced",
+        "source": "explicit"
+      },
+      "candidates": [
+        "drpc.derpc.eth",
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth",
+        "blast.derpc.eth",
+        "publicnode.derpc.eth"
+      ],
+      "value": "2098289664172619421148128",
+      "blockNumber": 26356339,
+      "blockHash": "0x0bf84aa596062c7a6d562386715a4d2224e77372d66ef03928536390237c0e92",
+      "selectedEndpoint": "https://eth-mainnet.public.blastapi.io",
+      "attemptedEndpoints": [
+        "https://eth-mainnet.public.blastapi.io"
+      ],
+      "accountRequests": [
+        {
+          "phase": "balanced-all-five",
+          "url": "https://eth-mainnet.public.blastapi.io",
+          "startedMs": 12642,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "durationMs": 2976
+        }
+      ],
+      "observations": [
+        {
+          "id": "drpc.derpc.eth",
+          "url": "https://eth.drpc.org",
+          "priority": 0,
+          "operator": "dRPC",
+          "ens": "drpc.derpc.eth",
+          "state": "eligible"
+        },
+        {
+          "id": "mevblocker.derpc.eth",
+          "url": "https://rpc.mevblocker.io",
+          "priority": 0,
+          "operator": "MEV Blocker",
+          "ens": "mevblocker.derpc.eth",
+          "state": "eligible"
+        },
+        {
+          "id": "blockrazor.derpc.eth",
+          "url": "https://eth.blockrazor.xyz",
+          "priority": 0,
+          "operator": "BlockRazor",
+          "ens": "blockrazor.derpc.eth",
+          "state": "eligible"
+        },
+        {
+          "id": "blast.derpc.eth",
+          "url": "https://eth-mainnet.public.blastapi.io",
+          "priority": 1,
+          "operator": "Blast API",
+          "ens": "blast.derpc.eth",
+          "state": "eligible",
+          "observations": {
+            "attempts": 2,
+            "successes": 2,
+            "failures": 0,
+            "meanVerifiedMs": 3279.5,
+            "lastObservedAt": 1793975472263
+          }
+        },
+        {
+          "id": "publicnode.derpc.eth",
+          "url": "https://ethereum-rpc.publicnode.com",
+          "priority": 1,
+          "operator": "PublicNode",
+          "ens": "publicnode.derpc.eth",
+          "state": "eligible"
+        }
+      ],
+      "durationMs": 6529,
+      "events": [
+        {
+          "type": "success",
+          "endpoint": "blast.derpc.eth",
+          "attempt": 1,
+          "at": 1793975469110
+        },
+        {
+          "type": "attempt",
+          "endpoint": "blast.derpc.eth",
+          "attempt": 1,
+          "at": 1793975469112
+        },
+        {
+          "type": "success",
+          "endpoint": "blast.derpc.eth",
+          "attempt": 1,
+          "at": 1793975472263
+        }
+      ],
+      "requests": [
+        {
+          "phase": "balanced-all-five",
+          "url": "https://eth-mainnet.public.blastapi.io",
+          "startedMs": 12642,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "durationMs": 2976
+        }
+      ]
+    },
+    {
+      "name": "fastest-retains-account",
+      "passed": true,
+      "routing": {
+        "selection": "fastest",
+        "source": "explicit"
+      },
+      "candidates": [
+        "drpc.derpc.eth",
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth",
+        "blast.derpc.eth",
+        "publicnode.derpc.eth"
+      ],
+      "value": "1",
+      "blockNumber": 26356339,
+      "blockHash": "0x0bf84aa596062c7a6d562386715a4d2224e77372d66ef03928536390237c0e92",
+      "selectedEndpoint": "https://eth-mainnet.public.blastapi.io",
+      "attemptedEndpoints": [
+        "https://eth-mainnet.public.blastapi.io"
+      ],
+      "accountRequests": [
+        {
+          "phase": "fastest-retains-account",
+          "url": "https://eth-mainnet.public.blastapi.io",
+          "startedMs": 15812,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "durationMs": 2187
+        }
+      ],
+      "observations": [
+        {
+          "id": "drpc.derpc.eth",
+          "url": "https://eth.drpc.org",
+          "priority": 0,
+          "operator": "dRPC",
+          "ens": "drpc.derpc.eth",
+          "state": "eligible"
+        },
+        {
+          "id": "mevblocker.derpc.eth",
+          "url": "https://rpc.mevblocker.io",
+          "priority": 0,
+          "operator": "MEV Blocker",
+          "ens": "mevblocker.derpc.eth",
+          "state": "eligible"
+        },
+        {
+          "id": "blockrazor.derpc.eth",
+          "url": "https://eth.blockrazor.xyz",
+          "priority": 0,
+          "operator": "BlockRazor",
+          "ens": "blockrazor.derpc.eth",
+          "state": "eligible"
+        },
+        {
+          "id": "blast.derpc.eth",
+          "url": "https://eth-mainnet.public.blastapi.io",
+          "priority": 1,
+          "operator": "Blast API",
+          "ens": "blast.derpc.eth",
+          "state": "eligible",
+          "observations": {
+            "attempts": 3,
+            "successes": 3,
+            "failures": 0,
+            "meanVerifiedMs": 2979.6666666666665,
+            "lastObservedAt": 1793975474662
+          }
+        },
+        {
+          "id": "publicnode.derpc.eth",
+          "url": "https://ethereum-rpc.publicnode.com",
+          "priority": 1,
+          "operator": "PublicNode",
+          "ens": "publicnode.derpc.eth",
+          "state": "eligible"
+        }
+      ],
+      "durationMs": 2382,
+      "events": [
+        {
+          "type": "attempt",
+          "endpoint": "blast.derpc.eth",
+          "attempt": 1,
+          "at": 1793975472282
+        },
+        {
+          "type": "success",
+          "endpoint": "blast.derpc.eth",
+          "attempt": 1,
+          "at": 1793975474662
+        }
+      ],
+      "requests": [
+        {
+          "phase": "fastest-retains-account",
+          "url": "https://eth-mainnet.public.blastapi.io",
+          "startedMs": 15812,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "durationMs": 2187
+        }
+      ]
+    },
+    {
+      "name": "reliable-retains-account",
+      "passed": true,
+      "routing": {
+        "selection": "reliable",
+        "source": "explicit"
+      },
+      "candidates": [
+        "drpc.derpc.eth",
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth",
+        "blast.derpc.eth",
+        "publicnode.derpc.eth"
+      ],
+      "value": "39553310892875263560936207548857176834471854732421237974622739861269930573850",
+      "blockNumber": 26356339,
+      "blockHash": "0x0bf84aa596062c7a6d562386715a4d2224e77372d66ef03928536390237c0e92",
+      "selectedEndpoint": "https://eth-mainnet.public.blastapi.io",
+      "attemptedEndpoints": [
+        "https://eth-mainnet.public.blastapi.io"
+      ],
+      "accountRequests": [
+        {
+          "phase": "reliable-retains-account",
+          "url": "https://eth-mainnet.public.blastapi.io",
+          "startedMs": 18272,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "durationMs": 2252
+        }
+      ],
+      "observations": [
+        {
+          "id": "drpc.derpc.eth",
+          "url": "https://eth.drpc.org",
+          "priority": 0,
+          "operator": "dRPC",
+          "ens": "drpc.derpc.eth",
+          "state": "eligible"
+        },
+        {
+          "id": "mevblocker.derpc.eth",
+          "url": "https://rpc.mevblocker.io",
+          "priority": 0,
+          "operator": "MEV Blocker",
+          "ens": "mevblocker.derpc.eth",
+          "state": "eligible"
+        },
+        {
+          "id": "blockrazor.derpc.eth",
+          "url": "https://eth.blockrazor.xyz",
+          "priority": 0,
+          "operator": "BlockRazor",
+          "ens": "blockrazor.derpc.eth",
+          "state": "eligible"
+        },
+        {
+          "id": "blast.derpc.eth",
+          "url": "https://eth-mainnet.public.blastapi.io",
+          "priority": 1,
+          "operator": "Blast API",
+          "ens": "blast.derpc.eth",
+          "state": "eligible",
+          "observations": {
+            "attempts": 4,
+            "successes": 4,
+            "failures": 0,
+            "meanVerifiedMs": 2845,
+            "lastObservedAt": 1793975477182
+          }
+        },
+        {
+          "id": "publicnode.derpc.eth",
+          "url": "https://ethereum-rpc.publicnode.com",
+          "priority": 1,
+          "operator": "PublicNode",
+          "ens": "publicnode.derpc.eth",
+          "state": "eligible"
+        }
+      ],
+      "durationMs": 2447,
+      "events": [
+        {
+          "type": "attempt",
+          "endpoint": "blast.derpc.eth",
+          "attempt": 1,
+          "at": 1793975474741
+        },
+        {
+          "type": "success",
+          "endpoint": "blast.derpc.eth",
+          "attempt": 1,
+          "at": 1793975477182
+        }
+      ],
+      "requests": [
+        {
+          "phase": "reliable-retains-account",
+          "url": "https://eth-mainnet.public.blastapi.io",
+          "startedMs": 18272,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "durationMs": 2252
+        }
+      ]
+    },
+    {
+      "name": "explicit-empty-allowlist",
+      "passed": true,
+      "durationMs": 0,
+      "refusal": {
+        "name": "NoOperatorsChosenError",
+        "message": "no operators chosen: choose at least one operator before reading"
+      },
+      "routing": {
+        "selection": "balanced",
+        "allowedOperators": [],
+        "source": "explicit"
+      },
+      "candidates": [],
+      "addedRpc": [],
+      "events": []
+    },
+    {
+      "name": "one-exact-allowed-name",
+      "passed": true,
+      "routing": {
+        "selection": "balanced",
+        "allowedOperators": [
+          "mevblocker.derpc.eth"
+        ],
+        "source": "explicit"
+      },
+      "candidates": [
+        "mevblocker.derpc.eth"
+      ],
+      "value": "2098289664172619421148128",
+      "blockNumber": 26356339,
+      "blockHash": "0x0bf84aa596062c7a6d562386715a4d2224e77372d66ef03928536390237c0e92",
+      "selectedEndpoint": "https://rpc.mevblocker.io",
+      "attemptedEndpoints": [
+        "https://rpc.mevblocker.io"
+      ],
+      "accountRequests": [
+        {
+          "phase": "one-exact-allowed-name",
+          "url": "https://rpc.mevblocker.io",
+          "startedMs": 20823,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "durationMs": 1033
+        }
+      ],
+      "observations": [
+        {
+          "id": "mevblocker.derpc.eth",
+          "url": "https://rpc.mevblocker.io",
+          "priority": 0,
+          "operator": "MEV Blocker",
+          "ens": "mevblocker.derpc.eth",
+          "state": "eligible",
+          "observations": {
+            "attempts": 1,
+            "successes": 1,
+            "failures": 0,
+            "meanVerifiedMs": 1252,
+            "lastObservedAt": 1793975478545
+          }
+        }
+      ],
+      "durationMs": 1253,
+      "events": [
+        {
+          "type": "attempt",
+          "endpoint": "mevblocker.derpc.eth",
+          "attempt": 1,
+          "at": 1793975477293
+        },
+        {
+          "type": "success",
+          "endpoint": "mevblocker.derpc.eth",
+          "attempt": 1,
+          "at": 1793975478545
+        }
+      ],
+      "requests": [
+        {
+          "phase": "one-exact-allowed-name",
+          "url": "https://rpc.mevblocker.io",
+          "startedMs": 20823,
+          "method": "eth_getProof",
+          "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "status": 200,
+          "durationMs": 1033
+        }
+      ]
+    }
+  ],
+  "worker": {
+    "ready": true,
+    "durationMs": 3149,
+    "workerHash": "0x5b62f358ce7a2b94ee9bc3a0e6a08757db68fa08fc348276f31eda788aec818b"
+  },
+  "header": {
+    "ready": true,
+    "durationMs": 9232,
+    "header": {
+      "network": "mainnet",
+      "slot": 15595872,
+      "blockNumber": 26356339,
+      "blockHash": "0x0bf84aa596062c7a6d562386715a4d2224e77372d66ef03928536390237c0e92",
+      "stateRoot": "0x57cc133963ce2f92097655b0ca7896eb26548091c05d2966f4d651cdbce0a92d",
+      "timestamp": 1793974487,
+      "execution": {
+        "feeRecipient": "0x6adb3bab5730852eb53987ea89d8e8f16393c200",
+        "prevRandao": "0x2069f0cee84828c58bf3560a8b1a8645187cd3a80a2083764ace2f34e0e66cb4",
+        "gasLimit": "59999943",
+        "baseFeePerGas": "106123728",
+        "excessBlobGas": "183645984"
+      }
+    }
+  },
+  "result": {
+    "completed": true,
+    "initialAssignedEndpoint": "https://eth-mainnet.public.blastapi.io",
+    "closedReadError": "TransportUnavailableError",
+    "requestsAfterClose": 0,
+    "workerPin": "verified"
+  },
+  "noDirectRpcOrBeacon": true,
+  "finished": "2026-11-06T14:31:19.013Z",
+  "sourcesAfter": {
+    "provider/src/config/mainnet.ts": "411030131139204d1d954ec3ea545caa258ff2dba8fc8e3ab6c9b90ec2639ef9",
+    "provider/src/api/derpc.ts": "1c888b7097e60e35b85768302f44b2cdef92074c9056ffd2ba100c88ff3bd3da",
+    "provider/src/pool/pool.ts": "560fdf901f0c1bcb83e6755d11d46ea5e32823ab1580b121807ca58ecb5ed9b8",
+    "provider/src/light-client/header-source.ts": "64ec68f4cb018b3c8702f839594ee4e7e27c0b35edf32d9c5caab11981861af7"
+  },
+  "sourceChangesDuringRun": [],
+  "qualifications": [
+    "One bounded functional pass from this client through its configured LAN gateway; timings are not a benchmark or ranking.",
+    "All five candidates were supplied to automatic balanced selection, but this extension exercises only the selected endpoint and exact allowed endpoint. The separate roster report probes every candidate.",
+    "Category changes use different supported methods for the same public WETH account, forcing fresh verified network reads instead of reader-cache hits.",
+    "Mock ENS-shaped labels are curated display labels, not registered ENS identities or independently verified ownership.",
+    "Explicit empty allowlist is asserted to prevent user execution RPC; anonymous consensus polling remains independent of execution selection.",
+    "No direct RPC or beacon fallback was added; worker bundle acquisition remains a direct CDN request."
+  ],
+  "additionalSourceVerification": {
+    "path": "provider/src/api/eip1193.ts",
+    "sha256": "4c4fc0d98f3a573fe3f0dd0eaaf09eef05ecc6aafeb7a326223ffda4d1aa9bde",
+    "observedAt": "2026-11-06T14:31:15.437976+00:00",
+    "phase": "during final live run after final source-stable signal",
+    "sha256After": "4c4fc0d98f3a573fe3f0dd0eaaf09eef05ecc6aafeb7a326223ffda4d1aa9bde",
+    "observedAfterAt": "2026-11-06T14:31:32.426042+00:00",
+    "unchanged": true
+  },
+  "runtime": {
+    "browser": "Firefox",
+    "transport": "Pinned tor-js worker through the existing local development gateway",
+    "network": "Ethereum mainnet"
+  },
+  "scope": "Functional automatic routing on the recorded source version. Real ENS enrollment and public gateway deployment are separate pending gates."
+}
