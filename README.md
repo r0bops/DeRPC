@@ -2,7 +2,7 @@
 
 **A decentralized RPC pool for Ethereum, in development.** The browser demo routes reads through [Anon-RPC](https://github.com/ethereum/anon-rpc), checks account, storage and code proofs against a light client, and switches endpoints after a failed read. There is no direct RPC fallback.
 
-Built at ETHGlobal Mumbai, Nov 5–7, 2026. This is a work in progress; the status below is as of Nov 5.
+Built at ETHGlobal Mumbai, Nov 5–7, 2026. This is a work in progress; the status below is as of Nov 6.
 
 > You don't need to trust operators for correctness; you only need to limit what they can learn about you.
 
@@ -20,7 +20,7 @@ DeRPC is a client-side provider that runs on the user's device. It wraps an Anon
 
 1. **Anonymous transport.** Every RPC and beacon request goes through a sandboxed tor-js worker, so the endpoint sees a Tor exit instead of the user's IP. A Nym pin is configured, but its runtime has not been validated here.
 2. **Verification in the host.** The worker is untrusted code, so verification lives outside it. A sync-committee light client, started from a pinned checkpoint, gives a verified state root. Each `eth_getProof` (EIP-1186) answer is checked against that root.
-3. **Local endpoint selection.** Pick a public keyless endpoint, exclude it locally if its proof fails, and retry another through the worker. Selection is random within preferred and fallback tiers; transient failures put an endpoint on cooldown. The attempt count is bounded, but the total-time limit needs the fix listed below.
+3. **Local endpoint selection.** Pick a public keyless endpoint, exclude it locally if its proof fails, and retry another through the worker. Selection is random within preferred and fallback tiers; transient failures put an endpoint on cooldown. Attempts and total time are both bounded.
 4. **Fail closed.** If the anonymity network is down or an answer can't be proven, the read returns an error. DeRPC never makes a direct RPC request.
 
 Wallet integrators are the first audience, demonstrated through a browser app.
@@ -50,25 +50,26 @@ Wallet integrators are the first audience, demonstrated through a browser app.
 - **Endpoint failover.** The pool selects among dRPC, MEV Blocker and BlockRazor first, with Blast and PublicNode as fallbacks. Invalid proofs cause local exclusion; timeouts and other transient errors cause cooldowns. Verified values are cached locally. Retry isolation keys are derived from the account key; stronger circuit-isolation guarantees remain unproven.
 - **A demo page** showing worker startup, the verified header, worker-pin status, ETH/WETH balances, verified code and pool events. Controls inject a clearly labeled corrupt response and close the worker. Its resource-timing table shows some direct connections; it does not capture every browser connection or the WebRTC gateway link.
 
-**Still pending:** submission materials and the QA fixes below. The telemetry and automated checks cover worker loss, cancellation and network outages, but not every browser or network failure mode.
+**Still pending:** submission materials and a browser rerun of the fixes below. The telemetry and automated checks cover worker loss, cancellation and network outages, but not every browser or network failure mode.
 
 ### QA checklist — Nov 5
 
 - [x] Workspace type checking and the production build pass.
-- [x] All 68 provider tests pass, including the Lodestar finality regression, worker-pin gate, pool selection, exclusion, cooldown and failover tests.
+- [x] All 193 provider tests and 74 frontend tests pass, including the Lodestar finality regression, worker-pin gate, pool selection, exclusion, cooldown and failover tests.
 - [x] A fresh Firefox profile runs the production build through tor-js: the pin gate passes, and ETH balance, WETH balance and contract-code reads verify.
 - [x] All five candidate execution endpoints and both beacon endpoints respond through Tor in this run. One of four Tor-exit probes fails with a TLS `CONNRESET`; the other three report `IsTor=true`.
 - [x] In the production Firefox demo, an inflated balance is rejected, the simulated endpoint is excluded, and another endpoint supplies verified results.
 - [x] Closing the worker makes all three subsequent reads fail with `TransportUnavailableError`.
 - [x] Browser request events show only local page assets and jsDelivr, with no direct RPC or beacon HTTP requests during successful reads, simulated corruption/failover or worker shutdown. This does not audit the WebRTC gateway connection or establish every failure path.
-- [ ] Render worker and network errors as text. A controlled worker error containing HTML executed an event handler in the demo page.
-- [ ] Fix polling recovery after an invalid update. The transport records an unverified slot before validation; one rejected high-slot response suppresses later valid updates.
-- [ ] Recheck the requested block's freshness before returning a read. A proof response can currently succeed after its header expires while the request is pending.
-- [ ] Enforce the pool's total deadline during an attempt. A pending request can outlive the budget indefinitely, and a late successful response is still accepted. The current check only prevents starting further attempts.
-- [ ] Keep one verified block across retries and its cache entry. A head change between attempts currently changes the requested block while retaining the original cache key.
-- [ ] Complete cancellation, crash, pool-exhaustion and actual network-loss coverage through the finished provider, including browser traffic inspection.
+- [x] Worker and network errors render as text.
+- [x] Polling recovers after an invalid update.
+- [x] A read's freshness is rechecked before it returns.
+- [x] The pool's total deadline applies during an attempt, and a late response is discarded.
+- [x] One verified block is kept across retries and in the cache entry.
+- [x] Automated tests cover cancellation, worker crashes, pool exhaustion and network loss.
+- [ ] Rerun the production build in Firefox with these fixes, including browser traffic inspection. The Firefox results above predate them.
 
-The five reproduced QA issues mean this prototype is not ready for production. The production build also reports browser-externalized Node modules and a large main bundle; its successful Firefox run does not establish support for every browser.
+This prototype has had no external audit and isn't ready for production. The production build also reports browser-externalized Node modules and a large main bundle; its successful Firefox run does not establish support for every browser. See [`THREAT_MODEL.md`](THREAT_MODEL.md).
 
 ### Traffic outside the worker
 
@@ -94,7 +95,7 @@ The lead property is **Private**, and **Secure** backs it up: the proofs let DeR
 - **C (censorship resistant):** The app is a static build with no required DeRPC RPC proxy. Endpoints and Tor gateways are replaceable lists (set your own gateway with `VITE_TOR_GATEWAYS`), and endpoint failover works in the demo. Availability still depends on reachable endpoints and a Tor gateway; failed routes never trigger direct RPC fallback.
 - **O (open source):** MIT. `pnpm install && pnpm dev` builds and runs it from this repo alone, with no keys or accounts. The one recurring step is refreshing the pinned checkpoint, which is refused after 7 days.
 - **P (private):** RPC and beacon endpoints see each query and its timing, but from a Tor exit's IP instead of the user's. The Tor gateway sees the user's IP but only encrypted traffic, and the exit sees which endpoint is contacted but not the content, because TLS runs inside the worker. jsDelivr sees the IP that downloads the worker, and the page host sees visitors as any website does. There are no analytics or DeRPC servers, and account isolation is not yet proven.
-- **S (secure):** DeRPC is read-only, with no wallet keys or signing. The host verifies headers, account/storage/code proofs and the worker pin, relying on the pinned checkpoint, bundle hash and light-client consensus assumptions. The five open QA issues above must be fixed before production use.
+- **S (secure):** DeRPC is read-only, with no wallet keys or signing. The host verifies headers, account/storage/code proofs and the worker pin, relying on the pinned checkpoint, bundle hash and light-client consensus assumptions. See [`THREAT_MODEL.md`](THREAT_MODEL.md) for what this does and doesn't protect against.
 
 ## Run it
 
@@ -121,10 +122,10 @@ Progress is tracked in [issue #1](https://github.com/r0bops/DeRPC/issues/1).
 |---|---|---|
 | P0 | Choose the light client, worker and chain | **Done.** Lodestar light client 1.43.0, tor-js 0.4.4, Ethereum mainnet; Nym remains an untested backup |
 | P1 | A real anonymous network path | **Passed.** Proofs and light-client data arrive through Tor, with no direct RPC. Isolation-key behavior is still unproven. |
-| P2 | One verified read path: ETH balance and one ERC-20 balance checked against verified state, and the worker pin proven on-chain | **Implemented in the demo; QA sign-off pending.** Proofs and the pin gate work. Error rendering, polling recovery and read freshness need fixes. |
-| P3 | A working pool: at least two endpoints, random selection, local exclusion, bounded anonymous failover | **Three-step browser demo passes; QA sign-off pending.** Total-deadline enforcement, stable block binding and remaining failure tests are open. |
+| P2 | One verified read path: ETH balance and one ERC-20 balance checked against verified state, and the worker pin proven on-chain | **Implemented in the demo; browser rerun pending.** Proofs, the pin gate, error rendering, polling recovery and read freshness are done. |
+| P3 | A working pool: at least two endpoints, random selection, local exclusion, bounded anonymous failover | **Three-step browser demo passes; browser rerun pending.** Total-deadline enforcement, stable block binding and failure tests are done. |
 | P4 | An EIP-1193 provider and viem transport, plus a demo screen | **Implemented.** Read-only EIP-1193 provider, viem transport and integrator example; browser sign-off pending. |
-| P5 | Threat model, failure tests, docs and demo video | **Partial.** README and QA checklist exist; threat model, full failure coverage and submission materials remain. |
+| P5 | Threat model, failure tests, docs and demo video | **Partial.** README, QA checklist, threat model and automated failure tests exist; the demo video and submission materials remain. |
 
 The browser demo shows three things:
 
