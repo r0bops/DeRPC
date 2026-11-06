@@ -6,7 +6,7 @@ const IPV4_IN_TEXT = /(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d.])/g;
 
 /** The host of a KPS address, parsed as tor-js does (`src/kpsAddress.ts`): IPv6 must be bracketed. */
 export function gatewayHost(address: string): string {
-  const value = address.trim().replace(/^kps:/, "");
+  const value = address.trim();
   const malformed = () => new Error(`malformed gateway address (expected ip:port:certhash or [ipv6]:port:certhash): ${address}`);
   let host: string;
   let rest: string;
@@ -24,6 +24,12 @@ export function gatewayHost(address: string): string {
   const j = rest.indexOf(":");
   const port = rest.slice(0, j);
   if (j < 0 || !host || !rest.slice(j + 1) || !/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535) throw malformed();
+  // The worker expects a canonical base64url SHA-256 multihash, not an arbitrary pin string.
+  const certificate = rest.slice(j + 1);
+  if (!/^u[A-Za-z0-9_-]{46}$/.test(certificate)) throw malformed();
+  const decoded = atob(certificate.slice(1).replace(/-/g, "+").replace(/_/g, "/") + "==");
+  if (decoded.length !== 34 || decoded.charCodeAt(0) !== 0x12 || decoded.charCodeAt(1) !== 0x20 ||
+      `u${btoa(decoded).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}` !== certificate) throw malformed();
   return host;
 }
 
@@ -121,8 +127,9 @@ export function releaseGateways(configured: string | undefined, demoGateway: str
   if (gateways.length === 0) {
     throw new Error("release builds need VITE_TOR_GATEWAYS set in the shell to at least one public tor-js gateway (use `build:local` for a LAN gateway)");
   }
-  assertPublicGateways(gateways);
-  return gateways.includes(demoGateway) ? gateways : [...gateways, demoGateway];
+  const release = gateways.includes(demoGateway) ? gateways : [...gateways, demoGateway];
+  assertPublicGateways(release);
+  return release;
 }
 
 /** Non-public gateway addresses and private, loopback or link-local IPv4 literals found in built text. */

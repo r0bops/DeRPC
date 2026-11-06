@@ -70,10 +70,9 @@ describe("nonPublicReason", () => {
 });
 
 describe("gatewayHost", () => {
-  it("reads IPv4, bracketed IPv6 and kps-prefixed addresses, as tor-js does", () => {
+  it("reads IPv4 and bracketed IPv6 addresses, as tor-js does", () => {
     expect(gatewayHost(DEMO)).toBe("152.236.3.22");
     expect(gatewayHost(`[fe80::1]:12298:${CERT}`)).toBe("fe80::1");
-    expect(gatewayHost(`kps:${DEMO}`)).toBe("152.236.3.22");
   });
 
   it.each([
@@ -84,6 +83,16 @@ describe("gatewayHost", () => {
     ["hex port", `152.236.3.22:0x1bb:${CERT}`],
     ["port out of range", `152.236.3.22:70000:${CERT}`],
     ["port zero", `152.236.3.22:0:${CERT}`],
+    ["resolver scheme instead of a gateway address", `kps:${DEMO}`],
+    ["arbitrary certificate text", "152.236.3.22:12298:not-a-certificate"],
+    ["wrong multibase", `152.236.3.22:12298:z${CERT.slice(1)}`],
+    ["short digest", `152.236.3.22:12298:${CERT.slice(0, -1)}`],
+    ["long digest", `152.236.3.22:12298:${CERT}A`],
+    ["wrong hash algorithm", `152.236.3.22:12298:u${Buffer.from([0x13, 0x20, ...Array(32).fill(0)]).toString("base64url")}`],
+    ["wrong digest length prefix", `152.236.3.22:12298:u${Buffer.from([0x12, 0x1f, ...Array(32).fill(0)]).toString("base64url")}`],
+    ["padded base64", `152.236.3.22:12298:${CERT}==`],
+    ["non-canonical trailing bits", `152.236.3.22:12298:${CERT.slice(0, -1)}R`],
+    ["invalid base64 character", `152.236.3.22:12298:${CERT.slice(0, -1)}!`],
   ])("rejects %s", (_name, address) => {
     expect(() => gatewayHost(address)).toThrow("malformed gateway address");
   });
@@ -105,6 +114,12 @@ describe("releaseGateways", () => {
   it("appends the demo gateway as a fallback, once", () => {
     expect(releaseGateways(PUBLIC, DEMO)).toEqual([PUBLIC, DEMO]);
     expect(releaseGateways(DEMO, DEMO)).toEqual([DEMO]);
+  });
+
+  it("rejects malformed gateways even when a working fallback exists", () => {
+    expect(() => releaseGateways(`kps:${PUBLIC}`, DEMO)).toThrow("malformed gateway address");
+    expect(() => releaseGateways("95.216.10.20:12298:not-a-certificate", DEMO)).toThrow("malformed gateway address");
+    expect(() => releaseGateways(PUBLIC, `kps:${DEMO}`)).toThrow("malformed gateway address");
   });
 });
 
