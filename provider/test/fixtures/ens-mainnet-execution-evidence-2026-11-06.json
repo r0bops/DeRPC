@@ -1,0 +1,242 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-ens-mainnet-execution-evidence",
+  "capturedAt": "2026-11-06T16:01:21.942Z",
+  "checkedAt": "2026-11-06T16:04:47.574Z",
+  "complete": true,
+  "scope": "Actual deployed mainnet code and EIP-1186 proofs; local in-memory transport fixture; injected root is not consensus verified; no anonymity or DeRPC public-deployment claim",
+  "sourceCommit": "4f47cbcc11462fb413196e6b5c0f8090247a6c08",
+  "proofSourceOrigin": "https://rpc.mevblocker.io",
+  "sourceArtifactChecks": [
+    "UniversalResolverV2",
+    "RootRegistry",
+    "ETHRegistry",
+    "PermissionedResolverImpl"
+  ],
+  "block": {
+    "network": "mainnet",
+    "slot": 0,
+    "blockNumber": 26356786,
+    "blockHash": "0x3f95e53e879e94c3a42697549f9adc8644f5c59469689823a136ef74e56809e5",
+    "stateRoot": "0x2a9f4ca2ec9040b7830a6756626ffb130ea979be1fdbab8440e0935508c1fc6b",
+    "timestamp": 1793979863,
+    "execution": {
+      "feeRecipient": "0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97",
+      "prevRandao": "0x5e5dfba5ed5738bffeb42f080c581958503156207a99c9f47a18d259b17ca81d",
+      "gasLimit": "60000000",
+      "baseFeePerGas": "975850325",
+      "excessBlobGas": "209423400"
+    }
+  },
+  "verificationMode": "offline recorded proof replay",
+  "fixtureSha256": "76344d80a2a4b119fc54bbcbfbb515dddaa393678f714d6228920b03d0e3c0d5",
+  "reproduce": "pnpm --filter @derpc/provider exec vitest run test/execution/verified-ens-mainnet.test.ts",
+  "capture": {
+    "administrativeRpcMethods": [
+      "eth_chainId",
+      "anvil_nodeInfo",
+      "eth_getBlockByNumber",
+      "eth_call",
+      "debug_traceCall",
+      "eth_getProof",
+      "eth_getCode"
+    ],
+    "sourceArtifactReads": "Official HTTPS deployment artifacts at the pinned source commit",
+    "limits": {
+      "rpcTimeoutMs": 30000,
+      "setupTimeoutMs": 180000,
+      "referenceCallGas": "1000000"
+    }
+  },
+  "execution": {
+    "coreLimits": {
+      "gas": "1000000",
+      "steps": 100000,
+      "accounts": 24,
+      "slots": 64,
+      "roundTrips": 128,
+      "codeBytes": 262144,
+      "memoryBytes": 4194304,
+      "inputBytes": 65536,
+      "outputBytes": 131072,
+      "depth": 32,
+      "timeoutMs": 60000
+    },
+    "ensLimits": {
+      "inputCharacters": 4096,
+      "labels": 32,
+      "nameBytes": 1024,
+      "textKeyBytes": 256,
+      "calldataBytes": 16384,
+      "resultBytes": 16384,
+      "timeoutMs": 60000
+    },
+    "verifiedEvmCallsPerResolution": 1,
+    "remoteRpcMethods": [
+      "eth_getProof",
+      "eth_getCode"
+    ],
+    "transport": "In-memory recorded proofs and code; no remote eth_call or debug_traceCall",
+    "offlineNetworkFetches": 0
+  },
+  "accounts": [
+    {
+      "address": "0x0000000000000000000000000000000000000000",
+      "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+      "codeBytes": 0,
+      "storageSlots": 0
+    },
+    {
+      "address": "0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e",
+      "codeHash": "0xd6bfd5d6f1384a1f6ea57b8a8412de5552f138d42021cf7c4941e33206f529e4",
+      "codeBytes": 5346,
+      "storageSlots": 4
+    },
+    {
+      "address": "0x06fdd07f007adac667177b46ab2eb9a75132cfd5",
+      "codeHash": "0x8670a22db547198d3c37dd7def401d10c3b765b28d3a7be6a4f5dfee86900b26",
+      "codeBytes": 18944,
+      "storageSlots": 0
+    },
+    {
+      "address": "0x231b0ee14048e9dccd1d247744d114a4eb5e8e63",
+      "codeHash": "0x19257636fde18e27704b400659de2cbaab55488586c18cd5b6d67f6417c8c19a",
+      "codeBytes": 12336,
+      "storageSlots": 6
+    },
+    {
+      "address": "0x2553c09be6447beffdb86fa622ad41fb8f77a91e",
+      "codeHash": "0xe2873b2a7becb1c9f1d017027d5b528ea4e797e609acaa7a4194694e718a0273",
+      "codeBytes": 16000,
+      "storageSlots": 2
+    },
+    {
+      "address": "0x394d8eb4a4fdf599384deab25f31d111d755c398",
+      "codeHash": "0x5870608f2f9ddbf4cb8d5e8b937a79b60a95f1cb1a2d82d4ecd3c0cfcc0778f6",
+      "codeBytes": 11102,
+      "storageSlots": 0
+    },
+    {
+      "address": "0xd1e3fac3837b85437530b8b5244e4def43219c04",
+      "codeHash": "0x70cfdceb52ba0103ddf6bc0aac49666e34feadbcb8e03479247e7b773952bff2",
+      "codeBytes": 2224,
+      "storageSlots": 3
+    },
+    {
+      "address": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+      "codeHash": "0xe2873b2a7becb1c9f1d017027d5b528ea4e797e609acaa7a4194694e718a0273",
+      "codeBytes": 16000,
+      "storageSlots": 6
+    },
+    {
+      "address": "0x565b0f456a04ac9b48758190e90030623cff57c5",
+      "codeHash": "0x25df12e14187ae568dca1861b918e01b6e24a671dea6089a6dbbe60c5d3ef640",
+      "codeBytes": 15608,
+      "storageSlots": 0
+    },
+    {
+      "address": "0x8e77da0dab32efcc1c75e0bd0e17680ebe0b1414",
+      "codeHash": "0xba5edd158d38e8afea296288e1f776df4ff3564d7d9677a91e125906d119248c",
+      "codeBytes": 1357,
+      "storageSlots": 0
+    },
+    {
+      "address": "0xf645ba7c7ae2a6915d0b904f39d4aadd7d899b59",
+      "codeHash": "0x6535fea999b58cff427e53a407bd107aa20f6efef46a8463732e8b41fd49087a",
+      "codeBytes": 77,
+      "storageSlots": 4
+    },
+    {
+      "address": "0xf4f1007ea430848f2fad60e405a54fc100fec341",
+      "codeHash": "0x0de6d7ecbb8751537f3c82a4de22bf3654d4299905bbdf8fc0133920222706c7",
+      "codeBytes": 77,
+      "storageSlots": 3
+    }
+  ],
+  "validations": [
+    {
+      "name": "vitalik.eth",
+      "record": {
+        "type": "address"
+      },
+      "value": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+      "resolver": "0x394D8EB4a4fDF599384DeAb25F31d111d755c398",
+      "verifiedEvmCalls": 1,
+      "proofRequests": 21,
+      "codeRequests": 7
+    },
+    {
+      "name": "derpc.eth",
+      "record": {
+        "type": "address"
+      },
+      "value": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "resolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59",
+      "verifiedEvmCalls": 1,
+      "proofRequests": 14,
+      "codeRequests": 6
+    },
+    {
+      "name": "nick.eth",
+      "record": {
+        "type": "address"
+      },
+      "value": "0xb8c2C29ee19D8307cb7255e1Cd9CbDE883A267d5",
+      "resolver": "0xF4f1007EA430848F2fAd60e405A54Fc100fEc341",
+      "verifiedEvmCalls": 1,
+      "proofRequests": 14,
+      "codeRequests": 6
+    },
+    {
+      "name": "vitalik.eth",
+      "record": {
+        "type": "text",
+        "key": "url"
+      },
+      "value": "https://vitalik.ca",
+      "resolver": "0x394D8EB4a4fDF599384DeAb25F31d111d755c398",
+      "verifiedEvmCalls": 1,
+      "proofRequests": 21,
+      "codeRequests": 7
+    },
+    {
+      "name": "derpc.eth",
+      "record": {
+        "type": "text",
+        "key": "description"
+      },
+      "value": "",
+      "resolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59",
+      "verifiedEvmCalls": 1,
+      "proofRequests": 14,
+      "codeRequests": 6
+    },
+    {
+      "name": "vitalik.eth",
+      "record": {
+        "type": "contenthash"
+      },
+      "value": "0xe301017012201d261cc098861d9952e6c8954801800e56aa34aabd8a9651b04b4e2498a45c53",
+      "resolver": "0x394D8EB4a4fDF599384DeAb25F31d111d755c398",
+      "verifiedEvmCalls": 1,
+      "proofRequests": 23,
+      "codeRequests": 7
+    },
+    {
+      "name": "vitalik.eth",
+      "record": {
+        "type": "coinAddress",
+        "coinType": "60"
+      },
+      "value": "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+      "resolver": "0x394D8EB4a4fDF599384DeAb25F31d111d755c398",
+      "verifiedEvmCalls": 1,
+      "proofRequests": 21,
+      "codeRequests": 7
+    }
+  ],
+  "integrityChecks": [
+    "Altered value in a genuine touched registry storage proof rejected",
+    "Altered deployed Universal Resolver code rejected"
+  ]
+}
