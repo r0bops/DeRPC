@@ -91,7 +91,7 @@ export function landingPage(): PageResult {
             <article class="panel panel--lime">
               <p class="panel__kicker">For operators</p>
               <h2 class="panel__title">One operator. A home for your nodes.</h2>
-              <p class="panel__text">Prepare an operator identity and node endpoints, then run the wrapper beside your node. Public registration and multi-endpoint routing are next steps.</p>
+              <p class="panel__text">Prepare an operator identity and node endpoints, then run the wrapper beside your node. Multi-endpoint routing is implemented; independent public enrollment and its live lifecycle demonstration remain pending.</p>
               <ul class="panel__list">
                 <li>${icon("check")}Plan yourname.derpc.eth and its endpoints.</li>
                 <li>${icon("check")}Staking per identity and node is planned.</li>
