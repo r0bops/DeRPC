@@ -10,7 +10,7 @@ Prepared November 6, 2026 for team review. This file does not submit anything or
 
 **Repository:** https://github.com/r0bops/DeRPC
 
-**Live demo and video:** insert the tested public deployment URL and human-narrated recording after they exist. A local gateway recording must be labeled as such. Do not describe a planned `derpc.eth.limo` deployment as already live.
+**Live demo:** [derpc.eth.limo/demo/](https://derpc.eth.limo/demo/) — the [recorded release passed HTTPS asset and fresh Firefox checks after its ENS-to-IPNS switch](../web/ens-ipns-publication-2026-11-06.json). That CID predates the later integrated fixes; publish and verify their artifact before recording it as the final build. **Video:** insert the human-narrated recording URL after upload. A local gateway recording must be labelled as such.
 
 **Description:**
 
@@ -30,7 +30,7 @@ Private transport alone does not establish correctness, and a valid proof is use
 
 **What is next:**
 
-Validate the hosted public gateway/browser path and the upcoming committee transition, complete independent ENS operator onboarding, and gather feedback from a real wallet integrator. Paid deployment follows the free release. Broader methods, additional chains and a server anonymity runtime each require their own verification and runtime evidence.
+Publish the integrated fixes and repeat hosted regressions on that exact artifact, complete real ENS operator onboarding with team-run demo entries labelled honestly, and gather feedback from a wallet integrator. The existing public release and period-1904 cold starts passed; independent-operator ownership and finalized directory lifecycle demonstrations remain gates. Paid deployment follows the free release. Broader methods, additional chains and a server anonymity runtime each require their own verification and runtime evidence.
 
 ## Partner form text
 
@@ -59,7 +59,7 @@ Before recording, choose **Manual** routing, select two working bootstrap operat
 | 0:45–1:15 | Show ETH balance, known WETH storage balance and bytecode with the verified block. Press **Read again**. | “These values come from proofs checked against the authenticated state root. The worker and RPC endpoint are not trusted to decide what is true. The dashboard shows observations from this device, not a global honesty score. Applications can use the same provider through EIP-1193 or viem.” |
 | 1:15–1:50 | Press **Inject a lying operator (simulated)**. Open read events and show rejection, exclusion and honest failover. | “This control deliberately corrupts a real returned response. It is a simulation, not an accusation against a public operator. The host rejects the bad answer and excludes that endpoint locally. An authorized endpoint supplies a proof that verifies, still through Tor. Agreement between providers is not our evidence; the proof is.” |
 | 1:50–2:15 | Press **Cut the anonymous network**. It automatically runs the refusal demonstration and disables further reads. Show the errors. | “Now we stop the private transport. Reads fail. DeRPC never repairs this by sending the query directly. That failure behavior is part of the product.” |
-| 2:15–2:45 | Show the source/architecture and briefly return to the dashboard. | “Nodes still see query content; Tor hides the client's network address along this route. The checkpoint, host code and verifier remain trust assumptions. We support finalized proven reads, not general transaction RPC. The next release gates are public infrastructure validation and independent ENS operator onboarding. Payments stay off for this free demo.” |
+| 2:15–2:45 | Show the source/architecture and briefly return to the dashboard. | “Nodes still see query content; Tor hides the client's network address along this route. The checkpoint, host code and verifier remain trust assumptions. We support finalized proven reads, not general transaction RPC. The next release gates are sustained public availability and real ENS operator lifecycle evidence; team-run entries are not independent operators. Payments stay off for this free demo.” |
 
 If the ENS gates pass before recording, replace part of the final segment with a short real directory update; do not squeeze an unobserved finality wait into the video. Keep separate transaction and verified-snapshot evidence, and remain below the CROPS three-minute cap.
 
@@ -71,12 +71,13 @@ If the ENS gates pass before recording, replace part of the final segment with a
 - **What if an operator is removed?** Clients stop authorizing it after observing a finalized, verified directory refresh, or when their bounded snapshot expires. A submitted transaction is not immediate revocation on every client.
 - **What if Tor stops?** Reads fail closed. The user must restore an anonymous route; there is no direct RPC fallback.
 - **What remains trusted?** The checkpoint source, application/verifier code, Ethereum consensus assumptions and curated admission policy. Worker pinning identifies code; it does not prove anonymity or honest behavior.
-- **What is live?** Use the dated evidence ledger. The existing onion tests used a local gateway and same-party demo proxy. The Hoodi escrow is deployed, but that is not a public paid-session demonstration. Do not describe fork tests as mainnet writes.
+- **What is live?** Use the dated evidence ledger. The recorded ENS/IPFS website passed fresh Firefox checks through the public VPS gateway. Its CID predates the later integrated fixes. The sibling-onion tests used a local gateway and same-party demo proxies. The Hoodi escrow is deployed, but that is not a public paid-session demonstration. Do not describe fork tests as mainnet writes.
 
 ## Team completion checklist
 
-- [ ] Run the release checks against the exact artifact and publish it using the team's chosen host/gateway; record a fresh external-browser pass.
-- [ ] Record the cold-start test after the period-1904 boundary, **November 6 at 19:53:59 UTC**, with forced updates disabled. Retain any failure instead of marking the gate passed.
+- [x] Publish the recorded release and retain a [fresh Firefox pass after the ENS-to-IPNS switch](../frontend/test/ipns-hosted-firefox-evidence-2026-11-06.json) plus [55 matching HTTPS assets](../web/ens-ipns-publication-2026-11-06.json).
+- [ ] Build and publish the later integrated fixes; repeat hosted read/rejection/failover/shutdown checks against that exact artifact before final recording.
+- [x] Record a cold start after the period-1904 boundary, **November 6 at 19:53:59 UTC**, with forced updates disabled. The [19:54 local-gateway run](../provider/test/light-client/period-1904-evidence-2026-11-06.json) and [21:51 integrated-provider run through the public gateway](../provider/test/light-client/period-1904-integration-evidence-2026-11-06.json) passed; both used local page delivery.
 - [ ] Record/upload a 2–3 minute human-narrated video and insert its URL plus the tested demo URL in the form.
 - [ ] Review per-file AI attribution and identify meaningful human contributions from the team's actual work. Do not fabricate authorship or edit archived conversation bodies.
 - [x] Review the Grok planning transcript for sensitive work context. The [read-only review](QA_REPORT.md#publication-review) is complete; its body and header remain verbatim.

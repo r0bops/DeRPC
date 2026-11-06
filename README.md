@@ -24,13 +24,13 @@ The current release target is the **free pool**. Reading needs no wallet connect
 
 The query escrow is deployed on **Hoodi (chain 560048)** at `0x9053513aCA73bAc0aF6a9942fd93832fd313B0bb`, with a [checked deployment manifest](contracts/deployments/payment-hoodi-deployment-2026-11-06.json) and [second-source verification](contracts/deployments/payment-hoodi-crosscheck-2026-11-06.json). This is separate from Ethereum mainnet read verification; it does not establish a completed public paid-read/settlement cycle.
 
-The free runtime groups **up to eight endpoints under one ENS operator identity**, with operator-first selection and node-local health/failover. The versioned record, wrapper identity and local integration work are documented in [M1](specs/ENS_TOR_MILESTONE.md). Public multi-endpoint enrollment, a reliable hosted demo, operator/node staking, traffic-based stake requirements and slashing remain [release gates or later work](#status-and-next-steps).
+The free runtime groups **up to eight endpoints under one ENS operator identity**, with operator-first selection and node-local health/failover. The versioned record, wrapper identity and local integration work are documented in [M1](specs/ENS_TOR_MILESTONE.md). Public multi-endpoint enrollment, sustained hosted availability, operator/node staking, traffic-based stake requirements and slashing remain [release gates or later work](#status-and-next-steps).
 
 ## Run it
 
 Use Node 24 and pnpm 11.22.0, the version pinned in `package.json`. The free verified-read demo needs no wallet, API key or funds. Optional payment demonstrations require a wallet and test funds.
 
-The public deployment target is `derpc.eth.limo`, with the directory and dashboard on IPFS. The [release package is prepared](web/deployment-ens-ipfs-2026-11-06.json); persistent public pinning, the owner-signed ENS contenthash update and a working public Tor gateway remain pending. The temporary Vercel deployments were removed at the team's request. Follow the [ENS/IPFS instructions](web/README.md#ensipfs-deployment) for publication and the [release gates](#status-and-next-steps) before relying on public reads.
+The public demo is [derpc.eth.limo/demo/](https://derpc.eth.limo/demo/), with the directory and dashboard on IPFS. The [published release](web/deployment-ens-ipfs-2026-11-06.json) is pinned on the VPS; the owner-signed ENS contenthash update, all 55 HTTPS assets and a fresh Firefox run through its public Tor gateway passed [publication checks](web/ens-website-publication-2026-11-06.json). The later [ENS-to-IPNS switch](web/ens-ipns-publication-2026-11-06.json) preserves that CID and also passed asset/browser checks. Those checks cover the recorded release CID; the later integrated fixes still need a new published artifact and hosted regression run. The temporary Vercel deployments were removed. Follow the [ENS/IPFS instructions](web/README.md#ensipfs-deployment) for updates and the [release gates](#status-and-next-steps) for remaining work.
 
 ```sh
 pnpm install
@@ -51,7 +51,7 @@ Optional ENS discovery takes the deployed ENSv2 registry and registrar pin, with
 
 ### Gateway and checkpoint
 
-The default configuration uses the tor-js demonstration gateway; its availability is not guaranteed, and the public-gateway QA check remains unresolved. To use your own [tor-js gateway](https://github.com/ethereum/tor-js), copy [`frontend/.env.example`](frontend/.env.example) to `frontend/.env.local` and set `VITE_TOR_GATEWAYS` to comma-separated KPS addresses (`ip:port:certhash`, without a `kps:` prefix). Integrators can pass the same list as `createDeRPC({ gateways })`. The [operations guide](specs/OPERATIONS.md) covers gateway and release checks.
+Development defaults to the tor-js demonstration gateway, whose availability is not guaranteed. The recorded public release uses the tested VPS gateway; release builds use exactly the explicit gateway list. To use your own [tor-js gateway](https://github.com/ethereum/tor-js), copy [`frontend/.env.example`](frontend/.env.example) to `frontend/.env.local` and set `VITE_TOR_GATEWAYS` to comma-separated KPS addresses (`ip:port:certhash`, without a `kps:` prefix). Integrators can pass the same list as `createDeRPC({ gateways })`. The [operations guide](specs/OPERATIONS.md) covers gateway and release checks.
 
 The light client starts from a trusted checkpoint in [`provider/src/config/mainnet.ts`](provider/src/config/mainnet.ts). The shipped checkpoint is dated **November 5, 2026**; startup rejects checkpoints older than seven days and cross-checks the configured epoch against the verified bootstrap. Refresh the root and epoch together from a trusted, recent finalized checkpoint before running an older checkout. A `checkpoint` option can override the shipped pair.
 
@@ -170,9 +170,9 @@ As of **November 6, 2026**, the core provider, dashboard, wrapper, contracts and
 
 | Area | Remaining work |
 |---|---|
-| Free public release | Reliable public gateway and all-onion path, fresh-browser hosted checks, a recent trusted checkpoint. The local period-1904 cold start [passed November 6](provider/test/light-client/period-1904-evidence-2026-11-06.json). |
-| ENS lifecycle: M1-A | Two independent operators with real registrations, proven discovery, restricted rotation and delisting observed after finalized refresh. Bounded snapshot validity and unsigned lifecycle tooling are current integration work; they do not establish a live deployment. |
-| Multiple endpoints: M1-B | Separate operator and endpoint identities, endpoint-level failover and several endpoints under one ENS name without increasing that operator's selection weight. Both M1-A and M1-B are required for [M1 completion](specs/ENS_TOR_MILESTONE.md). |
+| Free public release | Publish the integrated fixes and repeat hosted read/failure checks on that exact artifact; maintain gateway/onion availability and a recent trusted checkpoint. The existing public release passed publication checks; the integrated provider passed a [public-gateway period-1904 cold start](provider/test/light-client/period-1904-integration-evidence-2026-11-06.json). |
+| ENS lifecycle: M1-A | Real registrations, proven discovery, restricted rotation and delisting observed after finalized refresh. Bounded authorization and lifecycle tooling are implemented. Team-run demo registrations are the next deployment step; independent operators remain required for full M1-A completion. |
+| Multiple endpoints: M1-B | Code, fork checks and same-party live sibling failover are implemented; public enrollment and finalized directory changes remain pending. Both M1-A and M1-B are required for [M1 completion](specs/ENS_TOR_MILESTONE.md). |
 | Payments, after the free release | Public funding/read/settlement/refund demonstration, deployment of a configured app coordinator and external readiness reviews. The Hoodi escrow deployment alone does not satisfy these gates. |
 | Later economics | Specify and implement operator/node staking, traffic measurement, stake adjustment and accountability. Query escrow is not a staking contract. |
 
