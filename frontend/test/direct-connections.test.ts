@@ -77,6 +77,22 @@ describe("browser resource observations", () => {
     expect(body.textContent).not.toContain("private-path");
   });
 
+  it("refreshes endpoint classifications and retains bounded observed classifications across selection changes", () => {
+    let urls = ["https://first.example/rpc"];
+    panel = mountDirectConnections({ body, status, rpcUrls: () => urls, bundleUrls: [] });
+    emit([entry("https://first.example/rpc"), entry("https://next.example/beacon")]);
+    expect(rows()[0]!.cells[1]!.textContent).toContain("RPC/beacon");
+    expect(rows()[1]!.cells[1]!.textContent).toBe("unexpected");
+    urls = ["https://next.example/"];
+    panel.refresh();
+    expect(rows().every(row => row.cells[1]!.textContent!.includes("RPC/beacon"))).toBe(true);
+    urls = [];
+    vi.mocked(performance.getEntriesByType).mockReturnValue([]);
+    panel.refresh();
+    expect(rows().every(row => row.cells[1]!.textContent!.includes("RPC/beacon"))).toBe(true);
+    expect(rows().map(row => row.cells[2]!.textContent)).toEqual(["1", "1"]);
+  });
+
   it("skips malformed and non-HTTP entries without breaking subsequent observations", () => {
     mount();
     emit([

@@ -32,6 +32,7 @@
         <div class="boot__item"><dt>Verified finalized block</dt><dd id="lc-header" class="status">—</dd></div>
         <div class="boot__item"><dt>Worker pin</dt><dd id="pin-status" class="status">waiting…</dd></div>
       </dl>
+      <p id="network-status" class="container status" role="status" aria-live="polite"></p>
     </section>
 
     <main id="main" class="page" tabindex="-1">
@@ -255,6 +256,11 @@
             </p>
           </div>
           <div class="step__body">
+            <p id="traffic" class="status muted" role="status" aria-live="polite">Anonymous request-attempt count unavailable.</p>
+            <p class="note">The provider counts cumulative fetch attempts handed to Anon-RPC since this page started, including
+              retries and failures for consensus, proofs, discovery and payment requests. Cached or local reads and worker-bundle
+              acquisition are excluded. Attempts do not count successful or verified reads. Page resource observations below
+              have a separate scope; these counts cannot establish a percentage of traffic anonymized.</p>
             <p id="direct-status" class="muted" role="status" aria-live="polite">Waiting for browser resource timings…</p>
             <div class="table-card">
               <table class="table--loads">
