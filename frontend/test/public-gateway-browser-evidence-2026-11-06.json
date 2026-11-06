@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-11-06T16:18:07.444Z",
+  "finishedAt": "2026-11-06T16:20:35.453Z",
+  "browser": "firefox/156.0.1",
+  "scope": "Fresh Firefox; built demo served on a temporary local server using only the compiled public demonstration gateway. No team-hosted deployment, wallet action or public transaction.",
+  "passed": false,
+  "outcome": "Anonymous startup did not complete during the bounded observation; no verified header, worker-pin proof or account read was obtained.",
+  "totalWallMs": 148009,
+  "pageObservationMs": 82914,
+  "harnessQualification": "First launch ended before transport assessment because Firefox BiDi resourceType() is unsupported; optional field removed for retry within original deadline.",
+  "compiledGateways": [
+    "152.236.3.22:12298:uEiCH0VdbhryzJcMtCfB0vLA4sOvHdQ4hq5w7CopcwU59bQ"
+  ],
+  "selectedOperators": [
+    "mevblocker.derpc.eth",
+    "blockrazor.derpc.eth"
+  ],
+  "iceFailureCount": 6,
+  "workerDiagnostics": [
+    "Fast bootstrap peer connection failed at worker-log time 11.401 seconds.",
+    "Circuit build retry limit and directory download failure at worker-log time 56.882 seconds."
+  ],
+  "lastState": {
+    "worker": "booting tor-js 0.4.4 via own gateway (1)\u2026 81.8 s",
+    "lightClient": "waiting for the worker\u2026",
+    "header": "\u2014",
+    "pin": "waiting for the light client\u2026",
+    "choice": "Active: manual \u00b7 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+    "liarDisabled": true,
+    "readDisabled": true,
+    "cutDisabled": true,
+    "paymentsEnabled": false
+  },
+  "externalHttpRequests": [
+    "https://cdn.jsdelivr.net/npm/tor-js@0.4.4/dist/anon-rpc-worker.js"
+  ],
+  "observedDirectRpcOrBeaconRequests": [],
+  "artifactUnchanged": true,
+  "demoHtmlSha256": "6daaac03f54367cf2dee28ec7956e2c09f228c058bccfe427049f1cdf7ecd070",
+  "ownedBrowserAndServerStopped": true,
+  "limitations": [
+    "The first diagnostic listener failed before transport assessment; its repair consumed about 65 seconds of the original 150-second budget. The retry did not extend that deadline.",
+    "Missing direct RPC/beacon HTTP observations do not establish working anonymity when startup itself failed. WebRTC/UDP is outside the HTTP trace.",
+    "This is one environment and one public demonstration gateway, not proof of universal gateway unavailability.",
+    "Read verification, simulated corruption/failover and shutdown UI steps could not run because startup did not complete."
+  ],
+  "rawReport": "/tmp/derpc-built-public-gateway-dknNml/report.json"
+}
