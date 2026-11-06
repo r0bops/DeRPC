@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-query-escrow",
+  "testPayments": true,
+  "localOnly": false,
+  "chainId": 560048,
+  "name": "Hoodi",
+  "asset": {
+    "symbol": "ETH",
+    "decimals": 18
+  },
+  "escrow": "0x9053513aCA73bAc0aF6a9942fd93832fd313B0bb",
+  "codeHash": "0xfd80231e110458a6dd83da9dfeffa6650e50fb8c8371fe58c49c8cfb6a81ac24",
+  "creationCodeHash": "0x54e63012f797644a20f5e0ddc1971049dd72d4fc97f8c6907ceba85d3d642e1d",
+  "sourceHash": "0x59cdd63dcbc242cb72fb438ce531c63a170178d264678d87fbf22fde7eeec643",
+  "compiler": {
+    "version": "0.8.30+commit.73712a01.Emscripten.clang",
+    "evmVersion": "shanghai",
+    "optimizerRuns": 200
+  },
+  "transactionHash": "0xb8b53eaebe08d00d8d9e976a6897be5f8e5b145fd59052ac6be7ed11b36a7955",
+  "blockNumber": "3962188",
+  "blockHash": "0xbd83f8ded80b259a4dc69cad16a8612f3d319bea09ae5379e64544248b36b3e8",
+  "deployer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+  "gasUsed": "892743",
+  "effectiveGasPriceWei": "1004879195",
+  "transactionFeeWei": "897098867181885",
+  "verifiedAt": "2026-11-06T12:46:00.751Z",
+  "verification": {
+    "receipt": true,
+    "creationInput": true,
+    "runtimeCode": true,
+    "confirmations": "12",
+    "requiredConfirmations": 12,
+    "finalized": false
+  },
+  "rpcTrust": "administrative RPC; not light-client verified"
+}
