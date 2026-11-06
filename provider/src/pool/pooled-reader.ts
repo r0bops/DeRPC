@@ -17,6 +17,11 @@ const CACHE_LIMIT = 256;
  * when an answer fails verification or an attempt fails. Verified results are cached by the verified
  * block's hash and the request, on the device only.
  */
+/** Copy value + block so a caller mutating a returned result cannot poison the cache (#38). */
+function cloneVerified<T>(result: VerifiedValue<T>): VerifiedValue<T> {
+  return { value: result.value, block: { ...result.block } };
+}
+
 export function createPooledReader(deps: { headers: HeaderView; pool: Pool }): VerifiedReader {
   const { headers, pool } = deps;
   const cache = new Map<string, VerifiedValue<unknown>>();
@@ -33,14 +38,15 @@ export function createPooledReader(deps: { headers: HeaderView; pool: Pool }): V
       const block = headers.finalized(); // throws if stale, before anything is sent
       const key = `${block.blockHash}|${name}|${JSON.stringify(args).toLowerCase()}`;
       const hit = cache.get(key);
-      if (hit) return hit as VerifiedValue<T>;
+      if (hit) return cloneVerified(hit as VerifiedValue<T>);
       // Every attempt proves against the same block, so a retry can't silently move the value's
       // block away from the cache key (#24).
       const pinned: HeaderView = { finalized: () => block, assertFresh: (header) => headers.assertFresh?.(header) };
       const result = await pool.run((send) => read(createVerifiedReader({ headers: pinned, send }), ...args), { account: accountOf(...args) });
       if (cache.size >= CACHE_LIMIT) cache.delete(cache.keys().next().value!);
-      cache.set(key, result);
-      return result;
+      const stored = cloneVerified(result);
+      cache.set(key, stored);
+      return cloneVerified(stored);
     };
   }
 

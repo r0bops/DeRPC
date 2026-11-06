@@ -69,6 +69,23 @@ describe("createPooledReader", () => {
     expect(eps.calls).toHaveLength(1);
   });
 
+  it("keeps a returned result from changing a later cache hit", async () => {
+    const eps = endpoints({ honest: "honest" });
+    const pool = createPool({ endpoints: [{ url: "honest", priority: 0 }], sendFor: eps.sendFor });
+    const reader = createPooledReader({ headers: { finalized: () => header(fixture.block.number) }, pool });
+
+    const first = await reader.getBalance(HOLDER as Hex);
+    const original = first.value;
+    first.value = 999999999999999999999999n;
+    first.block.stateRoot = `0x${"00".repeat(32)}` as Hex;
+
+    const second = await reader.getBalance(HOLDER as Hex);
+
+    expect(second.value).toBe(original);
+    expect(second.block.stateRoot).toBe(fixture.block.stateRoot);
+    expect(eps.calls).toHaveLength(1);
+  });
+
   it("asks again once the verified block has moved on", async () => {
     const eps = endpoints({ honest: "honest" });
     const pool = createPool({ endpoints: [{ url: "honest", priority: 0 }], sendFor: eps.sendFor, maxAttempts: 1 });
