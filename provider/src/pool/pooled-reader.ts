@@ -1,5 +1,12 @@
 import type { VerifiedHeader } from "../light-client/header-source.ts";
-import { createVerifiedReader, type VerifiedReader, type VerifiedValue } from "../verify/reader.ts";
+import {
+  assertAddress,
+  assertSlot,
+  assertToken,
+  createVerifiedReader,
+  type VerifiedReader,
+  type VerifiedValue,
+} from "../verify/reader.ts";
 import type { Pool } from "./pool.ts";
 
 const CACHE_LIMIT = 256;
@@ -18,8 +25,10 @@ export function createPooledReader(deps: { headers: { finalized(): VerifiedHeade
     name: keyof VerifiedReader,
     accountOf: (...args: A) => string,
     read: (reader: VerifiedReader, ...args: A) => Promise<VerifiedValue<T>>,
+    validate?: (...args: A) => void,
   ) {
     return async (...args: A): Promise<VerifiedValue<T>> => {
+      validate?.(...args); // caller errors never reach an operator
       const block = headers.finalized(); // throws if stale, before anything is sent
       const key = `${block.blockHash}|${name}|${JSON.stringify(args).toLowerCase()}`;
       const hit = cache.get(key);
@@ -32,14 +41,41 @@ export function createPooledReader(deps: { headers: { finalized(): VerifiedHeade
   }
 
   return {
-    getBalance: cached("getBalance", (address) => address, (r, address: `0x${string}`) => r.getBalance(address)),
-    getTransactionCount: cached("getTransactionCount", (address) => address, (r, address: `0x${string}`) => r.getTransactionCount(address)),
-    getCode: cached("getCode", (address) => address, (r, address: `0x${string}`) => r.getCode(address)),
-    getStorageAt: cached("getStorageAt", (address: `0x${string}`, _slot: `0x${string}`) => address, (r, address: `0x${string}`, slot: `0x${string}`) => r.getStorageAt(address, slot)),
+    getBalance: cached(
+      "getBalance",
+      (address) => address,
+      (r, address: `0x${string}`) => r.getBalance(address),
+      (address) => assertAddress(address),
+    ),
+    getTransactionCount: cached(
+      "getTransactionCount",
+      (address) => address,
+      (r, address: `0x${string}`) => r.getTransactionCount(address),
+      (address) => assertAddress(address),
+    ),
+    getCode: cached(
+      "getCode",
+      (address) => address,
+      (r, address: `0x${string}`) => r.getCode(address),
+      (address) => assertAddress(address),
+    ),
+    getStorageAt: cached(
+      "getStorageAt",
+      (address: `0x${string}`, _slot: `0x${string}`) => address,
+      (r, address: `0x${string}`, slot: `0x${string}`) => r.getStorageAt(address, slot),
+      (address, slot) => {
+        assertAddress(address);
+        assertSlot(slot);
+      },
+    ),
     getTokenBalance: cached(
       "getTokenBalance",
       (_token, holder) => holder,
       (r, token: Parameters<VerifiedReader["getTokenBalance"]>[0], holder: `0x${string}`) => r.getTokenBalance(token, holder),
+      (token, holder) => {
+        assertToken(token);
+        assertAddress(holder, "holder");
+      },
     ),
   };
 }
