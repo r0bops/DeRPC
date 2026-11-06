@@ -61,7 +61,7 @@ const bootTicker = setInterval(() => {
   statusEl.textContent = `booting ${TOR_JS_PIN.name} via ${gatewayLabel}… ${elapsed(bootStarted)}`;
 }, 500);
 
-interface CheckResult { ok: boolean; detail: string; bytes?: number }
+interface CheckResult { ok: boolean | null; detail: string; bytes?: number }
 
 function addRow(name: string): (r: CheckResult, ms: number) => void {
   const tr = document.createElement("tr");
@@ -71,7 +71,7 @@ function addRow(name: string): (r: CheckResult, ms: number) => void {
   tr.append(textCell(name), result, time, size);
   resultsEl.append(tr);
   return (r, ms) => {
-    result.className = r.ok ? "ok" : "bad";
+    result.className = r.ok === null ? "warn" : r.ok ? "ok" : "bad";
     result.textContent = r.detail;
     time.textContent = `${(ms / 1000).toFixed(2)} s`;
     size.textContent = r.bytes ? `${(r.bytes / 1024).toFixed(1)} KB` : "";
@@ -111,6 +111,19 @@ async function getJson(url: string, isolationKey?: string) {
   return { json: JSON.parse(text) as Record<string, any>, bytes: text.length };
 }
 
+function exitAddress(value: unknown): string | undefined {
+  if (typeof value !== "string") return;
+  if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(value)) {
+    const octets = value.split(".").map(Number);
+    return octets.every(part => part <= 255) ? octets.join(".") : undefined;
+  }
+  if (!value.includes(":") || !/^[\da-f:.]+$/i.test(value)) return;
+  try {
+    // The URL parser validates and canonicalizes IPv6, including equivalent spellings.
+    return new URL(`http://[${value}]/`).hostname.slice(1, -1);
+  } catch { return; }
+}
+
 async function runChecks() {
   runBtn.disabled = true;
   resultsEl.replaceChildren();
@@ -120,16 +133,24 @@ async function runChecks() {
   for (const key of ["key-a", "key-b", "key-a", "key-b"]) {
     await check(`Tor exit check (isolationKey ${key})`, async () => {
       const { json, bytes } = await getJson(TOR_CHECK, key);
-      exits[key]!.push(String(json.IP));
-      return { ok: json.IsTor === true, detail: `IsTor=${json.IsTor} exit ${json.IP}`, bytes };
+      const ip = exitAddress(json.IP);
+      const ok = json.IsTor === true && ip !== undefined;
+      if (ok) exits[key]!.push(ip);
+      return { ok, detail: `IsTor=${json.IsTor} exit ${ip ?? "missing or invalid IP"}`, bytes };
     });
   }
   const a = new Set(exits["key-a"]), b = new Set(exits["key-b"]);
   const shared = [...a].filter((ip) => b.has(ip));
-  await check("Isolation observation (not proof)", async () => ({
-    ok: shared.length === 0,
-    detail: shared.length === 0 ? `key-a exits {${[...a].join(", ")}} vs key-b exits {${[...b].join(", ")}}: no overlap` : `shared exit ${shared.join(", ")} (may happen by chance)`,
-  }));
+  await check("Isolation observation (not proof)", async () => {
+    if (exits["key-a"]!.length < 2 || exits["key-b"]!.length < 2) return {
+      ok: null,
+      detail: `Inconclusive: valid Tor exit observations key-a ${exits["key-a"]!.length}/2, key-b ${exits["key-b"]!.length}/2. Failed, malformed or non-Tor replies cannot establish isolation.`,
+    };
+    return {
+      ok: shared.length === 0,
+      detail: shared.length === 0 ? `key-a exits {${[...a].join(", ")}} vs key-b exits {${[...b].join(", ")}}: no overlap` : `shared exit ${shared.join(", ")} (may happen by chance)`,
+    };
+  });
 
   // B. A real mainnet eth_getProof (WETH, slot 0, finalized) through each candidate execution endpoint.
   for (const url of MAINNET_EXECUTION_ENDPOINTS) {
