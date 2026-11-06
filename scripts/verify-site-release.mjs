@@ -60,9 +60,9 @@ const pause = (ms, signal) => new Promise((resolve, reject) => {
 });
 
 /** Bounds the decoded response body too; Content-Length alone does not protect chunked/compressed bodies. */
-export async function fetchBounded(url, { fetchImpl = fetch, signal, maxBytes, timeoutMs = LIMITS.requestMs, accept } = {}) {
+export async function fetchBounded(url, { fetchImpl = fetch, signal, maxBytes, timeoutMs = LIMITS.requestMs, accept, method = "GET" } = {}) {
   const scoped = AbortSignal.any([signal ?? new AbortController().signal, AbortSignal.timeout(timeoutMs)]);
-  const response = await abortable(fetchImpl(url, { redirect: "error", signal: scoped, headers: { "cache-control": "no-cache", ...(accept ? { accept } : {}) } }), scoped);
+  const response = await abortable(fetchImpl(url, { method, redirect: "error", signal: scoped, headers: { "cache-control": "no-cache", ...(accept ? { accept } : {}) } }), scoped);
   let reader;
   try {
     requireThat(response.ok, `HTTP ${response.status}`);
@@ -111,11 +111,18 @@ export function runCommand(binary, args, { env, signal, maxBytes = LIMITS.listin
 }
 
 /** Creates a private repository and, only for pinned retrieval, an isolated daemon. */
-export async function createFreshKubo({ phase, signal, ipfs = process.env.IPFS_BIN || "ipfs", limits = LIMITS }) {
+export async function createFreshKubo({ phase, signal, ipfs = process.env.IPFS_BIN || "ipfs", limits = LIMITS, routing = "none", execute = runCommand, spawnDaemon = spawn, fetchImpl = fetch }) {
+  requireThat(routing === "none" || routing === "auto", "invalid isolated routing mode");
   const repo = mkdtempSync(join(tmpdir(), "derpc-release-verifier-"));
   const env = { ...process.env, IPFS_PATH: repo };
   let daemon;
-  const command = (args, options = {}) => runCommand(ipfs, args, { env, signal, timeoutMs: limits.requestMs, ...options });
+  const command = (args, options = {}) => execute(ipfs, args, { env, signal, timeoutMs: limits.requestMs, ...options });
+  const apiUrl = command => {
+    const address = readFileSync(join(repo, "api"), "utf8").trim();
+    const match = /^\/ip4\/127\.0\.0\.1\/tcp\/(\d+)$/.exec(address);
+    requireThat(match && Number(match[1]) > 0 && Number(match[1]) < 65536, "isolated Kubo API address is invalid");
+    return new URL(`http://127.0.0.1:${match[1]}/api/v0/${command}`);
+  };
   const close = async () => {
     if (daemon?.pid && daemon.exitCode === null && daemon.signalCode === null) {
       await new Promise(resolve => {
@@ -139,20 +146,33 @@ export async function createFreshKubo({ phase, signal, ipfs = process.env.IPFS_B
       config.Swarm.DisableNatPortMap = true;
       config.Datastore.StorageMax = "128MB";
       config.Bootstrap = [];
-      config.Routing.Type = "none";
+      config.Routing.Type = routing;
       writeFileSync(configPath, JSON.stringify(config), { mode: 0o600 });
-      daemon = spawn(ipfs, ["daemon", "--enable-gc"], { env, stdio: "ignore" });
+      daemon = spawnDaemon(ipfs, ["daemon", "--enable-gc"], { env, stdio: "ignore" });
       let daemonError;
       daemon.on("error", () => { daemonError = true; });
       const ready = AbortSignal.any([signal, AbortSignal.timeout(20_000)]);
       for (;;) {
         ready.throwIfAborted();
         requireThat(!daemonError && daemon.exitCode === null && daemon.signalCode === null, "isolated Kubo daemon exited before readiness");
-        try { await command(["swarm", "peers"], { signal: ready, timeoutMs: 1000 }); break; }
+        // Do not start CLI commands before the API is ready: standalone CLI commands can
+        // contend for the repository lock and connect transient peers without the daemon.
+        try {
+          const response = await fetchBounded(apiUrl("version"), { method: "POST", fetchImpl, signal: ready, maxBytes: 4096, timeoutMs: 1000 });
+          requireThat(JSON.parse(response.bytes).Version === version, "isolated Kubo API version differs");
+          break;
+        }
         catch { await pause(200, ready); }
       }
     }
-    return { command, close, version };
+    // Kubo 0.43.1's CLI ls uses a custom text encoder even with --enc=json.
+    // Its owned loopback API exposes the typed UnixFS links needed to reject symlinks/extras.
+    const list = async (path, { maxBytes = limits.listingBytes } = {}) => {
+      const url = apiUrl("ls");
+      url.search = new URLSearchParams({ arg: path, "resolve-type": "true", size: "true" }).toString();
+      return (await fetchBounded(url, { method: "POST", fetchImpl, signal, maxBytes, timeoutMs: limits.requestMs })).bytes;
+    };
+    return { command, list, close, version, routing };
   } catch (error) { await close(); throw error; }
 }
 
@@ -170,7 +190,7 @@ export async function verifyPinned(manifest, { node, signal, limits = LIMITS, on
     signal.throwIfAborted();
     const directory = pending.pop(); seenDirectories.add(directory);
     onStep({ stage: "list-ipfs-directory", path: directory || "/" });
-    const response = await node.command(["ls", "--resolve-type=true", "--size=true", "--enc=json", `/ipfs/${manifest.cid}${directory ? `/${directory}` : ""}`], { maxBytes: limits.listingBytes });
+    const response = await node.list(`/ipfs/${manifest.cid}${directory ? `/${directory}` : ""}`, { maxBytes: limits.listingBytes });
     requireThat(response.length <= limits.listingBytes, "directory listing exceeds byte limit");
     const listing = JSON.parse(response.toString());
     requireThat(Array.isArray(listing.Objects) && listing.Objects.length === 1 && Array.isArray(listing.Objects[0].Links), "invalid IPFS directory listing");
@@ -204,7 +224,7 @@ export async function verifyPinned(manifest, { node, signal, limits = LIMITS, on
     requireThat(digest === manifest.files[path], `file hash differs: ${path}`);
     files.push({ path, bytes: body.length, sha256: digest });
   }
-  return { freshRepository: true, carImported: false, publicIpfsRetrieval: true, explicitPeer: PROVIDER_PEER, peerConnection: { connected: true }, routing: "none", bootstrapPeers: [], autonomousDiscoveryClaim: false, noExtraEntries: true, filesChecked: files.length, bytes, files };
+  return { freshRepository: true, carImported: false, publicIpfsRetrieval: true, explicitPeer: PROVIDER_PEER, peerConnection: { connected: true }, routing: node.routing ?? "none", bootstrapPeers: [], autonomousDiscoveryClaim: false, noExtraEntries: true, filesChecked: files.length, bytes, files };
 }
 
 export function verifyIpnsInspection(inspection, cid, now = Date.now()) {

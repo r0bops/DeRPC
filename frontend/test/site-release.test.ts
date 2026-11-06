@@ -1,7 +1,10 @@
 // @vitest-environment node
 import { createHash } from "node:crypto";
+import { EventEmitter } from "node:events";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { fetchBounded, LIMITS, PROVIDER_PEER, RECORD_URL, runCommand, validateManifest, verifyIpnsInspection, verifyPinned, verifyPublished, verifySiteRelease, WEBSITE_NAME, WEBSITE_ORIGIN } from "../../scripts/verify-site-release.mjs";
+import { createFreshKubo, fetchBounded, LIMITS, PROVIDER_PEER, RECORD_URL, runCommand, validateManifest, verifyIpnsInspection, verifyPinned, verifyPublished, verifySiteRelease, WEBSITE_NAME, WEBSITE_ORIGIN } from "../../scripts/verify-site-release.mjs";
 
 const hash = (body: string) => createHash("sha256").update(body).digest("hex");
 const CID = "bafybeihuaqdmtdjlu3rcucz2b7qho4flteohpy2zdmttk3nlnkosem4gqa";
@@ -31,7 +34,7 @@ function pinnedFixture() {
     if (args[0] === "cat") return Buffer.from(pages[path]);
     throw new Error("unexpected command");
   });
-  return { links, node: { command, close: vi.fn(async () => {}), version: "0.43.1" }, signal: signal() };
+  return { links, node: { command, list: (path: string) => command(["ls", path]), close: vi.fn(async () => {}), version: "0.43.1" }, signal: signal() };
 }
 
 describe("release manifest boundary", () => {
@@ -148,6 +151,37 @@ describe("signed IPNS and website publication", () => {
 });
 
 describe("resource and time bounds", () => {
+  it("waits on its own loopback API without launching a CLI readiness probe and enumerates via typed JSON API", async () => {
+    let repo = "";
+    const execute = vi.fn(async (_binary: string, args: string[], { env }: { env: Record<string, string> }) => {
+      repo = env.IPFS_PATH;
+      if (args[0] === "version") return Buffer.from("0.43.1\n");
+      if (args[0] === "init") {
+        writeFileSync(join(repo, "config"), JSON.stringify({ Addresses: {}, Swarm: {}, Datastore: {}, Routing: {} }));
+        return Buffer.from("");
+      }
+      throw new Error("unexpected CLI readiness command");
+    });
+    const child = Object.assign(new EventEmitter(), { pid: 12345, exitCode: null as number | null, signalCode: null as string | null, kill: vi.fn((_signal: string) => {
+      child.exitCode = 0; queueMicrotask(() => child.emit("exit", 0)); return true;
+    }) });
+    const spawnDaemon = vi.fn(() => {
+      const config = JSON.parse(readFileSync(join(repo, "config"), "utf8"));
+      expect(config).toMatchObject({ Routing: { Type: "none" }, Bootstrap: [], Addresses: { API: "/ip4/127.0.0.1/tcp/0" } });
+      writeFileSync(join(repo, "api"), "/ip4/127.0.0.1/tcp/12345");
+      return child;
+    });
+    const fetchImpl = vi.fn(async (url: URL) => new Response(url.pathname.endsWith("/version") ? JSON.stringify({ Version: "0.43.1" }) : JSON.stringify({ Objects: [{ Links: [] }] })));
+    const node = await createFreshKubo({ phase: "pinned", signal: signal(), execute, spawnDaemon, fetchImpl });
+    try {
+      expect(JSON.parse(await node.list(`/ipfs/${CID}`))).toEqual({ Objects: [{ Links: [] }] });
+      expect(execute.mock.calls.map(([, args]) => args[0])).toEqual(["version", "init"]);
+      expect(fetchImpl.mock.calls[0]).toEqual([expect.objectContaining({ href: "http://127.0.0.1:12345/api/v0/version" }), expect.objectContaining({ method: "POST" })]);
+      expect(fetchImpl.mock.calls[1][0].searchParams.get("arg")).toBe(`/ipfs/${CID}`);
+    } finally { await node.close(); }
+    expect(child.kill).toHaveBeenCalledWith("SIGTERM");
+    expect(existsSync(repo)).toBe(false);
+  });
   it("rejects oversized declared and streamed bodies, including absent Content-Length", async () => {
     const declared = vi.fn(async () => new Response("tiny", { headers: { "content-length": "999" } }));
     await expect(fetchBounded(WEBSITE_ORIGIN, { fetchImpl: declared, signal: signal(), maxBytes: 4 })).rejects.toThrow(/byte limit/);
