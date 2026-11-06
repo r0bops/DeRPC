@@ -1,0 +1,27 @@
+[Unit]
+Description=DeRPC persistent IPFS pinning
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=derpc-ipfs
+Group=derpc-ipfs
+StateDirectory=derpc-ipfs
+WorkingDirectory=/var/lib/derpc-ipfs
+Environment=IPFS_PATH=/var/lib/derpc-ipfs
+ExecStart=/opt/derpc/bin/ipfs daemon --enable-gc
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=120
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/derpc-ipfs
+MemoryHigh=3G
+MemoryMax=4G
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

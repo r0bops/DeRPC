@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-stable-ipns-website",
+  "preparedAt": "2026-11-06T21:27:49.863317+00:00",
+  "status": "ens-ipns-active-and-https-verified",
+  "contentUri": "ipns://k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc",
+  "ipnsName": "k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc",
+  "contenthash": "0xe501017200240801122064f96ccb9c67971214b89acf471f7f39ec91bf3aa505031f53e31eff8bbc02e0",
+  "targetCid": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me",
+  "host": "45.76.81.48",
+  "keyName": "derpc-website",
+  "keyType": "Ed25519",
+  "ipfsRepo": "/var/lib/derpc-ipfs",
+  "service": "derpc-ipfs.service",
+  "serviceEnabled": true,
+  "configuration": {
+    "routingType": "auto",
+    "Ipns.RepublishPeriod": "4h",
+    "Ipns.RecordLifetime": "48h",
+    "Ipns.DelegatedPublishers": [
+      "https://delegated-ipfs.dev/routing/v1/ipns"
+    ],
+    "publishTtl": "5m"
+  },
+  "publication": {
+    "successful": true,
+    "command": "ipfs --timeout=90s name publish --key=derpc-website --lifetime=48h --ttl=5m /ipfs/bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me",
+    "initialNativeDhtTimeoutsSeconds": [
+      120,
+      300
+    ]
+  },
+  "publicSignedRecord": {
+    "base64": "CkEvaXBmcy9iYWZ5YmVpZGtzbnZ0dmM3bjRjaWlmbHc3bzJnYzU2M2xxYXh0dWxtcWl4MmN4dmRkdmhjNHN2MjRtZRJAzyLm7nkod8a1bhaNqAiieCDlt3gAoI4xCx+YwKowPbzZikV6x64S2eoVihN7iHITS98CUj16dw7wLuvSFlihDRgAIh4yMDI2LTExLTA4VDIwOjUzOjQ3LjEzMzI2NTgyNVooADCA8JLL3QhCQBW8B3Sl9g+hqTVOegA3JpMVKjDSmzIbSMlUed8161f4ArOeI5shbqEj9Pw/GKcbOBcp4/TmTx9BZYpGWMunGwtKmAGlY1RUTBsAAABF2WS4AGVWYWx1ZVhBL2lwZnMvYmFmeWJlaWRrc252dHZjN240Y2lpZmx3N28yZ2M1NjNscWF4dHVsbXFpeDJjeHZkZHZoYzRzdjI0bWVoU2VxdWVuY2UAaFZhbGlkaXR5WB4yMDI2LTExLTA4VDIwOjUzOjQ3LjEzMzI2NTgyNVpsVmFsaWRpdHlUeXBlAA==",
+    "sha256": "b2a6d0c6b7a1900019754c4b3a5ea28d41a13c2d5fe14f6f55c4344ebc0501c8",
+    "bytes": 397
+  },
+  "verification": {
+    "schemaVersion": 2,
+    "kind": "derpc-independent-ipns-binding-verification",
+    "checkedAt": "2026-11-06T21:08:11.072550+00:00",
+    "ipnsName": "k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc",
+    "contentUri": "ipns://k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc",
+    "expectedPath": "/ipfs/bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me",
+    "ok": true,
+    "scope": "Independent fresh-node IPNS-to-CID resolution and independent signature/value/expiry verification of public record; prior immutable-CID asset verification is reused and explicitly not a new IPNS asset retrieval.",
+    "freshRepositoryResolutionSucceeded": true,
+    "privateKeyImported": false,
+    "ipnsRecordImported": false,
+    "carImported": false,
+    "manualPeerConnection": false,
+    "resolutionRuns": [
+      {
+        "evidence": "/tmp/derpc-ipns-resolution-before-http.json",
+        "startedAt": "2026-11-06T20:44:43.725852+00:00",
+        "finishedAt": "2026-11-06T20:46:51.785699+00:00",
+        "freshRepository": true,
+        "verifierPeerId": "12D3KooWKvzeVfmfbrBVv5NqDWiLQF5su7NekTBAKnafyxw9mBFn",
+        "attempts": [
+          {
+            "startedAt": "2026-11-06T20:44:47.580705+00:00",
+            "finishedAt": "2026-11-06T20:45:27.622881+00:00",
+            "error": "Error: could not resolve name\n"
+          },
+          {
+            "startedAt": "2026-11-06T20:45:29.623088+00:00",
+            "finishedAt": "2026-11-06T20:46:09.663132+00:00",
+            "error": "Error: could not resolve name\n"
+          },
+          {
+            "startedAt": "2026-11-06T20:46:11.663354+00:00",
+            "finishedAt": "2026-11-06T20:46:51.703298+00:00",
+            "error": "Error: could not resolve name\n"
+          }
+        ],
+        "error": "Command '['/tmp/derpc-ipfs-tools/ipfs', '--timeout=50s', 'name', 'resolve', '--nocache', '--dht-timeout=40s', '/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc']' returned non-zero exit status 1.",
+        "ownedDaemonStopped": true
+      },
+      {
+        "evidence": "/tmp/derpc-ipns-resolution-before-record-fallback.json",
+        "startedAt": "2026-11-06T20:54:32.267952+00:00",
+        "finishedAt": "2026-11-06T20:55:30.882270+00:00",
+        "freshRepository": true,
+        "verifierPeerId": "12D3KooWPZnzKa86r7vWJZXWt8yBqSVQABgLtVvaauULJYNguqFx",
+        "attempts": [
+          {
+            "startedAt": "2026-11-06T20:54:34.089848+00:00",
+            "finishedAt": "2026-11-06T20:54:39.751934+00:00",
+            "resolvedPath": "/ipfs/bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me"
+          }
+        ],
+        "error": "Command '['/tmp/derpc-ipfs-tools/ipfs', '--timeout=50s', 'routing', 'get', '/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc']' returned non-zero exit status 1.",
+        "ownedDaemonStopped": true
+      },
+      {
+        "evidence": "/tmp/derpc-ipns-resolution-before-content-check.json",
+        "startedAt": "2026-11-06T21:01:59.977722+00:00",
+        "finishedAt": "2026-11-06T21:03:38.583453+00:00",
+        "freshRepository": true,
+        "verifierPeerId": "12D3KooWD8NF9gjDUQEzVax6TsTj1RQpdRRqbPSHSPeUdhoPLDEB",
+        "attempts": [
+          {
+            "startedAt": "2026-11-06T21:02:06.082560+00:00",
+            "finishedAt": "2026-11-06T21:02:46.124711+00:00",
+            "resolvedPath": "/ipfs/bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me"
+          }
+        ],
+        "error": "<urlopen error _ssl.c:1064: The handshake operation timed out>",
+        "ownedDaemonStopped": true
+      }
+    ],
+    "recordRetrieval": {
+      "source": "Public HTTPS record obtained by deployment agent; independently verified here",
+      "bytes": 397,
+      "sha256": "b2a6d0c6b7a1900019754c4b3a5ea28d41a13c2d5fe14f6f55c4344ebc0501c8",
+      "url": "https://delegated-ipfs.dev/routing/v1/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc"
+    },
+    "recordInspection": {
+      "Entry": {
+        "Value": "/ipfs/bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me",
+        "ValidityType": 0,
+        "Validity": "2026-11-08T20:53:47.133265825Z",
+        "Sequence": 0,
+        "TTL": 300000000000
+      },
+      "PbSize": 397,
+      "SignatureType": "V1+V2",
+      "HexDump": "",
+      "Validation": {
+        "Valid": true,
+        "Reason": "",
+        "Name": "k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc"
+      }
+    },
+    "recordSignatureValueAndExpiryValid": true,
+    "priorAssetVerification": {
+      "cid": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me",
+      "filesChecked": 55,
+      "allFilesMatch": true,
+      "ipfsEvidence": "web/deployment-vps-2026-11-06.json",
+      "httpsEvidence": "web/ens-website-publication-2026-11-06.json",
+      "httpsCheckedAt": "2026-11-06T20:32:35.579907+00:00",
+      "releaseManifest": "web/deployment-ens-ipfs-2026-11-06.json",
+      "newIpnsAssetRetrieval": false
+    },
+    "newAssetsChecked": 0,
+    "followupDiagnostics": {
+      "publicRecordGet": "Independent HTTPS attempts failed with DNS/TLS timeout and peer reset; public record from deployment agent used for signature validation.",
+      "contentCheck": "Verifier daemon did not become ready",
+      "newDaemonsWillNotBeStarted": true
+    },
+    "ownedDaemonStopped": true,
+    "routing": {
+      "mode": "auto",
+      "directDhtOnlyClaim": false,
+      "note": "Fresh Kubo auto-mode discovery was observed. This report does not assert which router supplied the record."
+    },
+    "automaticRenewal": {
+      "sourceWiringConfirmed": true,
+      "observedRenewalCycle": false,
+      "note": "Explicit HTTP publisher participates in default namesys used by daemon republisher; native DHT stalls can delay parallel completion."
+    }
+  },
+  "backup": {
+    "encryptedWith": "age 1.3.1, operator SSH Ed25519 recipient",
+    "serverPath": "/var/lib/derpc-ipfs/ipns-backups/derpc-website-2026-11-06.key.age",
+    "offHostCopy": true,
+    "mode": "0600",
+    "sha256": "d3ff1894075f5a78a7018fab7daf778521dadbea109f4ff8560b4236ae78267d",
+    "restoredNameMatches": true,
+    "temporaryOfflineRestoreRepositoryRemoved": true
+  },
+  "ens": {
+    "name": "derpc.eth",
+    "migrationTransactionSent": true,
+    "lastVerifiedRecordNamespace": "ipns",
+    "agentSentTransaction": false,
+    "transactionHash": "0x279ae1501ad3df887e4d470ce8423523e68628a147ff34091fac3248d8c51587",
+    "receiptConfirmations": "18",
+    "recordConfirmed": true,
+    "verifiedAt": "2026-11-06T21:58:01.536659+00:00",
+    "publicationEvidence": "web/ens-ipns-publication-2026-11-06.json"
+  },
+  "limits": [
+    "Renewal is configured every 4 hours with 48-hour validity; no complete renewal cycle has been observed yet.",
+    "IPNS discovery can use delegated HTTP. Native DHT-only availability is not established.",
+    "Initial network failures and later DNS/TLS/routing timeouts are disclosed in verification.",
+    "Initial publisher checks reused earlier immutable-CID asset evidence. Separate post-switch HTTPS verification retrieved all 55 files and checked IPNS path headers; see the ENS publication evidence.",
+    "The VPS IPNS key now authorizes website-version changes without another Ethereum signature.",
+    "Current CI workflow pins releases but does not publish IPNS yet."
+  ]
+}
