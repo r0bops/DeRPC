@@ -73,6 +73,9 @@ export {
   type PoolAttempt,
   type EndpointState,
   type EndpointStatus,
+  type PoolOperationContext,
+  type PoolRunOptions,
+  type PoolAttemptLifecycle,
 } from "./pool/pool.ts";
 export { createPooledReader } from "./pool/pooled-reader.ts";
 export { operatorUrl, checkOperatorIdentity, assertSeparateGateway, type OperatorIdentity } from "./operators/endpoint.ts";
@@ -85,6 +88,10 @@ export {
   type DeRPCOperator,
   type DeRPCOptions,
   type DeRPCStatus,
+  type DeRPCPaymentClient,
+  type VerifiedCallInput,
+  type RefreshDirectoryOptions,
+  type PaymentSettlement,
 } from "./api/derpc.ts";
 export {
   createEip1193Provider,

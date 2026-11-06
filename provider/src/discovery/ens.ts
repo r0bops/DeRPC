@@ -4,7 +4,7 @@ import type { AnonTransport } from "../transport/anon-transport.ts";
 import { createJsonRpcSend } from "../transport/json-rpc.ts";
 import { ProofVerificationError, verifyAccountProof, verifyStorageProof, type AccountProof } from "../verify/index.ts";
 import type { HeaderView, JsonRpcSend, VerifiedValue } from "../verify/reader.ts";
-import type { PoolEndpoint } from "../pool/pool.ts";
+import type { DeRPCOperator } from "../api/derpc.ts";
 import { readProvenOperators, type RegistrarPin, type ProvenOperator } from "./registrar.ts";
 
 export { readProvenOperators, type RegistrarPin, type ProvenOperator } from "./registrar.ts";
@@ -35,10 +35,7 @@ export interface PaymentTerms {
   /** All terms were read using local execution against proven state. */
   readonly recordsProven: boolean;
 }
-export interface DiscoveredOperator extends PoolEndpoint {
-  beaconUrl?: string;
-  gateways: string[];
-  wrapperIdentity: { signer: Hex };
+export interface DiscoveredOperator extends DeRPCOperator {
   ens: string;
   expiry: number;
   payment?: PaymentTerms;

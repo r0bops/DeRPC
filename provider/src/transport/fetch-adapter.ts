@@ -8,6 +8,8 @@ export interface FetchAdapterOptions {
   timeoutMs?: number;
   /** Refuse a response body larger than this. Default 16 MiB. */
   maxBodyBytes?: number;
+  /** Personal-node credentials, selected by exact origin only. */
+  headersForUrl?: (url: string) => Record<string, string>;
 }
 
 const DEFAULT_BODY_MS = 60_000;
@@ -28,7 +30,8 @@ export function asFetch(transport: AnonTransport, opts: FetchAdapterOptions): ty
     const deadline = performance.now() + timeoutMs;
     const upstream = await transport.fetch(url, {
       method,
-      headers,
+      headers: { ...headers, ...opts.headersForUrl?.(url) },
+      redirect: "error",
       body,
       signal,
       isolationKey: opts.isolationKey,

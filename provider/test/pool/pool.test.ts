@@ -50,6 +50,34 @@ const exitTimeout = () => { throw new Error("Failed to connect: tor: operation t
 const PREFERRED: PoolEndpoint[] = [{ url: "a", priority: 0 }, { url: "b", priority: 0 }, { url: "c", priority: 1 }];
 
 describe("createPool", () => {
+  it("stops choosing an expired listing, including affinity and cooldown retries", async () => {
+    const h = harness([{ url: "a", priority: 0, expiry: 1001 }, { url: "b", priority: 1 }], { a: ok, b: ok });
+    await h.read("account");
+    h.advance(1000);
+    await h.read("account");
+    expect(h.calls.map(c => c.url)).toEqual(["a", "b"]);
+    expect(h.pool.status()[0]!.state).toBe("expired");
+
+    const onlyExpired = harness([{ url: "a", priority: 0, expiry: 1000 }], { a: ok });
+    await expect(onlyExpired.read()).rejects.toThrow("excluded or expired");
+    expect(onlyExpired.calls).toEqual([]);
+  });
+
+  it("does not send a later request in the same operation after its listing expires", async () => {
+    let now = 1_000_000;
+    const calls: string[] = [];
+    const pool = createPool({
+      endpoints: [{ url: "a", priority: 0, expiry: 1001 }, { url: "b", priority: 1 }], now: () => now,
+      sendFor: endpoint => async method => { calls.push(`${endpoint.url}:${method}`); now += 1000; },
+    });
+    await pool.run(async send => {
+      await send("eth_getProof", [], { isolationKey: KEY });
+      await send("eth_getCode", [], { isolationKey: KEY });
+    });
+    expect(calls).toEqual(["a:eth_getProof", "b:eth_getProof", "b:eth_getCode"]);
+    expect(pool.status()[0]!.state).toBe("expired");
+  });
+
   it("chooses randomly among the preferred tier and leaves the fallback tier alone while it is available", async () => {
     const h = harness(PREFERRED, { a: ok, b: ok, c: ok }, { random: [0, 0.99] });
 
@@ -101,7 +129,9 @@ describe("createPool", () => {
 
     await h.read();
 
-    expect(h.calls.map((c) => c.isolationKey)).toEqual([KEY, `${KEY}#retry-2`, `${KEY}#retry-3`]);
+    expect(h.calls[0]!.isolationKey).toBe(KEY);
+    expect(h.calls[1]!.isolationKey).toMatch(/^derpc:account:0xabc#retry-\d+-\d+-2$/);
+    expect(h.calls[2]!.isolationKey).toMatch(/^derpc:account:0xabc#retry-\d+-\d+-3$/);
   });
 
   it.each([
@@ -188,7 +218,9 @@ describe("createPool", () => {
 
     await expect(h.read()).resolves.toBe("ok");
 
-    expect(h.calls).toEqual([{ url: "a", isolationKey: KEY }, { url: "a", isolationKey: `${KEY}#retry-2` }]);
+    expect(h.calls.map(c => c.url)).toEqual(["a", "a"]);
+    expect(h.calls[0]!.isolationKey).toBe(KEY);
+    expect(h.calls[1]!.isolationKey).toMatch(/^derpc:account:0xabc#retry-\d+-\d+-2$/);
   });
 
   it("gives a cooling-down operator another try on a fresh circuit rather than fail, when no other is available", async () => {
@@ -196,7 +228,9 @@ describe("createPool", () => {
 
     await expect(h.read()).resolves.toBe("ok"); // a fails, b fails, then a again on a fresh circuit
 
-    expect(h.calls.map((c) => [c.url, c.isolationKey])).toEqual([["a", KEY], ["b", `${KEY}#retry-2`], ["a", `${KEY}#retry-3`]]);
+    expect(h.calls.map(c => c.url)).toEqual(["a", "b", "a"]);
+    expect(h.calls[0]!.isolationKey).toBe(KEY);
+    expect(new Set(h.calls.map(c => c.isolationKey)).size).toBe(3);
   });
 
   it("sends a later read to an operator that is still cooling down on a fresh circuit, not the one that failed", async () => {
@@ -205,7 +239,8 @@ describe("createPool", () => {
     await expect(h.read()).rejects.toBeInstanceOf(PoolExhaustedError); // three attempts, all at the exit
     await expect(h.read()).resolves.toBe("ok");
 
-    expect(h.calls[3]?.isolationKey).toBe(`${KEY}#retry-1`);
+    expect(h.calls[3]?.isolationKey).toMatch(/^derpc:account:0xabc#retry-\d+-\d+-1$/);
+    expect(new Set(h.calls.map(c => c.isolationKey)).size).toBe(4);
   });
 
   it("ends an operator's cooldown when it answers", async () => {

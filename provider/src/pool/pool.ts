@@ -14,9 +14,17 @@ export interface PoolEndpoint {
   operator?: string;
   /** The operator's ENS name (mock until the ENS milestone). */
   ens?: string;
+  /** ENS listing expiry in Unix seconds. Omitted for explicitly chosen, unlisted endpoints. */
+  expiry?: number;
 }
 
-export type EndpointState = "eligible" | "cooldown" | "excluded";
+export type EndpointState = "eligible" | "cooldown" | "excluded" | "expired";
+
+/** The listing no longer authorizes new requests; renewal requires an explicit new selection. */
+export function assertOperatorActive(endpoint: PoolEndpoint, now = Date.now()): void {
+  if (endpoint.expiry !== undefined && (!Number.isSafeInteger(endpoint.expiry) || endpoint.expiry <= 0)) throw new Error("invalid operator listing expiry");
+  if (endpoint.expiry !== undefined && endpoint.expiry <= now / 1000) throw new Error("operator listing expired; refresh the directory before reading");
+}
 
 export interface PoolEvent {
   type: "attempt" | "success" | "invalid-proof" | "transient-failure" | "stopped" | "exhausted";
@@ -37,7 +45,7 @@ export class PoolExhaustedError extends Error {
   constructor(readonly attempts: PoolAttempt[]) {
     super(
       attempts.length === 0
-        ? "no endpoint left: every chosen operator is excluded after an invalid proof"
+        ? "no endpoint left: every chosen operator is excluded or expired"
         : `all ${attempts.length} attempts failed: ${attempts.map((a) => `${a.endpoint} (${a.kind})`).join(", ")}`,
     );
   }
@@ -55,6 +63,10 @@ export interface PoolOptions {
   endpoints: PoolEndpoint[];
   /** JSON-RPC to one endpoint, through the anonymous transport. */
   sendFor: (endpoint: PoolEndpoint) => JsonRpcSend;
+  /** Optional per-logical-read lifecycle, e.g. credit reservation and post-verification payment. */
+  prepareAttempt?: (context: PoolOperationContext, send: JsonRpcSend) => Promise<PoolAttemptLifecycle>;
+  /** Provider shutdown or a replacement operator choice cancels every pending operation. */
+  signal?: AbortSignal;
   /** Ids excluded earlier in this session (for example before the user changed their choice). */
   excluded?: Iterable<string>;
   /** Endpoints tried per read, one at a time. Default 3. */
@@ -72,9 +84,35 @@ export interface Pool {
   /**
    * Run one read on one endpoint at a time; on failure, move to another chosen endpoint.
    * With `account`, reads for that account stay on the endpoint that last served it.
+   * Once completion/signing starts, failures are terminal to avoid duplicate payment.
    */
-  run<T>(operation: (send: JsonRpcSend) => Promise<T>, opts?: { account?: string }): Promise<T>;
+  run<T>(operation: (send: JsonRpcSend, context: PoolOperationContext) => Promise<T>, opts?: PoolRunOptions): Promise<T>;
   status(): EndpointStatus[];
+}
+
+export interface PoolRunOptions {
+  account?: string;
+  kind?: "proof" | "code" | "call";
+  /** Internal bootstrap/discovery work can explicitly bypass spending hooks. */
+  paid?: boolean;
+  signal?: AbortSignal;
+  totalTimeoutMs?: number;
+  /** Recheck pinned context before and after completion (including asynchronous voucher signing). */
+  assertValid?: () => void;
+}
+
+export interface PoolOperationContext {
+  endpoint: PoolEndpoint;
+  signal: AbortSignal;
+  kind: "proof" | "code" | "call";
+  paid: boolean;
+}
+
+export interface PoolAttemptLifecycle {
+  send: JsonRpcSend;
+  /** Called after verification; once invoked, this operation will never retry on another endpoint. */
+  verified?(): Promise<unknown>;
+  failed?(error: unknown): void;
 }
 
 export interface EndpointStatus {
@@ -88,6 +126,7 @@ export interface EndpointStatus {
 }
 
 const idOf = (e: PoolEndpoint) => e.id ?? e.url;
+let nextPoolId = 0;
 
 /**
  * A client-side pool of the execution endpoints the user chose. All of its state stays on the device.
@@ -98,12 +137,23 @@ const idOf = (e: PoolEndpoint) => e.id ?? e.url;
  * - Errors that aren't the endpoint's fault (stale header, worker pin, dead transport) are never retried.
  */
 export function createPool(opts: PoolOptions): Pool {
+  const poolId = ++nextPoolId;
+  let nextRunId = 0;
   const maxAttempts = opts.maxAttempts ?? 3;
   const totalTimeoutMs = opts.totalTimeoutMs ?? 30_000;
   const cooldownMs = opts.cooldownMs ?? 60_000;
   const random = opts.random ?? Math.random;
   const now = opts.now ?? Date.now;
-  const emit = (e: Omit<PoolEvent, "at">) => opts.onEvent?.({ ...e, at: now() });
+  const emit = (e: Omit<PoolEvent, "at">) => {
+    // Observers must not turn a verified, already-paid success into another retry.
+    try { opts.onEvent?.({ ...e, at: now() }); } catch { /* app observer */ }
+  };
+  for (const [label, value] of Object.entries({ maxAttempts, totalTimeoutMs, cooldownMs })) {
+    if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`${label} must be a positive integer`);
+  }
+  for (const endpoint of opts.endpoints) {
+    if (endpoint.expiry !== undefined && (!Number.isSafeInteger(endpoint.expiry) || endpoint.expiry <= 0)) throw new Error("invalid operator listing expiry");
+  }
   const excludedBefore = new Set(opts.excluded ?? []);
   const state = new Map(opts.endpoints.map((e) => [idOf(e), { excluded: excludedBefore.has(idOf(e)), cooldownUntil: 0 }]));
   // Sticky per account: each account's reads stay with one operator, so the other operators never
@@ -113,6 +163,8 @@ export function createPool(opts: PoolOptions): Pool {
   const stateOf = (id: string): EndpointState => {
     const s = state.get(id)!;
     if (s.excluded) return "excluded";
+    const endpoint = opts.endpoints.find(e => idOf(e) === id)!;
+    if (endpoint.expiry !== undefined && endpoint.expiry <= now() / 1000) return "expired";
     return s.cooldownUntil > now() ? "cooldown" : "eligible";
   };
 
@@ -132,7 +184,7 @@ export function createPool(opts: PoolOptions): Pool {
    * circuit (#14), so a single bad exit shouldn't bench an operator. Invalid proofs are never retried.
    */
   function secondChance(): PoolEndpoint | undefined {
-    const candidates = opts.endpoints.filter((e) => stateOf(idOf(e)) !== "excluded");
+    const candidates = opts.endpoints.filter((e) => ["eligible", "cooldown"].includes(stateOf(idOf(e))));
     if (candidates.length === 0) return undefined;
     return candidates.reduce((best, e) => (state.get(idOf(e))!.cooldownUntil < state.get(idOf(best))!.cooldownUntil ? e : best));
   }
@@ -141,31 +193,74 @@ export function createPool(opts: PoolOptions): Pool {
     async run(operation, runOpts) {
       if (opts.endpoints.length === 0) throw new NoOperatorsChosenError();
       const account = runOpts?.account?.toLowerCase();
+      const runId = ++nextRunId;
       const start = now();
+      const budget = runOpts?.totalTimeoutMs ?? totalTimeoutMs;
+      if (!Number.isSafeInteger(budget) || budget <= 0) throw new Error("invalid pool time budget");
+      const deadline = new AbortController();
+      const timeout = setTimeout(() => deadline.abort(new Error("pool time budget exhausted")), budget);
+      const signals = [deadline.signal, opts.signal, runOpts?.signal].filter((s): s is AbortSignal => !!s);
+      const signal = AbortSignal.any(signals);
       const tried = new Set<string>();
       const attempts: PoolAttempt[] = [];
+      try {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        if (attempt > 1 && now() - start >= totalTimeoutMs) break;
+        if (opts.signal?.aborted) throw opts.signal.reason;
+        if (runOpts?.signal?.aborted) throw runOpts.signal.reason;
+        if (deadline.signal.aborted || now() - start >= budget) break;
         const endpoint = choose(tried, account);
         if (!endpoint) break;
         const id = idOf(endpoint);
+        // Reserve before any await: concurrent reads for this account use the same first operator.
+        if (account) affinity.set(account, id);
         // A retry, or another try at an operator that failed before, goes out on a fresh circuit.
         const fresh = attempt > 1 || tried.has(id) || stateOf(id) !== "eligible";
         tried.add(id);
         emit({ type: "attempt", endpoint: id, attempt });
 
-        const base = opts.sendFor(endpoint);
-        const send: JsonRpcSend = (method, params, { isolationKey }) =>
-          base(method, params, { isolationKey: fresh ? `${isolationKey}#retry-${attempt}` : isolationKey });
+        let lifecycle: PoolAttemptLifecycle | undefined;
+        let completionStarted = false;
         try {
-          const value = await operation(send);
-          if (account) affinity.set(account, id);
+          const context: PoolOperationContext = { endpoint, signal, kind: runOpts?.kind ?? "proof", paid: runOpts?.paid !== false };
+          const base = opts.sendFor(endpoint);
+          const send: JsonRpcSend = (method, params, requestOptions) => {
+            signal.throwIfAborted();
+            assertOperatorActive(endpoint, now());
+            const requestSignal = requestOptions.signal ? AbortSignal.any([signal, requestOptions.signal]) : signal;
+            return base(method, params, { ...requestOptions, signal: requestSignal, isolationKey: fresh ? `${requestOptions.isolationKey}#retry-${poolId}-${runId}-${attempt}` : requestOptions.isolationKey });
+          };
+          lifecycle = opts.prepareAttempt ? await withinSignal(opts.prepareAttempt(context, send).then(prepared => {
+            if (signal.aborted) prepared.failed?.(signal.reason);
+            return prepared;
+          }), signal) : { send };
+          const prepared = lifecycle!;
+          const value = await withinSignal(operation(prepared.send, context), signal);
+          signal.throwIfAborted();
+          if (now() - start >= budget) throw new Error("pool time budget exhausted");
+          if (state.get(id)!.excluded) throw new ProofVerificationError("operator was excluded while this read was in flight");
+          assertOperatorActive(endpoint, now());
+          runOpts?.assertValid?.();
+          // Completion may create a spendable voucher even if it later rejects. From this point,
+          // any refusal is terminal: never retry the operation and potentially pay a second time.
+          completionStarted = true;
+          await withinSignal(Promise.resolve(prepared.verified?.()), signal);
+          signal.throwIfAborted();
+          if (now() - start >= budget) throw new Error("pool time budget exhausted");
+          assertOperatorActive(endpoint, now());
+          runOpts?.assertValid?.();
+          if (account && (!affinity.has(account) || affinity.get(account) === id)) affinity.set(account, id);
           state.get(id)!.cooldownUntil = 0; // it answered: no reason to keep it resting
           emit({ type: "success", endpoint: id, attempt });
           return value;
         } catch (error) {
+          lifecycle?.failed?.(error);
+          if (account && affinity.get(account) === id) affinity.delete(account);
           const detail = error instanceof Error ? error.message : String(error);
-          if (isNotTheEndpointsFault(error)) {
+          if (opts.signal?.aborted || runOpts?.signal?.aborted) {
+            emit({ type: "stopped", endpoint: id, attempt, detail });
+            throw opts.signal?.aborted ? opts.signal.reason : runOpts!.signal!.reason;
+          }
+          if (completionStarted || isNotTheEndpointsFault(error)) {
             emit({ type: "stopped", endpoint: id, attempt, detail });
             throw error;
           }
@@ -182,6 +277,7 @@ export function createPool(opts: PoolOptions): Pool {
       }
       emit({ type: "exhausted" });
       throw new PoolExhaustedError(attempts);
+      } finally { clearTimeout(timeout); }
     },
     status() {
       return opts.endpoints.map((e) => {
@@ -193,8 +289,22 @@ export function createPool(opts: PoolOptions): Pool {
   };
 }
 
+/** Stop waiting even if an upstream implementation ignores cancellation; never accept its late result. */
+function withinSignal<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => reject(signal.reason);
+    if (signal.aborted) { promise.catch(() => {}); reject(signal.reason); return; }
+    signal.addEventListener("abort", abort, { once: true });
+    promise.then(
+      value => { signal.removeEventListener("abort", abort); resolve(value); },
+      error => { signal.removeEventListener("abort", abort); reject(error); },
+    );
+  });
+}
+
 function isNotTheEndpointsFault(error: unknown): boolean {
   return (
+    error instanceof Error && ["InputError", "ExecutionLimitError", "UnsupportedExecutionError", "CallRevertedError", "AbortError"].includes(error.name) ||
     error instanceof StaleHeaderError ||
     error instanceof StaleCheckpointError ||
     error instanceof HeaderSourceNotReadyError ||
