@@ -221,7 +221,14 @@ describe("proof-backed local EVM execution", () => {
 
   it("reports an ordinary contract revert with its exact return bytes", async () => {
     const fixture = await provenFixture([{ address: TARGET, code: "0x602a60005260206000fd" }]);
-    await expect(createVerifiedExecutor({ headers: fixture.headers, send: fixture.endpoint() }).call({ to: TARGET })).rejects.toMatchObject({ name: "CallRevertedError", data: word(42n) });
+    const result = createVerifiedExecutor({ headers: fixture.headers, send: fixture.endpoint() }).call({ to: TARGET });
+    await expect(result).rejects.toBeInstanceOf(CallRevertedError);
+    await expect(result).rejects.toMatchObject({ data: word(42n) });
+  });
+
+  it.each([["invalid opcode", "0xfe"], ["stack underflow", "0x50"]] as const)("refuses %s instead of reporting a contract REVERT", async (_name, code) => {
+    const fixture = await provenFixture([{ address: TARGET, code }]);
+    await expect(createVerifiedExecutor({ headers: fixture.headers, send: fixture.endpoint() }).call({ to: TARGET })).rejects.toBeInstanceOf(UnsupportedExecutionError);
   });
 
   it("rejects a result if the pinned block became stale during execution", async () => {
@@ -284,7 +291,41 @@ describe("local execution resource bounds", () => {
 
   it("halts a gas-exhausting loop without trusting a remote execution result", async () => {
     const fixture = await provenFixture([{ address: TARGET, code: "0x5b600056" }]);
-    await expect(createVerifiedExecutor({ headers: fixture.headers, send: fixture.endpoint() }).call({ to: TARGET, gas: 21_100n })).rejects.toBeInstanceOf(CallRevertedError);
+    await expect(createVerifiedExecutor({ headers: fixture.headers, send: fixture.endpoint() }).call({ to: TARGET, gas: 21_100n })).rejects.toBeInstanceOf(ExecutionLimitError);
+  });
+
+  it("distinguishes insufficient local gas from a proven contract revert", async () => {
+    const fixture = await provenFixture([{ address: TARGET, code: RETURN_42 }]);
+    const executor = createVerifiedExecutor({ headers: fixture.headers, send: fixture.endpoint() });
+    await expect(executor.call({ to: TARGET, gas: 21_003n })).rejects.toBeInstanceOf(ExecutionLimitError);
+    expect((await executor.call({ to: TARGET, gas: 21_100n })).value).toBe(word(42n));
+  });
+
+  it("preserves a successful outer result after handled child gas exhaustion", async () => {
+    const fixture = await provenFixture([
+      // The parent deliberately limits the child to 100 gas, discards failure, then returns 42.
+      { address: TARGET, code: `0x602060006000600073${IMPLEMENTATION.slice(2)}6064f450${RETURN_42.slice(2)}` },
+      { address: IMPLEMENTATION, code: "0x5b600056" },
+    ]);
+    expect((await createVerifiedExecutor({ headers: fixture.headers, send: fixture.endpoint() }).call({ to: TARGET })).value).toBe(word(42n));
+  });
+
+  it("preserves a genuine outer REVERT after handled child gas exhaustion", async () => {
+    const fixture = await provenFixture([
+      { address: TARGET, code: `0x602060006000600073${IMPLEMENTATION.slice(2)}6064f45060006000fd` },
+      { address: IMPLEMENTATION, code: "0x5b600056" },
+    ]);
+    const result = createVerifiedExecutor({ headers: fixture.headers, send: fixture.endpoint() }).call({ to: TARGET });
+    await expect(result).rejects.toBeInstanceOf(CallRevertedError);
+    await expect(result).rejects.toMatchObject({ data: "0x" });
+  });
+
+  it("preserves a successful outer result after a handled child invalid opcode", async () => {
+    const fixture = await provenFixture([
+      { address: TARGET, code: delegateThen(IMPLEMENTATION, RETURN_42.slice(2)) },
+      { address: IMPLEMENTATION, code: "0xfe" },
+    ]);
+    expect((await createVerifiedExecutor({ headers: fixture.headers, send: fixture.endpoint() }).call({ to: TARGET })).value).toBe(word(42n));
   });
 
   it("rejects over-limit calldata before remote requests", async () => {

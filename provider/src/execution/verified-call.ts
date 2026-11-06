@@ -1,5 +1,5 @@
 import { Common, Mainnet } from "@ethereumjs/common";
-import { createEVM, getOpcodesForHF, paramsEVM, type EVMOpts, type EVMRunCallOpts } from "@ethereumjs/evm";
+import { createEVM, EVMError, getOpcodesForHF, paramsEVM, type EVMOpts, type EVMRunCallOpts } from "@ethereumjs/evm";
 import { SimpleStateManager } from "@ethereumjs/statemanager";
 import { Account, createAddressFromString, createZeroAddress, type Address } from "@ethereumjs/util";
 import { assertAddress, InputError, type HeaderView, type JsonRpcSend, type VerifiedValue } from "../verify/reader.ts";
@@ -301,9 +301,19 @@ export function createVerifiedExecutor(options: { headers: HeaderView; send: Jso
     check();
     if (result.execResult.returnValue.length > limits.outputBytes) throw new ExecutionLimitError("execution return data limit");
     const value = bytesToHex(result.execResult.returnValue);
-    if (result.execResult.exceptionError) {
+    const exception = result.execResult.exceptionError;
+    if (exception) {
+      // Only an actual top-level REVERT proves a contract rejection. Gas exhaustion and other
+      // exceptional halts must not let directory discovery omit a record it failed to resolve.
+      // Child failures handled by the EVM retain their normal contract-visible semantics.
+      if (exception.error === EVMError.errorMessages.OUT_OF_GAS || exception.error === EVMError.errorMessages.CODESTORE_OUT_OF_GAS) {
+        throw new ExecutionLimitError(`verified execution exhausted gas: ${exception.error}`);
+      }
+      if (exception.error !== EVMError.errorMessages.REVERT) {
+        throw new UnsupportedExecutionError(`verified execution halted without a contract revert: ${exception.error}`);
+      }
       if (value.startsWith("0x556f1830")) throw new UnsupportedExecutionError("CCIP-Read OffchainLookup is refused");
-      throw new CallRevertedError(value, `verified execution reverted: ${result.execResult.exceptionError.error}`);
+      throw new CallRevertedError(value, `verified execution reverted: ${exception.error}`);
     }
     options.headers.assertFresh?.(block);
     return { value, block };
