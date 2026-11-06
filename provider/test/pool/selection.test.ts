@@ -170,14 +170,14 @@ describe("automatic pool selection", () => {
 
   it("refuses duplicate identities in automatic modes without changing legacy demo behavior", () => {
     for (const duplicate of [
-      { ...sameTier[1]!, id: "a" },
       { ...sameTier[1]!, ens: "A.DERPC.ETH" },
       { ...sameTier[1]!, url: sameTier[0]!.url },
     ]) {
       const pool = createPool({ endpoints: [sameTier[0]!, duplicate], sendFor: () => async () => undefined });
-      expect(() => pool.setSelection("balanced")).toThrow("one endpoint per operator identity");
-      expect(() => createPool({ endpoints: [sameTier[0]!, duplicate], selection: "fastest", sendFor: () => async () => undefined })).toThrow("one endpoint per operator identity");
+      expect(() => pool.setSelection("balanced")).toThrow("automatic selection requires");
+      expect(() => createPool({ endpoints: [sameTier[0]!, duplicate], selection: "fastest", sendFor: () => async () => undefined })).toThrow("automatic selection requires");
     }
+    expect(() => createPool({ endpoints: [sameTier[0]!, { ...sameTier[1]!, id: "a" }], sendFor: () => async () => undefined })).toThrow("globally unique");
     expect(() => createPool({ endpoints: [], selection: "unknown" as SelectionMode, sendFor: () => async () => undefined })).toThrow("invalid pool selection");
   });
 

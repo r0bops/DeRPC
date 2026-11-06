@@ -7,6 +7,10 @@ import { WorkerPinChainError, WorkerPinMismatchError } from "../verify/worker-pi
 export interface PoolEndpoint {
   /** Tells apart entries that share a URL (the simulated lying operator wraps a real one). Defaults to `url`. */
   id?: string;
+  /** Stable owner/group identity. Several node endpoints under it receive one operator weight. */
+  operatorId?: string;
+  /** Node identifier within an explicit operator group; `id` remains globally unique. */
+  endpointId?: string;
   url: string;
   /** Lower is preferred in manual mode. Automatic modes consider all eligible operators. */
   priority: number;
@@ -61,15 +65,19 @@ export class NoOperatorsChosenError extends Error {
 }
 
 export interface PoolOptions {
+  /** Manual callers supply canonical groups; automatic mode additionally rejects alias ambiguity. */
   endpoints: PoolEndpoint[];
   /** Explicit automatic selection; omitted preserves manual priority tiers and random ties. */
   selection?: SelectionMode;
   /**
    * Carry local observations and account affinity across a pool replacement. The caller must only
    * include ids whose complete authenticated identity (including signer) has not changed. The pool
-   * additionally checks each id's URL, ENS name and operator label. No account data is exported.
+   * additionally checks each id's URL, ENS name, operator label, group and node id. No account
+   * data is exported; an unchanged sibling can retain owner affinity after a node is removed.
+   * `operatorIds` separately approves authenticated owner/signer continuity when every node changed.
+   * Those approvals carry only owner affinity, never node health, exclusion or node assignment.
    */
-  preserveFrom?: { pool: Pool; ids: Iterable<string> };
+  preserveFrom?: { pool: Pool; ids: Iterable<string>; operatorIds?: Iterable<string> };
   /** JSON-RPC to one endpoint, through the anonymous transport. */
   sendFor: (endpoint: PoolEndpoint) => JsonRpcSend;
   /** Optional per-logical-read lifecycle, e.g. credit reservation and post-verification payment. */
@@ -130,6 +138,8 @@ export interface PoolAttemptLifecycle {
 
 export interface EndpointStatus {
   id: string;
+  operatorId?: string;
+  endpointId?: string;
   url: string;
   priority: number;
   operator?: string;
@@ -138,6 +148,8 @@ export interface EndpointStatus {
   until?: number;
   /** Recent local completed attempts only; absence means unobserved, never healthy. */
   observations?: PoolObservations;
+  /** Last 32 actual outcomes across this operator's nodes, within five minutes. */
+  operatorObservations?: PoolObservations;
 }
 
 export interface PoolObservations {
@@ -149,12 +161,13 @@ export interface PoolObservations {
   lastObservedAt: number;
 }
 
-interface Observation { at: number; success: boolean; verifiedMs?: number }
+interface Observation { at: number; order: number; success: boolean; verifiedMs?: number }
 interface EndpointMemory { excluded: boolean; cooldownUntil: number; observations: Observation[] }
+interface AccountAffinity { operator: string; endpoint?: string }
 interface PoolMemory {
   endpoints: PoolEndpoint[];
   state: Map<string, EndpointMemory>;
-  affinity: Map<string, string>;
+  affinity: Map<string, AccountAffinity>;
 }
 
 const OBSERVATION_WINDOW_MS = 5 * 60_000;
@@ -163,6 +176,12 @@ const EXPLORATION_RATE = 0.1;
 const poolMemory = new WeakMap<Pool, PoolMemory>();
 const idOf = (e: PoolEndpoint) => e.id ?? e.url;
 let nextPoolId = 0;
+let nextObservationOrder = 0;
+
+/** Shared group key for selection and UI; authenticated callers supply canonical operator ids. */
+export function operatorKey(endpoint: Pick<PoolEndpoint, "operatorId" | "ens" | "id" | "url">): string {
+  return endpoint.operatorId ?? endpoint.ens ?? endpoint.id ?? endpoint.url;
+}
 
 /**
  * A client-side pool of the execution endpoints the user chose. All of its state stays on the device.
@@ -176,6 +195,12 @@ export function createPool(opts: PoolOptions): Pool {
   const poolId = ++nextPoolId;
   let nextRunId = 0;
   const endpoints = opts.endpoints.map(endpoint => ({ ...endpoint }));
+  const endpointById = new Map(endpoints.map(endpoint => [idOf(endpoint), endpoint]));
+  const groups = new Map<string, PoolEndpoint[]>();
+  for (const endpoint of endpoints) {
+    const key = operatorKey(endpoint), group = groups.get(key) ?? [];
+    group.push(endpoint); groups.set(key, group);
+  }
   let selection = opts.selection;
   const maxAttempts = opts.maxAttempts ?? 3;
   const totalTimeoutMs = opts.totalTimeoutMs ?? 30_000;
@@ -192,42 +217,79 @@ export function createPool(opts: PoolOptions): Pool {
   for (const endpoint of endpoints) {
     if (endpoint.expiry !== undefined && (!Number.isSafeInteger(endpoint.expiry) || endpoint.expiry <= 0)) throw new Error("invalid operator listing expiry");
   }
+  if (new Set(endpoints.map(idOf)).size !== endpoints.length) throw new Error("pool endpoint ids must be globally unique");
   validateSelection(selection);
   const excludedBefore = new Set(opts.excluded ?? []);
   const state = new Map<string, EndpointMemory>(endpoints.map((e) => [idOf(e), { excluded: excludedBefore.has(idOf(e)), cooldownUntil: 0, observations: [] }]));
   // Keep each account on its assigned operator while eligible. Only failures or explicit removal
   // move it; changing ranking or exploration never spreads an established account's reads.
-  const affinity = new Map<string, string>();
+  const affinity = new Map<string, AccountAffinity>();
   const previous = opts.preserveFrom && poolMemory.get(opts.preserveFrom.pool);
   if (previous) {
     const allowed = new Set(opts.preserveFrom!.ids);
     const carried = new Set<string>();
+    const carriedGroups = new Set<string>();
     for (const endpoint of endpoints) {
       const id = idOf(endpoint), prior = previous.endpoints.find(e => idOf(e) === id);
       const memory = previous.state.get(id);
-      if (!allowed.has(id) || !prior || !memory || prior.url !== endpoint.url || prior.ens !== endpoint.ens || prior.operator !== endpoint.operator) continue;
+      if (!allowed.has(id) || !prior || !memory || prior.url !== endpoint.url || prior.ens !== endpoint.ens || prior.operator !== endpoint.operator || operatorKey(prior) !== operatorKey(endpoint) || prior.endpointId !== endpoint.endpointId) continue;
       state.set(id, { excluded: excludedBefore.has(id) || memory.excluded, cooldownUntil: memory.cooldownUntil, observations: memory.observations.map(sample => ({ ...sample })) });
       carried.add(id);
+      carriedGroups.add(operatorKey(endpoint));
     }
-    for (const [account, id] of previous.affinity) if (carried.has(id)) affinity.set(account, id);
+    // Only the provider can attest ownership and signer continuity from its authenticated directory.
+    // A matching group name alone never authorizes this path. Check the pool-visible metadata too.
+    for (const key of opts.preserveFrom!.operatorIds ?? []) {
+      const current = groups.get(key);
+      const prior = previous.endpoints.filter(endpoint => operatorKey(endpoint) === key);
+      if (!current?.length || !prior.length) continue;
+      const identity = prior[0]!;
+      if ([...prior, ...current].every(endpoint =>
+        endpoint.operatorId === identity.operatorId && endpoint.ens?.toLowerCase() === identity.ens?.toLowerCase())) carriedGroups.add(key);
+    }
+    for (const [account, assigned] of previous.affinity) if (carriedGroups.has(assigned.operator)) {
+      affinity.set(account, { operator: assigned.operator, ...(assigned.endpoint && carried.has(assigned.endpoint) ? { endpoint: assigned.endpoint } : {}) });
+    }
   }
 
   function validateSelection(mode: SelectionMode | undefined): void {
     if (mode === undefined) return;
     if (!["balanced", "fastest", "reliable"].includes(mode)) throw new Error("invalid pool selection mode");
-    const ids = new Set<string>(), names = new Set<string>(), urls = new Set<string>();
+    const ids = new Set<string>(), urls = new Set<string>();
+    // One namespace for group keys and their aliases prevents one identity being split into
+    // several weights, or an endpoint id authorizing a different group with the same name.
+    const aliases = new Map<string, string>();
+    const alias = (value: string, group: string) => {
+      const key = value.toLowerCase(), existing = aliases.get(key);
+      if (existing !== undefined && existing !== group) throw new Error("automatic selection requires unambiguous operator identities");
+      aliases.set(key, group);
+    };
+    for (const [key, members] of groups) {
+      alias(key, key);
+      const first = members[0]!;
+      const nodeIds = new Set<string>();
+      for (const endpoint of members) {
+        if (endpoint.operatorId !== undefined && (!endpoint.operatorId.trim() || endpoint.operatorId !== endpoint.operatorId.trim()) || endpoint.endpointId !== undefined && (!endpoint.endpointId.trim() || !endpoint.operatorId)) throw new Error("automatic selection requires unambiguous operator identities");
+        if (members.length > 1 && (!endpoint.operatorId || !endpoint.endpointId || nodeIds.has(endpoint.endpointId.toLowerCase()) || endpoint.ens?.toLowerCase() !== first.ens?.toLowerCase() || endpoint.operator !== first.operator)) throw new Error("automatic selection requires distinct nodes under one consistent operator identity");
+        if (endpoint.endpointId) nodeIds.add(endpoint.endpointId.toLowerCase());
+      }
+    }
     for (const endpoint of endpoints) {
-      const id = idOf(endpoint), name = endpoint.ens?.toLowerCase();
-      if (ids.has(id) || urls.has(endpoint.url) || name && names.has(name)) throw new Error("automatic selection requires one endpoint per operator identity");
-      ids.add(id); urls.add(endpoint.url); if (name) names.add(name);
+      const id = idOf(endpoint), group = operatorKey(endpoint);
+      if (ids.has(id) || urls.has(endpoint.url)) throw new Error("automatic selection requires unique endpoint ids and URLs");
+      ids.add(id); urls.add(endpoint.url);
+      alias(id, group); if (endpoint.ens) alias(endpoint.ens, group);
     }
   }
 
-  function observations(id: string): PoolObservations | undefined {
+  function recent(id: string): Observation[] {
     const memory = state.get(id)!;
     const at = now();
     memory.observations = memory.observations.filter(sample => sample.at > at - OBSERVATION_WINDOW_MS && sample.at <= at);
-    const samples = memory.observations;
+    return memory.observations;
+  }
+
+  function summarize(samples: Observation[]): PoolObservations | undefined {
     if (!samples.length) return undefined;
     const successes = samples.filter(sample => sample.success);
     return {
@@ -237,58 +299,88 @@ export function createPool(opts: PoolOptions): Pool {
     };
   }
 
+  const observations = (id: string) => summarize(recent(id));
+  function operatorObservations(key: string): PoolObservations | undefined {
+    const samples = groups.get(key)!.flatMap(endpoint => recent(idOf(endpoint)))
+      .sort((a, b) => a.at - b.at || a.order - b.order).slice(-OBSERVATION_LIMIT);
+    return summarize(samples);
+  }
+
   function observe(id: string, success: boolean, verifiedMs?: number): void {
     if (success && (verifiedMs === undefined || !Number.isFinite(verifiedMs) || verifiedMs < 0)) return;
     observations(id); // discard stale samples before recording the bounded new observation
     const samples = state.get(id)!.observations;
-    samples.push({ at: now(), success, ...(success ? { verifiedMs } : {}) });
+    samples.push({ at: now(), order: ++nextObservationOrder, success, ...(success ? { verifiedMs } : {}) });
     if (samples.length > OBSERVATION_LIMIT) samples.splice(0, samples.length - OBSERVATION_LIMIT);
   }
 
   const sample = <T,>(items: T[]): T => items[Math.min(items.length - 1, Math.max(0, Math.floor(random() * items.length)))]!;
 
-  function ranked(eligible: PoolEndpoint[]): PoolEndpoint {
-    const measured = eligible.map(endpoint => ({ endpoint, observed: observations(idOf(endpoint)) }));
+  function ranked<T>(eligible: T[], measure: (candidate: T) => PoolObservations | undefined): T {
+    const measured = eligible.map(candidate => ({ candidate, observed: measure(candidate) }));
     // Exploration selects one operator for the actual read. It creates no probes or parallel copies.
     if (measured.every(item => !item.observed) || random() < EXPLORATION_RATE) return sample(eligible);
     const timings = measured.flatMap(item => item.observed?.meanVerifiedMs === undefined ? [] : [Math.max(1, item.observed.meanVerifiedMs)]).sort((a, b) => a - b);
     const referenceMs = timings[Math.floor(timings.length / 2)] ?? 1000;
-    const scores = measured.map(({ endpoint, observed }) => {
+    const scores = measured.map(({ candidate, observed }) => {
       // One success and one failure as a prior: an unobserved endpoint is neutral, not healthy.
       const reliability = ((observed?.successes ?? 0) + 1) / ((observed?.attempts ?? 0) + 2);
       const latency = observed?.meanVerifiedMs;
       const score = selection === "fastest" ? (latency === undefined ? -Infinity : -latency)
         : selection === "reliable" ? reliability
         : reliability / (1 + Math.max(1, latency ?? referenceMs) / referenceMs);
-      return { endpoint, score };
+      return { candidate, score };
     });
     const best = Math.max(...scores.map(item => item.score));
-    return sample(scores.filter(item => item.score === best).map(item => item.endpoint));
+    return sample(scores.filter(item => item.score === best).map(item => item.candidate));
+  }
+
+  function chooseNode(eligible: PoolEndpoint[]): PoolEndpoint {
+    if (eligible.length === 1) return eligible[0]!;
+    if (selection) return ranked(eligible, endpoint => observations(idOf(endpoint)));
+    const best = Math.min(...eligible.map(endpoint => endpoint.priority));
+    return sample(eligible.filter(endpoint => endpoint.priority === best));
+  }
+
+  function chooseGroup(eligible: PoolEndpoint[]): PoolEndpoint {
+    const candidates = new Map<string, PoolEndpoint[]>();
+    for (const endpoint of eligible) {
+      const key = operatorKey(endpoint), group = candidates.get(key) ?? [];
+      group.push(endpoint); candidates.set(key, group);
+    }
+    let keys = [...candidates.keys()];
+    if (!selection) {
+      const best = Math.min(...eligible.map(endpoint => endpoint.priority));
+      keys = keys.filter(key => candidates.get(key)!.some(endpoint => endpoint.priority === best));
+    }
+    const key = selection ? ranked(keys, operatorObservations) : sample(keys);
+    return chooseNode(candidates.get(key)!);
   }
 
   const stateOf = (id: string): EndpointState => {
     const s = state.get(id)!;
     if (s.excluded) return "excluded";
-    const endpoint = endpoints.find(e => idOf(e) === id)!;
+    const endpoint = endpointById.get(id)!;
     if (endpoint.expiry !== undefined && endpoint.expiry <= now() / 1000) return "expired";
     return s.cooldownUntil > now() ? "cooldown" : "eligible";
   };
 
-  function choose(tried: Set<string>, account?: string): PoolEndpoint | undefined {
-    const assigned = account ? endpoints.find((e) => idOf(e) === affinity.get(account)) : undefined;
+  function choose(tried: Set<string>, account?: string, previousOperator?: string): PoolEndpoint | undefined {
+    const assignment = account ? affinity.get(account) : undefined;
+    const assigned = assignment?.endpoint ? endpointById.get(assignment.endpoint) : undefined;
     if (assigned && !tried.has(idOf(assigned)) && stateOf(idOf(assigned)) === "eligible") return assigned;
     const eligible = endpoints.filter((e) => !tried.has(idOf(e)) && stateOf(idOf(e)) === "eligible");
+    const preferred = assignment?.operator ?? previousOperator;
+    const siblings = eligible.filter(endpoint => operatorKey(endpoint) === preferred);
+    if (siblings.length) return chooseNode(siblings);
     if (eligible.length === 0) return secondChance();
-    if (selection) return ranked(eligible);
-    const best = Math.min(...eligible.map((e) => e.priority));
-    const tier = eligible.filter((e) => e.priority === best);
-    return sample(tier);
+    return chooseGroup(eligible);
   }
 
   /**
    * Nothing fresh is left: give an operator that isn't excluded another try, on a fresh circuit, the one
-   * whose cooldown ends first. Users choose few operators, and Tor exit failures usually clear on a new
-   * circuit (#14), so a single bad exit shouldn't bench an operator. Invalid proofs are never retried.
+   * whose cooldown ends first. Tor exit failures can clear on a new circuit (#14), so a single bad
+   * exit shouldn't bench an operator. Invalid proofs are never retried.
    */
   function secondChance(): PoolEndpoint | undefined {
     const candidates = endpoints.filter((e) => ["eligible", "cooldown"].includes(stateOf(idOf(e))));
@@ -309,18 +401,21 @@ export function createPool(opts: PoolOptions): Pool {
       const signals = [deadline.signal, opts.signal, runOpts?.signal].filter((s): s is AbortSignal => !!s);
       const signal = AbortSignal.any(signals);
       const tried = new Set<string>();
+      let previousOperator: string | undefined;
       const attempts: PoolAttempt[] = [];
       try {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         if (opts.signal?.aborted) throw opts.signal.reason;
         if (runOpts?.signal?.aborted) throw runOpts.signal.reason;
         if (deadline.signal.aborted || now() - start >= budget) break;
-        const endpoint = choose(tried, account);
+        const endpoint = choose(tried, account, previousOperator);
         if (!endpoint) break;
         const id = idOf(endpoint);
+        const group = operatorKey(endpoint);
+        previousOperator = group;
         const attemptStarted = now();
         // Reserve before any await: concurrent reads for this account use the same first operator.
-        if (account) affinity.set(account, id);
+        if (account) affinity.set(account, { operator: group, endpoint: id });
         // A retry, or another try at an operator that failed before, goes out on a fresh circuit.
         const fresh = attempt > 1 || tried.has(id) || stateOf(id) !== "eligible";
         tried.add(id);
@@ -357,7 +452,7 @@ export function createPool(opts: PoolOptions): Pool {
           if (now() - start >= budget) throw new Error("pool time budget exhausted");
           assertOperatorActive(endpoint, now());
           runOpts?.assertValid?.();
-          if (account && (!affinity.has(account) || affinity.get(account) === id)) affinity.set(account, id);
+          if (account && (!affinity.has(account) || affinity.get(account)?.endpoint === id)) affinity.set(account, { operator: group, endpoint: id });
           state.get(id)!.cooldownUntil = 0; // it answered: no reason to keep it resting
           if (runOpts?.observe !== false) observe(id, true, verifiedMs);
           emit({ type: "success", endpoint: id, attempt });
@@ -375,7 +470,7 @@ export function createPool(opts: PoolOptions): Pool {
           }
           // A caller cancellation or local freshness/signing refusal says nothing about this
           // endpoint. Keep that account assigned; only a retryable endpoint failure moves it.
-          if (account && affinity.get(account) === id) affinity.delete(account);
+          if (account && affinity.get(account)?.endpoint === id) affinity.set(account, { operator: group });
           if (error instanceof ProofVerificationError) {
             state.get(id)!.excluded = true;
             if (runOpts?.observe !== false) observe(id, false);
@@ -396,11 +491,13 @@ export function createPool(opts: PoolOptions): Pool {
     },
     setSelection(mode) { validateSelection(mode); selection = mode; },
     status() {
+      const groupObservations = new Map([...groups.keys()].map(key => [key, operatorObservations(key)]));
       return endpoints.map((e) => {
         const s = state.get(idOf(e))!;
         const current = stateOf(idOf(e));
         const observed = observations(idOf(e));
-        return { id: idOf(e), url: e.url, priority: e.priority, operator: e.operator, ens: e.ens, state: current, ...(current === "cooldown" ? { until: s.cooldownUntil } : {}), ...(observed ? { observations: observed } : {}) };
+        const groupObserved = groupObservations.get(operatorKey(e));
+        return { id: idOf(e), operatorId: e.operatorId, endpointId: e.endpointId, url: e.url, priority: e.priority, operator: e.operator, ens: e.ens, state: current, ...(current === "cooldown" ? { until: s.cooldownUntil } : {}), ...(observed ? { observations: observed } : {}), ...(groupObserved ? { operatorObservations: groupObserved } : {}) };
       });
     },
   };
@@ -423,7 +520,7 @@ function withinSignal<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
 
 function isNotTheEndpointsFault(error: unknown): boolean {
   return (
-    error instanceof Error && ["InputError", "ExecutionLimitError", "UnsupportedExecutionError", "CallRevertedError", "AbortError"].includes(error.name) ||
+    error instanceof Error && ["InputError", "ExecutionLimitError", "UnsupportedExecutionError", "CallRevertedError", "AbortError", "DirectorySnapshotExpiredError"].includes(error.name) ||
     error instanceof StaleHeaderError ||
     error instanceof StaleCheckpointError ||
     error instanceof HeaderSourceNotReadyError ||
