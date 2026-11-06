@@ -51,8 +51,8 @@ export function operatePage(): PageResult {
                 <section class="step">
                   <div class="step__num">2</div>
                   <div>
-                    <h2 class="step__title">Set stake and price</h2>
-                    <p class="step__desc">Stake backs your score. Price is per 1k reads.</p>
+                    <h2 class="step__title">Set stake and price <span class="mock">roadmap</span></h2>
+                    <p class="step__desc">Preview only. Stake, scores and paid reads are not live in this build.</p>
                     <div class="form-row">
                       <div class="field">
                         <label for="operator-stake">Stake</label>
@@ -99,13 +99,13 @@ export function operatePage(): PageResult {
 
             <aside class="panel panel--dark">
               <p class="panel__kicker">What operators get</p>
-              <h2 class="panel__title">Identity, score, revenue, privacy.</h2>
-              <p class="panel__text">A place in the directory, a public record callers can pin, and payment for the reads you serve.</p>
+              <h2 class="panel__title">Endpoint listing today. Registry later.</h2>
+              <p class="panel__text">Callers can pin your endpoint now. ENS names, scores, stake and payments are roadmap, not live.</p>
               <ul class="panel__list">
-                <li>${icon("check")}An ENS name under .ops.derpc.eth.</li>
-                <li>${icon("check")}A score from independent watchers.</li>
-                <li>${icon("check")}Revenue from verified reads.</li>
-                <li>${icon("check")}Your node never sees the caller's IP.</li>
+                <li>${icon("check")}List an endpoint callers can choose today.</li>
+                <li>${icon("check")}ENS name under .ops.derpc.eth: planned.</li>
+                <li>${icon("check")}Watcher scores, stake and paid reads: planned.</li>
+                <li>${icon("check")}Private route: callers do not connect to your node directly.</li>
               </ul>
             </aside>
           </div>
