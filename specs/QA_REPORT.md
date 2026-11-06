@@ -6,7 +6,7 @@ The initial review covers the working tree based on `cccee83`, including the pen
 
 ## Reviewed branch integration — November 6, 21:52 UTC
 
-The six divergent branch heads were reviewed against main `c183ecd86a9f906fcf0983c518d6441e98ad851b` in an isolated checkout. Useful changes were reconciled in scoped commits before recording the branch ancestry; older implementations already superseded by main were retained as history, not restored over the current code. The shared checkout's separate deployment changes were not included.
+The six divergent branch heads were reviewed against main `c183ecd86a9f906fcf0983c518d6441e98ad851b` in an isolated checkout. Useful changes were reconciled in scoped commits before recording the branch ancestry; older implementations already superseded by main were retained as history, not restored over the current code. The shared checkout's separate deployment changes were not included. Before the final integration, main advanced to `ec37572c` by merging PR #64 at `0149c90a`; that merge was incorporated, preserving its gateway implementation and additional mixed-socket regression.
 
 | Branch | Resolution |
 | --- | --- |
@@ -14,12 +14,12 @@ The six divergent branch heads were reviewed against main `c183ecd86a9f906fcf098
 | `gateway-check` (`ffacc2e7`) | Retain the existing main release checks, which include stronger certificate and fallback validation. |
 | `threat-model` (`bce3557b`) | Retain the broader current threat model and implemented local EVM scope; update committee evidence instead of restoring older claims. |
 | `web-directory` (`f0f5aba4`) | Retain the current site; correct the selected-operator example, favicon path and multi-endpoint capability wording. |
-| `issue-review-fixes` (`db0fb002`) | Port portable gateway detection with local-port negative cases, and qualify benchmark, call-access-pattern and payee claims. |
+| `issue-review-fixes` (`0149c90a`, merged as #64) | Port portable gateway detection with local-port negative cases, and qualify benchmark, call-access-pattern and payee claims. |
 | `front-presentation` (`ee500fb9`) | Port slow-start diagnostics and attempted-request counts. Keep bounded ResourceTiming observations separate; never calculate an anonymity percentage from incompatible/incomplete counts. |
 
 Validation of the combined implementation:
 
-- **1,050 default tests passed:** provider 602, frontend 257, contracts 65, payments 68, wrapper 58. Five opt-in ENS fork tests remain skipped in this default run. The final syntax-only compatibility change additionally passed 48 provider regressions. Initial restricted runs that could not spawn child processes or bind loopback ports were rerun with that access; they were environment failures, not hidden product failures.
+- **1,050 default tests passed:** provider 602, frontend 257, contracts 65, payments 68, wrapper 58. The later main reconciliation added its mixed-socket regression; the focused gateway suite was rerun on the combined 13 cases. Five opt-in ENS fork tests remain skipped in this default run. The final syntax-only compatibility change additionally passed 48 provider regressions. Initial restricted runs that could not spawn child processes or bind loopback ports were rerun with that access; they were environment failures, not hidden product failures.
 - All five package typechecks passed. The web and frontend production builds and assembled-site offline checks passed. Existing bundle-size warnings remain; building an artifact does not publish it.
 - [Six integrated Firefox cases](../frontend/test/direct-connections-firefox-integration-evidence-2026-11-06.json) passed on the actual main and network-check pages: normal/private warm caches, cleared timing buffers and unavailable timing APIs. An independent HTTP observer confirmed cached responses and one fixture-server hit. The UI transport is deliberately stubbed, so this is diagnostic behavior evidence, not a Tor claim. [The earlier #19 evidence](../frontend/test/direct-connections-firefox-evidence-2026-11-06.json) is preserved with its historical source hashes.
 - [Fresh integrated live Firefox evidence](../provider/test/light-client/period-1904-integration-evidence-2026-11-06.json) passed through the existing public gateway at 21:51 UTC: period-1904 committee verification, worker pin and balance proof at finalized block **26358539**, no direct RPC/beacon requests, no page errors, no calls after close and no remaining worker iframe. All 38 recorded source/runtime hashes were unchanged. The original checkpoint and production timeouts were preserved; forced updates remained disabled. [The original 19:54 cold start](../provider/test/light-client/period-1904-evidence-2026-11-06.json) remains separately recorded.

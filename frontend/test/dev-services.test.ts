@@ -81,6 +81,11 @@ describe("local dev gateway configuration", { timeout: 30_000 }, () => {
     expect(env).toBeUndefined();
   });
 
+  it("finds a gateway bound to one address next to a connected client socket", () => {
+    const { stdout } = runHelper({ logged: CURRENT, macos: true, lsofNames: ["127.0.0.1:60090->127.0.0.1:12298", "10.0.0.138:12298"] });
+    expect(stdout).toContain("already listening");
+  });
+
   it("does not overwrite a corrected address with a surviving gateway's stale log", () => {
     const existing = `OTHER_SETTING=keep\nVITE_TOR_GATEWAYS=${CURRENT}\n`;
     const result = runHelper({ logged: STALE, existing });
