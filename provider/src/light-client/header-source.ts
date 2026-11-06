@@ -20,12 +20,22 @@ const DAY_MS = 24 * 60 * MINUTE_MS;
 
 /** A finalized execution header, verified from the pinned checkpoint through sync-committee signatures. */
 export interface VerifiedHeader {
+  /** Chain selected by the checkpoint and genesis trust anchor. Required for local execution. */
+  network?: HeaderNetwork;
   slot: number;
   blockNumber: number;
   blockHash: `0x${string}`;
   stateRoot: `0x${string}`;
   /** Execution block timestamp, in seconds. */
   timestamp: number;
+  /** Context authenticated by the execution-payload branch; required for local EVM calls. */
+  execution?: {
+    feeRecipient: `0x${string}`;
+    prevRandao: `0x${string}`;
+    gasLimit: bigint;
+    baseFeePerGas: bigint;
+    excessBlobGas?: bigint;
+  };
 }
 
 export class StaleCheckpointError extends Error {
@@ -200,7 +210,7 @@ export async function startVerifiedHeaderSource(opts: HeaderSourceOptions): Prom
       return {
         finalized() {
           signal.throwIfAborted();
-          const header = toVerifiedHeader(started.getFinalized());
+          const header = toVerifiedHeader(started.getFinalized(), opts.network);
           assertFresh(header);
           return header;
         },
@@ -225,15 +235,27 @@ function isFresh(header: LightClientHeader, maxAgeMs: number): boolean {
   return Date.now() - toVerifiedHeader(header).timestamp * 1000 <= maxAgeMs;
 }
 
-function toVerifiedHeader(header: LightClientHeader): VerifiedHeader {
-  const execution = (header as { execution?: { blockNumber: number; blockHash: Uint8Array; stateRoot: Uint8Array; timestamp: number } }).execution;
+function toVerifiedHeader(header: LightClientHeader, network?: HeaderNetwork): VerifiedHeader {
+  const execution = (header as { execution?: {
+    blockNumber: number; blockHash: Uint8Array; stateRoot: Uint8Array; timestamp: number;
+    feeRecipient: Uint8Array; prevRandao: Uint8Array; gasLimit: number | bigint;
+    baseFeePerGas: bigint; excessBlobGas?: number | bigint;
+  } }).execution;
   if (!execution) throw new Error("light client header has no execution payload header (pre-Capella)");
   return {
+    ...(network ? { network } : {}),
     slot: header.beacon.slot,
     blockNumber: Number(execution.blockNumber),
     blockHash: toHex(execution.blockHash) as `0x${string}`,
     stateRoot: toHex(execution.stateRoot) as `0x${string}`,
     timestamp: Number(execution.timestamp),
+    execution: {
+      feeRecipient: toHex(execution.feeRecipient) as `0x${string}`,
+      prevRandao: toHex(execution.prevRandao) as `0x${string}`,
+      gasLimit: BigInt(execution.gasLimit),
+      baseFeePerGas: BigInt(execution.baseFeePerGas),
+      ...(execution.excessBlobGas !== undefined ? { excessBlobGas: BigInt(execution.excessBlobGas) } : {}),
+    },
   };
 }
 

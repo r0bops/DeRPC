@@ -32,10 +32,14 @@ export interface Eip1193Provider {
 /** What the request interface reads from. The DeRPC wiring provides it; tests provide fixtures. */
 export interface ReadBackend {
   chainId: number;
+  /** Capture authorization at request entry, before asynchronous header startup can change it. */
+  requestSignal?(): AbortSignal;
   /** Resolves once verified headers exist (waits for initialization); rejects if they never will. */
   headers(): Promise<{ finalized(): VerifiedHeader }>;
   /** Resolves with the gated, pooled verified reader; rejects when reads can't happen (no operators, failed transport…). */
   reader(): Promise<VerifiedReader>;
+  /** Present only for an explicit local-execution opt-in; never sends remote eth_call. */
+  verifiedCall?(input: { to: Hex; data?: Hex; from?: Hex; gas?: bigint }): Promise<VerifiedValue<Hex>>;
 }
 
 /** Methods DeRPC answers. Every value read from the chain is proven at the verified finalized block. */
@@ -76,14 +80,15 @@ export function createEip1193Provider(backend: ReadBackend): {
 } {
   const listeners = new Map<ProviderEvent, Set<(...args: any[]) => void>>();
 
-  async function dispatch(method: string, params: readonly unknown[]): Promise<unknown> {
+  async function dispatch(method: string, params: readonly unknown[], signal?: AbortSignal): Promise<unknown> {
+    signal?.throwIfAborted();
     switch (method) {
       case "eth_chainId":
         return `0x${backend.chainId.toString(16)}`;
       case "net_version":
         return String(backend.chainId);
       case "eth_accounts":
-        return []; // read-only: DeRPC holds no keys
+        return []; // the read provider never exposes host-side payment signing keys
       case "eth_blockNumber": {
         const headers = await backend.headers();
         return `0x${headers.finalized().blockNumber.toString(16)}`;
@@ -92,7 +97,7 @@ export function createEip1193Provider(backend: ReadBackend): {
       case "eth_getTransactionCount":
       case "eth_getCode": {
         const address = addressParam(params[0]);
-        const read = await prepare(params[1]);
+        const read = await prepare(params[1], signal);
         if (method === "eth_getCode") return read((r) => r.getCode(address));
         const value = await read((r) => (method === "eth_getBalance" ? r.getBalance(address) : r.getTransactionCount(address)));
         return `0x${value.toString(16)}`;
@@ -100,9 +105,29 @@ export function createEip1193Provider(backend: ReadBackend): {
       case "eth_getStorageAt": {
         const address = addressParam(params[0]);
         const slot = slotParam(params[1]);
-        const read = await prepare(params[2]);
+        const read = await prepare(params[2], signal);
         const value = await read((r) => r.getStorageAt(address, slot));
         return `0x${value.toString(16).padStart(64, "0")}`;
+      }
+      case "eth_call": {
+        if (!backend.verifiedCall) throw new ProviderRpcError(4200, "eth_call results carry no proof: enable local verified execution explicitly before using this method");
+        if (params.length > 2 || !params[0] || typeof params[0] !== "object" || Array.isArray(params[0])) throw new ProviderRpcError(-32602, "expected a call object and finalized block selector, with no state overrides");
+        const input = params[0] as Record<string, unknown>;
+        if (Object.keys(input).some(key => !["to", "from", "data", "input", "gas"].includes(key))) throw new ProviderRpcError(-32602, "verified calls accept only to, from, data/input and gas");
+        if (input.data !== undefined && input.input !== undefined && input.data !== input.input) throw new ProviderRpcError(-32602, "data and input disagree");
+        const data = input.data ?? input.input ?? "0x";
+        if (typeof data !== "string" || !/^0x(?:[\da-fA-F]{2})*$/.test(data)) throw new ProviderRpcError(-32602, "expected hex call data");
+        if (input.gas !== undefined && (typeof input.gas !== "string" || !QUANTITY.test(input.gas))) throw new ProviderRpcError(-32602, "expected hex gas quantity");
+        const to = addressParam(input.to);
+        const from = input.from === undefined ? undefined : addressParam(input.from);
+        const want = blockSelector(params[1]);
+        const headers = await backend.headers();
+        signal?.throwIfAborted();
+        if (want) checkBlock(want, headers.finalized());
+        const result = await backend.verifiedCall({ to, from, data: data as Hex, gas: input.gas === undefined ? undefined : BigInt(input.gas as string) });
+        signal?.throwIfAborted();
+        if (want) checkBlock(want, result.block);
+        return result.value;
       }
       default:
         throw new ProviderRpcError(
@@ -115,14 +140,18 @@ export function createEip1193Provider(backend: ReadBackend): {
   }
 
   /** Check the block parameter against the verified block, then return a reader bound to it. */
-  async function prepare(blockParam: unknown) {
+  async function prepare(blockParam: unknown, signal?: AbortSignal) {
     const headers = await backend.headers();
+    signal?.throwIfAborted();
     const want = blockSelector(blockParam);
     const current = headers.finalized();
     if (want) checkBlock(want, current);
     const reader = await backend.reader();
+    signal?.throwIfAborted();
     return async <T>(fn: (r: VerifiedReader) => Promise<VerifiedValue<T>>): Promise<T> => {
+      signal?.throwIfAborted();
       const result = await fn(reader);
+      signal?.throwIfAborted();
       if (want) checkBlock(want, result.block); // the verified block may have moved on meanwhile
       return result.value;
     };
@@ -132,7 +161,10 @@ export function createEip1193Provider(backend: ReadBackend): {
     async request(args) {
       const params = Array.isArray(args.params) ? args.params : [];
       try {
-        return await dispatch(args.method, params);
+        const needsOperator = ["eth_getBalance", "eth_getTransactionCount", "eth_getCode", "eth_getStorageAt", "eth_call"].includes(args.method);
+        const signal = needsOperator ? backend.requestSignal?.() : undefined;
+        const result = dispatch(args.method, params, signal);
+        return await (signal ? withinSignal(result, signal) : result);
       } catch (error) {
         throw toProviderError(error);
       }
@@ -160,6 +192,16 @@ export function createEip1193Provider(backend: ReadBackend): {
       }
     },
   };
+}
+
+/** Stop waiting promptly; dispatch also checks before starting any work after a cancelled await. */
+function withinSignal<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    if (signal.aborted) { work.catch(() => {}); reject(signal.reason); return; }
+    const abort = () => reject(signal.reason);
+    signal.addEventListener("abort", abort, { once: true });
+    work.then(value => { signal.removeEventListener("abort", abort); resolve(value); }, error => { signal.removeEventListener("abort", abort); reject(error); });
+  });
 }
 
 type BlockSelector = { number: number } | { hash: string } | undefined;
@@ -205,6 +247,8 @@ function toProviderError(error: unknown): ProviderRpcError {
   const name = error instanceof Error ? error.name : "Error";
   const message = error instanceof Error ? error.message : String(error);
   if (error instanceof TransportUnavailableError) return new ProviderRpcError(4900, message, { reason: name });
+  if (name === "InputError") return new ProviderRpcError(-32602, message, { reason: name });
+  if (["ExecutionLimitError", "UnsupportedExecutionError", "CallRevertedError"].includes(name)) return new ProviderRpcError(-32002, message, { reason: name });
   if (REFUSALS.has(name)) return new ProviderRpcError(-32002, message, { reason: name });
   return new ProviderRpcError(-32603, message, { reason: name });
 }

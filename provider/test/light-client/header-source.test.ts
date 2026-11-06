@@ -79,9 +79,17 @@ describe("startVerifiedHeaderSource", () => {
 
     const header = source.finalized();
 
+    expect(header.network).toBe("mainnet");
     expect(header.blockNumber).toBe(EXPECTED.blockNumber);
     expect(header.blockHash).toBe(EXPECTED.blockHash);
     expect(header.stateRoot).toBe(EXPECTED.stateRoot);
+    expect(header.execution).toEqual({
+      feeRecipient: bootstrapHeader.execution.fee_recipient,
+      prevRandao: bootstrapHeader.execution.prev_randao,
+      gasLimit: BigInt(bootstrapHeader.execution.gas_limit),
+      baseFeePerGas: BigInt(bootstrapHeader.execution.base_fee_per_gas),
+      excessBlobGas: BigInt(bootstrapHeader.execution.excess_blob_gas),
+    });
     expect(source.pollHealth()).toEqual({ consecutiveFailures: 0 });
     expect(() => source!.assertFresh(header)).not.toThrow();
   });
