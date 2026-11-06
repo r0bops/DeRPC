@@ -6,6 +6,7 @@ import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import type { DelegationState, DelegationStore } from "./delegation.ts";
 import { decodeStoreValue, encodeStoreValue, MAX_STATE_BYTES, validateState, validateTransition } from "./node-codec.ts";
+export { serveDelegationCoordinator, serveSponsoredCoordinator, type CoordinatorServerOptions } from "./coordinator.ts";
 
 /**
  * Durable single-writer store for a Linux Node 24 sponsor. Requires util-linux `flock`.
