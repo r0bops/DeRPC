@@ -7,7 +7,8 @@
     "compile": "node scripts/compile.mjs",
     "test": "vitest run",
     "deploy:payment": "node scripts/payment-deploy.mjs",
-    "measure:payment": "node scripts/payment-deploy-measure.mjs"
+    "measure:payment": "node scripts/payment-deploy-measure.mjs",
+    "review:payment": "node scripts/payment-wallet.mjs"
   },
   "devDependencies": {
     "ganache": "7.9.2",
