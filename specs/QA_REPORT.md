@@ -1,8 +1,32 @@
 # Project QA — November 6, 2026
 
-The default automated suite and the live local-gateway verified-read/failover/shutdown flow pass, but this review does **not** clear the public release gate. The built release could not connect through the public demonstration gateway in a fresh Firefox session. The initial review reproduced seven medium-priority defects and two lower-priority configuration issues; the parallel follow-up below records their local corrections. Payments remain off and independent-operator ENS onboarding remains deferred, as specified in [CONTEXT.md](CONTEXT.md).
+This report records dated QA snapshots. The latest branch integration below passed the combined automated suite and a fresh public-gateway verified-read/shutdown check. Earlier failures and their narrower historical conclusions remain recorded in their own sections. Payments remain off and independent-operator ENS onboarding remains deferred, as specified in [CONTEXT.md](CONTEXT.md).
 
 The initial review covers the working tree based on `cccee83`, including the pending provider, frontend, contracts, payments, wrapper and website changes. A SHA-256 inventory of 253 source/document files was unchanged between the start and end of that review, before adding this report. Node 24.16.0 and pnpm 11.22.0 were used. That review left implementation files unchanged; the subsequently authorized fixes are recorded separately below. Neither exercise constitutes an independent security audit.
+
+## Reviewed branch integration — November 6, 21:52 UTC
+
+The six divergent branch heads were reviewed against main `c183ecd86a9f906fcf0983c518d6441e98ad851b` in an isolated checkout. Useful changes were reconciled in scoped commits before recording the branch ancestry; older implementations already superseded by main were retained as history, not restored over the current code. The shared checkout's separate deployment changes were not included.
+
+| Branch | Resolution |
+| --- | --- |
+| `provider-fixes` (`27ee186e`) | Port cache isolation, network failure attribution, EIP-1898 selector validation, readonly inputs and asynchronous validation; retain newer ENS, multi-endpoint, routing and payment guards. |
+| `gateway-check` (`ffacc2e7`) | Retain the existing main release checks, which include stronger certificate and fallback validation. |
+| `threat-model` (`bce3557b`) | Retain the broader current threat model and implemented local EVM scope; update committee evidence instead of restoring older claims. |
+| `web-directory` (`f0f5aba4`) | Retain the current site; correct the selected-operator example, favicon path and multi-endpoint capability wording. |
+| `issue-review-fixes` (`db0fb002`) | Port portable gateway detection with local-port negative cases, and qualify benchmark, call-access-pattern and payee claims. |
+| `front-presentation` (`ee500fb9`) | Port slow-start diagnostics and attempted-request counts. Keep bounded ResourceTiming observations separate; never calculate an anonymity percentage from incompatible/incomplete counts. |
+
+Validation of the combined implementation:
+
+- **1,050 default tests passed:** provider 602, frontend 257, contracts 65, payments 68, wrapper 58. Five opt-in ENS fork tests remain skipped in this default run. The final syntax-only compatibility change additionally passed 48 provider regressions. Initial restricted runs that could not spawn child processes or bind loopback ports were rerun with that access; they were environment failures, not hidden product failures.
+- All five package typechecks passed. The web and frontend production builds and assembled-site offline checks passed. Existing bundle-size warnings remain; building an artifact does not publish it.
+- [Six integrated Firefox cases](../frontend/test/direct-connections-firefox-integration-evidence-2026-11-06.json) passed on the actual main and network-check pages: normal/private warm caches, cleared timing buffers and unavailable timing APIs. An independent HTTP observer confirmed cached responses and one fixture-server hit. The UI transport is deliberately stubbed, so this is diagnostic behavior evidence, not a Tor claim. [The earlier #19 evidence](../frontend/test/direct-connections-firefox-evidence-2026-11-06.json) is preserved with its historical source hashes.
+- [Fresh integrated live Firefox evidence](../provider/test/light-client/period-1904-integration-evidence-2026-11-06.json) passed through the existing public gateway at 21:51 UTC: period-1904 committee verification, worker pin and balance proof at finalized block **26358539**, no direct RPC/beacon requests, no page errors, no calls after close and no remaining worker iframe. All 38 recorded source/runtime hashes were unchanged. The original checkpoint and production timeouts were preserved; forced updates remained disabled. [The original 19:54 cold start](../provider/test/light-client/period-1904-evidence-2026-11-06.json) remains separately recorded.
+
+The integration review also caught and fixed failed-circuit reuse across logical reads, terminal startup errors swallowed by the upstream client, loss of total-budget diagnostics, and a TypeScript syntax compatibility issue in transitive payment imports. Network failures renew isolation keys without cooldown or ranking penalties; cached result/header mutations cannot change future verified answers. Payment completion remains terminal and no direct fallback was added.
+
+The CI workflow checks and packages pushes/PRs. Site publication remains a manual workflow, and ENS transactions are separate. This branch integration does not deploy a site, activate payments, establish independent operator enrollment or complete an external security review.
 
 ## Local release completion — November 6, 16:12 UTC
 

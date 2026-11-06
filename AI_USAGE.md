@@ -19,6 +19,8 @@ Tools used:
 
 ---
 
+The team subsequently authorized branch reconciliation and merging into `main` through a reviewed integration branch. This authorization is separate from site publication and production deployment.
+
 ## Authored by humans, no AI assistance
 
 *Pending. The team fills this in.*
@@ -49,6 +51,7 @@ Tools used:
   - OpenAI Codex documented the M1-B code/fork/browser checkpoint, authenticated owner continuity, unsigned onboarding fragments, imported lifecycle-evidence limits and general ENS resolution, preserving the independent-enrollment, hosted-gateway and later payment gates.
   - OpenAI Codex documented the full-project QA results, reproduced defects and remaining live-release gates in `specs/QA_REPORT.md`, distinguishing automated checks, injected failure reproductions and live browser observations.
   - OpenAI Codex recorded the team's mainnet-alpha iteration decision and subsequent ENS/IPFS hosting correction, documented IPFS packaging and same-VPS pinning/gateway operation, and separated historical hosted asset checks from anonymous startup and pending on-chain website/operator updates in the context, roadmap and operations notes.
+  - OpenAI Codex documented Firefox private-window diagnostics, the authenticated period-1904 cold start and branch reconciliation, keeping historical source hashes and deployment limits explicit.
 - **Human role:**
   - Supplied the source material: prize pages, event rules, the EF mentor's feedback and the planning conversations.
   - Made the decisions:

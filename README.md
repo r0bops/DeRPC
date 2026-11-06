@@ -158,7 +158,7 @@ Provider errors use `4200` for unsupported methods, `-32602` for invalid inputs/
 2. **Authenticate the state root.** A host-side Lodestar light client verifies sync-committee updates from a trusted checkpoint. Beacon requests go through the worker, including polling for updates; no direct event stream is opened.
 3. **Verify the worker pin.** Through the selected operators, DeRPC proves the specifier contract's `workerHash` storage and compares it with the local pin before serving account, code or storage reads.
 4. **Verify each answer.** The host checks EIP-1186 account/storage proofs against the authenticated state root and checks bytecode against its proven hash. Verification stays outside the untrusted worker.
-5. **Handle failures locally.** Manual pools use priority tiers; automatic pools use the selected local routing policy. Both exclude endpoints whose proofs fail, give transient failures a cooldown and retry sequentially within attempt and time limits. Exclusions last for the running provider instance, not a global ban. Optional paid reads reserve bounded credit before requests and sign vouchers only after verification; a completion/signing failure cannot trigger payment to another operator through a retry.
+5. **Handle failures locally.** Manual pools use priority tiers; automatic pools use the selected local routing policy. Both exclude endpoints whose proofs fail, give endpoint failures a cooldown and retry sequentially within attempt and time limits. Anonymity-network failures renew the route without penalizing endpoint health. Exclusions last for the running provider instance, not a global ban. Optional paid reads reserve bounded credit before requests and sign vouchers only after verification; a completion/signing failure cannot trigger payment to another operator through a retry.
 
 DeRPC supplies the pool, proof verifier, pin gate, transport adapters, provider API and demo. It reuses the [Anon-RPC browser harness](https://github.com/ethereum/anon-rpc), [tor-js](https://github.com/ethereum/tor-js), [Lodestar](https://github.com/ChainSafe/lodestar) and [viem](https://github.com/wevm/viem). The workspace pins harness 0.4.0, tor-js 0.4.4, Lodestar 1.43.0 and viem 2.57.8.
 
@@ -170,13 +170,13 @@ As of **November 6, 2026**, the core provider, dashboard, wrapper, contracts and
 
 | Area | Remaining work |
 |---|---|
-| Free public release | Reliable public gateway and all-onion path, fresh-browser hosted checks, a recent trusted checkpoint and live cold-start validation across a committee period. |
+| Free public release | Reliable public gateway and all-onion path, fresh-browser hosted checks, a recent trusted checkpoint. The local period-1904 cold start [passed November 6](provider/test/light-client/period-1904-evidence-2026-11-06.json). |
 | ENS lifecycle: M1-A | Two independent operators with real registrations, proven discovery, restricted rotation and delisting observed after finalized refresh. Bounded snapshot validity and unsigned lifecycle tooling are current integration work; they do not establish a live deployment. |
 | Multiple endpoints: M1-B | Separate operator and endpoint identities, endpoint-level failover and several endpoints under one ENS name without increasing that operator's selection weight. Both M1-A and M1-B are required for [M1 completion](specs/ENS_TOR_MILESTONE.md). |
 | Payments, after the free release | Public funding/read/settlement/refund demonstration, deployment of a configured app coordinator and external readiness reviews. The Hoodi escrow deployment alone does not satisfy these gates. |
 | Later economics | Specify and implement operator/node staking, traffic measurement, stake adjustment and accountability. Query escrow is not a staking contract. |
 
-Startup recovery (#34) and outage reporting (#35) are closed implementation issues; their regression checks remain relevant to the public release.
+The reviewed branch fixes for startup recovery (#34), outage attribution (#35), cache isolation (#38) and block selectors (#39) are integrated with the newer ENS and payment code. [QA evidence](specs/QA_REPORT.md) distinguishes offline tests, Firefox diagnostics and live committee verification; these checks do not publish a new release.
 
 For operating a service, start with the [wrapper runbook](wrapper/README.md). Use the [contract guide](contracts/README.md) for ENS and escrow administration, and the [sponsored-read guide](payments/examples/README.md) for app-funded requests. The latter requires an application-supplied authenticated header/funding source and protected coordinator; it does not establish a conforming anonymous Node runtime.
 

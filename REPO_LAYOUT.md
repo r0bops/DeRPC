@@ -107,7 +107,7 @@ frontend/
 ├── package.json        — Vite 8.3.5, TypeScript 5.9.3, viem 2.57.8, self-hosted Inter
 ├── vite.config.ts      — relative asset paths, public-gateway release checks, three pages and dev-only call logging
 ├── build/gateways.ts   — gateway address validation and release-output scanning
-├── test/              — safe rendering, ENS/payment controls, wallet chain binding and release-gateway tests
+├── test/              — safe rendering, ENS/payment controls, wallet chain binding, release-gateway tests and normal/private Firefox resource-timing regressions with dated evidence
 ├── index.html          — the demo: start-up status, operator choice, verified reads, live operators, direct connections
 ├── example.html        — the smallest integrator example
 ├── network-check.html  — diagnostics for the anonymous path: Tor exits, proofs from every endpoint, beacon data
