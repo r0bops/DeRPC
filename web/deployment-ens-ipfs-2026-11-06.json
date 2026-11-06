@@ -1,23 +1,21 @@
 {
   "schemaVersion": 1,
   "kind": "derpc-ens-ipfs-release",
-  "preparedAt": "2026-11-06T19:10:21.753792+00:00",
-  "status": "prepared-not-published",
+  "preparedAt": "2026-11-06T20:17:01.579391+00:00",
+  "status": "published-and-https-verified",
   "ensName": "derpc.eth",
   "targetUrl": "https://derpc.eth.limo/",
   "dashboardUrl": "https://derpc.eth.limo/demo/",
   "artifact": {
-    "cid": "bafybeihuaqdmtdjlu3rcucz2b7qho4flteohpy2zdmttk3nlnkosem4gqa",
-    "contentUri": "ipfs://bafybeihuaqdmtdjlu3rcucz2b7qho4flteohpy2zdmttk3nlnkosem4gqa",
-    "contenthash": "0xe30101701220f40406c98d2ba6e22a0b3a0fe07770ab991c77e3591b27356dab6a9d22338680",
-    "carSha256": "80f74fa693c73370c7c3e63959698bdc20a24136b76c264e400e96e60de6170e",
-    "carBytes": 2353593,
-    "tarSha256": "535638166f16d743c00d3357ec8e29f4153e8832903b2dd9f7a7ecee01770e5f"
+    "cid": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me",
+    "contentUri": "ipfs://bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me",
+    "contenthash": "0xe301017012206a936b3a8bede09082aedf768c2efb6b802f3a2d9045f42bd463a9c5c9575c61",
+    "carBytes": 2363231,
+    "carSha256": "e52b08262dd1e5c4a4dbece7b0c280d83c7d32bff5daa769b00bcf90fc796359"
   },
   "files": {
-    "car": "web/out/ens-ipfs-2026-11-06/site.car",
-    "staticArchive": "web/out/ens-ipfs-2026-11-06/site.tar.gz",
-    "site": "web/out/ens-ipfs-2026-11-06/site"
+    "car": "web/out/ens-ipfs-vps-only-2026-11-06/site.car",
+    "site": "web/out/ens-ipfs-vps-only-2026-11-06/site"
   },
   "packaging": {
     "kuboVersion": "0.43.1",
@@ -35,62 +33,56 @@
       "filesChecked": 55,
       "checkpoint": {
         "epoch": 487173,
-        "ageHours": 26,
+        "ageHours": 27,
         "expiresAt": "2026-11-12T17:07:35.000Z"
       },
       "gatewayCount": 1,
       "errors": [],
-      "warnings": [
-        {
-          "check": "demo-gateway",
-          "message": "Only the demonstration gateway is configured; reliable public gateway availability remains unverified."
-        }
-      ],
+      "warnings": [],
       "limits": [
         "Offline checks do not establish gateway reachability, hosted browser behavior, committee-transition sync, or the quality of release documentation.",
         "Payment validation checks initial built HTML only; run the existing frontend UI tests for runtime behavior.",
         "Secret checks detect known literal patterns, not arbitrary secrets; matched values and local secret files are never printed."
       ]
     },
-    "roundtrip": {
-      "freshRepositoryCarImport": true,
+    "frontendTests": 239,
+    "frontendTypecheck": true,
+    "siteBuild": true,
+    "publicIpfsRetrieval": {
+      "ok": true,
       "filesChecked": 55,
-      "allSha256Match": true,
-      "contenthashMatchesKuboBase16Cid": true,
-      "publiclyPinned": false,
-      "daemonStarted": false
+      "method": "Fresh online IPFS node, DHT discovery and Bitswap; no CAR import or manual peer connection; all SHA-256 hashes match.",
+      "evidence": "web/deployment-vps-2026-11-06.json"
+    },
+    "browser": {
+      "evidence": "frontend/test/ens-hosted-firefox-evidence-2026-11-06.json",
+      "scope": "Fresh Firefox loading https://derpc.eth.limo with real public VPS Tor transport.",
+      "ok": true,
+      "gatesPassed": 17,
+      "finishedAt": "2026-11-06T20:32:52.980Z",
+      "externalHttpRequests": 0,
+      "publicEnsHttpsChecked": true
+    },
+    "httpsAssets": {
+      "ok": true,
+      "filesChecked": 55,
+      "evidence": "web/ens-website-publication-2026-11-06.json"
     }
   },
   "ensAdministrativePreflight": {
-    "chainId": 1,
-    "checkedAt": "2026-11-06T19:06:50.762Z",
-    "blockNumber": "26357793",
-    "blockHash": "0x9ac4b9c9f4f3f44399a3f6016f252a53261890907ce3994bf8aa4e9768334a21",
-    "parent": {
-      "name": "derpc.eth",
-      "registry": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
-      "status": 2,
-      "expiry": "1825433555",
-      "latestOwner": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
-      "tokenId": "86421749974462203513281326918437045380435208352249783119946164121359903358976",
-      "resource": "86421749974462203513281326918437045380435208352249783119946164121359903358976",
-      "subregistry": "0x0000000000000000000000000000000000000000",
-      "resolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59"
-    },
-    "website": {
-      "resolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59",
-      "implementation": "0x565b0F456a04Ac9b48758190e90030623Cff57C5",
-      "recordId": "1",
-      "defaultRecordId": "0",
-      "canSetContenthash": true,
-      "currentContenthash": "0x",
-      "qualification": "Administrative observations only; no contenthash transaction prepared or sent, and shared record links have not been audited."
-    },
-    "trust": "Read-only administrative RPC observations; not light-client verified. No transactions sent."
+    "blockNumber": "26358109",
+    "unsignedTransaction": "web/ens-website-transaction-2026-11-06.json",
+    "sharedRecordAudit": "web/ens-website-link-audit-2026-11-06.json",
+    "onlyDirectLinkedName": "derpc.eth",
+    "currentContenthash": "0x",
+    "transactionSent": true,
+    "ownerCanSetContenthash": true,
+    "existingAdditionalAdministrator": "0x00c2d95c074A772468657b39D0d4768648147e9d",
+    "transactionHash": "0xc68829ea02c0be675c8c187c4bc20a48cea9ab70e9d179994668c5c36a982bd9"
   },
   "assetsSha256": {
-    "assets/index-Dbcw4-37.css": "e63fbf905135f8f06e0e7ec46be224a49219f6b622550ba3475998c0468115e1",
-    "assets/index-DiOxYHfP.js": "5010f90ae1d924e4a0deb8088b492de26e5c6ed21da023e662ad469e54b80423",
+    "assets/index-Dp5B9GpU.css": "6ff5520d09abcb49f5a927acd756bcce7c649bb6265b6d67afcef96ecf827475",
+    "assets/index-SDb7JX1G.js": "aaae4de17da58c8368c38d4596f5f20069f33f7582602e8216605b0719ac563d",
     "assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2": "ca157063339ac4ad418f214f3abfed119b0798ab4d377386ce5c9e5a7a435ebd",
     "assets/inter-cyrillic-wght-normal-DqGufNeO.woff2": "71d5ee93cc1e9f1d520a3a8b66456de18c7879d8df09d57fcd2eaff75fef0075",
     "assets/inter-greek-ext-wght-normal-DlzME5K_.woff2": "6e9e020a25f9b56d418f2c085b1d3c09725a4da23fe693a5b463064606732190",
@@ -101,9 +93,9 @@
     "demo/assets/__vite-browser-external-TtGlo6oh.js": "099e4922cd21d73ac303cc0a95f5fac5b316fe370e881f20a9bb741419ad71db",
     "demo/assets/address-CYA4zBVK.js": "01be126d4c343d659d31ae642044335a6542cf346449bfd2670c84710da0c7a3",
     "demo/assets/ccip-B6i2UnlS.js": "a9a1a3280e8ef7cf64d7649fd879226c1116c4444f392d5edd295648da09c971",
-    "demo/assets/check-CgZLuWqt.js": "9d41916994e69de3eda3b40794a615ce55ad8815eb0e44cb4387c057e0dce38e",
+    "demo/assets/check-BaMk2yfm.js": "aca460a618f371efb9e6855b71fe4af40c268750cb608351b24c1309e610d012",
     "demo/assets/decodeFunctionResult-DcsPYciO.js": "39a1e729decad2aa8ad038e86824e3baaf68f98f91fda2624427bd2e04ae75c4",
-    "demo/assets/demo-DVGpmagF.js": "266948ecbc04ce45be8db0b5682c737c2c254659b976325db2fe44bf5fc66d2c",
+    "demo/assets/demo-El2EPWdN.js": "78141cd98465b02bc2ee6f56f19b1c52065318e5c15f6b2a6888d8f5bf2ea396",
     "demo/assets/derpc-lockup-CiJcctT3.svg": "41d1a1d0d07fa4cfded5584974ddaf7cc3023778771355a6c384e4a6df16fac2",
     "demo/assets/direct-connections-DJicyUPm.js": "c5402aa66508d977b92108bf537ca9f977ca0573090f5e8502c20fafb024d09f",
     "demo/assets/dist-CM5luU_N.js": "a5350ba64490fc6f21762251b8509a52e509b4274e243d0d5c8479d991b3027f",
@@ -112,7 +104,7 @@
     "demo/assets/endpoints-CRJPe_u7.js": "947536fe80808ebadf8433a7e9d10eb997c21d8cecbd56ef8acd497b79740dc1",
     "demo/assets/ens-BfwB4lmD.js": "21b2c4c23982ad0a2add3400944317d9897bbc2aec8cc990be2fd9668928c5cd",
     "demo/assets/eventsource-BTw0nsCP.js": "ab05beb0e920adb4fcbbc45949f6d0c0e9eb22ee451c2a21cd5ad9e89a62fad8",
-    "demo/assets/example-CorsWtPk.js": "66c1f2e575d4f472788649154e63266acb4271c05d8669b30fbbe5d2b49c4858",
+    "demo/assets/example-DuEpxmrs.js": "c27e0a59d637e49cf145bde718fde6afab33c5b90455ff23bd0a653fb57f661c",
     "demo/assets/execution-DoFCxzZj.js": "e8b4f3715df3110f0c655772e54efa465a2a4bae3c70e6f5996de1294480f5f7",
     "demo/assets/favicon-Try9hxE_.svg": "840c5ef0525701709f7875c667d95ae39f264eae5b0377aac28de3bed8d9f722",
     "demo/assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2": "ca157063339ac4ad418f214f3abfed119b0798ab4d377386ce5c9e5a7a435ebd",
@@ -123,7 +115,7 @@
     "demo/assets/inter-latin-wght-normal-Dx4kXJAl.woff2": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
     "demo/assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2": "5c66f9e07e90c6d4ac4922cc68d60de26c17b1858e677fb5e603fce3952b3ff2",
     "demo/assets/localBatchGatewayRequest-BJhp8X5H.js": "3c2c414c560db5a89fc291d475c822829258b4f6ef41ba6eaa0b2e7d8a1b573b",
-    "demo/assets/mainnet-C__FAjZU.js": "5676f1cf109ea32f070e8a9c24a2ab361fb340117a0301adc9be54e250318fe7",
+    "demo/assets/mainnet-BJbUCflL.js": "2749a760880c9530645472f27f9f09c09564fa02e0c95123ebe8cb75bc8b10ad",
     "demo/assets/preload-helper-CRzLMJPS.js": "bcc465e3e61dc3878a69ffa95ccb53cb82d95b1639ada223420b281ebd150048",
     "demo/assets/reader-BwyP6nOv.js": "967bb5f304a13a068a90787a38d8c7518866b863760b1b1afa2226a8a1ea363c",
     "demo/assets/rolldown-runtime-XKyaHtl9.js": "548d1dbf321e7d2ae804fcc158b588706a7c52f8ca175de1490c6ccb4dbe55b7",
@@ -131,36 +123,46 @@
     "demo/assets/secp256k1-DTgEC2Fy.js": "49404a8b0a98f9a7f2d81e667a8b1f777e0176ef13f82014f0e260099894aa21",
     "demo/assets/sha2-CsZgHejA.js": "21bf6ca4a29d1a03c1799f3c110180c7b2c0413a798c8246784c68b31351cd28",
     "demo/assets/sha3-CixuFzsY.js": "9b0af5805db52a230efc35c7a5dbf6fda63fafb7334a7fed275b3b9bf1a75b90",
-    "demo/assets/src-B3evyxQH.js": "7688fbb1dfa73010c4cdfb0ece01658e2a0117f1b0deb547b24bbc6d507c3e28",
-    "demo/assets/src-C6iovV4-.css": "1417084a6324a204d0f61c9e10e2920e58a06901f985368d2280bbaca43dcec8",
+    "demo/assets/src-B3Gfg644.css": "03efb6f9fc8e7192f1d2cfb403f6a09455b2f038195ac6f79e0e887f5f05dd60",
+    "demo/assets/src-C6_sT36k.js": "7688fbb1dfa73010c4cdfb0ece01658e2a0117f1b0deb547b24bbc6d507c3e28",
     "demo/assets/utils-Bpv4vmSW.js": "5114638bb111b647e478a947be5beed5558487685dc8284144566df3fc03d851",
     "demo/assets/verified-call-BqdT1oAO.js": "c1727c52ceff3b05bcaab76f4a558981552b5357a921cb7392d3f21c5077ce17",
     "demo/assets/verified-ens-CnwdsgS6.js": "3db0a724e4ae7a76216a381eec114c48bc0377c394710b07d4ba8206bb3943b1",
     "demo/assets/verify-BrqvWFSp.js": "21d531bb2f3f321606e6022e8129ea2933cf9586bf565cf7d1b5efc81d872566",
-    "demo/example.html": "daab7dd7cbc8113466a38bfbdc35207c022f6c48eb649e9ae583089aa95a66d4",
-    "demo/index.html": "0d19df4a557a8e20fefa885f5948605d561aefeff5b658fb0e9abf0d9c41c374",
-    "demo/network-check.html": "c6368c4654d3f59ae5befbca40856070bc69824cd1175c95214a6b6e23d308f1",
+    "demo/example.html": "b70c9c03916b42afeba48c1636e47b73375be955551828b9e780b83aabb80eea",
+    "demo/index.html": "ddbe3ee98293ad60504d4deaa400ddf57bad48fbd7b58ccf6cf89d3e443ff8ff",
+    "demo/network-check.html": "a65b164781253daf76769ee31f22eb46a2101ca6f754c97008e58bd4399d9e04",
     "derpc-lockup.svg": "41d1a1d0d07fa4cfded5584974ddaf7cc3023778771355a6c384e4a6df16fac2",
     "derpc-logo-512.png": "e5c8bcbe8b67cdbdcc9500dbc214564a74cbac5ed7950229e8446544e94a5c8a",
     "favicon.svg": "840c5ef0525701709f7875c667d95ae39f264eae5b0377aac28de3bed8d9f722",
-    "index.html": "489a6fce63a314dc35cb5c2302eab5749e3780b46829339a7d5faf622198656e"
+    "index.html": "ad22879af105fac6421b31e807a6ea02f3cdafdf1eac47dfe2cfa40b2a56e2a7"
   },
   "compiledGateways": [
-    "152.236.3.22:12298:uEiCH0VdbhryzJcMtCfB0vLA4sOvHdQ4hq5w7CopcwU59bQ"
+    "45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg"
   ],
+  "supersededPreparedRelease": {
+    "cid": "bafybeihuaqdmtdjlu3rcucz2b7qho4flteohpy2zdmttk3nlnkosem4gqa",
+    "contenthash": "0xe30101701220f40406c98d2ba6e22a0b3a0fe07770ab991c77e3591b27356dab6a9d22338680",
+    "carSha256": "80f74fa693c73370c7c3e63959698bdc20a24136b76c264e400e96e60de6170e",
+    "status": "Offline preparation only; not published in ENS."
+  },
   "pending": [
-    "Persistent public IPFS pin and retrieval of the expected asset bytes.",
-    "VPS details for the team Tor gateway; rebuild/repackage with its advertised public address.",
-    "Check resolver record sharing before preparing a name-scoped contenthash update.",
-    "Owner-signed mainnet contenthash update, receipt/readback and eth.limo browser validation.",
-    "Hosted verified reads and failure cases through the working public anonymous path."
+    "Independent ENS operator enrollment and payments remain deferred.",
+    "Refresh the pinned checkpoint before its November 12 startup expiry."
   ],
   "limits": [
-    "A CAR root pinned in isolated local repositories is not a durable public pin.",
-    "This package retains the demonstration gateway, whose prior hosted startup failed in this network.",
-    "Changing the gateway or any other built asset changes the CID and contenthash.",
-    "No ENS transaction was sent; no wallet or private key was accessed.",
-    "Prior Vercel deployments were removed; the separate historical evidence file records their earlier checks.",
-    "The package uses the frozen 55-file build validated before the hosting correction; later working-tree edits require rebuilding and a new CID."
-  ]
+    "ipfs.io and dweb.link returned HTTP429 with a service-worker migration notice; Pinata and inbrowser.link returned403. ipfs2.eth.limo CID preview resolved to0.0.0.0 from both tested hosts.",
+    "The displayed curated .derpc.eth operator identifiers remain mocks, not publicly enrolled identities.",
+    "The VPS gateway can observe client IPs and is declared an alpha/demo instance.",
+    "The checkpoint startup limit is November12,2026 at17:07:35UTC.",
+    "No paid operation was submitted; the successful ENS website update is recorded separately."
+  ],
+  "publicationEvidence": "web/ens-website-publication-2026-11-06.json",
+  "ipns": {
+    "status": "active-and-https-verified",
+    "contentUri": "ipns://k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc",
+    "evidence": "web/deployment-ipns-2026-11-06.json",
+    "publicationEvidence": "web/ens-ipns-publication-2026-11-06.json",
+    "transactionHash": "0x279ae1501ad3df887e4d470ce8423523e68628a147ff34091fac3248d8c51587"
+  }
 }

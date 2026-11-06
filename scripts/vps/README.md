@@ -68,6 +68,29 @@ The dedicated website IPNS key now has a tested encrypted off-host backup; this
 does not back up the full IPFS repository or the gateway identity. Its stable
 address, renewal settings and recovery steps are in [IPNS.md](IPNS.md).
 
+## Restricted website release access
+
+The GitHub `release-ens.yml` workflow uses a forced SSH command on the IPFS host.
+Install or update it as root with `scripts/vps/install-release.sh` after the gateway
+and IPFS services are installed. The installer preserves `authorized_keys`, the
+current pins and the `derpc-website` IPNS key. It creates an unprivileged
+`derpc-deploy` account and a private receipt/watermark directory at
+`/var/lib/derpc-release`.
+
+Bind only the deploy public key to the forced command in
+`/home/derpc-deploy/.ssh/authorized_keys`:
+
+```text
+restrict,command="/opt/derpc/bin/derpc-pin-car" ssh-ed25519 AAAA... derpc-release
+```
+
+The command accepts a bounded CAR whose root, SHA-256 and source commit match the
+GitHub artifact, plus a narrowly scoped publication request for the fixed IPNS name.
+The workflow key cannot open a shell, change the ENS record or access the IPNS private
+key directly. Set the host, SSH host key, peer ID and matching SSH private key in the
+GitHub `ens-production` environment. The workflow verifies the pinned CID before it
+requests publication. See [release pipeline notes](../../web/README.md#continuous-integration-and-release-pipeline).
+
 ## Publish a release
 
 Build and check the site using the exact public address printed by the gateway.

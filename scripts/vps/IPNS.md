@@ -51,8 +51,12 @@ then compare the website bytes and run the HTTPS browser checks. A timed-out pub
 can have partially succeeded; inspect the signed record before retrying. Do not
 generate a replacement key to solve a network timeout. Caches may keep an older
 version temporarily; the record TTL is five minutes, not a promise of instant
-gateway propagation. The current GitHub workflow pins a CID; it does not yet perform
-this IPNS publication step.
+gateway propagation. The GitHub release workflow now calls the restricted VPS
+handler to publish only after validating the CAR, independently checking the pinned
+CID and confirming the source is still current `main`. The handler retains a durable
+workflow-run watermark and accepts only the fixed website IPNS identity. Use the
+manual commands above for recovery or a deliberately supervised update; do not race
+an active workflow release.
 
 ## Renewal and availability
 
