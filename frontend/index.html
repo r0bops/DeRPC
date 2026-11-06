@@ -3,209 +3,330 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0A0A0F" />
     <title>DeRPC operator dashboard</title>
+    <link rel="icon" href="../web/public/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>
-    <header>
-      <nav class="dashboard-nav" aria-label="DeRPC navigation">
-        <a href="../#/directory" data-product-page="directory">Operator directory</a>
-        <a href="../#/operate" data-product-page="operate">Run an operator</a>
-        <a href="#operator-dashboard">Live checks</a>
-      </nav>
-      <p class="eyebrow">Free demo · Ethereum mainnet</p>
-      <h1>Your operators. Your verified reads.</h1>
-      <p class="muted">
-        Every read goes through Anon-RPC (the tor-js worker) to operators you choose, and is checked against a
-        light client before it is shown. Reads that can't be proven are refused, and nothing ever falls back to a
-        direct connection. No wallet or deposit is needed for free reads. Operators still see the query content.
-        Also: <a href="./example.html">integrator example</a> · <a href="./network-check.html">network check</a>.
-      </p>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="nav">
+      <div class="container nav__inner">
+        <a class="nav__brand" href="../#/" data-product-page="" aria-label="DeRPC home"><span class="brand-lockup"></span></a>
+        <nav class="nav__links" aria-label="DeRPC navigation">
+          <a class="nav__link" href="../#/directory" data-product-page="directory">Directory</a>
+          <a class="nav__link" href="../#/operate" data-product-page="operate">Run an operator</a>
+          <a class="nav__link" href="./index.html" aria-current="page">Dashboard</a>
+          <a class="nav__link" href="https://github.com/r0bops/DeRPC" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+        <span class="nav__spacer"></span>
+        <span class="nav__badge"><span class="ok-dot" aria-hidden="true"></span>Hackathon build</span>
+        <a class="btn btn--ghost btn--small" href="../#/directory" data-product-page="directory">Browse directory</a>
+      </div>
     </header>
 
-    <section>
-      <h2>1 · Start-up</h2>
-      <table>
-        <tbody>
-          <tr><td>Anonymous network</td><td id="worker-status" class="status">starting…</td></tr>
-          <tr><td>Light client</td><td id="lc-status" class="status">waiting for the worker…</td></tr>
-          <tr><td>Verified finalized block</td><td id="lc-header" class="status">—</td></tr>
-          <tr><td>Worker pin</td><td id="pin-status" class="status">waiting…</td></tr>
-        </tbody>
-      </table>
-      <details>
-        <summary>Worker log</summary>
-        <pre id="worker-log"></pre>
-      </details>
+    <section class="boot" aria-label="Start-up checks">
+      <dl class="container boot__grid">
+        <div class="boot__item"><dt>Anonymous network</dt><dd id="worker-status" class="status">starting…</dd></div>
+        <div class="boot__item"><dt>Light client</dt><dd id="lc-status" class="status">waiting for the worker…</dd></div>
+        <div class="boot__item"><dt>Verified finalized block</dt><dd id="lc-header" class="status">—</dd></div>
+        <div class="boot__item"><dt>Worker pin</dt><dd id="pin-status" class="status">waiting…</dd></div>
+      </dl>
     </section>
 
-    <section id="operator-dashboard" aria-labelledby="operator-health-title">
-      <h2 id="operator-health-title">2 · Operator health on this device</h2>
-      <p id="pool-summary" class="dashboard-summary" role="status">No observations yet.</p>
-      <p class="muted">Checks come from reads you choose to send. An untested endpoint stays unobserved.
-        A checked proof establishes that response's correctness; ENS identity and stake do not prove an operator is safe.
-        Checks include bootstrap and directory proofs. Latency is the latest unambiguous verified attempt, including the anonymous route and verification.</p>
-      <div class="table-scroll" role="region" aria-label="Operator health table; scroll horizontally on small screens" tabindex="0">
-        <table class="dashboard-table">
-          <caption class="sr-only">Local operator observations. No global uptime or safety score.</caption>
-          <thead><tr><th scope="col">Operator / choice</th><th scope="col">Observed state</th><th scope="col">Last proof checked</th><th scope="col">Endpoint</th><th scope="col">Identity source</th><th scope="col">Local latency</th><th scope="col">Local failures</th></tr></thead>
-          <tbody id="pool"></tbody>
-        </table>
-      </div>
-      <p class="muted">Scroll the table for endpoint and identity details. Choose operators below to begin. Several endpoints under one operator is planned;
-        they will share one identity, rather than count as independent operators.</p>
-      <details><summary>Read events and rejected responses</summary><ul id="pool-events" class="events"></ul></details>
-    </section>
+    <main id="main" class="page" tabindex="-1">
+      <div class="container">
+        <header>
+          <p class="eyebrow">Free demo · Ethereum mainnet</p>
+          <h1 class="page-title">Your operators. Your verified reads.</h1>
+          <p class="page-lead">
+            Every read goes through Anon-RPC (the tor-js worker) to operators you choose, and is checked against a
+            light client before it is shown. Reads that can't be proven are refused, and nothing ever falls back to a
+            direct connection.
+          </p>
+          <p class="demo-note"><span class="demo-note__square" aria-hidden="true"></span><span>No wallet or deposit is needed for free reads. Operators still see the query content.
+            Also: <a href="./example.html">integrator example</a> · <a href="./network-check.html">network check</a>.</span></p>
+        </header>
 
-    <section>
-      <h2>3 · Choose how reads are routed</h2>
-      <p class="muted">
-        Pick operators manually, or explicitly let DeRPC select from eligible free operators on Ethereum mainnet.
-        Every supported answer still needs a proof. Each account stays with its assigned operator until it fails.
-        The initial list is a bootstrap list with <strong>mock ENS names</strong>. Load the registry below to
-        replace it with real records. Discovery affects who receives a query; supported answers still need proofs.
-      </p>
-      <div class="routing-controls">
-        <div class="field">
-          <label for="routing-mode">Selection strategy</label>
-          <select id="routing-mode" aria-describedby="routing-help">
-            <option value="manual">Manual — only the operators I choose</option>
-            <option value="balanced">Balanced — weigh reliability and latency</option>
-            <option value="fastest">Fastest — prefer lower observed latency</option>
-            <option value="reliable">Reliable — prefer successful verified reads</option>
-          </select>
-          <p id="routing-help" class="muted">Manual uses only checked operators. Changes take effect when you press Apply.</p>
-        </div>
-        <fieldset id="routing-scope" hidden>
-          <legend>Automatic selection can use</legend>
-          <label class="check-label"><input type="radio" id="routing-scope-all" name="routing-scope" value="all" checked /> All eligible free operators in this list</label>
-          <label class="check-label"><input type="radio" id="routing-scope-selected" name="routing-scope" value="selected" /> Only the operators checked below</label>
-          <p class="muted">An empty restricted list stops reads. Paid, personal, expired and unverified ENS entries are excluded.</p>
-        </fieldset>
-        <p id="routing-source" class="muted"></p>
-        <p id="routing-restore" class="warn" role="status"></p>
-        <p id="routing-pending" class="muted" role="status">No changes applied.</p>
-        <p id="routing-error" class="bad" role="alert"></p>
-      </div>
-      <details id="directory-panel">
-        <summary>Load operators from ENS</summary>
-        <p class="muted">The <code>derpc.eth</code> owner curates this list. Choose a bootstrap operator first.
-          Refresh after an operator is removed or its name expires; removed choices stop receiving reads.</p>
-        <form id="directory-form" class="form-grid">
-          <label for="ens-registry">Mainnet ENSv2 .eth registry <span class="muted">(required)</span></label>
-          <input id="ens-registry" type="text" autocomplete="off" spellcheck="false" required placeholder="0x…" />
-          <label for="ens-registrar">DeRPC registrar <span class="muted">(optional)</span></label>
-          <input id="ens-registrar" type="text" autocomplete="off" spellcheck="false" placeholder="0x…" />
-          <label for="ens-code-hash">Trusted registrar runtime hash <span class="muted">(required with registrar)</span></label>
-          <input id="ens-code-hash" type="text" autocomplete="off" spellcheck="false" placeholder="0x…" />
-          <label class="check-label"><input id="ens-verified-records" type="checkbox" /> Prove ENS execution locally (more requests)</label>
-          <div class="controls"><button id="refresh-directory" type="submit">Refresh ENS directory</button></div>
-        </form>
-        <p id="directory-status" class="muted" role="status" aria-live="polite">No registry loaded. Enter the addresses from the deployment record.</p>
-        <ul id="directory-rejected" class="events"></ul>
-      </details>
-      <p id="operator-suggestion" class="muted" role="status"></p>
-      <table>
-        <thead><tr><th></th><th>Name</th><th>Operator</th><th>Endpoint</th><th>Price per verified read</th></tr></thead>
-        <tbody id="operators"></tbody>
-      </table>
-      <div class="controls">
-        <button id="use-operators" disabled>Apply routing</button>
-        <span id="choice-status" class="muted"></span>
-      </div>
-      <details>
-        <summary>Use my own node</summary>
-        <p class="muted">Add the unpublished onion address from your wrapper. The token stays in memory for this page,
-          and your other selected operators are fallbacks. Proofs are still checked. The Tor gateway sees your IP.</p>
-        <form id="personal-form" class="form-grid">
-          <label for="personal-endpoint">Private onion RPC URL</label>
-          <input id="personal-endpoint" type="url" autocomplete="off" spellcheck="false" required placeholder="http://…onion/rpc" />
-          <label for="personal-token">Personal access token</label>
-          <input id="personal-token" type="password" autocomplete="off" spellcheck="false" required aria-describedby="personal-status" />
-          <div class="controls">
-            <button id="add-personal" type="submit">Add my node</button>
-            <button id="remove-personal" type="button" disabled>Remove my node</button>
+        <section id="routing" class="step" aria-labelledby="routing-title">
+          <div class="step__head">
+            <span class="step__num" aria-hidden="true">1</span>
+            <h2 id="routing-title" class="step__title">Choose how reads are routed</h2>
+            <p class="step__hint">
+              Pick operators manually, or explicitly let DeRPC select from eligible free operators on Ethereum mainnet.
+              Every supported answer still needs a proof.
+            </p>
           </div>
-        </form>
-        <p id="personal-status" class="muted" role="status">No personal node added. It is never published in the directory.</p>
-      </details>
-    </section>
+          <div class="step__body">
+            <p id="operator-suggestion" class="note" role="status"></p>
+            <div class="card routing-card">
+              <fieldset class="strategy-group" aria-describedby="routing-help">
+                <legend>Selection strategy</legend>
+                <div class="strategy-grid">
+                  <label class="strategy"><input type="radio" name="routing-strategy" value="manual" checked /><span class="strategy__body"><span class="strategy__name">Manual</span><span class="strategy__desc">Only the operators I choose</span></span></label>
+                  <label class="strategy"><input type="radio" name="routing-strategy" value="balanced" /><span class="strategy__body"><span class="strategy__name">Balanced</span><span class="strategy__desc">Weigh reliability and latency</span></span></label>
+                  <label class="strategy"><input type="radio" name="routing-strategy" value="fastest" /><span class="strategy__body"><span class="strategy__name">Fastest</span><span class="strategy__desc">Prefer lower observed latency</span></span></label>
+                  <label class="strategy"><input type="radio" name="routing-strategy" value="reliable" /><span class="strategy__body"><span class="strategy__name">Reliable</span><span class="strategy__desc">Prefer successful verified reads</span></span></label>
+                </div>
+                <!-- The cards above are the visible control. This select holds the one value the page script reads. -->
+                <select id="routing-mode" hidden aria-hidden="true" tabindex="-1">
+                  <option value="manual">Manual — only the operators I choose</option>
+                  <option value="balanced">Balanced — weigh reliability and latency</option>
+                  <option value="fastest">Fastest — prefer lower observed latency</option>
+                  <option value="reliable">Reliable — prefer successful verified reads</option>
+                </select>
+                <p id="routing-help" class="field__hint">Manual uses only checked operators. Changes take effect when you press Apply.</p>
+              </fieldset>
+              <div class="routing-card__details">
+                <fieldset id="routing-scope" hidden>
+                  <legend>Automatic selection can use</legend>
+                  <label class="check-label"><input type="radio" id="routing-scope-all" name="routing-scope" value="all" checked /> All eligible free operators in this list</label>
+                  <label class="check-label"><input type="radio" id="routing-scope-selected" name="routing-scope" value="selected" /> Only the operators checked below</label>
+                  <p class="field__hint">An empty restricted list stops reads. Paid, personal, expired and unverified ENS entries are excluded.</p>
+                </fieldset>
+                <div class="flow">
+                  <p id="routing-source" class="note"></p>
+                  <p class="note">ENS directory snapshot: <span id="directory-snapshot-status" class="status">No proven ENS snapshot loaded.</span></p>
+                  <p id="routing-restore" class="warn" role="status"></p>
+                  <p id="routing-error" class="bad" role="alert"></p>
+                </div>
+              </div>
+            </div>
+            <div class="table-card">
+              <table class="table--choose">
+                <thead><tr><th><span class="sr-only">Use</span></th><th>Name</th><th>Operator</th><th>Endpoints</th><th>Price per verified read</th></tr></thead>
+                <tbody id="operators"></tbody>
+              </table>
+            </div>
+            <div class="action-bar">
+              <button id="use-operators" class="btn btn--lime" disabled>Apply routing</button>
+              <div class="action-bar__status">
+                <span id="choice-status"></span>
+                <p id="routing-pending" class="note" role="status">No changes applied.</p>
+              </div>
+            </div>
+            <p class="note">
+              Selection applies to an operator and its published endpoints;
+              an endpoint failure can use another endpoint of the same operator before another selected operator.
+              The initial list is a bootstrap list with <strong>mock ENS names</strong>. Load the registry below to
+              replace it with real records. Discovery affects who receives a query; supported answers still need proofs.
+            </p>
+            <div class="disclosures">
+              <details id="directory-panel">
+                <summary>Load operators from ENS</summary>
+                <div class="disclosure__body flow">
+                  <p class="note">The <code>derpc.eth</code> owner curates this list. Choose a bootstrap operator first.
+                    A verified refresh observes membership and records at one finalized block; later revocations and rotations are not visible immediately.
+                    When the snapshot expires, refresh it before continuing ENS-authorized reads.</p>
+                  <p id="directory-snapshot-details" class="note"></p>
+                  <form id="directory-form" class="form-grid">
+                    <label for="ens-registry">Mainnet ENSv2 .eth registry <span class="muted">(required)</span></label>
+                    <input id="ens-registry" type="text" autocomplete="off" spellcheck="false" required placeholder="0x…" />
+                    <label for="ens-registrar">DeRPC registrar <span class="muted">(optional)</span></label>
+                    <input id="ens-registrar" type="text" autocomplete="off" spellcheck="false" placeholder="0x…" />
+                    <label for="ens-code-hash">Trusted registrar runtime hash <span class="muted">(required with registrar)</span></label>
+                    <input id="ens-code-hash" type="text" autocomplete="off" spellcheck="false" placeholder="0x…" />
+                    <label class="check-label"><input id="ens-verified-records" type="checkbox" /> Prove ENS execution locally (more requests)</label>
+                    <div class="controls"><button id="refresh-directory" class="btn btn--ink" type="submit">Refresh ENS directory</button></div>
+                  </form>
+                  <p id="directory-status" class="muted" role="status" aria-live="polite">No registry loaded. Enter the addresses from the deployment record.</p>
+                  <ul id="directory-rejected" class="events"></ul>
+                  <details id="lifecycle-panel">
+                    <summary>Track an ENS update</summary>
+                    <div class="disclosure__body flow">
+                      <p class="note">Compare one administrative receipt with the next fresh proven directory. This local tracker does not sign, send transactions or change your routing. Imported evidence stays in this page's memory.</p>
+                      <div class="field">
+                        <label for="lifecycle-file">Public lifecycle evidence JSON <span class="muted">(maximum 128 KiB)</span></label>
+                        <input id="lifecycle-file" type="file" accept="application/json,.json" aria-describedby="lifecycle-import-error" />
+                      </div>
+                      <div class="controls"><button id="lifecycle-clear" type="button" disabled>Clear tracked update</button></div>
+                      <p id="lifecycle-loading" class="muted" role="status"></p>
+                      <p id="lifecycle-import-error" class="bad" role="alert"></p>
+                      <p id="lifecycle-status" class="muted" role="status">No ENS update tracked.</p>
+                      <p id="lifecycle-metadata" class="lifecycle-metadata muted"></p>
+                      <p id="lifecycle-details" class="muted">Import the public JSON result from the ENS lifecycle verifier to track one update on this page.</p>
+                    </div>
+                  </details>
+                </div>
+              </details>
+              <details>
+                <summary>Use my own node</summary>
+                <div class="disclosure__body flow">
+                  <p class="note">Add the unpublished onion address from your wrapper. The token stays in memory for this page,
+                    and your other selected operators are fallbacks. Proofs are still checked. The Tor gateway sees your IP.</p>
+                  <form id="personal-form" class="form-grid">
+                    <label for="personal-endpoint">Private onion RPC URL</label>
+                    <input id="personal-endpoint" type="url" autocomplete="off" spellcheck="false" required placeholder="http://…onion/rpc" />
+                    <label for="personal-token">Personal access token</label>
+                    <input id="personal-token" type="password" autocomplete="off" spellcheck="false" required aria-describedby="personal-status" />
+                    <div class="controls">
+                      <button id="add-personal" class="btn btn--ink" type="submit">Add my node</button>
+                      <button id="remove-personal" type="button" disabled>Remove my node</button>
+                    </div>
+                  </form>
+                  <p id="personal-status" class="muted" role="status">No personal node added. It is never published in the directory.</p>
+                </div>
+              </details>
+            </div>
+          </div>
+        </section>
 
-    <section>
-      <h2>4 · Verified reads</h2>
-      <p class="muted">
-        Each value is proven with <code>eth_getProof</code> at the verified finalized block, through the worker and
-        your operators. A repeat at the same block comes from the on-device cache. Public addresses only.
-      </p>
-      <table>
-        <thead><tr><th>Read</th><th>Result</th><th>Via</th><th>Time</th></tr></thead>
-        <tbody id="reads"></tbody>
-      </table>
-      <div class="controls">
-        <button id="read-again" disabled>Read again</button>
-        <button id="inject-liar" disabled>Inject a lying operator (simulated)</button>
-        <button id="cut-network" disabled>Cut the anonymous network</button>
+        <section class="step" aria-labelledby="reads-title">
+          <div class="step__head">
+            <span class="step__num" aria-hidden="true">2</span>
+            <h2 id="reads-title" class="step__title">Verified reads</h2>
+            <p class="step__hint">
+              Each value is proven with <code>eth_getProof</code> at the verified finalized block, through the worker and
+              your operators. A repeat at the same block comes from the on-device cache. Public addresses only.
+            </p>
+          </div>
+          <div class="step__body">
+            <p id="read-policy-status" class="note" role="status"></p>
+            <div class="table-card">
+              <table class="table--reads">
+                <thead><tr><th>Read</th><th>Result</th><th>Via</th><th>Time</th></tr></thead>
+                <tbody id="reads"></tbody>
+              </table>
+            </div>
+            <div class="controls">
+              <button id="read-again" class="btn btn--ink" disabled>Read again</button>
+              <button id="inject-liar" class="btn btn--ghost" disabled>Inject a lying operator (simulated)</button>
+              <button id="cut-network" class="btn btn--ghost" disabled>Cut the anonymous network</button>
+            </div>
+            <p class="note">
+              The simulated lying operator is part of this demo, not a real operator: it makes a real request through Tor
+              to one of your chosen operators, then inflates the balances it returns. Rejecting it is local evidence only.
+            </p>
+            <div class="disclosures">
+              <details>
+                <summary>Verified contract call</summary>
+                <div class="disclosure__body flow">
+                  <p class="note">Explicit opt-in: execute a call locally against proven account, code and storage data at one
+                    finalized block. Calls exceeding the limits or requiring off-chain data fail closed.</p>
+                  <form id="verified-call-form" class="form-grid">
+                    <label for="call-address">Contract address</label>
+                    <input id="call-address" type="text" autocomplete="off" spellcheck="false" required placeholder="0x…" />
+                    <label for="call-data">Call data</label>
+                    <input id="call-data" type="text" autocomplete="off" spellcheck="false" required value="0x" />
+                    <div class="controls"><button id="run-verified-call" class="btn btn--ink" type="submit">Run verified call</button></div>
+                  </form>
+                  <p id="verified-call-result" class="muted" role="status">No call run.</p>
+                </div>
+              </details>
+            </div>
+          </div>
+        </section>
+
+        <section id="operator-dashboard" class="step" aria-labelledby="operator-health-title">
+          <div class="step__head">
+            <span class="step__num" aria-hidden="true">3</span>
+            <h2 id="operator-health-title" class="step__title">Operator health on this device</h2>
+            <p class="step__hint">Checks come from reads you choose to send. An untested endpoint stays unobserved.</p>
+          </div>
+          <div class="step__body">
+            <p id="pool-summary" class="dashboard-summary" role="status">No observations yet.</p>
+            <div class="table-card table-scroll" role="region" aria-label="Operator health table; scroll horizontally on small screens" tabindex="0">
+              <table class="dashboard-table table--health">
+                <caption class="sr-only">Local operator observations. No global uptime or safety score.</caption>
+                <thead><tr><th scope="col">Operator / endpoint</th><th scope="col">Observed state</th><th scope="col">Last proof checked</th><th scope="col">Endpoint URL</th><th scope="col">Identity source</th><th scope="col">Local latency</th><th scope="col">Local failures</th></tr></thead>
+                <tbody id="pool"></tbody>
+              </table>
+            </div>
+            <p class="note">
+              A checked proof establishes that response's correctness; ENS identity and stake do not prove an operator is safe.
+              Checks include bootstrap and directory proofs. Latency is the latest unambiguous verified attempt, including the anonymous route and verification.</p>
+            <p class="note">Scroll the table for endpoint and identity details. Select an operator to allow its published endpoints.
+              Several endpoints under one identity provide redundancy and count as one operator. Each endpoint has its own observations.</p>
+            <div class="disclosures">
+              <details>
+                <summary>Read events and rejected responses</summary>
+                <div class="disclosure__body"><ul id="pool-events" class="events"></ul></div>
+              </details>
+            </div>
+          </div>
+        </section>
+
+        <section class="step" aria-labelledby="loads-title">
+          <div class="step__head">
+            <span class="step__num" aria-hidden="true">4</span>
+            <h2 id="loads-title" class="step__title">Resource loads observed by this page</h2>
+            <p class="step__hint">
+              Browser ResourceTiming can show page assets and direct worker-bundle downloads, including cached loads.
+            </p>
+          </div>
+          <div class="step__body">
+            <p id="direct-status" class="muted" role="status" aria-live="polite">Waiting for browser resource timings…</p>
+            <div class="table-card">
+              <table class="table--loads">
+                <thead><tr><th scope="col">Host</th><th scope="col">Kind</th><th scope="col">Observed loads</th></tr></thead>
+                <tbody id="direct"><tr><td colspan="3" class="muted">No resource timing observations yet.</td></tr></tbody>
+              </table>
+            </div>
+            <p class="note">
+              Privacy settings, cleared timings and buffer limits can leave observations missing. This is not a complete
+              connection log or proof that no direct RPC occurred. The gateway's WebRTC link and separate worker,
+              iframe or wallet contexts are not covered. Use the browser Network panel and WebRTC diagnostics for a separate check.
+            </p>
+            <div class="disclosures">
+              <details>
+                <summary>Worker log</summary>
+                <div class="disclosure__body"><pre id="worker-log"></pre></div>
+              </details>
+            </div>
+          </div>
+        </section>
+
+        <details id="payment-panel" class="advanced-panel step">
+          <summary>Later rollout · advanced test-payment controls</summary>
+          <div class="disclosure__body flow">
+            <p class="note">The free demo does not require these controls. Operator identity stake, traffic-based stake per node,
+              and operator-set prices are planned for the later rollout. Staking is not implemented.</p>
+            <p class="note">Pay only after a read verifies. Cached answers and rejected proofs add nothing to the signed total.
+              <strong>Paid queries are linkable to the paying account.</strong> Deposits and receipt checks use your wallet's
+              connection outside Anon-RPC. Session signing keys stay in this page's memory; reloading loses them.</p>
+            <label class="check-label"><input id="enable-payments" type="checkbox" /> Enable test payments for this page</label>
+            <fieldset id="payment-controls" disabled>
+              <legend>Fund one selected operator</legend>
+              <form id="payment-open-form" class="form-grid">
+                <label for="payment-manifest">Verified test escrow deployment record (JSON)</label>
+                <input id="payment-manifest" type="file" accept="application/json,.json" aria-describedby="payment-status" />
+                <label for="payment-operator">Operator</label>
+                <select id="payment-operator"><option value="">Choose a paid operator above first</option></select>
+                <p id="payment-terms" class="muted">No paid operator selected.</p>
+                <label for="payment-deposit">Deposit in test ETH</label>
+                <input id="payment-deposit" type="text" inputmode="decimal" autocomplete="off" required value="0.001" />
+                <div class="controls"><button id="open-payment" class="btn btn--ink" type="submit">Open test session in wallet</button></div>
+              </form>
+            </fieldset>
+            <p id="payment-status" class="muted" role="status" aria-live="polite">Test payments are off. Free reads do not need a wallet.</p>
+            <div class="table-card">
+              <table class="table--sessions">
+                <thead><tr><th>Operator / session</th><th>Verified reads</th><th>Signed / deposited</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="payment-sessions"><tr><td colspan="5" class="muted">No sessions opened.</td></tr></tbody>
+              </table>
+            </div>
+            <p id="payment-rejection" class="muted" role="status">The simulated corruption step never authorizes payment for the rejected answer.</p>
+          </div>
+        </details>
       </div>
-      <p class="muted">
-        The simulated lying operator is part of this demo, not a real operator: it makes a real request through Tor
-        to one of your chosen operators, then inflates the balances it returns. Rejecting it is local evidence only.
-      </p>
-      <details>
-        <summary>Verified contract call</summary>
-        <p class="muted">Explicit opt-in: execute a call locally against proven account, code and storage data at one
-          finalized block. Calls exceeding the limits or requiring off-chain data fail closed.</p>
-        <form id="verified-call-form" class="form-grid">
-          <label for="call-address">Contract address</label>
-          <input id="call-address" type="text" autocomplete="off" spellcheck="false" required placeholder="0x…" />
-          <label for="call-data">Call data</label>
-          <input id="call-data" type="text" autocomplete="off" spellcheck="false" required value="0x" />
-          <div class="controls"><button id="run-verified-call" type="submit">Run verified call</button></div>
-        </form>
-        <p id="verified-call-result" class="muted" role="status">No call run.</p>
-      </details>
-    </section>
+    </main>
 
-    <details id="payment-panel" class="advanced-panel">
-      <summary>Later rollout · advanced test-payment controls</summary>
-      <p class="muted">The free demo does not require these controls. Operator identity stake, traffic-based stake per node,
-        and operator-set prices are planned for the later rollout. Staking is not implemented.</p>
-      <p class="muted">Pay only after a read verifies. Cached answers and rejected proofs add nothing to the signed total.
-        <strong>Paid queries are linkable to the paying account.</strong> Deposits and receipt checks use your wallet's
-        connection outside Anon-RPC. Session signing keys stay in this page's memory; reloading loses them.</p>
-      <label class="check-label"><input id="enable-payments" type="checkbox" /> Enable test payments for this page</label>
-      <fieldset id="payment-controls" disabled>
-        <legend>Fund one selected operator</legend>
-        <form id="payment-open-form" class="form-grid">
-          <label for="payment-manifest">Verified test escrow deployment record (JSON)</label>
-          <input id="payment-manifest" type="file" accept="application/json,.json" aria-describedby="payment-status" />
-          <label for="payment-operator">Operator</label>
-          <select id="payment-operator"><option value="">Choose a paid operator above first</option></select>
-          <p id="payment-terms" class="muted">No paid operator selected.</p>
-          <label for="payment-deposit">Deposit in test ETH</label>
-          <input id="payment-deposit" type="text" inputmode="decimal" autocomplete="off" required value="0.001" />
-          <div class="controls"><button id="open-payment" type="submit">Open test session in wallet</button></div>
-        </form>
-      </fieldset>
-      <p id="payment-status" class="muted" role="status" aria-live="polite">Test payments are off. Free reads do not need a wallet.</p>
-      <table>
-        <thead><tr><th>Operator / session</th><th>Verified reads</th><th>Signed / deposited</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody id="payment-sessions"><tr><td colspan="5" class="muted">No sessions opened.</td></tr></tbody>
-      </table>
-      <p id="payment-rejection" class="muted" role="status">The simulated corruption step never authorizes payment for the rejected answer.</p>
-    </details>
-
-    <section>
-      <h2>5 · Direct connections made by this page</h2>
-      <p class="muted">
-        From the browser's resource timing. Expected: page assets and the worker bundle download.
-        Not listed by the browser: the WebRTC connection to the Tor gateway and requests made by your wallet
-        for optional test-payment transactions and receipts.
-      </p>
-      <table>
-        <thead><tr><th>Host</th><th>Kind</th><th>Count</th></tr></thead>
-        <tbody id="direct"></tbody>
-      </table>
-    </section>
+    <footer class="footer">
+      <div class="container footer__inner">
+        <div class="footer__brand">
+          <span class="brand-lockup" role="img" aria-label="DeRPC"></span>
+          <p class="footer__desc">Private, verified RPC for Ethereum. Reads through an anonymity network, answers checked by a light client, no direct fallback.</p>
+          <p class="footer__event">ETHGlobal Mumbai 2026 · Live dashboard</p>
+        </div>
+        <nav class="footer__links" aria-label="Footer">
+          <a href="../#/directory" data-product-page="directory">Directory</a>
+          <a href="../#/operate" data-product-page="operate">Run an operator</a>
+          <a href="./example.html">Integrator example</a>
+          <a href="./network-check.html">Network check</a>
+          <a href="https://github.com/r0bops/DeRPC" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </footer>
 
     <script type="module" src="./src/main.ts"></script>
   </body>

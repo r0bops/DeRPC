@@ -11,6 +11,7 @@ import {
   type WorkerPin,
   type DeRPCOperator,
   operatorUrl,
+  operatorKey,
 } from "@derpc/provider";
 import { derpcTransport } from "@derpc/provider/viem";
 import type { PaymentTerms } from "@derpc/provider/discovery";
@@ -21,6 +22,10 @@ import { renderStatus as setText, tableRow, textCell, type StatusPart } from "./
 import { mountPaymentPanel } from "./payment-panel.ts";
 import { OperatorObservations, renderOperatorDashboard } from "./operator-dashboard.ts";
 import { defaultRouting, eligibleForAutomatic, parseRoutingPreferences, routingOptions, type RoutingMode, type RoutingPreferences } from "./routing-preferences.ts";
+import { directoryFreshness } from "./directory-freshness.ts";
+import { mountDirectConnections } from "./direct-connections.ts";
+import { groupOperators, operatorKeys } from "./operator-groups.ts";
+import { lifecycleStatus, parseLifecycleEvidence, MAX_LIFECYCLE_EVIDENCE_BYTES, type LifecycleDirectory, type LifecycleEvidence } from "./ens-lifecycle-status.ts";
 
 type Operator = DeRPCOperator & {
   source: "bootstrap" | "ens" | "personal"; website?: string; payment?: PaymentTerms; expiry?: number;
@@ -30,10 +35,11 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 const pageStarted = performance.now();
 const seconds = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
-// The directory and demo share a path in the release bundle, but use separate Vite ports in development.
+// The demo is served under the directory's /demo/ path, in the release bundle and on the site's dev server.
+// Only the standalone demo server (pnpm dev) is at the root of its own port.
 document.querySelectorAll<HTMLAnchorElement>("[data-product-page]").forEach(link => {
   const target = new URL("../", location.href);
-  if (import.meta.env.DEV) { target.port = "5174"; target.pathname = "/"; }
+  if (import.meta.env.DEV && import.meta.env.BASE_URL === "/") { target.port = "5174"; target.pathname = "/"; }
   target.search = "";
   target.hash = `#/${link.dataset.productPage}`;
   link.href = target.href;
@@ -45,7 +51,7 @@ const gateways = String(import.meta.env.VITE_TOR_GATEWAYS ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
-const gatewayLabel = gateways.length ? `own gateway (${gateways.length})` : "demo gateway";
+const gatewayLabel = gateways.length ? `configured gateway (${gateways.length})` : "demo gateway";
 
 // Dev-only fault injection, never in production builds:
 //   ?fault=bad-worker-hash  boot from a wrong worker hash: the harness must reject the bundle, and nothing is read
@@ -57,11 +63,14 @@ if (fault) document.title = `DeRPC — fault: ${fault}`;
 // ---- The user's choice of operators, kept on this device only ----
 const CHOICE_KEY = "derpc:chosen-operators";
 const ROUTING_KEY = "derpc:routing";
-const choiceId = (operator: Operator) => operator.ens ?? operator.id ?? operator.url;
+const choiceId = (operator: Operator) => operatorKey(operator);
 let available: Operator[] = MAINNET_OPERATORS.map(o => ({ ...o, source: "bootstrap" }));
 let directorySource: "bootstrap" | "ens" = "bootstrap";
 let personalNode: Operator | undefined;
 let sensitiveSession = false;
+let latestDirectory: LifecycleDirectory | undefined;
+let trackedLifecycle: LifecycleEvidence | undefined;
+let lifecycleImportVersion = 0;
 function loadChoice(): Operator[] {
   try {
     const saved: unknown = JSON.parse(localStorage.getItem(CHOICE_KEY) ?? "[]");
@@ -73,7 +82,7 @@ function loadChoice(): Operator[] {
 function saveChoice(chosen: Operator[]) {
   try {
     // ENS choices require a fresh proven directory, never a mock bootstrap entry with the same name.
-    localStorage.setItem(CHOICE_KEY, JSON.stringify(chosen.filter(o => o.source === "bootstrap").map(choiceId)));
+    localStorage.setItem(CHOICE_KEY, JSON.stringify(operatorKeys(chosen.filter(o => o.source === "bootstrap"))));
   } catch {
     // Storage blocked (private window): the choice lasts for this page only.
   }
@@ -92,7 +101,7 @@ const savedRouting = loadRouting();
 const needsVerifiedRestore = savedRouting.source === "ens";
 let activeRouting = needsVerifiedRestore ? defaultRouting() : savedRouting;
 let chosen: Operator[] = needsVerifiedRestore ? [] : activeRouting.selection === "manual" ? loadChoice() : automaticOperators(activeRouting);
-if (activeRouting.selection === "manual") activeRouting.allowedOperators = chosen.filter(o => o.source !== "personal").map(choiceId);
+if (activeRouting.selection === "manual") activeRouting.allowedOperators = operatorKeys(chosen.filter(o => o.source !== "personal"));
 // A directory link can suggest a known bootstrap operator. It never changes the live pool or stored choice.
 const requestedOperator = new URLSearchParams(location.search).get("operator");
 let suggestedOperator = MAINNET_OPERATORS.find(operator => operator.ens === requestedOperator)?.ens;
@@ -101,6 +110,8 @@ let suggestedOperator = MAINNET_OPERATORS.find(operator => operator.ens === requ
 let workerReadyAt: number | undefined;
 let lightClientReadyAt: number | undefined;
 let servedBy: string[] = [];
+let readsInProgress = false;
+let verifiedCallInProgress = false;
 let paymentPanel: ReturnType<typeof mountPaymentPanel> | undefined;
 const observations = new OperatorObservations();
 const payments = new PaymentClient({ onChange: () => paymentPanel?.render() });
@@ -178,8 +189,86 @@ function renderStatus(s: DeRPCStatus) {
     : [tag("not verified yet", "warn"), plain(` — ${p.error ?? ""}; it runs again with the next read`)]);
 
   renderOperatorDashboard({ body: $("pool"), summary: $("pool-summary"), available, chosen, status: s, observations });
+  const snapshot = directoryFreshness(s);
+  $("directory-snapshot-status").textContent = snapshot.text;
+  $("directory-snapshot-status").className = `status ${snapshot.tone}`;
+  $("directory-snapshot-details").textContent = snapshot.details;
+  renderLifecycle(s);
+  updateReadControls(s);
 }
 setInterval(() => renderStatus(derpc.status()), 1000);
+
+function renderLifecycle(status: DeRPCStatus) {
+  const summary = $("lifecycle-status");
+  const details = $("lifecycle-details");
+  const metadata = $("lifecycle-metadata");
+  if (!trackedLifecycle) {
+    summary.textContent = "No ENS update tracked."; summary.className = "muted";
+    details.textContent = "Import the public JSON result from the ENS lifecycle verifier to track one update on this page.";
+    metadata.textContent = "";
+    return;
+  }
+  const observation = lifecycleStatus(trackedLifecycle, { directory: latestDirectory, snapshot: status.routing?.directorySnapshot });
+  summary.textContent = observation.title;
+  summary.className = observation.state === "expected-state-observed" ? "ok" : observation.state === "conflict" ? "bad" : "warn";
+  details.textContent = observation.detail;
+  metadata.textContent = `${trackedLifecycle.name} · ${trackedLifecycle.action.type} · receipt block ${trackedLifecycle.receipt.blockNumber} · administrative finality: ${trackedLifecycle.administrativeFinality}${trackedLifecycle.localOnly ? " · local fork only" : ""}\nTransaction: ${trackedLifecycle.transactionHash}`;
+}
+
+const lifecycleFile = $<HTMLInputElement>("lifecycle-file");
+const lifecycleClear = $<HTMLButtonElement>("lifecycle-clear");
+lifecycleFile.addEventListener("change", async () => {
+  const file = lifecycleFile.files?.[0];
+  if (!file) return;
+  const version = ++lifecycleImportVersion;
+  lifecycleFile.disabled = true; lifecycleClear.disabled = false;
+  $("lifecycle-import-error").textContent = "";
+  $("lifecycle-loading").textContent = "Reading local evidence…";
+  lifecycleFile.removeAttribute("aria-invalid");
+  try {
+    if (file.size > MAX_LIFECYCLE_EVIDENCE_BYTES) throw new Error("size");
+    const evidence = parseLifecycleEvidence(await file.text());
+    if (version !== lifecycleImportVersion) return;
+    trackedLifecycle = evidence;
+    renderLifecycle(derpc.status());
+  } catch {
+    if (version !== lifecycleImportVersion) return;
+    $("lifecycle-import-error").textContent = "Import failed. Choose a public ENS lifecycle verifier JSON file no larger than 128 KiB. The previous tracked update is unchanged.";
+    lifecycleFile.setAttribute("aria-invalid", "true");
+  } finally {
+    if (version === lifecycleImportVersion) {
+      lifecycleFile.disabled = false; lifecycleFile.value = "";
+      lifecycleClear.disabled = !trackedLifecycle;
+      $("lifecycle-loading").textContent = "";
+    }
+  }
+});
+lifecycleClear.addEventListener("click", () => {
+  ++lifecycleImportVersion;
+  trackedLifecycle = undefined;
+  lifecycleFile.value = ""; lifecycleFile.disabled = false; lifecycleClear.disabled = true;
+  lifecycleFile.removeAttribute("aria-invalid");
+  $("lifecycle-import-error").textContent = ""; $("lifecycle-loading").textContent = "";
+  renderLifecycle(derpc.status());
+});
+
+function updateReadControls(status: DeRPCStatus) {
+  const snapshot = directoryFreshness(status);
+  const routeUnavailable = status.transport.state === "closed" || status.transport.state === "failed";
+  const hasOperators = effectiveOperators().length > 0;
+  $<HTMLButtonElement>("read-again").disabled = snapshot.blocked || routeUnavailable || !hasOperators || readsInProgress;
+  $<HTMLButtonElement>("run-verified-call").disabled = snapshot.blocked || routeUnavailable || !hasOperators || verifiedCallInProgress;
+  $<HTMLButtonElement>("inject-liar").disabled = snapshot.blocked || routeUnavailable || !hasOperators || readsInProgress || activeRouting.selection !== "manual" ||
+    status.transport.state !== "ready" || status.operators.some(o => o.id.startsWith("simulated-liar:"));
+  $<HTMLButtonElement>("cut-network").disabled = status.transport.state !== "ready";
+  const message = snapshot.blocked ? "ENS-authorized reads are paused. Refresh the proven directory in the ENS panel; you can still narrow the selection or stop reads."
+    : routeUnavailable ? "The anonymous route is unavailable. No direct RPC fallback is used."
+    : !hasOperators ? "Apply a nonempty operator selection to begin verified reads."
+    : "Each supported read is verified. ENS membership changes require a new finalized verified refresh.";
+  const statusElement = $("read-policy-status");
+  if (statusElement.textContent !== message) statusElement.textContent = message;
+  statusElement.className = snapshot.blocked ? "warn" : "muted";
+}
 
 // ---- 2 · Choose your operators ----
 const operatorsEl = $("operators");
@@ -191,9 +280,10 @@ function renderOperators() {
   const suggestion = available.find(operator => operator.source === "bootstrap" && operator.ens === suggestedOperator);
   if (suggestion) selected.add(choiceId(suggestion));
   $("operator-suggestion").textContent = suggestion ? `Suggested from the directory: ${suggestion.ens}. Review the choices and press Apply. Your active operators have not changed.` : "";
-  operatorsEl.replaceChildren(...available.map((op, index) => {
+  operatorsEl.replaceChildren(...groupOperators(available).map((group, index) => {
+    const op = group.endpoints[0]!;
     const id = `operator-${index}`;
-    const checkbox = Object.assign(document.createElement("input"), { type: "checkbox", id, value: choiceId(op), checked: selected.has(choiceId(op)) });
+    const checkbox = Object.assign(document.createElement("input"), { type: "checkbox", id, value: group.key, checked: selected.has(group.key) });
     const check = document.createElement("td"); check.append(checkbox);
     const name = document.createElement("td");
     name.append(Object.assign(document.createElement("label"), { htmlFor: id, textContent: op.ens ?? "My own node" }));
@@ -201,7 +291,14 @@ function renderOperators() {
     if (op.source === "personal") name.append(Object.assign(document.createElement("span"), { className: "badge", textContent: "private" }));
     const price = op.payment ? `${op.payment.price} wei · test chain ${op.payment.chainId}` : "Free";
     const row = document.createElement("tr");
-    row.append(check, name, textCell(op.operator ?? "operator"), textCell(op.source === "personal" ? "Unpublished onion" : new URL(op.url).host), textCell(price));
+    row.dataset.operatorKey = op.source === "personal" ? "personal" : group.key;
+    const endpoints = textCell(`${group.endpoints.length} endpoint${group.endpoints.length === 1 ? "" : "s"}`);
+    const nodes = document.createElement("ul"); nodes.className = "operator-endpoints";
+    for (const endpoint of group.endpoints) {
+      nodes.append(Object.assign(document.createElement("li"), { textContent: endpoint.source === "personal" ? "Unpublished onion" : `${endpoint.endpointId ? `${endpoint.endpointId} · ` : ""}${new URL(endpoint.url).host}` }));
+    }
+    endpoints.append(nodes);
+    row.append(check, name, textCell(op.operator ?? "operator"), endpoints, textCell(price));
     return row;
   }));
   updateChoiceButton();
@@ -213,6 +310,16 @@ const ticked = () => {
 };
 const routingMode = $<HTMLSelectElement>("routing-mode");
 routingMode.value = activeRouting.selection;
+// The strategy cards are the visible control. The hidden select stays the one value the rest of the page reads.
+const routingCards = [...document.querySelectorAll<HTMLInputElement>('input[name="routing-strategy"]')];
+const syncRoutingCards = () => routingCards.forEach(card => { card.checked = card.value === routingMode.value; });
+syncRoutingCards();
+routingMode.addEventListener("change", syncRoutingCards);
+for (const card of routingCards) card.addEventListener("change", () => {
+  if (!card.checked) return;
+  routingMode.value = card.value;
+  routingMode.dispatchEvent(new Event("change"));
+});
 $<HTMLInputElement>(`routing-scope-${activeRouting.selection === "manual" ? "all" : activeRouting.scope}`).checked = true;
 if (needsVerifiedRestore) $("routing-restore").textContent = "Your saved ENS routing is paused. Select a bootstrap operator to load a proven directory, then apply your routing strategy again. No mock operator replaces a saved ENS identity.";
 
@@ -225,7 +332,7 @@ const MODE_HELP: Record<RoutingMode, string> = {
 function proposedRouting(): RoutingPreferences {
   const selection = routingMode.value as RoutingMode;
   const scope = selection === "manual" ? "selected" : $<HTMLInputElement>("routing-scope-selected").checked ? "selected" : "all";
-  return { version: 1, selection, scope, source: directorySource, allowedOperators: scope === "selected" ? ticked().filter(o => o.source !== "personal").map(choiceId) : [] };
+  return { version: 1, selection, scope, source: directorySource, allowedOperators: scope === "selected" ? operatorKeys(ticked().filter(o => o.source !== "personal")) : [] };
 }
 function pendingOperators(preferences: RoutingPreferences): Operator[] {
   return preferences.selection === "manual" ? ticked() : automaticOperators(preferences);
@@ -233,21 +340,23 @@ function pendingOperators(preferences: RoutingPreferences): Operator[] {
 function updateChoiceButton() {
   const proposed = proposedRouting();
   const next = pendingOperators(proposed);
+  const nextCount = operatorKeys(next).length;
   $("routing-scope").hidden = proposed.selection === "manual";
   operatorsEl.querySelectorAll<HTMLInputElement>("input[type=checkbox]").forEach(input => {
     input.disabled = proposed.selection !== "manual" && proposed.scope === "all";
   });
   $("routing-help").textContent = MODE_HELP[proposed.selection];
-  const freeCount = available.filter(operator => eligibleForAutomatic(operator)).length;
+  const freeEndpoints = available.filter(operator => eligibleForAutomatic(operator));
+  const freeCount = operatorKeys(freeEndpoints).length;
   $("routing-source").textContent = directorySource === "bootstrap"
-    ? `Source: curated bootstrap list · mock ENS names. ${freeCount} eligible free operator(s), Ethereum mainnet only.`
-    : `Source: ENS directory. ${freeCount} free operator(s) have proven list and records; unverified records cannot enter automatic selection.`;
+    ? `Source: curated bootstrap list · mock ENS names. ${freeCount} eligible free operator(s) across ${freeEndpoints.length} endpoint(s), Ethereum mainnet only.`
+    : `Source: ENS directory. ${freeCount} free operator(s) across ${freeEndpoints.length} endpoint(s) have proven list and records; unverified records cannot enter automatic selection.`;
   const same = proposed.selection === activeRouting.selection && proposed.scope === activeRouting.scope &&
     (proposed.scope === "all" || proposed.allowedOperators.join("\n") === activeRouting.allowedOperators.join("\n")) &&
     (proposed.selection !== "manual" || next.map(choiceId).join("\n") === chosen.map(choiceId).join("\n"));
-  $("routing-pending").textContent = same ? "Showing the active routing settings." : `Pending: ${proposed.selection}, ${next.length} eligible operator(s). Press Apply to change active routing.`;
-  useOperatorsBtn.disabled = proposed.selection === "manual" && next.length === 0 && chosen.length === 0;
-  useOperatorsBtn.textContent = next.length === 0 ? "Apply empty list — stop reads" : `Apply ${proposed.selection} · ${next.length} operator${next.length === 1 ? "" : "s"}`;
+  $("routing-pending").textContent = same ? "Showing the active routing settings." : `Pending: ${proposed.selection}, ${nextCount} eligible operator(s) across ${next.length} endpoint(s). Press Apply to change active routing.`;
+  useOperatorsBtn.disabled = proposed.selection === "manual" && activeRouting.selection === "manual" && next.length === 0 && chosen.length === 0;
+  useOperatorsBtn.textContent = next.length === 0 ? "Apply empty list — stop reads" : `Apply ${proposed.selection} · ${nextCount} operator${nextCount === 1 ? "" : "s"} / ${next.length} endpoint${next.length === 1 ? "" : "s"}`;
 }
 operatorsEl.addEventListener("change", updateChoiceButton);
 routingMode.addEventListener("change", updateChoiceButton);
@@ -260,9 +369,13 @@ function effectiveOperators(): Operator[] {
 }
 function showActiveChoice() {
   const active = effectiveOperators();
-  const waiting = chosen.length - active.length;
-  choiceStatusEl.textContent = `Active: ${activeRouting.selection} · ${active.length ? `using ${active.map(o => o.ens ?? "My own node").join(", ")}` : "no operators; reads are stopped"}${waiting > 0 ? ` · ${waiting} paid operator(s) wait for an enabled, funded test session.` : ""}`;
-  paymentPanel?.setOperators(activeRouting.selection === "manual" ? chosen.flatMap(o => o.payment ? [{ id: o.id ?? o.url, name: o.ens ?? o.operator ?? "operator", payment: o.payment, endpoint: o }] : []) : []);
+  const groups = groupOperators(active);
+  const waiting = operatorKeys(chosen).length - groups.length;
+  choiceStatusEl.textContent = `Active: ${activeRouting.selection} · ${active.length ? `${groups.length} operator(s) / ${active.length} endpoint(s), using ${groups.map(group => group.endpoints[0]!.ens ?? group.endpoints[0]!.operator ?? "My own node").join(", ")}` : "no operators; reads are stopped"}${waiting > 0 ? ` · ${waiting} paid operator(s) wait for an enabled, funded test session.` : ""}`;
+  paymentPanel?.setOperators(activeRouting.selection === "manual" ? groupOperators(chosen).flatMap(group => {
+    const o = group.endpoints[0]!;
+    return o.payment ? [{ id: o.id ?? o.url, name: o.ens ?? o.operator ?? "operator", payment: o.payment, endpoint: o }] : [];
+  }) : []);
 }
 function applyChoice() {
   if (activeRouting.selection === "manual") derpc.setOperators(effectiveOperators());
@@ -310,25 +423,26 @@ $("directory-form").addEventListener("submit", async event => {
   try {
     const previous = new Set(chosen.map(choiceId));
     const result = await derpc.refreshDirectory({ ethRegistry, ...(registrar ? { registrar: { address: registrar as Hex, codeHash: codeHash as Hex } } : {}), verifiedRecords: $<HTMLInputElement>("ens-verified-records").checked });
+    latestDirectory = result;
     const refreshed = result.operators.map(o => ({ ...o, source: "ens" as const, listVerification: result.listVerification, recordVerification: result.recordVerification }));
     // An ENS name can rotate its URL. Observations about the old endpoint do not prove the new one.
     for (const old of available) {
       const replacement = refreshed.find(o => (o.id ?? o.url) === (old.id ?? old.url));
-      if (old.source !== "personal" && (!replacement || replacement.url !== old.url || replacement.ens !== old.ens || replacement.wrapperIdentity?.signer !== old.wrapperIdentity?.signer)) observations.forget(old.id ?? old.url);
+      if (old.source !== "personal" && (!replacement || replacement.url !== old.url || replacement.ens !== old.ens || choiceId(replacement) !== choiceId(old) || replacement.wrapperIdentity?.signer !== old.wrapperIdentity?.signer)) observations.forget(old.id ?? old.url);
     }
     available = [...refreshed, ...(personalNode ? [personalNode] : [])];
     directorySource = "ens";
     chosen = activeRouting.selection === "manual" ? available.filter(o => previous.has(choiceId(o))) : automaticOperators(activeRouting);
     const removed = [...previous].filter(id => !chosen.some(o => choiceId(o) === id)).length;
-    activeRouting = { ...activeRouting, source: "ens", ...(activeRouting.selection === "manual" ? { allowedOperators: chosen.filter(o => o.source !== "personal").map(choiceId) } : {}) };
+    activeRouting = { ...activeRouting, source: "ens", ...(activeRouting.selection === "manual" ? { allowedOperators: operatorKeys(chosen.filter(o => o.source !== "personal")) } : {}) };
     // refreshDirectory already applied revocation and, in automatic mode, the full proven roster.
     // Replacing candidates here would erase its authenticated directory provenance.
     saveChoice(chosen); persistRouting(); renderOperators(); showActiveChoice();
-    state.textContent = `${result.operators.length} operators at block ${result.blockNumber}. List: ${result.listVerification}; records: ${result.recordVerification}.${result.recordVerification === "unverified" ? " Unverified discovery can change who sees your queries; answers still require proofs." : ""}${removed ? ` ${removed} previous choice(s) removed.` : ""}${!result.operators.length ? " No active operators remain; no public endpoint was selected automatically." : ""}`;
+    state.textContent = `${operatorKeys(result.operators).length} operators / ${result.operators.length} endpoints at block ${result.blockNumber}. List: ${result.listVerification}; records: ${result.recordVerification}.${result.recordVerification === "unverified" ? " Unverified discovery can change who sees your queries; answers still require proofs." : ""}${removed ? ` ${removed} previous choice(s) removed.` : ""}${!result.operators.length ? " No active operators remain; no public endpoint was selected automatically." : ""}`;
     state.className = result.recordVerification === "proven" ? "ok" : "warn";
     $("directory-rejected").replaceChildren(...result.rejected.map(entry => Object.assign(document.createElement("li"), { textContent: `${entry.name}: ${entry.reason}` })));
   } catch (error) { state.textContent = `Directory refresh failed: ${rootError(error).text}. Check the deployment addresses and retry.`; state.className = "bad"; }
-  finally { button.disabled = false; button.textContent = "Refresh ENS directory"; }
+  finally { button.disabled = false; button.textContent = "Refresh ENS directory"; renderStatus(derpc.status()); }
 });
 
 $("personal-form").addEventListener("submit", event => {
@@ -373,7 +487,7 @@ setInterval(() => {
       $("routing-error").textContent = `Routing stopped while removing expired listings: ${rootError(error).text}. Reload and refresh the directory.`;
     }
   }
-  else activeRouting.allowedOperators = chosen.filter(o => o.source !== "personal").map(choiceId);
+  else activeRouting.allowedOperators = operatorKeys(chosen.filter(o => o.source !== "personal"));
   saveChoice(chosen); persistRouting(); renderOperators(); applyChoice();
   $("directory-status").textContent = `${expired.size} expired operator(s) removed. Refresh ENS to discover renewed listings.`;
 }, 1000);
@@ -382,17 +496,19 @@ $("verified-call-form").addEventListener("submit", async event => {
   event.preventDefault();
   const button = $<HTMLButtonElement>("run-verified-call");
   const result = $("verified-call-result");
+  if (directoryFreshness(derpc.status()).blocked) { result.textContent = "Refresh the proven ENS directory before running another call."; result.className = "warn"; updateReadControls(derpc.status()); return; }
   const to = $<HTMLInputElement>("call-address").value.trim();
   const data = $<HTMLInputElement>("call-data").value.trim();
   if (!isAddress(to) || !/^0x(?:[\da-fA-F]{2})*$/.test(data)) { result.textContent = "Enter a contract address and even-length hex call data."; result.className = "bad"; return; }
   if (button.disabled) return;
+  verifiedCallInProgress = true;
   button.disabled = true; button.textContent = "Executing against proven state…";
   result.textContent = "Fetching and verifying the state needed by the call…"; result.className = "muted";
   try {
     const response = await derpc.verifiedCall({ to, data: data as Hex });
     result.textContent = `${response.value} · verified at block ${response.block.blockNumber}`; result.className = "ok";
   } catch (error) { result.textContent = `Call refused: ${rootError(error).text}`; result.className = "bad"; }
-  finally { button.disabled = false; button.textContent = "Run verified call"; }
+  finally { verifiedCallInProgress = false; button.textContent = "Run verified call"; updateReadControls(derpc.status()); }
 });
 
 // ---- 3 · Verified reads ----
@@ -442,51 +558,63 @@ function readAll(): Promise<void> {
 }
 
 async function runReads() {
+  if (directoryFreshness(derpc.status()).blocked) {
+    const empty = textCell("ENS snapshot is stale or unavailable. Refresh the proven directory before more reads.", "warn");
+    empty.colSpan = 4;
+    const row = document.createElement("tr"); row.append(empty); readsEl.replaceChildren(row);
+    updateReadControls(derpc.status());
+    return;
+  }
   if (!effectiveOperators().length) {
     const empty = textCell("No reads: apply a nonempty manual choice or automatic routing above.", "muted");
     empty.colSpan = 4;
     const tr = document.createElement("tr");
     tr.append(empty);
     readsEl.replaceChildren(tr);
+    updateReadControls(derpc.status());
     return;
   }
+  readsInProgress = true;
+  updateReadControls(derpc.status());
   readsEl.replaceChildren();
-  for (const read of READS) {
-    const result = textCell("verifying…", "muted");
-    const via = textCell("");
-    const time = textCell("");
-    const tr = document.createElement("tr");
-    tr.append(textCell(read.label), result, via, time);
-    readsEl.append(tr);
-    servedBy = [];
-    const t = performance.now();
-    try {
-      const text = await read.run();
-      const block = derpc.status().lightClient.header?.blockNumber;
-      result.textContent = `${text}${block ? ` · verified at block ${block}` : ""}`;
-      result.className = read.refused ? "bad" : "ok";
-      via.textContent = servedBy.at(-1) ?? "on-device cache (proven earlier at this block)";
-    } catch (error) {
-      const e = rootError(error);
-      const expected = read.refused && e.code === 4200;
-      result.textContent = expected ? `refused as expected — ${e.text}` : e.text;
-      result.className = expected ? "warn" : "bad";
-      via.textContent = servedBy.at(-1) ?? "nothing sent";
+  try {
+    for (const read of READS) {
+      if (directoryFreshness(derpc.status()).blocked) break;
+      const result = textCell("verifying…", "muted");
+      const via = textCell("");
+      const time = textCell("");
+      const tr = document.createElement("tr");
+      tr.append(textCell(read.label), result, via, time);
+      readsEl.append(tr);
+      servedBy = [];
+      const t = performance.now();
+      try {
+        const text = await read.run();
+        const block = derpc.status().lightClient.header?.blockNumber;
+        result.textContent = `${text}${block ? ` · verified at block ${block}` : ""}`;
+        result.className = read.refused ? "bad" : "ok";
+        via.textContent = servedBy.at(-1) ?? "on-device cache (proven earlier at this block)";
+      } catch (error) {
+        const e = rootError(error);
+        const expected = read.refused && e.code === 4200;
+        result.textContent = expected ? `refused as expected — ${e.text}` : e.text;
+        result.className = expected ? "warn" : "bad";
+        via.textContent = servedBy.at(-1) ?? "nothing sent";
+      }
+      time.textContent = seconds(performance.now() - t);
+      devLog("read", { read: read.label, result: result.textContent, via: via.textContent, time: time.textContent });
     }
-    time.textContent = seconds(performance.now() - t);
-    devLog("read", { read: read.label, result: result.textContent, via: via.textContent, time: time.textContent });
+  } finally {
+    readsInProgress = false;
+    updateReadControls(derpc.status());
+    directConnections.refresh();
   }
-  const transportOk = derpc.status().transport.state === "ready";
-  readAgainBtn.disabled = false;
-  cutNetworkBtn.disabled = !transportOk;
-  injectLiarBtn.disabled = activeRouting.selection !== "manual" || !transportOk || derpc.status().operators.some((o) => o.id.startsWith("simulated-liar:"));
-  renderDirectConnections();
 }
 
 readAgainBtn.addEventListener("click", () => void readAll());
 injectLiarBtn.addEventListener("click", () => {
   injectLiarBtn.disabled = true;
-  if (activeRouting.selection !== "manual") return;
+  if (activeRouting.selection !== "manual" || directoryFreshness(derpc.status()).blocked) return;
   const active = effectiveOperators();
   if (!active.length) return;
   derpc.setOperators([simulatedLyingOperator(active[0]!), ...active]);
@@ -502,7 +630,10 @@ cutNetworkBtn.addEventListener("click", () => {
 function label(id: string): string {
   if (id.startsWith("simulated-liar:")) return "simulated lying operator";
   const operator = [...available, ...chosen].find(o => o.id === id || o.url === id || o.ens === id);
-  if (operator) return operator.ens ?? operator.operator ?? "operator";
+  if (operator) {
+    const name = operator.ens ?? operator.operator ?? "operator";
+    return operator.source !== "personal" && operator.endpointId ? `${name} / ${operator.endpointId}` : name;
+  }
   try { return new URL(id).host; } catch { return id; }
 }
 
@@ -520,28 +651,13 @@ function logEvent(e: PoolEvent) {
   $("pool-events").prepend(li);
 }
 
-// ---- 5 · Direct connections: every HTTP(S) request the page itself made ----
-const RPC_HOSTS = new Set([...MAINNET_OPERATORS.map((o) => o.url), ...MAINNET_BEACON_ENDPOINTS].map((u) => new URL(u).host));
-const BUNDLE_HOSTS = new Set(TOR_JS_PIN.resolvers.filter((r) => r.startsWith("https:")).map((u) => new URL(u).host));
-
-function renderDirectConnections() {
-  const counts = new Map<string, number>();
-  for (const entry of performance.getEntriesByType("resource")) {
-    const host = new URL(entry.name).host;
-    counts.set(host, (counts.get(host) ?? 0) + 1);
-  }
-  $("direct").replaceChildren(
-    ...[...counts].map(([host, n]) => {
-      const [kind, css]: [string, string] = host === location.host ? ["page assets", "ok"]
-        : BUNDLE_HOSTS.has(host) ? ["worker bundle download (expected, disclosed)", "warn"]
-        : RPC_HOSTS.has(host) ? ["RPC/beacon request outside the worker — LEAK", "bad"]
-        : ["unexpected", "bad"];
-      return tableRow([{ text: host }, { text: kind, className: css }, { text: String(n) }]);
-    }),
-  );
-}
-renderDirectConnections();
-setInterval(renderDirectConnections, 3000);
+// ---- 5 · ResourceTiming observations, with explicit limits and empty states ----
+const directConnections = mountDirectConnections({
+  body: $("direct"),
+  status: $("direct-status"),
+  rpcUrls: [...MAINNET_OPERATORS.map((o) => o.url), ...MAINNET_BEACON_ENDPOINTS],
+  bundleUrls: TOR_JS_PIN.resolvers,
+});
 
 // ---- helpers ----
 /** Dev server only: mirror events to .dev-logs/calls.log (scripts/show-logs.sh). Changed statuses only. */

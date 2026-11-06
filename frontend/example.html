@@ -3,18 +3,60 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0A0A0F" />
     <title>DeRPC integrator example</title>
+    <link rel="icon" href="../web/public/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>
-    <header>
-      <h1>DeRPC <span class="muted">integrator example</span></h1>
-      <p class="muted">
-        The smallest integration, in <code>src/example.ts</code>: a viem public client on the DeRPC transport.
-        One proven read and one refused <code>eth_call</code>. Back to the <a href="./index.html">demo</a>.
-      </p>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="nav">
+      <div class="container nav__inner">
+        <a class="nav__brand" href="../#/" aria-label="DeRPC home"><span class="brand-lockup"></span></a>
+        <nav class="nav__links" aria-label="DeRPC navigation">
+          <a class="nav__link" href="../#/directory">Directory</a>
+          <a class="nav__link" href="../#/operate">Run an operator</a>
+          <a class="nav__link" href="./index.html">Dashboard</a>
+          <a class="nav__link" href="https://github.com/r0bops/DeRPC" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+        <span class="nav__spacer"></span>
+        <span class="nav__badge"><span class="ok-dot" aria-hidden="true"></span>Hackathon build</span>
+        <a class="btn btn--ghost btn--small" href="./index.html">Open dashboard</a>
+      </div>
     </header>
-    <pre id="out"></pre>
+
+    <main id="main" class="page page--narrow" tabindex="-1">
+      <div class="container">
+        <header>
+          <p class="eyebrow">For integrators · Ethereum mainnet</p>
+          <h1 class="page-title">Integrator example</h1>
+          <p class="page-lead">
+            The smallest integration, in <code>src/example.ts</code>: a viem public client on the DeRPC transport.
+            One proven read and one refused <code>eth_call</code>. Back to the <a href="./index.html">demo</a>.
+          </p>
+        </header>
+        <div class="step">
+          <pre id="out"></pre>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <div class="footer__brand">
+          <span class="brand-lockup" role="img" aria-label="DeRPC"></span>
+          <p class="footer__desc">Private, verified RPC for Ethereum. Reads through an anonymity network, answers checked by a light client, no direct fallback.</p>
+          <p class="footer__event">ETHGlobal Mumbai 2026 · Integrator example</p>
+        </div>
+        <nav class="footer__links" aria-label="Footer">
+          <a href="./index.html">Live dashboard</a>
+          <a href="./network-check.html">Network check</a>
+          <a href="../#/directory">Directory</a>
+          <a href="https://github.com/r0bops/DeRPC" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </footer>
+
     <script type="module" src="./src/example.ts"></script>
   </body>
 </html>
