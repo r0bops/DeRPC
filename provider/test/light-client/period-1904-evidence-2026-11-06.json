@@ -1,0 +1,569 @@
+{
+  "kind": "period-1904-cold-start",
+  "mode": "live",
+  "startedAt": "2026-11-06T19:54:11.425Z",
+  "boundaryAt": "2026-11-06T19:53:59.000Z",
+  "runtime": "Fresh Firefox profile, isolated temporary Vite cache and page, real pinned tor-js worker",
+  "gatewaySha256": "dbe01bc2a80ecc4a86869f5ad7f36f8de00a28dcb4612a38cebde8a80b9b2b3f",
+  "beacons": [
+    "https://ethereum-beacon-api.publicnode.com",
+    "https://lodestar-mainnet.chainsafe.io"
+  ],
+  "rpcs": [
+    "https://eth.drpc.org",
+    "https://rpc.mevblocker.io",
+    "https://eth.blockrazor.xyz"
+  ],
+  "sourcesBefore": {
+    "patches/@lodestar__light-client@1.43.0.patch": "a0da4dcf9be9e10813ec2f8f1715c1585e52aa0a3acef83758c480ba944b775d",
+    "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+    "provider/node_modules/@lodestar/light-client/lib/index.js": "178d862e9021c3cd8b9c42b4b62e7d05a2a278269cff569c01268955aadd0704",
+    "provider/node_modules/@lodestar/light-client/lib/spec/processLightClientUpdate.js": "1c061d765d3b14d9ac175acb80117b3c60e183f00768ddf434372746598ceb8d",
+    "provider/node_modules/@lodestar/light-client/lib/spec/utils.js": "89880995245c623815d0ea3ce9f772d44b394a4a43eb99535957eeaa27aa0987",
+    "provider/node_modules/@lodestar/light-client/lib/spec/validateLightClientUpdate.js": "90d3713f566aaf4f1097a73e1d8cf12a14b111ed9c4b0c4fc5720c9da7f4451b",
+    "provider/src/api/derpc.ts": "e163893601d37c8e3438bdf3a9a2706b79ac26bc8f9b350535f80de58b130a38",
+    "provider/src/api/directory-snapshot.ts": "57dd2f7ee9a4a1fb12efae1661e89c07b09f580043ffc53656524512bc4f069d",
+    "provider/src/api/eip1193.ts": "6a6f59f1a6ee6d877ee53a4ca909983f9345f1b28e61bc107e0c4365770e9e44",
+    "provider/src/api/viem.ts": "d3de0977312a6c0c426e8641f268e22fdc61098aa6a4b20b66765e3a61c3cd00",
+    "provider/src/config/mainnet.ts": "b64e2640a015fa83c3fe12550016f47c4e7f5023b3526fa8be1e9b00feef7ede",
+    "provider/src/discovery/ens.ts": "7cb88d7a3e32ac690a8bee01bf321de3ebc0df27c14dedd179ab80a710c85ac3",
+    "provider/src/discovery/registrar.ts": "f5c37e44434814f930a669b53b6860d5762ec08befdf69e52b362c8539f750d5",
+    "provider/src/execution/index.ts": "61ddd27262533b38b2bc43ebf384ea3206ecb94602d7eaa9287faa71d9eced1d",
+    "provider/src/execution/verified-call.ts": "0c73889387a5fcf7e5f48ebbda236b555465c9048bca09c877b4630568a4fbf8",
+    "provider/src/execution/verified-ens.ts": "d40bf013901bbe0d0c964f30a9ac8ee6332f5af945b40aa6ed296e00c816e0b0",
+    "provider/src/index.ts": "4fd0ed545e9148f9b526db9cdc2432e9254485bcd75c2c1cf925a1587871a647",
+    "provider/src/light-client/header-source.ts": "64ec68f4cb018b3c8702f839594ee4e7e27c0b35edf32d9c5caab11981861af7",
+    "provider/src/light-client/polling-transport.ts": "9b89022bb50eebc6828c368d3aa337a12e0b61e8aadc73b7865eecfb8d309bbe",
+    "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+    "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6",
+    "provider/src/pool/pool.ts": "e97f10c9bf1af5c0df5161194f72c42e1d4de604865cfa1c2917ca995ea863ad",
+    "provider/src/pool/pooled-reader.ts": "84105a315318cc420c11743467c8483b2775655ab765ddce64e87eb387d89318",
+    "provider/src/runtime/node-globals.ts": "1116c2620fae0ff23c93712c35adfc8df3580c9fb3e0284d930708d255d1544f",
+    "provider/src/transport/anon-transport.ts": "23354ea462c3bc793f774376adc7f97343f764cedb4f59ab841b96d2fe7af3e7",
+    "provider/src/transport/fetch-adapter.ts": "b15dd8b0bff219141cdca960248aeb73a96a644662a6b2bd4a785138cd74a944",
+    "provider/src/transport/json-rpc.ts": "427616e720bf80d963f76aab7d14b2883fad03487993551c522b4140b73757d6",
+    "provider/src/transport/pinned-bootstrap.ts": "0a2f13fe7a9dac7b9ea6d21b6dee62463164962c9171b129525a195e61736b86",
+    "provider/src/transport/response-body.ts": "a0b3d4692e81cee31137bc67c8a9c85dad2732422080053e7917d6c0c810711a",
+    "provider/src/verify/hex.ts": "232116283b53158689e5c54639fc1117c50e15aa6269d8df20b95b432ad1aebd",
+    "provider/src/verify/index.ts": "01ab8cf6e96b699a901eeae381c2f709a5a2a7e0a11a8d64755de9d40a8d3e8c",
+    "provider/src/verify/mpt.ts": "9286c91b2e7789e5b48c976b0580d629f15640be0a6c93b0e900245e2fa1ca71",
+    "provider/src/verify/reader.ts": "6ee290ab8e432e5dc94ea9b77f67dfa238c42d5a5e47a74eb8334ce03cfe8946",
+    "provider/src/verify/rlp.ts": "e300c90787737f64e2587573b6771919caf69719f6ac9121383d75d57fd4e3fa",
+    "provider/src/verify/worker-pin.ts": "e3e0b02c5ee6ec36117e86a806e8232591253679246551d26ccb7b135505b94e",
+    "provider/test/light-client/forced-update.test.ts": "a2358f0ccf7cf207f70b5b0a2ae3e65764caf3ff81d4f10e33b94650746e52ce",
+    "provider/test/light-client/period-cold-start.browser.mjs": "dd22e13857c2b1477ca3f358503b509dc19f99b9d8740f0c8bb99cb28de9b751",
+    "provider/test/light-client/period-cold-start.mjs": "e59bf987cf9d39000197e76358f63d5782c4fe5c8a9cbde66960db4e123edad4"
+  },
+  "progress": [
+    {
+      "phase": "worker-ready",
+      "mode": "live",
+      "at": "2026-11-06T19:54:21.272Z"
+    },
+    {
+      "phase": "headers-ready",
+      "mode": "live",
+      "at": "2026-11-06T19:54:28.858Z",
+      "header": {
+        "network": "mainnet",
+        "slot": 15597504,
+        "blockNumber": 26357966,
+        "blockHash": "0x8d7adeab0787982a87d39a60afd07f478ddc4ad190bbc251066533d8ab6f905f",
+        "stateRoot": "0x123c420b57afb55c5f31a07725b727804ead703275709379038b9207a65cfdd8",
+        "timestamp": 1793994071,
+        "execution": {
+          "feeRecipient": "0x4675c7e5baafbffbca748158becba61ef3b0a263",
+          "prevRandao": "0xce18c3131410645707b74c6ccba0bfb02ad942bf5afa0eb1528c94cb312e310d",
+          "gasLimit": "60000000",
+          "baseFeePerGas": "94513677",
+          "excessBlobGas": "182029073"
+        }
+      }
+    },
+    {
+      "phase": "target-signature-accepted",
+      "mode": "live",
+      "transition": {
+        "clientId": 1,
+        "safeUpdateEvent": 0,
+        "acceptedHeadEvent": 1,
+        "committeeRoot": "0x2556696b4b85ba918523bba918b51dd2ce8b52a5fdfbe85626ceec73473eccc1",
+        "signatureSlot": 15597570,
+        "headSlot": 15597569
+      },
+      "at": "2026-11-06T19:54:28.878Z"
+    },
+    {
+      "phase": "balance-verified",
+      "at": "2026-11-06T19:54:32.603Z",
+      "blockNumber": 26357966,
+      "finalizedPeriod": 1903
+    }
+  ],
+  "qualifications": [
+    "No synthetic clock, refreshed checkpoint, preloaded committee or verifier bypass.",
+    "Observer wrappers invoke the original verifier methods unchanged; fetched response summaries alone never establish acceptance.",
+    "A finalized header can legitimately remain in period 1903 near the boundary; its actual slot and period are disclosed.",
+    "This tests the existing gateway and selected endpoints, not public hosting or independence.",
+    "Production startup, freshness, response and pool timeout settings remain unchanged. Harness bounds only stop the observation.",
+    "All execution and beacon requests must use the anonymous worker. Public bundle-only resolver fallbacks remain allowed."
+  ],
+  "browserVersion": "firefox/156.0.1",
+  "browserLaunchedAt": "2026-11-06T19:54:14.536Z",
+  "externalBrowserRequests": [],
+  "blockedDirectRequests": [],
+  "pageErrors": [],
+  "result": {
+    "mode": "live",
+    "startedAt": "2026-11-06T19:54:16.242Z",
+    "startPeriod": 1904,
+    "checkpoint": {
+      "epoch": 487173,
+      "root": "0x35bd26d77ecef24031f37b86d4be488fd66c472eb68c11595ca1f327a9a54f24"
+    },
+    "boundary": {
+      "period": 1904,
+      "slot": 15597568,
+      "at": "2026-11-06T19:53:59.000Z"
+    },
+    "productionTimeoutOverrides": false,
+    "activeClientId": 1,
+    "outcome": {
+      "functionalPass": true,
+      "readAt": "2026-11-06T19:54:32.603Z",
+      "readPeriod": 1904,
+      "pin": {
+        "state": "verified",
+        "workerHash": "0x5b62f358ce7a2b94ee9bc3a0e6a08757db68fa08fc348276f31eda788aec818b",
+        "block": 26357966
+      },
+      "balance": "2111914453482670954193804",
+      "readHeader": {
+        "network": "mainnet",
+        "slot": 15597504,
+        "blockNumber": 26357966,
+        "blockHash": "0x8d7adeab0787982a87d39a60afd07f478ddc4ad190bbc251066533d8ab6f905f",
+        "stateRoot": "0x123c420b57afb55c5f31a07725b727804ead703275709379038b9207a65cfdd8",
+        "timestamp": 1793994071,
+        "execution": {
+          "feeRecipient": "0x4675c7e5baafbffbca748158becba61ef3b0a263",
+          "prevRandao": "0xce18c3131410645707b74c6ccba0bfb02ad942bf5afa0eb1528c94cb312e310d",
+          "gasLimit": "60000000",
+          "baseFeePerGas": "94513677",
+          "excessBlobGas": "182029073"
+        }
+      },
+      "finalizedPeriod": 1903,
+      "transition": {
+        "clientId": 1,
+        "safeUpdateEvent": 0,
+        "acceptedHeadEvent": 1,
+        "committeeRoot": "0x2556696b4b85ba918523bba918b51dd2ce8b52a5fdfbe85626ceec73473eccc1",
+        "signatureSlot": 15597570,
+        "headSlot": 15597569
+      },
+      "close": {
+        "callsAfterClose": 0,
+        "refusal": {
+          "name": "TransportUnavailableError",
+          "message": "DeRPC: anonymous transport is closed; refusing to send (no direct fallback)"
+        },
+        "iframeCount": 0
+      },
+      "boundaryValidated": true
+    },
+    "initializations": [
+      {
+        "clientId": 1,
+        "at": "2026-11-06T19:54:25.967Z",
+        "headSlot": 15589536,
+        "finalizedSlot": 15589536,
+        "allowForcedUpdates": false,
+        "installedCommittees": [
+          {
+            "period": 1903,
+            "root": "0xc15f9b3c819dd52585cc1b29509ac27bd6cce8e29cae636809f0f0dfe3b12640"
+          }
+        ]
+      }
+    ],
+    "fetched": [
+      {
+        "url": "https://ethereum-beacon-api.publicnode.com/eth/v1/beacon/light_client/bootstrap/0x35bd26d77ecef24031f37b86d4be488fd66c472eb68c11595ca1f327a9a54f24",
+        "status": 200,
+        "receivedAt": "2026-11-06T19:54:25.302Z",
+        "bodySha256": "41025b0f32b2c6ee03fcd7154edaa995d8c8eb3ece947e1e11724f7c342c5ead",
+        "updates": [
+          {
+            "version": "fulu",
+            "bootstrapSlot": "15589536"
+          }
+        ]
+      },
+      {
+        "url": "https://ethereum-beacon-api.publicnode.com/eth/v1/beacon/light_client/updates?start_period=1903&count=2",
+        "status": 200,
+        "receivedAt": "2026-11-06T19:54:28.045Z",
+        "bodySha256": "289772a34e5ea90b3c4bf29cd3977d39f4d7230aa6c05a6321a65eadd5dbc589",
+        "updates": [
+          {
+            "version": "fulu",
+            "signatureSlot": 15589672,
+            "signaturePeriod": 1903,
+            "attestedSlot": 15589671,
+            "finalizedSlot": 15589599,
+            "participants": 511,
+            "finalityBranchPresent": true,
+            "nextCommitteeBranchPresent": true
+          },
+          {
+            "version": "fulu",
+            "signatureSlot": 15597570,
+            "signaturePeriod": 1904,
+            "attestedSlot": 15597569,
+            "finalizedSlot": 15597504,
+            "participants": 510,
+            "finalityBranchPresent": true,
+            "nextCommitteeBranchPresent": true
+          }
+        ]
+      },
+      {
+        "url": "https://ethereum-beacon-api.publicnode.com/eth/v1/beacon/light_client/optimistic_update",
+        "status": 200,
+        "receivedAt": "2026-11-06T19:54:30.189Z",
+        "bodySha256": "fcf1c84536ca15d1cb1ff6adbbfc068b78069b7d09489572f28bf5d21ddf6ca9",
+        "updates": [
+          {
+            "version": "fulu",
+            "signatureSlot": 15597570,
+            "signaturePeriod": 1904,
+            "attestedSlot": 15597569,
+            "finalizedSlot": null,
+            "participants": 510,
+            "finalityBranchPresent": false,
+            "nextCommitteeBranchPresent": false
+          }
+        ]
+      },
+      {
+        "url": "https://ethereum-beacon-api.publicnode.com/eth/v1/beacon/light_client/optimistic_update",
+        "status": 200,
+        "receivedAt": "2026-11-06T19:54:31.532Z",
+        "bodySha256": "fcf1c84536ca15d1cb1ff6adbbfc068b78069b7d09489572f28bf5d21ddf6ca9",
+        "updates": [
+          {
+            "version": "fulu",
+            "signatureSlot": 15597570,
+            "signaturePeriod": 1904,
+            "attestedSlot": 15597569,
+            "finalizedSlot": null,
+            "participants": 510,
+            "finalityBranchPresent": false,
+            "nextCommitteeBranchPresent": false
+          }
+        ]
+      }
+    ],
+    "events": [
+      {
+        "clientId": 1,
+        "method": "processSyncCommitteeUpdate",
+        "at": "2026-11-06T19:54:28.065Z",
+        "signatureSlot": 15589672,
+        "signaturePeriod": 1903,
+        "attestedSlot": 15589671,
+        "finalizedSlot": 15589599,
+        "participants": 511,
+        "before": {
+          "headSlot": 15589536,
+          "finalizedSlot": 15589536,
+          "allowForcedUpdates": false,
+          "installedCommittees": [
+            {
+              "period": 1903,
+              "root": "0xc15f9b3c819dd52585cc1b29509ac27bd6cce8e29cae636809f0f0dfe3b12640"
+            }
+          ]
+        },
+        "summary": {
+          "activeParticipants": 511,
+          "attestedHeaderSlot": 15589671,
+          "signatureSlot": 15589672,
+          "finalizedHeaderSlot": 15589599,
+          "isSyncCommitteeUpdate": true,
+          "isFinalityUpdate": true
+        },
+        "nextCommitteeRoot": "0x2556696b4b85ba918523bba918b51dd2ce8b52a5fdfbe85626ceec73473eccc1",
+        "returnedNormally": true,
+        "after": {
+          "headSlot": 15589671,
+          "finalizedSlot": 15589599,
+          "allowForcedUpdates": false,
+          "installedCommittees": [
+            {
+              "period": 1903,
+              "root": "0xc15f9b3c819dd52585cc1b29509ac27bd6cce8e29cae636809f0f0dfe3b12640"
+            }
+          ]
+        },
+        "headAdvanced": true,
+        "acceptedHead": true
+      },
+      {
+        "clientId": 1,
+        "method": "processSyncCommitteeUpdate",
+        "at": "2026-11-06T19:54:28.137Z",
+        "signatureSlot": 15597570,
+        "signaturePeriod": 1904,
+        "attestedSlot": 15597569,
+        "finalizedSlot": 15597504,
+        "participants": 510,
+        "before": {
+          "headSlot": 15589671,
+          "finalizedSlot": 15589599,
+          "allowForcedUpdates": false,
+          "installedCommittees": [
+            {
+              "period": 1903,
+              "root": "0xc15f9b3c819dd52585cc1b29509ac27bd6cce8e29cae636809f0f0dfe3b12640"
+            }
+          ]
+        },
+        "summary": {
+          "activeParticipants": 510,
+          "attestedHeaderSlot": 15597569,
+          "signatureSlot": 15597570,
+          "finalizedHeaderSlot": 15597504,
+          "isSyncCommitteeUpdate": true,
+          "isFinalityUpdate": true
+        },
+        "nextCommitteeRoot": "0xd9dbefc601e4262fccfd41550e63938fde906cc986f040ed2d31f5bced432ca6",
+        "returnedNormally": true,
+        "after": {
+          "headSlot": 15597569,
+          "finalizedSlot": 15597504,
+          "allowForcedUpdates": false,
+          "installedCommittees": [
+            {
+              "period": 1903,
+              "root": "0xc15f9b3c819dd52585cc1b29509ac27bd6cce8e29cae636809f0f0dfe3b12640"
+            },
+            {
+              "period": 1904,
+              "root": "0x2556696b4b85ba918523bba918b51dd2ce8b52a5fdfbe85626ceec73473eccc1"
+            }
+          ]
+        },
+        "headAdvanced": true,
+        "acceptedHead": true
+      },
+      {
+        "clientId": 1,
+        "method": "processOptimisticUpdate",
+        "at": "2026-11-06T19:54:30.217Z",
+        "signatureSlot": 15597570,
+        "signaturePeriod": 1904,
+        "attestedSlot": 15597569,
+        "participants": 510,
+        "before": {
+          "headSlot": 15597569,
+          "finalizedSlot": 15597504,
+          "allowForcedUpdates": false,
+          "installedCommittees": [
+            {
+              "period": 1903,
+              "root": "0xc15f9b3c819dd52585cc1b29509ac27bd6cce8e29cae636809f0f0dfe3b12640"
+            },
+            {
+              "period": 1904,
+              "root": "0x2556696b4b85ba918523bba918b51dd2ce8b52a5fdfbe85626ceec73473eccc1"
+            }
+          ]
+        },
+        "returnedNormally": true,
+        "after": {
+          "headSlot": 15597569,
+          "finalizedSlot": 15597504,
+          "allowForcedUpdates": false,
+          "installedCommittees": [
+            {
+              "period": 1903,
+              "root": "0xc15f9b3c819dd52585cc1b29509ac27bd6cce8e29cae636809f0f0dfe3b12640"
+            },
+            {
+              "period": 1904,
+              "root": "0x2556696b4b85ba918523bba918b51dd2ce8b52a5fdfbe85626ceec73473eccc1"
+            }
+          ]
+        },
+        "headAdvanced": false,
+        "acceptedHead": false
+      }
+    ],
+    "traffic": [
+      {
+        "phase": "worker-startup",
+        "url": "https://ethereum-beacon-api.publicnode.com/eth/v1/beacon/light_client/bootstrap/0x35bd26d77ecef24031f37b86d4be488fd66c472eb68c11595ca1f327a9a54f24",
+        "at": "2026-11-06T19:54:21.272Z",
+        "status": 200
+      },
+      {
+        "phase": "consensus-startup",
+        "url": "https://ethereum-beacon-api.publicnode.com/eth/v1/beacon/light_client/updates?start_period=1903&count=2",
+        "at": "2026-11-06T19:54:25.968Z",
+        "status": 200
+      },
+      {
+        "phase": "consensus-startup",
+        "url": "https://eth.drpc.org",
+        "at": "2026-11-06T19:54:28.858Z",
+        "method": "eth_getProof",
+        "status": 200
+      },
+      {
+        "phase": "consensus-startup",
+        "url": "https://ethereum-beacon-api.publicnode.com/eth/v1/beacon/light_client/optimistic_update",
+        "at": "2026-11-06T19:54:28.861Z",
+        "status": 200
+      },
+      {
+        "phase": "worker-pin-and-balance",
+        "url": "https://ethereum-beacon-api.publicnode.com/eth/v1/beacon/light_client/optimistic_update",
+        "at": "2026-11-06T19:54:30.265Z",
+        "status": 200
+      },
+      {
+        "phase": "worker-pin-and-balance",
+        "url": "https://eth.drpc.org",
+        "at": "2026-11-06T19:54:30.762Z",
+        "method": "eth_getProof",
+        "status": 200
+      },
+      {
+        "phase": "worker-pin-and-balance",
+        "url": "https://ethereum-beacon-api.publicnode.com/eth/v1/beacon/light_client/finality_update",
+        "at": "2026-11-06T19:54:31.533Z",
+        "status": 200
+      }
+    ],
+    "headerLogs": [
+      {
+        "level": "debug",
+        "message": "Syncing",
+        "at": "2026-11-06T19:54:25.967Z"
+      },
+      {
+        "level": "debug",
+        "message": "Updated state.optimisticHeader",
+        "at": "2026-11-06T19:54:28.113Z"
+      },
+      {
+        "level": "debug",
+        "message": "Updated state.finalizedHeader",
+        "at": "2026-11-06T19:54:28.113Z"
+      },
+      {
+        "level": "debug",
+        "message": "processed sync update",
+        "at": "2026-11-06T19:54:28.126Z"
+      },
+      {
+        "level": "debug",
+        "message": "Updated state.optimisticHeader",
+        "at": "2026-11-06T19:54:28.835Z"
+      },
+      {
+        "level": "debug",
+        "message": "Updated state.finalizedHeader",
+        "at": "2026-11-06T19:54:28.835Z"
+      },
+      {
+        "level": "debug",
+        "message": "processed sync update",
+        "at": "2026-11-06T19:54:28.857Z"
+      },
+      {
+        "level": "debug",
+        "message": "Synced",
+        "at": "2026-11-06T19:54:28.861Z"
+      },
+      {
+        "level": "debug",
+        "message": "Started tracking the head",
+        "at": "2026-11-06T19:54:28.861Z"
+      }
+    ],
+    "poolEvents": [
+      {
+        "type": "attempt",
+        "endpoint": "live-proof-0",
+        "attempt": 1,
+        "at": 1793994868858
+      },
+      {
+        "type": "success",
+        "endpoint": "live-proof-0",
+        "attempt": 1,
+        "at": 1793994870762
+      },
+      {
+        "type": "attempt",
+        "endpoint": "live-proof-0",
+        "attempt": 1,
+        "at": 1793994870762
+      },
+      {
+        "type": "success",
+        "endpoint": "live-proof-0",
+        "attempt": 1,
+        "at": 1793994872603
+      }
+    ]
+  },
+  "noDirectRpcOrBeacon": true,
+  "ok": true,
+  "boundaryValidated": true,
+  "finishedAt": "2026-11-06T19:54:34.214Z",
+  "sourcesAfter": {
+    "patches/@lodestar__light-client@1.43.0.patch": "a0da4dcf9be9e10813ec2f8f1715c1585e52aa0a3acef83758c480ba944b775d",
+    "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+    "provider/node_modules/@lodestar/light-client/lib/index.js": "178d862e9021c3cd8b9c42b4b62e7d05a2a278269cff569c01268955aadd0704",
+    "provider/node_modules/@lodestar/light-client/lib/spec/processLightClientUpdate.js": "1c061d765d3b14d9ac175acb80117b3c60e183f00768ddf434372746598ceb8d",
+    "provider/node_modules/@lodestar/light-client/lib/spec/utils.js": "89880995245c623815d0ea3ce9f772d44b394a4a43eb99535957eeaa27aa0987",
+    "provider/node_modules/@lodestar/light-client/lib/spec/validateLightClientUpdate.js": "90d3713f566aaf4f1097a73e1d8cf12a14b111ed9c4b0c4fc5720c9da7f4451b",
+    "provider/src/api/derpc.ts": "e163893601d37c8e3438bdf3a9a2706b79ac26bc8f9b350535f80de58b130a38",
+    "provider/src/api/directory-snapshot.ts": "57dd2f7ee9a4a1fb12efae1661e89c07b09f580043ffc53656524512bc4f069d",
+    "provider/src/api/eip1193.ts": "6a6f59f1a6ee6d877ee53a4ca909983f9345f1b28e61bc107e0c4365770e9e44",
+    "provider/src/api/viem.ts": "d3de0977312a6c0c426e8641f268e22fdc61098aa6a4b20b66765e3a61c3cd00",
+    "provider/src/config/mainnet.ts": "b64e2640a015fa83c3fe12550016f47c4e7f5023b3526fa8be1e9b00feef7ede",
+    "provider/src/discovery/ens.ts": "7cb88d7a3e32ac690a8bee01bf321de3ebc0df27c14dedd179ab80a710c85ac3",
+    "provider/src/discovery/registrar.ts": "f5c37e44434814f930a669b53b6860d5762ec08befdf69e52b362c8539f750d5",
+    "provider/src/execution/index.ts": "61ddd27262533b38b2bc43ebf384ea3206ecb94602d7eaa9287faa71d9eced1d",
+    "provider/src/execution/verified-call.ts": "0c73889387a5fcf7e5f48ebbda236b555465c9048bca09c877b4630568a4fbf8",
+    "provider/src/execution/verified-ens.ts": "d40bf013901bbe0d0c964f30a9ac8ee6332f5af945b40aa6ed296e00c816e0b0",
+    "provider/src/index.ts": "4fd0ed545e9148f9b526db9cdc2432e9254485bcd75c2c1cf925a1587871a647",
+    "provider/src/light-client/header-source.ts": "64ec68f4cb018b3c8702f839594ee4e7e27c0b35edf32d9c5caab11981861af7",
+    "provider/src/light-client/polling-transport.ts": "9b89022bb50eebc6828c368d3aa337a12e0b61e8aadc73b7865eecfb8d309bbe",
+    "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+    "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6",
+    "provider/src/pool/pool.ts": "e97f10c9bf1af5c0df5161194f72c42e1d4de604865cfa1c2917ca995ea863ad",
+    "provider/src/pool/pooled-reader.ts": "84105a315318cc420c11743467c8483b2775655ab765ddce64e87eb387d89318",
+    "provider/src/runtime/node-globals.ts": "1116c2620fae0ff23c93712c35adfc8df3580c9fb3e0284d930708d255d1544f",
+    "provider/src/transport/anon-transport.ts": "23354ea462c3bc793f774376adc7f97343f764cedb4f59ab841b96d2fe7af3e7",
+    "provider/src/transport/fetch-adapter.ts": "b15dd8b0bff219141cdca960248aeb73a96a644662a6b2bd4a785138cd74a944",
+    "provider/src/transport/json-rpc.ts": "427616e720bf80d963f76aab7d14b2883fad03487993551c522b4140b73757d6",
+    "provider/src/transport/pinned-bootstrap.ts": "0a2f13fe7a9dac7b9ea6d21b6dee62463164962c9171b129525a195e61736b86",
+    "provider/src/transport/response-body.ts": "a0b3d4692e81cee31137bc67c8a9c85dad2732422080053e7917d6c0c810711a",
+    "provider/src/verify/hex.ts": "232116283b53158689e5c54639fc1117c50e15aa6269d8df20b95b432ad1aebd",
+    "provider/src/verify/index.ts": "01ab8cf6e96b699a901eeae381c2f709a5a2a7e0a11a8d64755de9d40a8d3e8c",
+    "provider/src/verify/mpt.ts": "9286c91b2e7789e5b48c976b0580d629f15640be0a6c93b0e900245e2fa1ca71",
+    "provider/src/verify/reader.ts": "6ee290ab8e432e5dc94ea9b77f67dfa238c42d5a5e47a74eb8334ce03cfe8946",
+    "provider/src/verify/rlp.ts": "e300c90787737f64e2587573b6771919caf69719f6ac9121383d75d57fd4e3fa",
+    "provider/src/verify/worker-pin.ts": "e3e0b02c5ee6ec36117e86a806e8232591253679246551d26ccb7b135505b94e",
+    "provider/test/light-client/forced-update.test.ts": "a2358f0ccf7cf207f70b5b0a2ae3e65764caf3ff81d4f10e33b94650746e52ce",
+    "provider/test/light-client/period-cold-start.browser.mjs": "dd22e13857c2b1477ca3f358503b509dc19f99b9d8740f0c8bb99cb28de9b751",
+    "provider/test/light-client/period-cold-start.mjs": "e59bf987cf9d39000197e76358f63d5782c4fe5c8a9cbde66960db4e123edad4"
+  },
+  "changedSources": []
+}
