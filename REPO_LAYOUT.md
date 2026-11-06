@@ -199,6 +199,7 @@ wrapper/
 ├── compose.payments.yaml      — settlement-key secret and persistent payment-state volume
 ├── torrc                      — pool/personal onion services; proof-of-work disabled
 ├── release/                   — downloadable free-pool Compose, launcher, public env example, pool-only torrc and operator instructions
+├── scripts/package-release.mjs — native image builds, isolated checks, archive/checksum generation and installation checks without host Node
 ├── src/
 │   ├── proxy.ts                — body-aware RPC/beacon allowlists, budgets and finalized cache
 │   ├── server.ts, main.ts      — loopback HTTP listeners and environment configuration
@@ -207,7 +208,7 @@ wrapper/
 │   ├── payment-chain.ts       — pinned escrow checks and prepared-transaction recovery
 │   ├── setup.ts                — starts compose, shares the running-wrapper self-test, prints ENS records
 │   └── check.ts                — runs that self-test inside a prebuilt container without a Docker socket
-└── test/                      — filtering/payment/setup tests, real onion/browser and availability diagnostics, multi-endpoint packaging and sibling failover, paid container and encrypted restoration runners, labeled evidence
+└── test/                      — filtering/payment/setup tests, offline release-smoke.mjs against actual wrapper/Tor images, real onion/browser and availability diagnostics, multi-endpoint packaging and sibling failover, paid container and encrypted restoration runners, labeled evidence
 ```
 
 ## /payments — host-side session protocol

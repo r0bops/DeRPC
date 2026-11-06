@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node src/main.ts",
     "setup": "node src/setup.ts",
+    "check": "node src/check.ts",
+    "release:package": "node scripts/package-release.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p .",
     "test:live": "node test/live-browser.mjs",
