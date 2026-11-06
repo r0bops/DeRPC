@@ -24,13 +24,13 @@ The current release target is the **free pool**. Reading needs no wallet connect
 
 The query escrow is deployed on **Hoodi (chain 560048)** at `0x9053513aCA73bAc0aF6a9942fd93832fd313B0bb`, with a [checked deployment manifest](contracts/deployments/payment-hoodi-deployment-2026-11-06.json) and [second-source verification](contracts/deployments/payment-hoodi-crosscheck-2026-11-06.json). This is separate from Ethereum mainnet read verification; it does not establish a completed public paid-read/settlement cycle.
 
-The free runtime groups **up to eight endpoints under one ENS operator identity**, with operator-first selection and node-local health/failover. The versioned record, wrapper identity and local integration work are documented in [M1](specs/ENS_TOR_MILESTONE.md). Public multi-endpoint enrollment, a reliable hosted demo, operator/node staking, traffic-based stake requirements and slashing remain [release gates or later work](#status-and-next-steps).
+The free runtime groups **up to eight endpoints under one ENS operator identity**, with operator-first selection and node-local health/failover. The versioned record, wrapper identity and local integration work are documented in [M1](specs/ENS_TOR_MILESTONE.md). Public independent-operator enrollment, operator/node staking, traffic-based stake requirements and slashing remain [release gates or later work](#status-and-next-steps).
 
 ## Run it
 
 Use Node 24 and pnpm 11.22.0, the version pinned in `package.json`. The free verified-read demo needs no wallet, API key or funds. Optional payment demonstrations require a wallet and test funds.
 
-The public deployment target is `derpc.eth.limo`, with the directory and dashboard on IPFS. The [release package is prepared](web/deployment-ens-ipfs-2026-11-06.json); persistent public pinning, the owner-signed ENS contenthash update and a working public Tor gateway remain pending. The temporary Vercel deployments were removed at the team's request. Follow the [ENS/IPFS instructions](web/README.md#ensipfs-deployment) for publication and the [release gates](#status-and-next-steps) before relying on public reads.
+The public deployment is [derpc.eth.limo](https://derpc.eth.limo/), with the directory and dashboard on IPFS. The [release is pinned on the VPS](web/deployment-ens-ipfs-2026-11-06.json), and Firefox verified reads through its public Tor gateway. The owner-signed contenthash update is confirmed; all 55 HTTPS assets and the fresh Firefox verified-read/shutdown flow passed. The temporary Vercel deployments were removed at the team's request. Follow the [ENS/IPFS instructions](web/README.md#ensipfs-deployment) for publication and the [release gates](#status-and-next-steps) before relying on public reads.
 
 ```sh
 pnpm install
@@ -166,17 +166,17 @@ The [Lodestar patch](patches/@lodestar__light-client@1.43.0.patch) backports fin
 
 ## Status and next steps
 
-As of **November 6, 2026**, the core provider, dashboard, wrapper, contracts and payment modules are implemented. The free browser flow has recorded local-gateway and onion evidence; public release is not yet cleared. The [roadmap](specs/ROADMAP.md) and [operations guide](specs/OPERATIONS.md) distinguish implementation from deployment and verification gates.
+As of **November 6, 2026**, the core provider, dashboard, wrapper, contracts and payment modules are implemented. The free mainnet alpha is live at `derpc.eth.limo`; fresh Firefox checks verified the hosted site, anonymous reads and shutdown behavior. The [roadmap](specs/ROADMAP.md) and [operations guide](specs/OPERATIONS.md) distinguish completed deployment checks from remaining maintenance and independent-operator gates.
 
 | Area | Remaining work |
 |---|---|
-| Free public release | Reliable public gateway and all-onion path, fresh-browser hosted checks, a recent trusted checkpoint and live cold-start validation across a committee period. |
+| Free public release | The public gateway, ENS/IPNS site and hosted Firefox flow are verified. Observe a complete IPNS renewal cycle, establish redundant pinning and off-host recovery, and refresh the trusted checkpoint before Nov 12 at 17:07:35 UTC. The local period-1904 cold start [passed November 6](provider/test/light-client/period-1904-evidence-2026-11-06.json). |
 | ENS lifecycle: M1-A | Two independent operators with real registrations, proven discovery, restricted rotation and delisting observed after finalized refresh. Bounded snapshot validity and unsigned lifecycle tooling are current integration work; they do not establish a live deployment. |
-| Multiple endpoints: M1-B | Separate operator and endpoint identities, endpoint-level failover and several endpoints under one ENS name without increasing that operator's selection weight. Both M1-A and M1-B are required for [M1 completion](specs/ENS_TOR_MILESTONE.md). |
+| Multiple endpoints: M1-B | The bounded `derpc.endpoints` record, operator-first selection, endpoint-local observations and sibling failover are implemented. Live lifecycle validation still depends on real operator registrations under M1-A. Both M1-A and M1-B are required for [M1 completion](specs/ENS_TOR_MILESTONE.md). |
 | Payments, after the free release | Public funding/read/settlement/refund demonstration, deployment of a configured app coordinator and external readiness reviews. The Hoodi escrow deployment alone does not satisfy these gates. |
 | Later economics | Specify and implement operator/node staking, traffic measurement, stake adjustment and accountability. Query escrow is not a staking contract. |
 
-Startup recovery (#34) and outage reporting (#35) are closed implementation issues; their regression checks remain relevant to the public release.
+Startup recovery (#34) remains a public-release regression case. The later [branch review](specs/QA_REPORT.md#branch-integration-review--november-6-1927-utc) reproduced outage attribution (#35), mutable cached results (#38) and conflicting block selectors (#39) on main despite their closed tracker state. Their fixes need focused integration from `provider-fixes`.
 
 For operating a service, start with the [wrapper runbook](wrapper/README.md). Use the [contract guide](contracts/README.md) for ENS and escrow administration, and the [sponsored-read guide](payments/examples/README.md) for app-funded requests. The latter requires an application-supplied authenticated header/funding source and protected coordinator; it does not establish a conforming anonymous Node runtime.
 
@@ -244,10 +244,11 @@ The November 6 final default workspace run passed **1,004 tests** in the working
 | [ENS fork checks](contracts/deployments/ens-fork-evidence.json) and [discovery integration](contracts/deployments/ens-fork-discovery-evidence.json) | Actual ENS contract bytecode, permissions and deployment verification, plus a separate locally constructed proof-root integration. These are not public operator registrations. |
 | [Payment container lifecycle](wrapper/test/payment-container-evidence-2026-11-06.json) | Local-chain paid reads, restart recovery, settlement and unused-deposit refunds; distinct from the public Hoodi deployment. |
 | [Gateway bundle delivery](provider/test/transport/kps-bootstrap-live-2026-11-06.json) | Fresh Firefox loaded the hash-checked worker through the local gateway with no CDN request, then refused a fetch after close. Bundle delivery only; no execution/consensus proof was requested in this check. |
+| [Hosted Firefox checks](frontend/test/ipns-hosted-firefox-evidence-2026-11-06.json) | Fresh browser on the actual ENS/IPNS site; verified reads, no direct RPC/beacon HTTP requests and refusal after shutdown. |
 | [Browser timing diagnostics](frontend/test/direct-connections-browser-evidence-2026-11-06.json) | Normal/private Chromium cache and missing-API cases on both pages. Transport was stubbed for these UI checks; this is not a live anonymity observation. |
 | [QA report](specs/QA_REPORT.md) | Earlier full-project review, reproduced defects and their corrections, with the public-gateway and release limitations preserved. |
 
-These are dated functional observations, not uptime guarantees, general latency benchmarks or an independent security audit. The browser checks used the local development gateway; they do not clear the hosted public-gateway release gate.
+These are dated functional observations, not uptime guarantees, general latency benchmarks or an independent security audit. The dated public-host checks verify the observed release path; they do not establish sustained uptime or independent operators.
 
 ### Repository guide
 

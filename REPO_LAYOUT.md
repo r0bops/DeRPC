@@ -13,6 +13,10 @@ AI_USAGE.md        — how AI tools were used
 REPO_LAYOUT.md     — this file
 LICENSE            — MIT
 .gitignore         — excludes upstream clones, local agent instruction files, .env files and build output
+.github/workflows/ci.yml — on pull requests and main: type check, tests, release build, offline release check and an IPFS package artifact
+.github/workflows/release-ens.yml — manual release: package with the release gateway, pin on the team IPFS node, check public retrieval; sends no transaction
+.github/actions/site-package/ — the build, check and packaging steps both workflows share
+.github/actions/install-kubo/ — downloads the pinned Kubo release and verifies its recorded SHA-256
 frontend/.env.example — VITE_TOR_GATEWAYS: our own tor-js gateway address(es); copy to .env.local
 package.json       — workspace root: demo/directory dev and build scripts, combined build:site, and typecheck (pnpm)
 pnpm-workspace.yaml — provider, frontend, web, wrapper, payments and contract packages, Lodestar/ssz pins and patch registration
@@ -94,7 +98,7 @@ provider/
     ├── operators/                    — onion URL integrity, identity rotation/mismatch and gateway separation
     ├── discovery/                    — ENS responses, expiry, off-chain refusal and registrar storage proofs
     ├── execution/                    — proof-backed execution, tampering, context and work-limit tests
-    ├── light-client/                 — #9419 attack, polling transport, header source (staleness, wrong chain, bad signatures)
+    ├── light-client/                 — #9419 attack, committee authenticity, polling/header checks and a manual Firefox committee-boundary harness
     ├── verify/                       — proof verification (tampering, binding, absence, truncation), the reader, the worker-pin check
     ├── pool/                         — manual/automatic policy, local observations, exclusion, cooldown, retries, bounds, sticky accounts and pooled reads
     └── transport/                    — fetch adapter, JSON-RPC sender, fail-closed transport
@@ -107,7 +111,7 @@ frontend/
 ├── package.json        — Vite 8.3.5, TypeScript 5.9.3, viem 2.57.8, self-hosted Inter
 ├── vite.config.ts      — relative asset paths, public-gateway release checks, three pages and dev-only call logging
 ├── build/gateways.ts   — gateway address validation and release-output scanning
-├── test/              — safe rendering, ENS/payment controls, wallet chain binding and release-gateway tests
+├── test/              — safe rendering, ENS/payment controls, wallet chain binding, release gateways, Firefox cache/private-window HTTP evidence and opt-in public VPS/IPFS-path and live ENS-domain verification; ipns-hosted-firefox-evidence-2026-11-06.json records the post-IPNS activation run and preceding canceled-asset attempt
 ├── index.html          — the demo: start-up status, operator choice, verified reads, live operators, direct connections
 ├── example.html        — the smallest integrator example
 ├── network-check.html  — diagnostics for the anonymous path: Tor exits, proofs from every endpoint, beacon data
@@ -132,7 +136,13 @@ frontend/
 web/
 ├── README.md           — local development and combined release instructions
 ├── deployment-mainnet-alpha-2026-11-06.json — historical static deployment and browser evidence, marked removed after the ENS/IPFS hosting decision
-├── deployment-ens-ipfs-2026-11-06.json — prepared IPFS CID/contenthash, asset/CAR checks and pending public pin/ENS update
+├── deployment-ens-ipfs-2026-11-06.json — published IPFS release, asset/CAR checks, ENS transaction and public HTTPS browser evidence
+├── deployment-ipns-2026-11-06.json — stable IPNS name, public signed record, independent resolution, encrypted-backup restore evidence and ENS activation status
+├── ens-ipns-publication-2026-11-06.json — owner-signed IPNS switch, two-source receipt/record checks, HTTPS asset hashes and browser evidence
+├── deployment-vps-2026-11-06.json — gateway/IPFS services, binary hashes, restart checks and fresh-node public IPFS retrieval evidence
+├── ens-website-transaction-2026-11-06.json — unsigned mainnet contenthash update, decoded fields, two-source simulation and current resolver authorities
+├── ens-website-publication-2026-11-06.json — canonical owner transaction, matching HTTPS assets and actual ENS-domain browser verification
+├── ens-website-link-audit-2026-11-06.json — resolver creation-to-current event audit and direct record-bundle links before the website update
 ├── package.json        — Vite, TypeScript, Viem address validation and self-hosted Inter
 ├── index.html          — application entry point
 ├── tsconfig.json
@@ -227,7 +237,10 @@ scripts/
 ├── dev-services.sh   — starts/reuses the local tor-js-gateway and Vite dev server
 ├── show-logs.sh      — follows the dev call log and gateway log
 ├── assemble-site.mjs — copies the release demo into web/dist/demo after both builds pass
-└── check-release.mjs — offline assembled-site checks for checkpoint/gateway inputs, page assets and accidental local files
+├── check-release.mjs — offline assembled-site checks for checkpoint/gateway inputs, page assets and accidental local files
+├── package-ipfs.mjs — offline IPFS packaging of web/dist: CAR, root CID, ENSIP-7 contenthash and a per-file SHA-256 manifest in web/out/ipfs-release/
+├── verify-ipfs.mjs  — compares a pinned release with its manifest: through public gateways, from a directory fetched from the pinning node, or by provider listing
+└── vps/             — initial Ubuntu/systemd installation, bounded gateway/IPFS service units and public gateway configuration template; IPNS.md covers the dedicated website key, renewal and encrypted recovery; identities and backups stay outside the repo; pin-car.sh is the forced command for the release deploy key (accepts one CAR and its root CID)
 ```
 
 ## /reference — upstream context (not committed)

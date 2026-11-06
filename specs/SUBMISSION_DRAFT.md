@@ -30,7 +30,7 @@ Private transport alone does not establish correctness, and a valid proof is use
 
 **What is next:**
 
-Validate the hosted public gateway/browser path and the upcoming committee transition, complete independent ENS operator onboarding, and gather feedback from a real wallet integrator. Paid deployment follows the free release. Broader methods, additional chains and a server anonymity runtime each require their own verification and runtime evidence.
+Validate the hosted public gateway/browser path, integrate the remaining fixes identified by branch review, complete independent ENS operator onboarding, and gather feedback from a real wallet integrator. The local committee-transition cold start passed on November 6. Paid deployment follows the free release. Broader methods, additional chains and a server anonymity runtime each require their own verification and runtime evidence.
 
 ## Partner form text
 
@@ -59,7 +59,7 @@ Before recording, choose **Manual** routing, select two working bootstrap operat
 | 0:45–1:15 | Show ETH balance, known WETH storage balance and bytecode with the verified block. Press **Read again**. | “These values come from proofs checked against the authenticated state root. The worker and RPC endpoint are not trusted to decide what is true. The dashboard shows observations from this device, not a global honesty score. Applications can use the same provider through EIP-1193 or viem.” |
 | 1:15–1:50 | Press **Inject a lying operator (simulated)**. Open read events and show rejection, exclusion and honest failover. | “This control deliberately corrupts a real returned response. It is a simulation, not an accusation against a public operator. The host rejects the bad answer and excludes that endpoint locally. An authorized endpoint supplies a proof that verifies, still through Tor. Agreement between providers is not our evidence; the proof is.” |
 | 1:50–2:15 | Press **Cut the anonymous network**. It automatically runs the refusal demonstration and disables further reads. Show the errors. | “Now we stop the private transport. Reads fail. DeRPC never repairs this by sending the query directly. That failure behavior is part of the product.” |
-| 2:15–2:45 | Show the source/architecture and briefly return to the dashboard. | “Nodes still see query content; Tor hides the client's network address along this route. The checkpoint, host code and verifier remain trust assumptions. We support finalized proven reads, not general transaction RPC. The next release gates are public infrastructure validation and independent ENS operator onboarding. Payments stay off for this free demo.” |
+| 2:15–2:45 | Show the source/architecture and briefly return to the dashboard. | “Nodes still see query content; Tor hides the client's network address along this route. The checkpoint, host code and verifier remain trust assumptions. We support finalized proven reads, not general transaction RPC. The hosted alpha is live; the remaining gates are checkpoint and IPNS maintenance and independent ENS operator onboarding. Payments stay off for this free demo.” |
 
 If the ENS gates pass before recording, replace part of the final segment with a short real directory update; do not squeeze an unobserved finality wait into the video. Keep separate transaction and verified-snapshot evidence, and remain below the CROPS three-minute cap.
 
@@ -76,7 +76,7 @@ If the ENS gates pass before recording, replace part of the final segment with a
 ## Team completion checklist
 
 - [ ] Run the release checks against the exact artifact and publish it using the team's chosen host/gateway; record a fresh external-browser pass.
-- [ ] Record the cold-start test after the period-1904 boundary, **November 6 at 19:53:59 UTC**, with forced updates disabled. Retain any failure instead of marking the gate passed.
+- [x] Record the cold-start test after the period-1904 boundary, **November 6 at 19:53:59 UTC**, with forced updates disabled. [Passed at 19:54 UTC](../provider/test/light-client/period-1904-evidence-2026-11-06.json) from the original checkpoint; local-gateway evidence does not clear public hosting.
 - [ ] Record/upload a 2–3 minute human-narrated video and insert its URL plus the tested demo URL in the form.
 - [ ] Review per-file AI attribution and identify meaningful human contributions from the team's actual work. Do not fabricate authorship or edit archived conversation bodies.
 - [x] Review the Grok planning transcript for sensitive work context. The [read-only review](QA_REPORT.md#publication-review) is complete; its body and header remain verbatim.
