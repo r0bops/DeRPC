@@ -88,6 +88,11 @@ function renderStatus(s: DeRPCStatus) {
     : t.state === "failed" ? [tag("failed", "bad"), plain(` — ${t.error ?? "unknown error"} (no direct fallback)`)]
     : [tag("closed", "bad"), plain(" — anonymous network cut; DeRPC never falls back to a direct request")]);
 
+  const net = s.network;
+  setText($("network-status"),
+    net.state === "ok" ? [tag("reachable", "ok")]
+    : [tag("unavailable", "bad"), plain(` — ${net.error ?? "the anonymity network isn't reachable"}`)]);
+
   const lc = s.lightClient;
   const checkpointDays = ((Date.now() / 1000 - (MAINNET_GENESIS + s.checkpoint.epoch * 384)) / 86400).toFixed(1);
   const checkpoint = `pinned checkpoint epoch ${s.checkpoint.epoch} (${checkpointDays} days old)`;

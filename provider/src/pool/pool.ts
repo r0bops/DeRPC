@@ -1,5 +1,5 @@
 import { HeaderSourceNotReadyError, StaleCheckpointError, StaleHeaderError } from "../light-client/header-source.ts";
-import { TransportUnavailableError } from "../transport/anon-transport.ts";
+import { NetworkUnavailableError, TransportUnavailableError } from "../transport/anon-transport.ts";
 import { ProofVerificationError } from "../verify/mpt.ts";
 import type { JsonRpcSend } from "../verify/reader.ts";
 import { WorkerPinChainError, WorkerPinMismatchError } from "../verify/worker-pin.ts";
@@ -19,7 +19,7 @@ export interface PoolEndpoint {
 export type EndpointState = "eligible" | "cooldown" | "excluded";
 
 export interface PoolEvent {
-  type: "attempt" | "success" | "invalid-proof" | "transient-failure" | "stopped" | "exhausted";
+  type: "attempt" | "success" | "invalid-proof" | "transient-failure" | "stopped" | "network-unavailable" | "exhausted";
   endpoint?: string;
   attempt?: number;
   detail?: string;
@@ -28,7 +28,7 @@ export interface PoolEvent {
 
 export interface PoolAttempt {
   endpoint: string;
-  kind: "invalid-proof" | "transient-failure";
+  kind: "invalid-proof" | "transient-failure" | "network-unavailable";
   error: string;
 }
 
@@ -154,6 +154,7 @@ export function createPool(opts: PoolOptions): Pool {
       const deadline = start + totalTimeoutMs;
       const tried = new Set<string>();
       const attempts: PoolAttempt[] = [];
+      let lastNetworkError: NetworkUnavailableError | undefined;
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         const remaining = deadline - now();
         if (attempt > 1 && remaining <= 0) break;
@@ -206,6 +207,11 @@ export function createPool(opts: PoolOptions): Pool {
             sharedExcluded.add(id);
             attempts.push({ endpoint: id, kind: "invalid-proof", error: detail });
             emit({ type: "invalid-proof", endpoint: id, attempt, detail });
+          } else if (error instanceof NetworkUnavailableError) {
+            // The anonymity network, not the endpoint: don't bench an operator that may be fine (#35).
+            lastNetworkError = error;
+            attempts.push({ endpoint: id, kind: "network-unavailable", error: detail });
+            emit({ type: "transient-failure", endpoint: id, attempt, detail });
           } else {
             state.get(id)!.cooldownUntil = now() + cooldownMs;
             attempts.push({ endpoint: id, kind: "transient-failure", error: detail });
@@ -214,6 +220,15 @@ export function createPool(opts: PoolOptions): Pool {
         } finally {
           if (timer) clearTimeout(timer);
         }
+      }
+      if (attempts.length > 0 && attempts.every((a) => a.kind === "network-unavailable")) {
+        // Every attempt died on the anonymity network. Reporting individual operator failures (and
+        // cooling them all down) would blame endpoints that never got a usable circuit.
+        emit({ type: "network-unavailable", detail: lastNetworkError?.message });
+        throw new NetworkUnavailableError(
+          `anonymity network unavailable after ${attempts.length} attempt${attempts.length === 1 ? "" : "s"}: ${lastNetworkError?.message ?? "unknown error"}`,
+          { cause: lastNetworkError, code: lastNetworkError?.code, kind: lastNetworkError?.kind, torKind: lastNetworkError?.torKind },
+        );
       }
       emit({ type: "exhausted" });
       throw new PoolExhaustedError(attempts);

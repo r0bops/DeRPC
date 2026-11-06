@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { createEip1193Provider, ProviderRpcError, type ReadBackend } from "../../src/api/eip1193.ts";
 import { createPool, NoOperatorsChosenError } from "../../src/pool/pool.ts";
 import { createPooledReader } from "../../src/pool/pooled-reader.ts";
-import { TransportUnavailableError } from "../../src/transport/anon-transport.ts";
+import { NetworkUnavailableError, TransportUnavailableError } from "../../src/transport/anon-transport.ts";
 import type { VerifiedReader } from "../../src/verify/reader.ts";
 import { BLOCK_TAG, RECORDED_HEADER, recordedEndpoint } from "../helpers/recorded-endpoint.ts";
 import fixture from "../fixtures/mainnet-proofs.json" with { type: "json" };
@@ -146,6 +146,15 @@ describe("createEip1193Provider", () => {
 
     expect(error.code).toBe(4900);
     expect(error.data).toEqual({ reason: "TransportUnavailableError" });
+  });
+
+  it("reports an unreachable anonymity network as disconnected (4900)", async () => {
+    const { provider } = createEip1193Provider(failingBackend(new NetworkUnavailableError("tor: operation timed out at exit")));
+
+    const error = await rpcError(provider.request({ method: "eth_getBalance", params: [WETH, "finalized"] }));
+
+    expect(error.code).toBe(4900);
+    expect(error.data).toEqual({ reason: "NetworkUnavailableError" });
   });
 
   it("reports reads refused for safety (no operator chosen) as resource unavailable, with the reason", async () => {

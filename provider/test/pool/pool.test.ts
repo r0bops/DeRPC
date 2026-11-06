@@ -5,7 +5,7 @@ import type { JsonRpcSend } from "../../src/verify/reader.ts";
 import { ProofVerificationError } from "../../src/verify/index.ts";
 import { StaleHeaderError } from "../../src/light-client/header-source.ts";
 import { WorkerPinMismatchError } from "../../src/verify/worker-pin.ts";
-import { TransportUnavailableError } from "../../src/transport/anon-transport.ts";
+import { NetworkUnavailableError, TransportUnavailableError } from "../../src/transport/anon-transport.ts";
 
 const KEY = "derpc:account:0xabc";
 type Behavior = () => unknown;
@@ -47,6 +47,7 @@ function harness(endpoints: PoolEndpoint[], behaviors: Record<string, Behavior[]
 const ok = () => "ok";
 const lie = () => "lie";
 const exitTimeout = () => { throw new Error("Failed to connect: tor: operation timed out at exit"); };
+const networkDown = () => { throw new NetworkUnavailableError("tor: operation timed out at exit", { kind: "timeout", torKind: "exit" }); };
 const PREFERRED: PoolEndpoint[] = [{ url: "a", priority: 0 }, { url: "b", priority: 0 }, { url: "c", priority: 1 }];
 
 describe("createPool", () => {
@@ -85,6 +86,40 @@ describe("createPool", () => {
 
     h.advance(60_001);
     expect(h.pool.status().find((s) => s.url === "a")?.state).toBe("eligible");
+  });
+
+  it("reports a network outage instead of cooling every operator that never got a circuit", async () => {
+    const h = harness([{ url: "a", priority: 0 }, { url: "b", priority: 0 }], { a: networkDown, b: networkDown });
+
+    await expect(h.read()).rejects.toBeInstanceOf(NetworkUnavailableError);
+
+    expect(h.pool.status().map((s) => s.state)).toEqual(["eligible", "eligible"]);
+    expect(h.events).toEqual([
+      "attempt a", "transient-failure a",
+      "attempt b", "transient-failure b",
+      "attempt a", "transient-failure a",
+      "network-unavailable",
+    ]);
+  });
+
+  it("still blames an endpoint when another attempt failed on the network", async () => {
+    const h = harness(PREFERRED, { a: networkDown, b: exitTimeout, c: exitTimeout });
+
+    await expect(h.read()).rejects.toBeInstanceOf(PoolExhaustedError);
+
+    expect(h.pool.status().find((s) => s.url === "a")?.state).toBe("eligible");
+    expect(h.pool.status().find((s) => s.url === "b")?.state).toBe("cooldown");
+    expect(h.pool.status().find((s) => s.url === "c")?.state).toBe("cooldown");
+    expect(h.events).not.toContain("network-unavailable");
+  });
+
+  it("does not bench an operator after a network error, so a later attempt can still answer", async () => {
+    const h = harness(PREFERRED, { a: [networkDown, ok], b: ok });
+
+    await expect(h.read()).resolves.toBe("ok");
+
+    expect(h.pool.status().find((s) => s.url === "a")?.state).toBe("eligible");
+    expect(h.events).toEqual(["attempt a", "transient-failure a", "attempt b", "success b"]);
   });
 
   it("treats the proof-window error as a cooldown, not as an invalid proof", async () => {

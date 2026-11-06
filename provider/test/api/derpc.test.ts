@@ -5,7 +5,7 @@ import { createDeRPCWith, simulatedLyingOperator, type DeRPCOperator, type DeRPC
 import { ProviderRpcError } from "../../src/api/eip1193.ts";
 import { MAINNET_BEACON_ENDPOINTS, TOR_JS_PIN, type WorkerPin } from "../../src/config/mainnet.ts";
 import { StaleCheckpointError, type HeaderSourceOptions, type VerifiedHeader, type VerifiedHeaderSource } from "../../src/light-client/header-source.ts";
-import { TransportUnavailableError, type AnonTransport, type StartOptions, type TransportState } from "../../src/transport/anon-transport.ts";
+import { NetworkUnavailableError, TransportUnavailableError, type AnonTransport, type StartOptions, type TransportState } from "../../src/transport/anon-transport.ts";
 import fixture from "../fixtures/mainnet-worker-pin.json" with { type: "json" };
 
 type Hex = `0x${string}`;
@@ -53,7 +53,7 @@ function fakeTransport(start: StartOptions, opts: { bootError?: Error; pinGate?:
       if (opts.pinGate && method === "eth_getProof" && params[0]?.toLowerCase() === SPECIFIER.toLowerCase() && params[2] === TAG && params[1].length === 1) {
         await opts.pinGate;
       }
-      if (url.includes("down.example")) throw new Error("tor: operation timed out at exit");
+      if (url.includes("down.example")) throw new NetworkUnavailableError("tor: operation timed out at exit");
       const result = answer(method, params);
       const body = result === undefined ? { jsonrpc: "2.0", id, error: { code: -32000, message: "no recorded answer" } } : { jsonrpc: "2.0", id, result };
       return new Response(JSON.stringify(body), { status: 200 });
@@ -168,6 +168,20 @@ describe("createDeRPC", () => {
 
     expect(await derpc.provider.request(balanceOfSpecifier)).toBe("0x0");
     expect(derpc.status().pin.state).toBe("verified");
+  });
+
+  it("reports a network outage as disconnected (4900) and recovers after a successful read", async () => {
+    const unreachable: DeRPCOperator = { url: "https://down.example", priority: 0 };
+    const { derpc } = setup({ operators: [unreachable] });
+
+    const error = await rpcError(derpc.provider.request(balanceOfSpecifier));
+    expect(error.code).toBe(4900);
+    expect(error.data).toEqual({ reason: "NetworkUnavailableError" });
+    expect(derpc.status().network.state).toBe("unavailable");
+
+    derpc.setOperators([A]);
+    expect(await derpc.provider.request(balanceOfSpecifier)).toBe("0x0");
+    expect(derpc.status().network.state).toBe("ok");
   });
 
   it("fails closed, as disconnected, when the worker can't start", async () => {

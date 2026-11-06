@@ -1,5 +1,5 @@
 import type { VerifiedHeader } from "../light-client/header-source.ts";
-import { TransportUnavailableError } from "../transport/anon-transport.ts";
+import { NetworkUnavailableError, TransportUnavailableError } from "../transport/anon-transport.ts";
 import type { VerifiedReader, VerifiedValue } from "../verify/reader.ts";
 
 type Hex = `0x${string}`;
@@ -212,7 +212,7 @@ function toProviderError(error: unknown): ProviderRpcError {
   if (error instanceof ProviderRpcError) return error;
   const name = error instanceof Error ? error.name : "Error";
   const message = error instanceof Error ? error.message : String(error);
-  if (error instanceof TransportUnavailableError) return new ProviderRpcError(4900, message, { reason: name });
+  if (error instanceof TransportUnavailableError || error instanceof NetworkUnavailableError) return new ProviderRpcError(4900, message, { reason: name });
   if (REFUSALS.has(name)) return new ProviderRpcError(-32002, message, { reason: name });
   return new ProviderRpcError(-32603, message, { reason: name });
 }

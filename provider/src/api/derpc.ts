@@ -60,6 +60,8 @@ export interface DeRPCStatus {
   worker: { name: string; workerHash: Hex };
   checkpoint: { epoch: number; root: Hex };
   transport: { state: TransportState; error?: string };
+  /** The anonymity network's last observed state, separate from the worker's lifecycle. */
+  network: { state: "ok" | "unavailable"; error?: string };
   lightClient: { state: "waiting" | "syncing" | "verified" | "stale" | "failed"; header?: VerifiedHeader; error?: string };
   pin: { state: "waiting-for-operators" | "waiting-for-light-client" | "checking" | "verified" | "mismatch" | "failed"; workerHash?: Hex; block?: number; error?: string };
   operators: EndpointStatus[];
@@ -103,6 +105,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   const attemptTimeoutMs = options.attemptTimeoutMs ?? 20_000;
 
   let transportError: string | undefined;
+  let network: DeRPCStatus["network"] = { state: "ok" };
   let lightClient: { state: "waiting" | "syncing" | "verified" | "failed"; error?: string } = { state: "waiting" };
   let headerSource: VerifiedHeaderSource | undefined;
   let pool: Pool | undefined;
@@ -263,6 +266,8 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
           sendFor,
           excluded,
           onEvent: (event) => {
+            if (event.type === "success") network = { state: "ok" };
+            if (event.type === "network-unavailable") network = { state: "unavailable", ...(event.detail ? { error: event.detail } : {}) };
             if (event.type === "invalid-proof" && event.endpoint) excluded.add(event.endpoint);
             if (options.onPoolEvent) {
               try {
@@ -295,6 +300,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
       worker: { name: pin.name, workerHash: pin.workerHash },
       checkpoint,
       transport: { state: transport.state(), ...(transportError ? { error: transportError } : {}) },
+      network,
       lightClient: lc,
       pin: pinStatus,
       operators: pool?.status() ?? [],
