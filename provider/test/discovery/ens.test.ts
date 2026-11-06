@@ -1,14 +1,16 @@
 // ENS metadata is a controlled ABI-response fixture; capability proofs are recorded mainnet data.
 import { describe, expect, it, vi } from "vitest";
 import { decodeFunctionData, encodeFunctionResult, hexToBytes, keccak256, stringToHex, type Hex } from "viem";
-import { discoverOperators, dnsName, registryAbi, resolverAbi, retainChosenOperators, RECORD_KEYS, type DiscoveryOptions } from "../../src/discovery/ens.ts";
+import { discoverOperators, DiscoveryReadError, dnsName, registryAbi, resolverAbi, retainChosenOperators, RECORD_KEYS, type DiscoveryOptions } from "../../src/discovery/ens.ts";
+import { CallRevertedError, ExecutionLimitError, UnsupportedExecutionError } from "../../src/execution/verified-call.ts";
 import { PoolExhaustedError } from "../../src/pool/pool.ts";
 import { TOR_JS_PIN } from "../../src/config/mainnet.ts";
 import type { VerifiedHeader } from "../../src/light-client/header-source.ts";
-import type { AnonFetchOptions, AnonTransport } from "../../src/transport/anon-transport.ts";
+import { NetworkUnavailableError, TransportUnavailableError, type AnonFetchOptions, type AnonTransport } from "../../src/transport/anon-transport.ts";
 import { ProofVerificationError, type AccountProof } from "../../src/verify/index.ts";
 import fixture from "../fixtures/mainnet-worker-pin.json" with { type: "json" };
 import { registrarProofs } from "./proofs.ts";
+import { serializeOperatorEndpoints, type OperatorEndpointRecord } from "../../src/operators/endpoints.ts";
 
 const addr = (byte: string) => `0x${byte.repeat(20)}` as Hex;
 const ROOT = addr("a1"), SUB = addr("a2"), PARENT_RESOLVER = addr("b1"), SIGNER = addr("11"), OWNER = addr("22"), ESCROW = addr("33");
@@ -19,11 +21,17 @@ const decodeDns = (hex: Hex) => {
   for (let i = 0; i < bytes.length && bytes[i];) { const length = bytes[i++]!; labels.push(new TextDecoder().decode(bytes.slice(i, i + length))); i += length; }
   return labels.join(".");
 };
+const isBobsRecords = (to: Hex, data: Hex) => {
+  if (to.toLowerCase() !== addr("b2")) return false;
+  const decoded = decodeFunctionData({ abi: resolverAbi, data });
+  return decoded.functionName === "resolve" && decodeDns(decoded.args[0]) === "bob.derpc.eth";
+};
 
 function setup(labels: unknown = ["alice", "bob"]) {
   const states = new Map<string, { status: number; expiry: bigint; latestOwner: Hex; tokenId: bigint; resource: bigint }>();
   const records = new Map<string, Record<string, string>>();
   const offchain = new Set<string>(), corrupted = new Set<string>(), wrongIdentity = new Set<string>();
+  const identities = new Map<string, { ens: string; endpointId?: string }>();
   for (const [i, label] of ["derpc", "alice", "bob", "mallory"].entries()) {
     states.set(label, { status: 2, expiry: BigInt(now + 3600), latestOwner: OWNER, tokenId: BigInt(i + 1), resource: 0n });
     if (label !== "derpc") records.set(label, {
@@ -65,7 +73,7 @@ function setup(labels: unknown = ["alice", "bob"]) {
       options.signal?.throwIfAborted();
       fetches.push({ url, options });
       const label = new URL(url).hostname.split(".")[0]!;
-      if (!options.body) return Response.json({ ens: `${wrongIdentity.has(label) ? "not-this" : label}.derpc.eth`, signer: SIGNER, chains: [1], version: "1", service: "demo-proxy" });
+      if (!options.body) return Response.json({ ...identities.get(label), ens: wrongIdentity.has(label) ? "not-this.derpc.eth" : identities.get(label)?.ens ?? `${label}.derpc.eth`, signer: SIGNER, chains: [1], version: "1", service: "demo-proxy" });
       const request = JSON.parse(String(options.body));
       if (request.method === "eth_getProof") {
         expect(request.params).toEqual([TOR_JS_PIN.specifier, ["0x1"], `0x${HEADER.blockNumber.toString(16)}`]);
@@ -81,7 +89,15 @@ function setup(labels: unknown = ["alice", "bob"]) {
     },
   };
   const options: DiscoveryOptions = { transport, executionUrl: "https://bootstrap.example/", ethRegistry: ROOT, headers: { finalized: () => HEADER, assertFresh: () => {} }, now: () => now * 1000 };
-  return { options, answer, fetches, records, states, offchain, corrupted, wrongIdentity, setIndex: (value: unknown) => { index = value; }, setCapabilityProof: (proof: AccountProof) => { capabilityProof = proof; } };
+  return { options, answer, fetches, records, states, offchain, corrupted, wrongIdentity, identities, setIndex: (value: unknown) => { index = value; }, setCapabilityProof: (proof: AccountProof) => { capabilityProof = proof; } };
+}
+
+function publishNodes(test: ReturnType<typeof setup>, label: string, nodes: OperatorEndpointRecord[]) {
+  const records = test.records.get(label)!;
+  records["derpc.endpoints"] = serializeOperatorEndpoints(nodes);
+  records["derpc.caps"] = JSON.stringify({ chainId: 1, methods: ["eth_getProof", "eth_getCode"] });
+  for (const key of ["derpc.price", "derpc.payee", "derpc.paymentChain", "derpc.escrow"]) records[key] = "";
+  for (const node of nodes) test.identities.set(new URL(node.url).hostname.split(".")[0]!, { ens: `${label}.derpc.eth`, endpointId: node.id });
 }
 
 describe("ENSv2 anonymous directory discovery", () => {
@@ -93,6 +109,7 @@ describe("ENSv2 anonymous directory discovery", () => {
       expect(directory.operators.map(o => o.ens)).toEqual(["alice.derpc.eth", "bob.derpc.eth"]);
       expect(directory).toMatchObject({ listVerification: "unverified", recordVerification: "unverified", blockNumber: HEADER.blockNumber });
       expect(directory.operators.every(o => o.proofVerifiedAt === HEADER.blockNumber)).toBe(true);
+      expect(directory.operators.every(o => o.ensOwner === undefined)).toBe(true);
       expect(directory.operators[0]!.payment).toEqual({ price: 1000n, payee: SIGNER, chainId: 560048, escrow: ESCROW, payeeProven: false, recordsProven: false });
       expect(Object.isFrozen(directory.operators[0]!.payment)).toBe(true);
       expect(retainChosenOperators(directory, ["bob.derpc.eth", "gone.derpc.eth"]).map(o => o.ens)).toEqual(["bob.derpc.eth"]);
@@ -160,6 +177,34 @@ describe("ENSv2 anonymous directory discovery", () => {
     expect(result.rejected[1]!.reason).toContain("balance");
   });
 
+  it.each(["declared certificate", "known owner"] as const)("rejects a shared gateway's %s before contacting the candidate", async ownership => {
+    const test = setup();
+    const active = "gateway.example:12298:abcdefghijklmnop";
+    const alternate = "192.0.2.18:4222:abcdefghijklmnop";
+    test.options.transport.pin = { ...TOR_JS_PIN, config: { ...TOR_JS_PIN.config, gateways: [active] } };
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    if (ownership === "declared certificate") test.records.get("bob")!["derpc.gateways"] = JSON.stringify([alternate]);
+    else test.options.gatewayOwners = { [alternate]: "BOB.derpc.eth" };
+    const directory = await discoverOperators(test.options);
+    expect(directory.operators.map(o => o.ens)).toEqual(["alice.derpc.eth"]);
+    expect(directory.rejected).toEqual([{ name: "bob.derpc.eth", reason: "gateway and RPC service share an operator; choose an independent gateway" }]);
+    expect(test.fetches.filter(c => new URL(c.url).hostname === "alice.example")).toHaveLength(2);
+    expect(test.fetches.some(c => new URL(c.url).hostname === "bob.example")).toBe(false);
+  });
+
+  it("probes an unrelated candidate using the actual configured worker gateways", async () => {
+    const test = setup(["alice"]);
+    const active = "gateway.example:12298:abcdefghijklmnop";
+    test.options.transport.pin = { ...TOR_JS_PIN, config: { ...TOR_JS_PIN.config, gateways: [active] } };
+    test.options.gatewayOwners = { [active]: "someone-else.derpc.eth" };
+    test.records.get("alice")!["derpc.gateways"] = JSON.stringify(["gateway.example:12298:ponmlkjihgfedcba"]);
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    const directory = await discoverOperators(test.options);
+    expect(directory.operators.map(o => o.ens)).toEqual(["alice.derpc.eth"]);
+    expect(directory.rejected).toEqual([]);
+    expect(test.fetches).toHaveLength(2);
+  });
+
   it.each([
     ["derpc.paymentChain", "9007199254740992"], ["derpc.price", "0"], ["derpc.price", (1n << 256n).toString()],
     ["derpc.payee", "0x" + "00".repeat(20)], ["derpc.escrow", "not-an-address"], ["derpc.gateways", '["gateway:0:abcdefghijklmnop"]'],
@@ -211,8 +256,122 @@ describe("ENSv2 anonymous directory discovery", () => {
     await expect(discoverOperators(test.options)).rejects.toBe(failure);
   });
 
+  it.each([
+    ["execution limit", () => new ExecutionLimitError("execution storage-slot limit")],
+    ["unsupported execution", () => new UnsupportedExecutionError("BLOCKHASH needs unavailable authenticated block context")],
+    ["off-chain execution", () => new UnsupportedExecutionError("CCIP-Read OffchainLookup is refused")],
+  ])("aborts the snapshot on a second operator's %s after accepting the first", async (_label, makeError) => {
+    const test = setup();
+    const failure = makeError();
+    test.options.verifiedCall = async (to, data) => {
+      if (isBobsRecords(to, data)) throw failure;
+      return { value: test.answer(to, data), block: HEADER };
+    };
+    await expect(discoverOperators(test.options)).rejects.toMatchObject({ name: "DiscoveryReadError", cause: failure });
+    // Alice's reciprocal identity and public proof both passed before Bob became unreadable.
+    expect(test.fetches.filter(c => new URL(c.url).hostname === "alice.example")).toHaveLength(2);
+    expect(test.fetches.some(c => new URL(c.url).hostname === "bob.example")).toBe(false);
+  });
+
+  it.each(["raw", "verified"] as const)("aborts on a late %s metadata network failure without returning the earlier operator", async mode => {
+    const test = setup();
+    const failure = new NetworkUnavailableError("metadata circuit reset");
+    const read = (to: Hex, data: Hex) => {
+      if (isBobsRecords(to, data)) throw failure;
+      return test.answer(to, data);
+    };
+    if (mode === "verified") test.options.verifiedCall = async (to, data) => ({ value: read(to, data), block: HEADER });
+    else test.options.send = async (_method, params) => { const { to, data } = params[0] as { to: Hex; data: Hex }; return read(to, data); };
+    await expect(discoverOperators(test.options)).rejects.toBeInstanceOf(DiscoveryReadError);
+    expect(test.fetches.filter(c => new URL(c.url).hostname === "alice.example")).toHaveLength(2);
+  });
+
+  it("can reject an authenticated second resolver revert without treating it as incomplete execution", async () => {
+    const test = setup();
+    test.options.verifiedCall = async (to, data) => {
+      if (isBobsRecords(to, data)) throw new CallRevertedError("0x", "verified resolver rejected the profile");
+      return { value: test.answer(to, data), block: HEADER };
+    };
+    const directory = await discoverOperators(test.options);
+    expect(directory).toMatchObject({ listVerification: "proven", recordVerification: "proven" });
+    expect(directory.operators.map(o => o.ens)).toEqual(["alice.derpc.eth"]);
+    expect(directory.rejected).toEqual([{ name: "bob.derpc.eth", reason: "verified resolver rejected the profile" }]);
+  });
+
+  it.each([
+    ["derpc.caps", "invalid JSON"],
+    ["derpc.endpoint", "http://unapproved.example"],
+    ["derpc.gateways", "x".repeat(4097)],
+  ])("can reject a proven malformed second operator %s record", async (key, value) => {
+    const test = setup();
+    test.records.get("bob")![key] = value;
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    const directory = await discoverOperators(test.options);
+    expect(directory).toMatchObject({ listVerification: "proven", recordVerification: "proven" });
+    expect(directory.operators.map(o => o.ens)).toEqual(["alice.derpc.eth"]);
+    expect(directory.rejected.map(o => o.name)).toEqual(["bob.derpc.eth"]);
+    expect(test.fetches.some(c => new URL(c.url).hostname === "bob.example")).toBe(false);
+  });
+
+  it.each([
+    ["circuit reset", () => new NetworkUnavailableError("candidate circuit reset")],
+    ["request timeout", () => new DOMException("candidate request timed out", "TimeoutError")],
+    ["request cancellation", () => new DOMException("candidate request cancelled", "AbortError")],
+  ])("treats a candidate %s as availability rejection after complete proven records", async (_label, makeError) => {
+    const test = setup();
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    const fetch = test.options.transport.fetch;
+    test.options.transport.fetch = async (url, options) => {
+      if (new URL(url).hostname === "bob.example") throw makeError();
+      return fetch(url, options);
+    };
+    const directory = await discoverOperators(test.options);
+    expect(directory).toMatchObject({ listVerification: "proven", recordVerification: "proven" });
+    expect(directory.operators.map(o => o.ens)).toEqual(["alice.derpc.eth"]);
+    expect(directory.rejected.map(o => o.name)).toEqual(["bob.derpc.eth"]);
+  });
+
+  it("still aborts the snapshot when the worker dies during a candidate probe", async () => {
+    const test = setup();
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    const fetch = test.options.transport.fetch;
+    const failure = new TransportUnavailableError("failed");
+    test.options.transport.fetch = async (url, options) => {
+      if (new URL(url).hostname === "bob.example") throw failure;
+      return fetch(url, options);
+    };
+    await expect(discoverOperators(test.options)).rejects.toBe(failure);
+    expect(test.fetches.filter(c => new URL(c.url).hostname === "alice.example")).toHaveLength(2);
+  });
+
+  it.each(["identity", "proof"] as const)("keeps a second candidate's %s failure separate from authenticated metadata", async kind => {
+    const test = setup();
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    (kind === "identity" ? test.wrongIdentity : test.corrupted).add("bob");
+    const directory = await discoverOperators(test.options);
+    expect(directory).toMatchObject({ listVerification: "proven", recordVerification: "proven" });
+    expect(directory.operators.map(o => o.ens)).toEqual(["alice.derpc.eth"]);
+    expect(directory.rejected.map(o => o.name)).toEqual(["bob.derpc.eth"]);
+    expect(directory.rejected[0]!.reason).toContain(kind === "identity" ? "does not match" : "balance");
+  });
+
+  it("does not mistake cancellation of the whole scan for a candidate's request cancellation", async () => {
+    const test = setup();
+    const controller = new AbortController();
+    const failure = new DOMException("user cancelled refresh", "AbortError");
+    test.options.signal = controller.signal;
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    const fetch = test.options.transport.fetch;
+    test.options.transport.fetch = async (url, options) => {
+      if (new URL(url).hostname === "bob.example") controller.abort(failure);
+      return fetch(url, options);
+    };
+    await expect(discoverOperators(test.options)).rejects.toBe(failure);
+    expect(test.fetches.filter(c => new URL(c.url).hostname === "alice.example")).toHaveLength(2);
+  });
+
   it("rejects a truncated or reverted resolver batch without retrying individual records", async () => {
-    for (const inner of [[], Array(9).fill("0x556f1830")]) {
+    for (const inner of [[], Array(RECORD_KEYS.length).fill("0x556f1830")]) {
       const test = setup(["alice"]);
       let candidateReads = 0;
       test.options.verifiedCall = async (to, data) => {
@@ -284,6 +443,148 @@ describe("ENSv2 anonymous directory discovery", () => {
     const directory = await discoverOperators(test.options);
     expect(directory.operators).toEqual([]);
     expect(directory.rejected[0]!.reason).toContain("expired during discovery");
+  });
+
+  it("expands a proven plural record under one operator and retains the legacy identity", async () => {
+    const test = setup();
+    publishNodes(test, "alice", [
+      { id: "east", url: "https://alice-east.example/rpc", beaconUrl: "https://alice-east.example/beacon" },
+      { id: "west", url: "https://alice-west.example/rpc" },
+    ]);
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    const directory = await discoverOperators(test.options);
+    expect(directory).toMatchObject({ listVerification: "proven", recordVerification: "proven" });
+    expect(directory.operators.map(o => [o.id, o.operatorId, o.endpointId, o.ens])).toEqual([
+      ["alice.derpc.eth#east", "alice.derpc.eth", "east", "alice.derpc.eth"],
+      ["alice.derpc.eth#west", "alice.derpc.eth", "west", "alice.derpc.eth"],
+      ["bob.derpc.eth", "bob.derpc.eth", undefined, "bob.derpc.eth"],
+    ]);
+    expect(directory.operators.every(o => o.ensOwner?.toLowerCase() === OWNER)).toBe(true);
+    expect(retainChosenOperators(directory, ["alice.derpc.eth"]).map(o => o.endpointId)).toEqual(["east", "west"]);
+    expect(directory.operators.slice(0, 2).every(o => o.payment === undefined)).toBe(true);
+    expect(test.fetches.some(c => new URL(c.url).hostname === "alice.example")).toBe(false);
+    expect(test.fetches).toHaveLength(6); // identity + identical public proof for each endpoint
+  });
+
+  it("updates the proven owner binding when the ENS owner changes", async () => {
+    const test = setup(["alice"]);
+    publishNodes(test, "alice", [{ id: "east", url: "https://alice-east.example/" }, { id: "west", url: "https://alice-west.example/" }]);
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    const before = await discoverOperators(test.options);
+    test.states.get("alice")!.latestOwner = ESCROW;
+    const after = await discoverOperators(test.options);
+    expect(after.operators.map(o => o.id)).toEqual(before.operators.map(o => o.id));
+    expect(before.operators.every(o => o.ensOwner?.toLowerCase() === OWNER)).toBe(true);
+    expect(after.operators.every(o => o.ensOwner?.toLowerCase() === ESCROW)).toBe(true);
+  });
+
+  it.each([
+    " ", "{}", '{"version":2,"endpoints":[]}',
+    '{"version":1,"endpoints":[{"id":"east","url":"https://one.example"},{"id":"east","url":"https://two.example"}]}',
+    '{"version":1,"endpoints":[{"id":"east","url":"https://one.example"},{"id":"west","url":"http://bad.example"}]}',
+  ])("never probes or falls back to singular records for invalid plural metadata: %s", async value => {
+    const test = setup(["alice"]);
+    test.records.get("alice")!["derpc.endpoints"] = value;
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    const directory = await discoverOperators(test.options);
+    expect(directory.operators).toEqual([]);
+    expect(directory.rejected.map(o => o.name)).toEqual(["alice.derpc.eth"]);
+    expect(test.fetches).toEqual([]);
+  });
+
+  it("ignores stale singular URLs only when a valid plural record is present", async () => {
+    const test = setup(["alice"]);
+    publishNodes(test, "alice", [{ id: "east", url: "https://alice-east.example/rpc" }]);
+    test.records.get("alice")!["derpc.endpoint"] = "http://old-invalid.example/";
+    test.records.get("alice")!["derpc.beacon"] = "not a URL";
+    const directory = await discoverOperators(test.options);
+    expect(directory.operators.map(o => o.id)).toEqual(["alice.derpc.eth#east"]);
+    expect(directory.recordVerification).toBe("unverified");
+    test.records.get("alice")!["derpc.endpoints"] = "";
+    expect((await discoverOperators(test.options)).operators).toEqual([]);
+  });
+
+  it.each(["derpc.price", "derpc.payee", "derpc.paymentChain", "derpc.escrow"])("rejects plural operators with any payment term: %s", async key => {
+    const test = setup(["alice"]);
+    publishNodes(test, "alice", [{ id: "east", url: "https://alice-east.example/rpc" }]);
+    test.records.get("alice")![key] = "1";
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    const directory = await discoverOperators(test.options);
+    expect(directory.operators).toEqual([]);
+    expect(directory.rejected[0]!.reason).toBe("plural operator endpoints are free-only");
+    expect(test.fetches).toEqual([]);
+  });
+
+  it("validates beacon requirements for the complete node set before probing any node", async () => {
+    const test = setup(["alice"]);
+    publishNodes(test, "alice", [
+      { id: "east", url: "https://alice-east.example/", beaconUrl: "https://alice-east.example/beacon" },
+      { id: "west", url: "https://alice-west.example/" },
+    ]);
+    test.records.get("alice")!["derpc.caps"] = JSON.stringify({ chainId: 1, methods: ["eth_getProof", "eth_getCode"], beacon: true });
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    const directory = await discoverOperators(test.options);
+    expect(directory.operators).toEqual([]);
+    expect(directory.rejected[0]!.reason).toBe("beacon capability has no endpoint");
+    expect(test.fetches).toEqual([]);
+  });
+
+  it.each(["missing ID", "wrong ID", "proof", "network"] as const)("keeps a healthy sibling after another node's %s failure", async kind => {
+    const test = setup(["alice"]);
+    publishNodes(test, "alice", [{ id: "east", url: "https://alice-east.example/" }, { id: "west", url: "https://alice-west.example/" }]);
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    if (kind === "missing ID") test.identities.set("alice-east", { ens: "alice.derpc.eth" });
+    if (kind === "wrong ID") test.identities.set("alice-east", { ens: "alice.derpc.eth", endpointId: "west" });
+    if (kind === "proof") test.corrupted.add("alice-east");
+    if (kind === "network") {
+      const fetch = test.options.transport.fetch;
+      test.options.transport.fetch = async (url, options) => {
+        if (new URL(url).hostname === "alice-east.example") throw new NetworkUnavailableError("candidate unavailable");
+        return fetch(url, options);
+      };
+    }
+    const directory = await discoverOperators(test.options);
+    expect(directory.operators.map(o => o.id)).toEqual(["alice.derpc.eth#west"]);
+    expect(directory.rejected.map(o => o.name)).toEqual(["alice.derpc.eth#east"]);
+    expect(test.fetches.some(c => new URL(c.url).hostname === "alice.example")).toBe(false);
+  });
+
+  it("rejects shared gateway ownership before contacting any plural sibling", async () => {
+    const test = setup(["alice"]);
+    publishNodes(test, "alice", [{ id: "east", url: "https://alice-east.example/" }, { id: "west", url: "https://alice-west.example/" }]);
+    test.options.gatewayOwners = { [(TOR_JS_PIN.config.gateways as string[])[0]!]: "alice.derpc.eth" };
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    const directory = await discoverOperators(test.options);
+    expect(directory.operators).toEqual([]);
+    expect(directory.rejected[0]!.reason).toContain("share an operator");
+    expect(test.fetches).toEqual([]);
+  });
+
+  it("aborts a later metadata failure even after proving two sibling endpoints", async () => {
+    const test = setup();
+    publishNodes(test, "alice", [{ id: "east", url: "https://alice-east.example/" }, { id: "west", url: "https://alice-west.example/" }]);
+    test.options.verifiedCall = async (to, data) => {
+      if (isBobsRecords(to, data)) throw new ExecutionLimitError("incomplete resolver execution");
+      return { value: test.answer(to, data), block: HEADER };
+    };
+    await expect(discoverOperators(test.options)).rejects.toBeInstanceOf(DiscoveryReadError);
+    expect(test.fetches).toHaveLength(4);
+  });
+
+  it("rotates one stable endpoint ID and removes the whole operator on a later index refresh", async () => {
+    const test = setup();
+    publishNodes(test, "alice", [{ id: "east", url: "https://alice-east.example/" }, { id: "west", url: "https://alice-west.example/" }]);
+    test.options.verifiedCall = async (to, data) => ({ value: test.answer(to, data), block: HEADER });
+    const before = await discoverOperators(test.options);
+    test.fetches.length = 0;
+    publishNodes(test, "alice", [{ id: "east", url: "https://alice-east-new.example/" }, { id: "west", url: "https://alice-west.example/" }]);
+    const rotated = await discoverOperators(test.options);
+    expect(rotated.operators.map(o => o.id)).toEqual(before.operators.map(o => o.id));
+    expect(rotated.operators[0]!.url).toBe("https://alice-east-new.example/");
+    expect(test.fetches.some(c => new URL(c.url).hostname === "alice-east.example")).toBe(false);
+    test.setIndex(["bob"]);
+    const removed = await discoverOperators(test.options);
+    expect(retainChosenOperators(removed, ["alice.derpc.eth", "bob.derpc.eth"]).map(o => o.id)).toEqual(["bob.derpc.eth"]);
   });
 
   it("encodes bounded DNS names and rejects malformed labels", () => {

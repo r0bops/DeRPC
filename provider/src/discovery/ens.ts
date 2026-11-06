@@ -1,5 +1,6 @@
 import { decodeFunctionResult, encodeFunctionData, isAddress, keccak256, namehash, parseAbi, stringToHex, zeroAddress, type Hex } from "viem";
-import { operatorUrl, checkOperatorIdentity } from "../operators/endpoint.ts";
+import { operatorUrl, checkOperatorIdentity, assertSeparateGateway } from "../operators/endpoint.ts";
+import { parseOperatorEndpoints } from "../operators/endpoints.ts";
 import type { AnonTransport } from "../transport/anon-transport.ts";
 import { createJsonRpcSend } from "../transport/json-rpc.ts";
 import { ProofVerificationError, verifyAccountProof, verifyStorageProof, type AccountProof } from "../verify/index.ts";
@@ -14,7 +15,7 @@ export const registryAbi = parseAbi([
   "function getState(uint256 anyId) view returns ((uint8 status,uint64 expiry,address latestOwner,uint256 tokenId,uint256 resource))",
 ]);
 export const resolverAbi = parseAbi(["function resolve(bytes name,bytes data) view returns (bytes)", "function text(bytes32 node,string key) view returns (string)", "function multicall(bytes[] calls) view returns (bytes[])"]);
-export const RECORD_KEYS = ["derpc.endpoint", "derpc.beacon", "derpc.signer", "derpc.caps", "derpc.gateways", "derpc.price", "derpc.payee", "derpc.paymentChain", "derpc.escrow"] as const;
+export const RECORD_KEYS = ["derpc.endpoints", "derpc.endpoint", "derpc.beacon", "derpc.signer", "derpc.caps", "derpc.gateways", "derpc.price", "derpc.payee", "derpc.paymentChain", "derpc.escrow"] as const;
 const LABEL = /^[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/;
 const MAX_UINT256 = (1n << 256n) - 1n;
 const ISOLATION_KEY = "derpc:operator-discovery";
@@ -59,6 +60,8 @@ export interface DiscoveryOptions {
   headers: HeaderView;
   ethRegistry: Hex;
   registrar?: RegistrarPin;
+  /** Independently known gateway owners, keyed by KPS address; checked before any candidate probe. */
+  gatewayOwners?: Record<string, string>;
   /** Run the complete registrar proof under one bounded pool/payment authorization. */
   readRegistrar?: (pin: RegistrarPin, options?: { signal?: AbortSignal }) => Promise<VerifiedValue<ProvenOperator[]>>;
   /** Optional local EVM execution against proven state, pinned to the requested block. */
@@ -101,6 +104,8 @@ export async function discoverOperators(options: DiscoveryOptions): Promise<Dire
 
 async function scan(options: DiscoveryOptions & { signal: AbortSignal }): Promise<Directory> {
   const { transport, headers, signal } = options;
+  const activeGateways = transport.pin.config.gateways ?? [];
+  if (!Array.isArray(activeGateways) || activeGateways.some(gateway => typeof gateway !== "string")) throw new Error("invalid anonymous gateway configuration");
   const block = headers.finalized();
   const timestamp = Math.floor((options.now ?? Date.now)() / 1000);
   if (!Number.isSafeInteger(timestamp) || timestamp < 0) throw new Error("invalid discovery clock");
@@ -123,9 +128,10 @@ async function scan(options: DiscoveryOptions & { signal: AbortSignal }): Promis
         result = await send("eth_call", [{ to, data }, blockTag], { isolationKey: ISOLATION_KEY, signal });
       }
     } catch (error) {
-      // A remote sender does not authenticate revert data. Its error might be a network or
-      // payment failure: abort the refresh rather than presenting an incomplete list.
-      if (error instanceof ProofVerificationError || isFatal(error) || options.verifiedCall && error instanceof Error && ["CallRevertedError", "ExecutionLimitError", "UnsupportedExecutionError"].includes(error.name)) throw error;
+      // Only a completed local execution can establish a resolver revert. Local execution
+      // limits, unavailable context and sender failures leave the snapshot incomplete.
+      // Preserve them as fatal read errors instead of silently dropping this operator.
+      if (error instanceof ProofVerificationError || isFatal(error) || options.verifiedCall && error instanceof Error && error.name === "CallRevertedError") throw error;
       throw new DiscoveryReadError(error instanceof Error ? error.message : "ENS metadata read failed", { cause: error });
     }
     check();
@@ -143,7 +149,7 @@ async function scan(options: DiscoveryOptions & { signal: AbortSignal }): Promis
   async function texts(resolver: Hex, name: string, keys: readonly string[]): Promise<string[]> {
     const profiles = keys.map(key => encodeFunctionData({ abi: resolverAbi, functionName: "text", args: [namehash(name), key] }));
     // ENSv2 AbstractRecordResolver explicitly supports resolve(name, multicall(profiles)).
-    // Keep all nine records in one local EVM execution and one logical paid read.
+    // Keep all records in one local EVM execution and one logical read.
     const profile = profiles.length === 1 ? profiles[0]! : encodeFunctionData({ abi: resolverAbi, functionName: "multicall", args: [profiles] });
     const data = await call(resolver, encodeFunctionData({ abi: resolverAbi, functionName: "resolve", args: [dnsName(name), profile] }));
     const inner = decodeFunctionResult({ abi: resolverAbi, functionName: "resolve", data });
@@ -189,7 +195,14 @@ async function scan(options: DiscoveryOptions & { signal: AbortSignal }): Promis
       const resolver = await registryAddress(subregistry, "getResolver", label);
       const recordValues = await texts(resolver, name, RECORD_KEYS);
       const records = Object.fromEntries(RECORD_KEYS.map((key, i) => [key, recordValues[i]!])) as Record<string, string>;
-      const url = operatorUrl(records["derpc.endpoint"]!).href;
+      const plural = records["derpc.endpoints"] !== "";
+      // An invalid present plural record is an operator-level policy rejection. Never
+      // fall back to an older singular endpoint or probe a partly validated node list.
+      const nodes = plural ? parseOperatorEndpoints(records["derpc.endpoints"]!) : [{
+        id: undefined,
+        url: operatorUrl(records["derpc.endpoint"]!).href,
+        ...(records["derpc.beacon"] ? { beaconUrl: operatorUrl(records["derpc.beacon"]).href } : {}),
+      }];
       const signer = records["derpc.signer"]!;
       if (!validAddress(signer)) throw new Error("invalid signer");
       const caps: unknown = JSON.parse(records["derpc.caps"]!);
@@ -199,30 +212,49 @@ async function scan(options: DiscoveryOptions & { signal: AbortSignal }): Promis
       const gateways: unknown = records["derpc.gateways"] ? JSON.parse(records["derpc.gateways"]) : [];
       if (!Array.isArray(gateways) || gateways.length > 16 || gateways.some(g => typeof g !== "string" || !validGateway(g))) throw new Error("invalid gateway declarations");
       const expiry = Math.min(Number(parent.expiry), Number(entry.expiry), member?.expiry ?? Number.MAX_SAFE_INTEGER);
-      const operator: DiscoveredOperator = { id: name, ens: name, operator: name, url, priority: 0, expiry, gateways, wrapperIdentity: { signer }, proofVerifiedAt: block.blockNumber };
-      if (records["derpc.beacon"]) operator.beaconUrl = operatorUrl(records["derpc.beacon"]).href;
-      if (capability.beacon === true && !operator.beaconUrl) throw new Error("beacon capability has no endpoint");
+      if (capability.beacon === true && nodes.some(node => !node.beaconUrl)) throw new Error("beacon capability has no endpoint");
+      const candidates: DiscoveredOperator[] = nodes.map(node => ({
+        id: node.id === undefined ? name : `${name}#${node.id}`, operatorId: name,
+        ...(node.id === undefined ? {} : { endpointId: node.id }),
+        ...(options.verifiedCall ? { ensOwner: entry.latestOwner } : {}),
+        ens: name, operator: name, url: node.url, ...(node.beaconUrl ? { beaconUrl: node.beaconUrl } : {}),
+        priority: 0, expiry, gateways, wrapperIdentity: { signer }, proofVerifiedAt: block.blockNumber,
+      }));
       const paymentKeys = ["derpc.price", "derpc.payee", "derpc.paymentChain", "derpc.escrow"];
       if (paymentKeys.some(k => records[k])) {
+        if (plural) throw new Error("plural operator endpoints are free-only");
         const price = records["derpc.price"]!, chain = records["derpc.paymentChain"]!, escrow = records["derpc.escrow"]!, recordPayee = records["derpc.payee"]!;
         if (!/^[1-9]\d{0,77}$/.test(price) || BigInt(price) > MAX_UINT256 || !/^[1-9]\d{0,15}$/.test(chain) || !Number.isSafeInteger(Number(chain)) || !validAddress(recordPayee) || !validAddress(escrow)) throw new Error("invalid payment terms");
         if (member && member.payee.toLowerCase() !== recordPayee.toLowerCase()) throw new Error("ENS payee differs from the proven payee");
-        operator.payment = Object.freeze({ price: BigInt(price), payee: member?.payee ?? recordPayee, chainId: Number(chain), escrow, payeeProven: !!proven || !!options.verifiedCall, recordsProven: !!options.verifiedCall });
+        candidates[0]!.payment = Object.freeze({ price: BigInt(price), payee: member?.payee ?? recordPayee, chainId: Number(chain), escrow, payeeProven: !!proven || !!options.verifiedCall, recordsProven: !!options.verifiedCall });
       }
+      // Apply the same gateway/operator ownership separation as normal routing before the
+      // public identity or proof probe contacts this candidate through the active worker.
+      assertSeparateGateway({ ens: name, gateways }, activeGateways, options.gatewayOwners);
       phase = "endpoint";
-      await checkOperatorIdentity(transport, url, { ens: name, signer }, signal);
-      // Every candidate receives the same public bootstrap proof, never a user's account query.
-      // Paid wrappers allow this fixed pin check before a session is funded.
-      const probe = createJsonRpcSend(transport, url, { timeoutMs: 15_000, maxBodyBytes: 256 * 1024 });
-      const proof = await probe("eth_getProof", [transport.pin.specifier, ["0x1"], blockTag], { isolationKey: ISOLATION_KEY, signal }) as AccountProof;
-      const account = verifyAccountProof({ stateRoot: block.stateRoot, address: transport.pin.specifier, proof });
-      if (!Array.isArray(proof.storageProof) || proof.storageProof.length !== 1) throw new Error("endpoint did not serve the bootstrap slot proof");
-      verifyStorageProof({ storageRoot: account.storageRoot, slot: "0x1", proof: proof.storageProof[0]! });
-      check();
-      result.operators.push(operator);
+      for (const operator of candidates) {
+        try {
+          check();
+          await checkOperatorIdentity(transport, operator.url, { ens: name, signer, endpointId: operator.endpointId }, signal);
+          // Every candidate receives the same public bootstrap proof, never a user's account query.
+          // Paid legacy wrappers allow this fixed pin check before a session is funded.
+          const probe = createJsonRpcSend(transport, operator.url, { timeoutMs: 15_000, maxBodyBytes: 256 * 1024 });
+          const proof = await probe("eth_getProof", [transport.pin.specifier, ["0x1"], blockTag], { isolationKey: ISOLATION_KEY, signal }) as AccountProof;
+          const account = verifyAccountProof({ stateRoot: block.stateRoot, address: transport.pin.specifier, proof });
+          if (!Array.isArray(proof.storageProof) || proof.storageProof.length !== 1) throw new Error("endpoint did not serve the bootstrap slot proof");
+          verifyStorageProof({ storageRoot: account.storageRoot, slot: "0x1", proof: proof.storageProof[0]! });
+          check();
+          result.operators.push(operator);
+        } catch (error) {
+          check();
+          if (isFatal(error)) throw error;
+          result.rejected.push({ name: operator.id!, reason: error instanceof Error ? error.message : String(error) });
+        }
+      }
     } catch (error) {
-      // A failed candidate probe rejects that candidate. A corrupt proven record from the
-      // bootstrap pool must instead bubble up so the pool excludes/retries the responsible source.
+      // Endpoint-local failures are availability observations after the metadata was read.
+      // An incomplete/corrupt metadata read invalidates the whole refresh. The scan signal
+      // and freshness check still make cancellation or a stale header fatal in either phase.
       check();
       if ((phase === "records" && error instanceof ProofVerificationError) || isFatal(error)) throw error;
       result.rejected.push({ name, reason: error instanceof Error ? error.message : String(error) });
@@ -254,7 +286,7 @@ function validGateway(value: string): boolean {
   return value.length <= 256 && !!match && Number(match[2]) > 0 && Number(match[2]) <= 65535;
 }
 function isFatal(error: unknown): boolean {
-  return error instanceof Error && ["TransportUnavailableError", "NetworkUnavailableError", "StaleHeaderError", "StaleCheckpointError", "HeaderSourceNotReadyError", "WorkerPinMismatchError", "WorkerPinChainError", "DiscoveryBlockChangedError", "DiscoveryReadError", "PoolExhaustedError", "NoOperatorsChosenError", "PaymentAuthorizationError", "PaymentSessionError", "AbortError", "TimeoutError"].includes(error.name);
+  return error instanceof Error && ["TransportUnavailableError", "StaleHeaderError", "StaleCheckpointError", "HeaderSourceNotReadyError", "WorkerPinMismatchError", "WorkerPinChainError", "DiscoveryBlockChangedError", "DiscoveryReadError", "PoolExhaustedError", "NoOperatorsChosenError", "PaymentAuthorizationError", "PaymentSessionError"].includes(error.name);
 }
 async function abortable<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
   signal.throwIfAborted();
