@@ -10,8 +10,8 @@ export function landingPage(): PageResult {
         <div class="container hero__inner">
           <div>
             <span class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>Private reads. Verified answers.</span>
-            <h1 class="display">RPC you can trust<br />and <span class="lime">nobody can watch.</span></h1>
-            <p class="lead">DeRPC routes every read through an anonymity network and checks every answer against a light client. If the route or the proof is missing, the call fails closed.</p>
+            <h1 class="display">RPC you can trust<br />and <span class="lime">operators can't see your IP.</span></h1>
+            <p class="lead">DeRPC routes every read through an anonymity network and checks every answer against a light client. Operators still see the query contents and timing. If the route or the proof is missing, the call fails closed.</p>
             <div class="hero__actions">
               <a class="btn btn--lime" href="#/directory">Browse operators ${icon("arrow")}</a>
               <a class="btn btn--ghost" href="#/operate">Run an operator</a>
@@ -78,11 +78,11 @@ export function landingPage(): PageResult {
             <article class="panel panel--dark">
               <p class="panel__kicker">For app builders</p>
               <h2 class="panel__title">Keep your reads private without changing your stack.</h2>
-              <p class="panel__text">One transport swap. Your viem calls keep working; the private route and the proof happen underneath.</p>
+              <p class="panel__text">One transport swap for the supported finalized reads on Ethereum mainnet. Unsupported methods such as <span class="mono">eth_call</span> are refused. The private route and the proof happen underneath.</p>
               <ul class="panel__list">
                 <li>${icon("check")}No direct fallback. Ever.</li>
-                <li>${icon("check")}ENS identity you can pin.</li>
-                <li>${icon("check")}Pay per read, not per seat.</li>
+                <li>${icon("check")}Finalized state only, proven by a light client.</li>
+                <li>${icon("check")}You choose which operators to trust.</li>
               </ul>
               <div class="panel__actions">
                 <a class="btn btn--ghost" href="#/directory">Open directory ${icon("arrow")}</a>
@@ -90,12 +90,12 @@ export function landingPage(): PageResult {
             </article>
             <article class="panel panel--lime">
               <p class="panel__kicker">For operators</p>
-              <h2 class="panel__title">Run a node. Earn per verified read.</h2>
-              <p class="panel__text">Publish an endpoint, stake behind your name, and let independent watchers keep the score honest.</p>
+              <h2 class="panel__title">Run a node. Join the directory.</h2>
+              <p class="panel__text">Publish an endpoint operators can choose today. Stake, scores, payments and an ENS registry are roadmap, not live.</p>
               <ul class="panel__list">
-                <li>${icon("check")}An ENS name under .ops.derpc.eth.</li>
-                <li>${icon("check")}A stake-backed public score.</li>
-                <li>${icon("check")}Revenue from verified reads.</li>
+                <li>${icon("check")}List your endpoint in the open directory.</li>
+                <li>${icon("check")}Tor-tier labels so apps can prefer private exits.</li>
+                <li>${icon("check")}ENS names, stake and revenue: planned.</li>
               </ul>
               <div class="panel__actions">
                 <a class="btn btn--ink" href="#/operate">Run an operator ${icon("arrow")}</a>
