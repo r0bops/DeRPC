@@ -117,7 +117,7 @@ exceptions in them are logged and cannot change DeRPC's state or fail a read.
 
 The EIP-1193 `request()` surface has no per-call `AbortSignal`. Each read is bounded instead:
 
-- the pool has a total budget (30 s by default) and an attempt timeout (20 s by default);
+- the pool has a total budget (30 s by default) and an attempt timeout (8 s by default, so a slow fallback cannot eat the budget);
 - an attempt that exceeds the budget is aborted, and a late response is rejected;
 - `close()` makes pending and later reads fail with `4900`.
 
