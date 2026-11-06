@@ -1,5 +1,5 @@
 // The endpoint pool: which endpoint serves a read, and what happens when one fails.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createPool, NoOperatorsChosenError, PoolExhaustedError, type PoolEndpoint, type PoolEvent } from "../../src/pool/pool.ts";
 import type { JsonRpcSend } from "../../src/verify/reader.ts";
 import { ProofVerificationError } from "../../src/verify/index.ts";
@@ -10,7 +10,7 @@ import { TransportUnavailableError } from "../../src/transport/anon-transport.ts
 const KEY = "derpc:account:0xabc";
 type Behavior = () => unknown;
 
-function harness(endpoints: PoolEndpoint[], behaviors: Record<string, Behavior[] | Behavior>, opts: { random?: number[]; stepMs?: number; excluded?: string[] } = {}) {
+function harness(endpoints: PoolEndpoint[], behaviors: Record<string, Behavior[] | Behavior>, opts: { random?: number[]; stepMs?: number; excluded?: Iterable<string> } = {}) {
   const calls: { url: string; isolationKey: string }[] = [];
   const events: string[] = [];
   let now = 1_000_000;
@@ -101,7 +101,7 @@ describe("createPool", () => {
 
     await h.read();
 
-    expect(h.calls.map((c) => c.isolationKey)).toEqual([KEY, `${KEY}#retry-2`, `${KEY}#retry-3`]);
+    expect(h.calls.map((c) => c.isolationKey)).toEqual([`${KEY}#read-1-1`, `${KEY}#read-1-2`, `${KEY}#read-1-3`]);
   });
 
   it.each([
@@ -154,6 +154,27 @@ describe("createPool", () => {
     expect(h.calls.map((c) => c.url)).toEqual(["a", "b", "a", "b"]);
   });
 
+  it("keeps simultaneous first reads for one account on the same operator", async () => {
+    const h = harness(PREFERRED, { a: ok, b: ok, c: ok }, { random: [0, 0.99] });
+
+    await Promise.all([h.read("alice"), h.read("alice")]);
+
+    expect(h.calls.map((c) => c.url)).toEqual(["a", "a"]);
+  });
+
+  it("moves concurrent reads for one account together when its operator fails at the exit", async () => {
+    let failures = 0;
+    const a = () => {
+      if (failures++ < 2) throw exitTimeout();
+      return "ok";
+    };
+    const h = harness([{ url: "a", priority: 0 }, { url: "b", priority: 0 }], { a, b: ok });
+
+    await Promise.all([h.read("alice"), h.read("alice")]);
+
+    expect(h.calls.map((c) => c.url)).toEqual(["a", "a", "b", "b"]);
+  });
+
   it("moves an account to another chosen operator when its operator fails, and stays there", async () => {
     const h = harness(PREFERRED, { a: [exitTimeout, ok], b: ok, c: ok }, { random: [0, 0, 0] });
 
@@ -183,12 +204,37 @@ describe("createPool", () => {
     expect(h.pool.status().find((s) => s.url === "a")?.state).toBe("excluded");
   });
 
+  it("shares a late invalid proof with pools created before the rejection", async () => {
+    const excluded = new Set<string>();
+    let release!: (value: string) => void;
+    const pending = new Promise<string>((resolve) => (release = resolve));
+    const old = harness([{ id: "liar", url: "x", priority: 0 }], { liar: () => pending }, { excluded });
+    const fresh = harness([{ id: "liar", url: "x", priority: 0 }, { url: "y", priority: 1 }], { liar: "lie", y: ok }, { excluded });
+
+    const result = old.read().catch((error) => error);
+    expect(old.calls).toHaveLength(1);
+    release("lie");
+
+    expect(await result).toBeInstanceOf(PoolExhaustedError);
+    expect(fresh.pool.status().find((s) => s.id === "liar")?.state).toBe("excluded");
+  });
+
+  it("uses a fresh circuit for every attempt across reads", async () => {
+    const h = harness([{ url: "a", priority: 0 }], { a: [exitTimeout, exitTimeout, exitTimeout, exitTimeout, ok] });
+
+    await h.read().catch(() => {}); // three attempts, all at the exit
+    await h.read();
+
+    const keys = h.calls.map((c) => c.isolationKey);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
   it("retries the only chosen operator on a fresh circuit when its first attempt fails at the Tor exit", async () => {
     const h = harness([{ url: "a", priority: 0 }], { a: [exitTimeout, ok] });
 
     await expect(h.read()).resolves.toBe("ok");
 
-    expect(h.calls).toEqual([{ url: "a", isolationKey: KEY }, { url: "a", isolationKey: `${KEY}#retry-2` }]);
+    expect(h.calls).toEqual([{ url: "a", isolationKey: `${KEY}#read-1-1` }, { url: "a", isolationKey: `${KEY}#read-1-2` }]);
   });
 
   it("gives a cooling-down operator another try on a fresh circuit rather than fail, when no other is available", async () => {
@@ -196,7 +242,7 @@ describe("createPool", () => {
 
     await expect(h.read()).resolves.toBe("ok"); // a fails, b fails, then a again on a fresh circuit
 
-    expect(h.calls.map((c) => [c.url, c.isolationKey])).toEqual([["a", KEY], ["b", `${KEY}#retry-2`], ["a", `${KEY}#retry-3`]]);
+    expect(h.calls.map((c) => [c.url, c.isolationKey])).toEqual([["a", `${KEY}#read-1-1`], ["b", `${KEY}#read-1-2`], ["a", `${KEY}#read-1-3`]]);
   });
 
   it("sends a later read to an operator that is still cooling down on a fresh circuit, not the one that failed", async () => {
@@ -205,7 +251,7 @@ describe("createPool", () => {
     await expect(h.read()).rejects.toBeInstanceOf(PoolExhaustedError); // three attempts, all at the exit
     await expect(h.read()).resolves.toBe("ok");
 
-    expect(h.calls[3]?.isolationKey).toBe(`${KEY}#retry-1`);
+    expect(h.calls[3]?.isolationKey).toBe(`${KEY}#read-2-1`);
   });
 
   it("ends an operator's cooldown when it answers", async () => {
@@ -228,6 +274,25 @@ describe("createPool", () => {
 
     await expect(h.read("alice")).rejects.toBeInstanceOf(NoOperatorsChosenError);
     expect(h.calls).toEqual([]);
+  });
+
+  it("cuts off an attempt at the total budget and rejects a late answer", async () => {
+    vi.useFakeTimers();
+    try {
+      let release!: (value: string) => void;
+      const h = harness([{ url: "a", priority: 0 }], { a: () => new Promise<string>((resolve) => (release = resolve)) });
+      const read = h.read();
+      const result = read.catch((error) => error);
+
+      await vi.advanceTimersByTimeAsync(30_001);
+
+      expect(await result).toBeInstanceOf(PoolExhaustedError);
+      expect(h.calls).toHaveLength(1);
+      release("late");
+      await expect(read).rejects.toBeInstanceOf(PoolExhaustedError);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("refuses to send anything when every endpoint is excluded", async () => {
