@@ -82,6 +82,22 @@ describe("createEip1193Provider", () => {
     expect(await provider.request({ method: "eth_getBalance", params: [WETH, { blockNumber: BLOCK_TAG }] })).toBe(expected);
   });
 
+  it("rejects a block selector that names both a hash and a number, and sends nothing", async () => {
+    const { backend: b, calls } = backend();
+    const { provider } = createEip1193Provider(b);
+
+    const error = await rpcError(
+      provider.request({
+        method: "eth_getBalance",
+        params: [WETH, { blockHash: fixture.block.hash, blockNumber: "0x1" }],
+      }),
+    );
+
+    expect(error.code).toBe(-32602);
+    expect(error.message).toMatch(/both blockHash and blockNumber/);
+    expect(calls).toEqual([]);
+  });
+
   it.each(["latest", "safe", "pending", "earliest", "0x1"])("refuses block %s with invalid params, and sends nothing", async (block) => {
     const { backend: b, calls } = backend();
     const { provider } = createEip1193Provider(b);

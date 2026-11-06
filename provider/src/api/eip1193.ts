@@ -170,8 +170,16 @@ function blockSelector(param: unknown): BlockSelector {
   if (typeof param === "string" && QUANTITY.test(param)) return { number: Number.parseInt(param, 16) };
   if (param && typeof param === "object") {
     const p = param as { blockHash?: unknown; blockNumber?: unknown };
-    if (typeof p.blockHash === "string" && HASH.test(p.blockHash)) return { hash: p.blockHash.toLowerCase() };
-    if (typeof p.blockNumber === "string" && QUANTITY.test(p.blockNumber)) return { number: Number.parseInt(p.blockNumber, 16) };
+    const hasHash = typeof p.blockHash === "string" && HASH.test(p.blockHash);
+    const hasNumber = typeof p.blockNumber === "string" && QUANTITY.test(p.blockNumber);
+    if (hasHash && hasNumber) {
+      throw new ProviderRpcError(
+        -32602,
+        'DeRPC refuses a block selector that names both blockHash and blockNumber; pass only one, or "finalized"',
+      );
+    }
+    if (hasHash) return { hash: (p.blockHash as string).toLowerCase() };
+    if (hasNumber) return { number: Number.parseInt(p.blockNumber as string, 16) };
   }
   throw new ProviderRpcError(
     -32602,
