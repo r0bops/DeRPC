@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-query-escrow-deployment-settings",
+  "status": "not-deployed",
+  "testPayments": true,
+  "chainId": 560048,
+  "name": "Hoodi",
+  "deployer": null,
+  "escrow": null,
+  "transactionHash": null,
+  "instructions": "Supply the wallet owner's public address to payment-deploy.mjs prepare. Review and send the unsigned request with that wallet, then run verify with the actual transaction hash. This settings example is not a deployment manifest and must not enable payment UI."
+}

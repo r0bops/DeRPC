@@ -1,6 +1,7 @@
 packages:
   - provider
   - frontend
+  - contracts
 
 # The Lodestar light client stopped publishing at 1.43.0 (it moved out of the Lodestar monorepo).
 # Keep every @lodestar package on that release, and keep @chainsafe/ssz at 1.7.0:
@@ -16,3 +17,8 @@ overrides:
 
 patchedDependencies:
   '@lodestar/light-client@1.43.0': patches/@lodestar__light-client@1.43.0.patch
+
+# Ganache's WebSocket accelerators are optional; use their JavaScript fallbacks in tests.
+allowBuilds:
+  bufferutil: false
+  utf-8-validate: false

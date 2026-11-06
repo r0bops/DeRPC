@@ -1,0 +1,18 @@
+{
+  "name": "@derpc/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compile": "node scripts/compile.mjs",
+    "test": "vitest run",
+    "deploy:payment": "node scripts/payment-deploy.mjs",
+    "measure:payment": "node scripts/payment-deploy-measure.mjs"
+  },
+  "devDependencies": {
+    "ganache": "7.9.2",
+    "solc": "0.8.30",
+    "viem": "2.57.8",
+    "vitest": "4.1.12"
+  }
+}
