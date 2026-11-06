@@ -4,8 +4,9 @@ import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { checkSitePackage } from '../../scripts/check-site-package.mjs';
+import { checkPublicationState, checkSitePackage } from '../../scripts/check-site-package.mjs';
 import { contenthashFromCid } from '../../scripts/package-ipfs.mjs';
+import { WEBSITE_NAME } from '../../scripts/verify-site-release.mjs';
 
 const cid = 'bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me';
 const sourceSha = '0123456789abcdef0123456789abcdef01234567';
@@ -73,5 +74,29 @@ describe('Actions artifact binding', () => {
       expect(() => checkSitePackage({ directory: f.directory, cid: invalid, sourceSha })).toThrow(/Invalid/);
     }
     expect(() => checkSitePackage({ directory: f.directory, cid, sourceSha: sourceSha + '\n' })).toThrow(/Invalid/);
+  });
+});
+
+describe('uncertain publication acceptance', () => {
+  const carSha256 = 'a'.repeat(64);
+  const args = { cid, sourceSha, carSha256, runNumber: 12, runId: 45 };
+  const response = () => ({ ok: true, keyIdentityMatches: true, ipnsName: WEBSITE_NAME, publication: {
+    ipnsName: WEBSITE_NAME, status: 'publish-uncertain', accepted: { ...args },
+  } });
+  it('requires exact durable acceptance and still requires public verification', () => {
+    expect(checkPublicationState({ ...args, response: response() })).toEqual({ accepted: true, status: 'publish-uncertain', publicVerificationStillRequired: true });
+  });
+  it('refuses an old or different release even if its public CID is unchanged', () => {
+    for (const field of ['runNumber', 'runId', 'cid', 'sourceSha', 'carSha256'] as const) {
+      const r = response();
+      Object.assign(r.publication.accepted, { [field]: typeof args[field] === 'number' ? 1 : 'wrong' });
+      expect(() => checkPublicationState({ ...args, response: r })).toThrow(/different release/);
+    }
+  });
+  it('refuses missing state, another key, failures and malformed sequence numbers', () => {
+    expect(() => checkPublicationState({ ...args, response: {} })).toThrow(/identity/);
+    const r = response(); r.ipnsName = 'other';
+    expect(() => checkPublicationState({ ...args, response: r })).toThrow(/identity/);
+    expect(() => checkPublicationState({ ...args, response: response(), runNumber: NaN })).toThrow(/different release/);
   });
 });

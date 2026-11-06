@@ -17,6 +17,7 @@ node_modules/
 dist/
 dist-local/
 out/
+__pycache__/
 
 # Local dev service logs
 .dev-logs/

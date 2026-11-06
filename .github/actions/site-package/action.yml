@@ -35,7 +35,7 @@ runs:
       run: pnpm -r --workspace-concurrency=1 --if-present test
     - name: Test the restricted VPS release command
       shell: bash
-      run: python3 -m unittest discover -s scripts/vps -p 'test_*.py'
+      run: python3 -B -m unittest discover -s scripts/vps -p 'test_*.py'
     - name: Build the site
       shell: bash
       env:

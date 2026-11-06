@@ -111,8 +111,15 @@ jobs:
             echo '::error::A newer main commit exists. This release stays pinned but will not replace IPNS.'
             exit 1
           fi
+          publish_code=0
           ssh -i "$RUNNER_TEMP/derpc-deploy/key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$RUNNER_TEMP/derpc-deploy/known_hosts" -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
-            "$PIN_HOST" "publish $CID $CAR_SHA256 $GITHUB_RUN_NUMBER $GITHUB_RUN_ID $GITHUB_SHA" > release/publish-receipt.json
+            "$PIN_HOST" "publish $CID $CAR_SHA256 $GITHUB_RUN_NUMBER $GITHUB_RUN_ID $GITHUB_SHA" > release/publish-receipt.json || publish_code=$?
+          ssh -i "$RUNNER_TEMP/derpc-deploy/key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$RUNNER_TEMP/derpc-deploy/known_hosts" -o ConnectTimeout=20 \
+            "$PIN_HOST" status > release/publication-state.json
+          node scripts/check-site-package.mjs --publication release/publication-state.json "$CID" "$CAR_SHA256" "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ID"
+          if [ "$publish_code" != 0 ]; then
+            echo '::warning::The VPS accepted this exact release but publication did not acknowledge completion. The public signature and website checks must still pass.'
+          fi
       - name: Verify the public IPNS record and all ENS website files
         run: node scripts/verify-site-release.mjs --manifest release/manifest.json --phase published --out release/published-check.json
       - name: Remove the deploy key
@@ -126,6 +133,7 @@ jobs:
           path: |
             release/*-receipt.json
             release/*-check.json
+            release/publication-state.json
           retention-days: 90
           if-no-files-found: warn
 
