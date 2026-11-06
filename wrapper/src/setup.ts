@@ -68,36 +68,27 @@ const rpc = async (url: string, method: string, params: unknown[]) => {
   return data.result;
 };
 
-async function main() {
-try {
+/** Checks an already running wrapper; never starts Docker or publishes ENS records. */
+export async function checkRunningWrapper(onion: string) {
+  assertOnionHostname(onion);
   validateOperatorName(process.env.DERPC_ENS_NAME);
   if (!/^0x[\da-fA-F]{40}$/.test(process.env.DERPC_SIGNER ?? "")) throw new Error("expected signer address");
   const endpointId = process.env.DERPC_ENDPOINT_ID || undefined;
   if (endpointId !== undefined) {
     validateEndpointId(endpointId);
-    if (process.env.DERPC_PAYMENT_ESCROW) throw new Error("multiple-endpoint operators are free-only; remove payment configuration before running setup");
+    if (process.env.DERPC_PAYMENT_ESCROW) throw new Error("multiple-endpoint operators are free-only");
   }
-  execFileSync("docker", [...compose, "up", "--build", "-d"], { cwd, stdio: "inherit" });
-  let onion = "";
-  const startupDeadline = Date.now() + 60_000;
-  for (;;) {
-    try {
-      onion = docker("exec", "-T", "tor", "cat", "/var/lib/tor/pool/hostname").trim();
-      const chain = await rpc("http://127.0.0.1:8787/rpc", "eth_chainId", []);
-      if (chain !== "0x1") throw new Error("wrapper must serve Ethereum mainnet");
-      break;
-    } catch (error) {
-      if (Date.now() >= startupDeadline) throw error;
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-  }
-  assertOnionHostname(onion);
+  const port = process.env.DERPC_PORT ?? "8787";
+  if (!/^[1-9]\d{0,4}$/.test(port) || Number(port) > 65535) throw new Error("invalid wrapper port");
+  const wrapperUrl = `http://127.0.0.1:${port}`;
+  const chain = await rpc(`${wrapperUrl}/rpc`, "eth_chainId", []);
+  if (chain !== "0x1") throw new Error("wrapper must serve Ethereum mainnet");
   const block = await rpc(process.env.DERPC_EXECUTION_URL ?? "http://127.0.0.1:8545", "eth_getBlockByNumber", ["finalized", false]);
   // The pinned worker's slot is the narrowly unpaid bootstrap proof even in payment mode.
-  const proof = await rpc("http://127.0.0.1:8787/rpc", "eth_getProof", ["0x700dA3193D35fA54Cd3fBf29B66f2a2A0385659e", ["0x1"], block.number]);
+  const proof = await rpc(`${wrapperUrl}/rpc`, "eth_getProof", ["0x700dA3193D35fA54Cd3fBf29B66f2a2A0385659e", ["0x1"], block.number]);
   if (!Array.isArray(proof.accountProof) || !proof.accountProof.length || !Array.isArray(proof.storageProof) || proof.storageProof.length !== 1 || !Array.isArray(proof.storageProof[0]?.proof) || !proof.storageProof[0].proof.length) throw new Error("node returned no account/storage proof at the finalized block");
   const signal = AbortSignal.timeout(20_000);
-  const beacon = await fetch("http://127.0.0.1:8787/eth/v1/beacon/light_client/finality_update", { signal });
+  const beacon = await fetch(`${wrapperUrl}/eth/v1/beacon/light_client/finality_update`, { signal });
   const update = JSON.parse(await boundedText(beacon, 2 * 1024 * 1024, signal));
   if (!beacon.ok || !update.data?.finalized_header) throw new Error("enable beacon light-client serving and wait for sync");
   console.log("Local wrapper self-test passed (onion reachability must still be tested through Anon-RPC).");
@@ -122,6 +113,32 @@ try {
     name: process.env.DERPC_ENS_NAME ?? "", signer: process.env.DERPC_SIGNER ?? "",
     onion, endpointId, paymentRecords,
   }), null, 2));
+}
+
+async function main() {
+try {
+  validateOperatorName(process.env.DERPC_ENS_NAME);
+  if (!/^0x[\da-fA-F]{40}$/.test(process.env.DERPC_SIGNER ?? "")) throw new Error("expected signer address");
+  const endpointId = process.env.DERPC_ENDPOINT_ID || undefined;
+  if (endpointId !== undefined) {
+    validateEndpointId(endpointId);
+    if (process.env.DERPC_PAYMENT_ESCROW) throw new Error("multiple-endpoint operators are free-only; remove payment configuration before running setup");
+  }
+  execFileSync("docker", [...compose, "up", "--build", "-d"], { cwd, stdio: "inherit" });
+  let onion = "";
+  const startupDeadline = Date.now() + 60_000;
+  for (;;) {
+    try {
+      onion = docker("exec", "-T", "tor", "cat", "/var/lib/tor/pool/hostname").trim();
+      const chain = await rpc("http://127.0.0.1:8787/rpc", "eth_chainId", []);
+      if (chain !== "0x1") throw new Error("wrapper must serve Ethereum mainnet");
+      break;
+    } catch (error) {
+      if (Date.now() >= startupDeadline) throw error;
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  await checkRunningWrapper(onion);
 } catch (error) {
   console.error(`Setup failed: ${error instanceof Error ? error.message : "unknown error"}. ENS records were not published.`);
   process.exitCode = 1;

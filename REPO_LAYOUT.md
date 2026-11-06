@@ -204,7 +204,8 @@ wrapper/
 │   ├── payment.ts             — authenticated read credit and voucher/settlement lifecycle
 │   ├── payment-store.ts       — bounded durable single-writer payment journal
 │   ├── payment-chain.ts       — pinned escrow checks and prepared-transaction recovery
-│   └── setup.ts                — starts compose, checks finalized proofs/beacon, prints ENS records
+│   ├── setup.ts                — starts compose, shares the running-wrapper self-test, prints ENS records
+│   └── check.ts                — runs that self-test inside a prebuilt container without a Docker socket
 └── test/                      — filtering/payment/setup tests, real onion/browser and availability diagnostics, multi-endpoint packaging and sibling failover, paid container and encrypted restoration runners, labeled evidence
 ```
 
