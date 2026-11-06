@@ -46,6 +46,10 @@ const result = await derpc.verifiedCall({ to: contract, data: calldata, signal }
 
 The supported input is `to`, optional `data`, `from`, `gas` and `signal`; value transfers and transaction overrides are not supported. Defaults bound gas to 1,000,000, steps to 100,000, accounts to 24, storage slots to 64, remote round trips to 128, memory to 4 MiB and execution time to 60 seconds. The pool uses that same call deadline, including retries. Configure `verifiedCalls: { limits: { ... } }` to change executor limits. The executor refuses unsupported forks/context, `BLOCKHASH`, `BLOBBASEFEE`, and CCIP-Read/off-chain resolution. A limit failure or revert returns no verified value and earns no payment. This is an experimental bounded executor, not a claim of compatibility with every contract.
 
+The [isolated Chrome benchmark](test/execution/browser-measure-evidence-2026-11-06.json) produced about 99 KB of gzipped JavaScript (319 KB raw), including its generated-proof fixture and harness. This measures the standalone benchmark build, not the executor's incremental size in the production page. Across five samples, loading the module and finishing a first small call took a median 45.1 ms; live chain and Tor latency were not measured.
+
+Local execution does not hide what a call reads. The executor requests accounts, storage slots and contract code with `eth_getProof` or `eth_getCode`. It does not forward the raw calldata in an `eth_call`, but these access patterns can reveal the call's intent to the operator.
+
 The same explicit option enables fully on-chain ENS resolution:
 
 ```ts

@@ -1,0 +1,64 @@
+{
+  "measuredAt": "2026-11-06T19:36:49.356Z",
+  "browser": "Chrome/156.0.8078.80",
+  "scope": "Fresh browser realms; dynamic import over loopback HTTP, factory setup, first local EVM call with generated valid account/storage trie proofs. No live chain, worker, or RPC latency is measured.",
+  "executionSourceSha256": "0c73889387a5fcf7e5f48ebbda236b555465c9048bca09c877b4630568a4fbf8",
+  "ethereumjsEvmVersion": "10.1.3",
+  "assets": [
+    {
+      "file": "execution-D44yU-xD.js",
+      "rawBytes": 313462,
+      "gzipBytes": 96348
+    },
+    {
+      "file": "index-B55uxU5m.js",
+      "rawBytes": 5600,
+      "gzipBytes": 2258
+    }
+  ],
+  "totalRawBytes": 319062,
+  "totalGzipBytes": 98606,
+  "median": {
+    "importMs": 35.9,
+    "factoryMs": 0.1,
+    "firstCallMs": 9.1,
+    "totalMs": 45.1
+  },
+  "externalRequests": [],
+  "samples": [
+    {
+      "importMs": 29,
+      "factoryMs": 0,
+      "firstCallMs": 8.7,
+      "totalMs": 37.7
+    },
+    {
+      "importMs": 36.5,
+      "factoryMs": 0.2,
+      "firstCallMs": 9.2,
+      "totalMs": 45.9
+    },
+    {
+      "importMs": 37.6,
+      "factoryMs": 0,
+      "firstCallMs": 9.2,
+      "totalMs": 46.8
+    },
+    {
+      "importMs": 35,
+      "factoryMs": 0.1,
+      "firstCallMs": 9,
+      "totalMs": 44.1
+    },
+    {
+      "importMs": 35.9,
+      "factoryMs": 0.1,
+      "firstCallMs": 9.1,
+      "totalMs": 45.1
+    }
+  ],
+  "limits": [
+    "One machine and five samples; no live chain, worker or Tor latency is included.",
+    "The first call uses a small generated contract, not a real ENS resolution."
+  ]
+}
