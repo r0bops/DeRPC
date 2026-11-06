@@ -1,8 +1,8 @@
 /**
- * Isolated Firefox benchmark; uses generated trie proofs, never a network RPC.
+ * Isolated browser benchmark; uses generated trie proofs, never a network RPC.
  * Run from the repo root:
  * node provider/test/execution/browser-measure.mjs --puppeteer=/path/to/puppeteer-core.js
- * Optional: --browser=/path/to/firefox --samples=5
+ * Optional: --browser=/path/to/firefox --engine=firefox --samples=5 (use --engine=chrome for Chrome)
  * Requires the workspace dependencies. Build artifacts and JSON report stay under /tmp.
  */
 import { mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
@@ -121,7 +121,7 @@ await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
 let browser;
 try {
-  browser = await puppeteer.launch({ browser: "firefox", executablePath: args.get("--browser") ?? "/usr/bin/firefox", headless: true, protocolTimeout: 120_000 });
+  browser = await puppeteer.launch({ browser: args.get("--engine") ?? "firefox", executablePath: args.get("--browser") ?? "/usr/bin/firefox", headless: true, protocolTimeout: 120_000 });
   const requests = [];
   const externalRequests = [];
   const runs = [];
