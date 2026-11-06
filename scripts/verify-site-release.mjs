@@ -2,7 +2,7 @@
 // IPFS_BIN=/path/to/ipfs node scripts/verify-site-release.mjs --manifest release/manifest.json --phase pinned --out pinned.json
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, readFileSync, writeFileSync, rmSync, statSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync, rmSync, openSync, fstatSync, readSync, closeSync, constants } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -17,14 +17,14 @@ const sha256 = bytes => createHash("sha256").update(bytes).digest("hex");
 const plainObject = value => value && typeof value === "object" && !Array.isArray(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value));
 function requireThat(condition, message) { if (!condition) throw new Error(message); }
 function safePath(path) {
-  return typeof path === "string" && path.length <= 512 && path.split("/").every(part => /^[A-Za-z0-9._-]+$/.test(part) && part !== "." && part !== ".." && part !== "__proto__");
+  return typeof path === "string" && path.length <= 512 && !/[^A-Za-z0-9._/-]/.test(path) && path.split("/").every(part => part.length > 0 && part !== "." && part !== ".." && part !== "__proto__");
 }
 
 /** Only the package format and canonical UnixFS directory roots produced by our packager are accepted. */
 export function validateManifest(input, limits = LIMITS) {
   requireThat(plainObject(input) && input.schemaVersion === 1 && input.kind === "derpc-ipfs-package", "unsupported release manifest");
   const cid = input.cid;
-  requireThat(typeof cid === "string" && /^b[a-z2-7]{58}$/.test(cid) && ("abcdefghijklmnopqrstuvwxyz234567".indexOf(cid.at(-1)) & 3) === 0, "non-canonical release CID");
+  requireThat(typeof cid === "string" && cid.length === 59 && /^b[a-z2-7]{58}$/.test(cid) && ("abcdefghijklmnopqrstuvwxyz234567".indexOf(cid.at(-1)) & 3) === 0, "non-canonical release CID");
   const contenthash = contenthashFromCid(cid);
   requireThat(input.contentUri === undefined || input.contentUri === `ipfs://${cid}`, "manifest content URI differs from CID");
   requireThat(input.contenthash === undefined || input.contenthash === contenthash, "manifest contenthash differs from CID");
@@ -35,7 +35,7 @@ export function validateManifest(input, limits = LIMITS) {
   const paths = new Set(entries.map(([path]) => path));
   for (const [path, digest] of entries) {
     requireThat(safePath(path), "unsafe manifest path");
-    requireThat(typeof digest === "string" && /^[a-f0-9]{64}$/.test(digest), `invalid SHA-256 for ${path}`);
+    requireThat(typeof digest === "string" && digest.length === 64 && /^[a-f0-9]{64}$/.test(digest), `invalid SHA-256 for ${path}`);
     const parts = path.split("/");
     for (let i = 1; i < parts.length; i++) requireThat(!paths.has(parts.slice(0, i).join("/")), "manifest file/directory collision");
   }
@@ -65,7 +65,7 @@ export async function fetchBounded(url, { fetchImpl = fetch, signal, maxBytes, t
   const response = await abortable(fetchImpl(url, { method, redirect: "error", signal: scoped, headers: { "cache-control": "no-cache", ...(accept ? { accept } : {}) } }), scoped);
   let reader;
   try {
-    requireThat(response.ok, `HTTP ${response.status}`);
+    requireThat(response.status === 200, `HTTP ${response.status}`);
     const length = response.headers.get("content-length");
     requireThat(length === null || (/^\d+$/.test(length) && Number(length) <= maxBytes), "response exceeds byte limit");
     requireThat(response.body, "response body is missing");
@@ -111,7 +111,7 @@ export function runCommand(binary, args, { env, signal, maxBytes = LIMITS.listin
 }
 
 /** Creates a private repository and, only for pinned retrieval, an isolated daemon. */
-export async function createFreshKubo({ phase, signal, ipfs = process.env.IPFS_BIN || "ipfs", limits = LIMITS, routing = "none", execute = runCommand, spawnDaemon = spawn, fetchImpl = fetch }) {
+export async function createFreshKubo({ phase, signal, ipfs = process.env.IPFS_BIN || "ipfs", limits = LIMITS, routing = "auto", execute = runCommand, spawnDaemon = spawn, fetchImpl = fetch }) {
   requireThat(routing === "none" || routing === "auto", "invalid isolated routing mode");
   const repo = mkdtempSync(join(tmpdir(), "derpc-release-verifier-"));
   const env = { ...process.env, IPFS_PATH: repo };
@@ -224,7 +224,7 @@ export async function verifyPinned(manifest, { node, signal, limits = LIMITS, on
     requireThat(digest === manifest.files[path], `file hash differs: ${path}`);
     files.push({ path, bytes: body.length, sha256: digest });
   }
-  return { freshRepository: true, carImported: false, publicIpfsRetrieval: true, explicitPeer: PROVIDER_PEER, peerConnection: { connected: true }, routing: node.routing ?? "none", bootstrapPeers: [], autonomousDiscoveryClaim: false, noExtraEntries: true, filesChecked: files.length, bytes, files };
+  return { freshRepository: true, carImported: false, publicIpfsRetrieval: true, explicitPeer: PROVIDER_PEER, peerConnection: { connected: true }, routing: node.routing ?? "auto", bootstrapPeers: [], autonomousDiscoveryClaim: false, allBytesFromExplicitPeerClaim: false, noExtraEntries: true, filesChecked: files.length, bytes, files };
 }
 
 export function verifyIpnsInspection(inspection, cid, now = Date.now()) {
@@ -289,6 +289,7 @@ export async function verifySiteRelease({ manifest, phase, ipfs, limits = LIMITS
     report.verification = phase === "pinned"
       ? await verifyPinned(checked, { node, signal, limits, onStep })
       : await verifyPublished(checked, { ...dependencies, node, signal, limits, onStep, onAttempt: entry => report.attempts.push(entry) });
+    signal.throwIfAborted();
     report.ok = true;
   } catch (error) { report.error = String(error.message ?? error).slice(0, 1000); }
   finally {
@@ -301,6 +302,22 @@ export async function verifySiteRelease({ manifest, phase, ipfs, limits = LIMITS
   return report;
 }
 
+export function readManifestFile(path, maxBytes = LIMITS.manifestBytes) {
+  const fd = openSync(path, constants.O_RDONLY | constants.O_NONBLOCK);
+  try {
+    const stat = fstatSync(fd);
+    requireThat(stat.isFile() && stat.size <= maxBytes, "manifest must be a regular file within the byte limit");
+    const bytes = Buffer.alloc(maxBytes + 1); let length = 0;
+    while (length < bytes.length) {
+      const count = readSync(fd, bytes, length, bytes.length - length, null);
+      if (!count) break;
+      length += count;
+    }
+    requireThat(length <= maxBytes, "manifest exceeds byte limit");
+    return bytes.subarray(0, length);
+  } finally { closeSync(fd); }
+}
+
 async function cli(args) {
   const options = {};
   requireThat(args.length === 6, "usage: --manifest PATH --phase pinned|published --out PATH");
@@ -308,14 +325,13 @@ async function cli(args) {
     requireThat(["--manifest", "--phase", "--out"].includes(args[i]) && !Object.hasOwn(options, args[i]) && args[i + 1] && !args[i + 1].startsWith("--"), "invalid or duplicate CLI option");
     options[args[i]] = args[i + 1];
   }
+  requireThat(resolve(options["--out"]) !== resolve(options["--manifest"]), "output must not overwrite the manifest");
   let report;
   const controller = new AbortController();
   const stop = () => controller.abort(new Error("release verification interrupted"));
   process.once("SIGTERM", stop); process.once("SIGINT", stop);
   try {
-    requireThat(statSync(options["--manifest"]).size <= LIMITS.manifestBytes, "manifest exceeds byte limit");
-    const raw = readFileSync(options["--manifest"]);
-    requireThat(raw.length <= LIMITS.manifestBytes, "manifest exceeds byte limit");
+    const raw = readManifestFile(options["--manifest"]);
     report = await verifySiteRelease({ manifest: JSON.parse(raw), phase: options["--phase"], signal: controller.signal });
     report.manifestSha256 = sha256(raw);
   } catch (error) { report = { schemaVersion: 1, kind: "derpc-site-release-verification", phase: options["--phase"], ok: false, error: String(error.message).slice(0, 1000) }; }

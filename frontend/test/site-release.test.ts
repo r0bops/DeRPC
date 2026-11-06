@@ -1,10 +1,11 @@
 // @vitest-environment node
 import { createHash } from "node:crypto";
 import { EventEmitter } from "node:events";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { createFreshKubo, fetchBounded, LIMITS, PROVIDER_PEER, RECORD_URL, runCommand, validateManifest, verifyIpnsInspection, verifyPinned, verifyPublished, verifySiteRelease, WEBSITE_NAME, WEBSITE_ORIGIN } from "../../scripts/verify-site-release.mjs";
+import { createFreshKubo, fetchBounded, LIMITS, PROVIDER_PEER, readManifestFile, RECORD_URL, runCommand, validateManifest, verifyIpnsInspection, verifyPinned, verifyPublished, verifySiteRelease, WEBSITE_NAME, WEBSITE_ORIGIN } from "../../scripts/verify-site-release.mjs";
 
 const hash = (body: string) => createHash("sha256").update(body).digest("hex");
 const CID = "bafybeihuaqdmtdjlu3rcucz2b7qho4flteohpy2zdmttk3nlnkosem4gqa";
@@ -46,12 +47,13 @@ describe("release manifest boundary", () => {
     expect(() => validateManifest({ ...manifest(), cid: CID.slice(0, -1) + "b" })).toThrow(/canonical/);
     expect(() => validateManifest({ ...manifest(), cid: "bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku" })).toThrow(/directory/);
   });
-  it.each(["../secret", "/index.html", "demo//x", "demo/../x", "demo/%2e%2e/x", "demo\\x", "x?query", "x#fragment", "x\nname", "__proto__"])("rejects malicious path %j", path => {
+  it.each(["../secret", "/index.html", "demo//x", "demo/../x", "demo/%2e%2e/x", "demo\\x", "x?query", "x#fragment", "x\nname", "terminal\n", "terminal\r", "terminal\u2028", "__proto__"])("rejects malicious path %j", path => {
     expect(() => validateManifest({ ...manifest(), fileCount: 3, files: { ...manifest().files, [path]: hash("evil") } })).toThrow(/path/);
   });
   it("rejects file/directory collisions, invalid hashes, missing pages and excessive entries", () => {
     expect(() => validateManifest({ ...manifest(), fileCount: 3, files: { ...manifest().files, demo: hash("x") } })).toThrow(/collision/);
     expect(() => validateManifest({ ...manifest(), files: { ...manifest().files, "index.html": "00" } })).toThrow(/SHA/);
+    expect(() => validateManifest({ ...manifest(), files: { ...manifest().files, "index.html": hash("site") + "\n" } })).toThrow(/SHA/);
     expect(() => validateManifest({ ...manifest(), fileCount: 1, files: { "index.html": hash("site") } })).toThrow(/required/);
     expect(() => validateManifest(manifest(), { ...LIMITS, files: 1 })).toThrow(/bounds/);
   });
@@ -151,6 +153,18 @@ describe("signed IPNS and website publication", () => {
 });
 
 describe("resource and time bounds", () => {
+  it("bounds manifest reads and refuses non-regular inputs", () => {
+    const dir = mkdtempSync(join(tmpdir(), "derpc-manifest-test-"));
+    try {
+      const path = join(dir, "manifest.json"); writeFileSync(path, "12345");
+      expect(() => readManifestFile(path, 4)).toThrow(/byte limit/);
+      expect(readManifestFile(path, 5).toString()).toBe("12345");
+      expect(() => readManifestFile(dir)).toThrow(/regular/);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+  it("rejects partial HTTP status even if returned bytes happen to match", async () => {
+    await expect(fetchBounded(WEBSITE_ORIGIN, { fetchImpl: async () => new Response("site", { status: 206 }), signal: signal(), maxBytes: 4 })).rejects.toThrow(/HTTP 206/);
+  });
   it("waits on its own loopback API without launching a CLI readiness probe and enumerates via typed JSON API", async () => {
     let repo = "";
     const execute = vi.fn(async (_binary: string, args: string[], { env }: { env: Record<string, string> }) => {
@@ -167,7 +181,7 @@ describe("resource and time bounds", () => {
     }) });
     const spawnDaemon = vi.fn(() => {
       const config = JSON.parse(readFileSync(join(repo, "config"), "utf8"));
-      expect(config).toMatchObject({ Routing: { Type: "none" }, Bootstrap: [], Addresses: { API: "/ip4/127.0.0.1/tcp/0" } });
+      expect(config).toMatchObject({ Routing: { Type: "auto" }, Bootstrap: [], Addresses: { API: "/ip4/127.0.0.1/tcp/0" } });
       writeFileSync(join(repo, "api"), "/ip4/127.0.0.1/tcp/12345");
       return child;
     });
