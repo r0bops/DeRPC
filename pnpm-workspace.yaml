@@ -1,6 +1,7 @@
 packages:
   - provider
   - frontend
+  - web
   - wrapper
   - contracts
   - payments
