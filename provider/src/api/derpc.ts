@@ -119,7 +119,14 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     }
   };
 
-  const { provider, emit } = createEip1193Provider({ chainId: CHAIN_ID, headers: () => headersReady, reader: readerForReads });
+  const { provider, emit } = createEip1193Provider({
+    chainId: CHAIN_ID,
+    headers: async () => {
+      if (disconnected) throw new TransportUnavailableError("closed");
+      return headersReady;
+    },
+    reader: readerForReads,
+  });
 
   function disconnect(reason: string) {
     if (disconnected) return;
@@ -146,6 +153,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
       notify();
       throw new TransportUnavailableError("failed", { cause: error });
     }
+    if (disconnected) throw new TransportUnavailableError("closed");
     lightClient = { state: "syncing" };
     notify();
     try {
@@ -159,6 +167,11 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
       lightClient = { state: "failed", error: message(error) };
       notify();
       throw error;
+    }
+    if (disconnected) {
+      headerSource.close();
+      headerSource = undefined;
+      throw new TransportUnavailableError("closed");
     }
     lightClient = { state: "verified" };
     emit("connect", { chainId: `0x${CHAIN_ID.toString(16)}` });
@@ -210,7 +223,9 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
 
   /** The reader for one request: only once everything before it holds, and never after the transport is gone. */
   async function readerForReads(): Promise<VerifiedReader> {
+    if (disconnected) throw new TransportUnavailableError("closed");
     const headers = await headersReady;
+    if (disconnected) throw new TransportUnavailableError("closed");
     const state = transport.state();
     if (state === "failed" || state === "closed") {
       throw new TransportUnavailableError(state);

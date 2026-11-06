@@ -270,4 +270,56 @@ describe("createDeRPC", () => {
 
     expect(await derpc.provider.request(balanceOfSpecifier)).toBe("0x0");
   });
+
+  it("stays closed when initialization finishes after close(), and closes the late header source", async () => {
+    let release!: () => void;
+    let headersStarted!: () => void;
+    const headersAfter = new Promise<void>((r) => (release = r));
+    const started = new Promise<void>((r) => (headersStarted = r));
+    let fake!: ReturnType<typeof fakeTransport>;
+    const headerCloses: number[] = [];
+    const headers: VerifiedHeaderSource = {
+      finalized: () => HEADER,
+      assertFresh: () => {},
+      close: () => {
+        headerCloses.push(1);
+      },
+    };
+    const derpc = createDeRPCWith(
+      {
+        startTransport: (start) => (fake = fakeTransport(start)).transport,
+        startHeaders: async () => {
+          headersStarted();
+          await headersAfter;
+          return headers;
+        },
+      },
+      { operators: [A], worker: TOR_JS_PIN },
+    );
+    derpc.ready.catch(() => {});
+    const events: string[] = [];
+    derpc.provider.on("connect", () => events.push("connect"));
+    derpc.provider.on("disconnect", () => events.push("disconnect"));
+
+    await started;
+    derpc.close();
+    release();
+    await expect(derpc.ready).rejects.toBeInstanceOf(TransportUnavailableError);
+
+    expect(events).toEqual(["disconnect"]);
+    expect(headerCloses).toEqual([1]);
+    expect(fake.sent).toEqual([]);
+    const blockNumber = await rpcError(derpc.provider.request({ method: "eth_blockNumber" }));
+    expect(blockNumber.code).toBe(4900);
+  });
+
+  it("refuses eth_blockNumber after close()", async () => {
+    const { derpc } = setup({ operators: [A] });
+    await derpc.ready;
+    expect(await derpc.provider.request({ method: "eth_blockNumber" })).toBe(TAG);
+
+    derpc.close();
+    const error = await rpcError(derpc.provider.request({ method: "eth_blockNumber" }));
+    expect(error.code).toBe(4900);
+  });
 });
