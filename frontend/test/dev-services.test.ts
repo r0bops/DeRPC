@@ -15,7 +15,7 @@ afterEach(() => {
   for (const root of temporaryRoots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-function runHelper(options: { logged: string; existing?: string; shell?: string; interfacesAvailable?: boolean; macos?: boolean }) {
+function runHelper(options: { logged: string; existing?: string; shell?: string; interfacesAvailable?: boolean; macos?: boolean; lsofNames?: string[]; expectStatus?: number }) {
   const root = mkdtempSync(join(tmpdir(), "derpc-dev-services-"));
   temporaryRoots.push(root);
   for (const directory of ["scripts", "frontend", ".dev-logs", "node_modules", "bin"]) mkdirSync(join(root, directory));
@@ -31,8 +31,10 @@ function runHelper(options: { logged: string; existing?: string; shell?: string;
     pnpm: "printf '%s\\n' \"$*\" > \"$QA_PNPM_CALLS\"",
   };
   // macOS ships neither ss nor ip: the helper must use lsof and ifconfig there.
+  // lsof -Fn prints one "n<name>" line per socket: "*:12298" when bound, "local->remote" when connected.
+  const lsofNames = options.lsofNames ?? ["*:12298"];
   Object.assign(mocks, options.macos
-    ? { ss: "exit 127", ip: "exit 127", lsof: "exit 0", ifconfig: "printf 'en0: flags=8863\\n\\tinet 10.0.0.138 netmask 0xffffff00\\n'" }
+    ? { ss: "exit 127", ip: "exit 127", lsof: `printf '%s\\n' p4242 ${lsofNames.map(name => `'n${name}'`).join(" ")}`, ifconfig: "printf 'en0: flags=8863\\n\\tinet 10.0.0.138 netmask 0xffffff00\\n'" }
     : { ifconfig: "exit 0" });
   for (const [command, body] of Object.entries(mocks)) writeFileSync(join(root, "bin", command), `#!/bin/sh\n${body}\n`, { mode: 0o755 });
   const calls = join(root, "pnpm-calls");
@@ -40,12 +42,14 @@ function runHelper(options: { logged: string; existing?: string; shell?: string;
     encoding: "utf8", timeout: 25_000, // macOS scans each new mock script before it first runs
     env: {
       ...process.env, PATH: `${join(root, "bin")}:${process.env.PATH}`,
+      // Never a real binary: a run that finds no gateway must stop, not start one.
+      TOR_JS_GATEWAY: join(root, "no-gateway"),
       VITE_TOR_GATEWAYS: options.shell ?? "", QA_IP_STATUS: options.interfacesAvailable === false ? "1" : "0", QA_PNPM_CALLS: calls,
     },
   });
   expect(result.error).toBeUndefined();
-  expect(result.status, result.stderr).toBe(0);
-  expect(readFileSync(calls, "utf8")).toBe("dev:site\n");
+  expect(result.status, result.stderr).toBe(options.expectStatus ?? 0);
+  if (!options.expectStatus) expect(readFileSync(calls, "utf8")).toBe("dev:site\n");
   return { env: existsSync(envFile) ? readFileSync(envFile, "utf8") : undefined, stdout: result.stdout, stderr: result.stderr };
 }
 
@@ -54,6 +58,21 @@ describe("local dev gateway configuration", { timeout: 30_000 }, () => {
     const { env, stdout } = runHelper({ logged: CURRENT, macos: true });
     expect(stdout).toContain("already listening");
     expect(env).toBe(`VITE_TOR_GATEWAYS=${CURRENT}\n`);
+  });
+
+  it("does not take a client socket connected to port 12298 for a running gateway", () => {
+    const { stdout, stderr } = runHelper({
+      logged: CURRENT, macos: true, expectStatus: 1,
+      lsofNames: ["127.0.0.1:60090->127.0.0.1:12298", "[::1]:60091->[::1]:12298"],
+    });
+    expect(stdout).not.toContain("already listening");
+    // With no gateway found and no binary in the temporary root, the helper stops before starting anything.
+    expect(stderr).toContain("tor-js-gateway not found");
+  });
+
+  it("finds a gateway bound to one address next to a connected client socket", () => {
+    const { stdout } = runHelper({ logged: CURRENT, macos: true, lsofNames: ["127.0.0.1:60090->127.0.0.1:12298", "10.0.0.138:12298"] });
+    expect(stdout).toContain("already listening");
   });
 
   it("does not overwrite a corrected address with a surviving gateway's stale log", () => {

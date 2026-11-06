@@ -13,7 +13,14 @@ LOG_DIR="$ROOT/.dev-logs"
 mkdir -p "$LOG_DIR"
 
 # ss and ip are Linux tools; macOS has lsof and ifconfig instead.
-gateway_up() { ss -uln 2>/dev/null | grep -q ':12298\b' || lsof -nP -iUDP:12298 >/dev/null 2>&1; }
+# lsof also lists a client socket that is only connected to port 12298 ("local->remote"),
+# so compare the local side of each socket name: the gateway is the one bound to the port.
+gateway_up() {
+  ss -uln 2>/dev/null | grep -q ':12298\b' && return 0
+  local names
+  names="$(lsof -nP -iUDP:12298 -Fn 2>/dev/null | sed -n '/^n/{s/^n//;s/->.*//;p;}')" || true
+  grep -q ':12298$' <<< "$names"
+}
 local_addresses() {
   ip -o -4 address show 2>/dev/null | awk '{ sub(/\/.*/, "", $4); print $4 }' || true
   ifconfig 2>/dev/null | awk '$1 == "inet" { print $2 }' || true
