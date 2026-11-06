@@ -1,0 +1,30 @@
+# Linux host networking lets both services reach node APIs bound to loopback.
+# No node ports, gateway, private keys or tokens are included in the images.
+services:
+  proxy:
+    build:
+      context: ..
+      dockerfile: wrapper/Dockerfile
+    network_mode: host
+    environment:
+      DERPC_EXECUTION_URL: ${DERPC_EXECUTION_URL:-http://127.0.0.1:8545}
+      DERPC_BEACON_URL: ${DERPC_BEACON_URL:-http://127.0.0.1:5052}
+      DERPC_ENS_NAME: ${DERPC_ENS_NAME:?set the operator ENS name}
+      DERPC_SIGNER: ${DERPC_SIGNER:?set the operator signer address}
+      DERPC_DEMO_PROXY: ${DERPC_DEMO_PROXY:-false}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  tor:
+    build:
+      context: .
+      dockerfile: Dockerfile.tor
+    network_mode: host
+    volumes:
+      - onion-keys:/var/lib/tor
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+volumes:
+  onion-keys:

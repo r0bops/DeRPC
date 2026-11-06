@@ -1,0 +1,19 @@
+# Test payments only. The settlement secret is independent of the Tor onion-key volume.
+services:
+  proxy:
+    environment:
+      DERPC_PAYMENT_RPC_URL: ${DERPC_PAYMENT_RPC_URL:?set the operator payment-chain RPC}
+      DERPC_PAYMENT_CHAIN_ID: ${DERPC_PAYMENT_CHAIN_ID:?set the test payment chain ID}
+      DERPC_PAYMENT_CONFIRMATIONS: ${DERPC_PAYMENT_CONFIRMATIONS:-2}
+      DERPC_PAYMENT_ESCROW: ${DERPC_PAYMENT_ESCROW:?set the deployed test escrow}
+      DERPC_PRICE_WEI: ${DERPC_PRICE_WEI:?set the fixed price per verified read}
+      DERPC_SETTLEMENT_KEY_FILE: /run/secrets/settlement_key
+      DERPC_PAYMENT_STATE_DIR: /var/lib/derpc/payments
+    secrets: [settlement_key]
+    volumes:
+      - payment-state:/var/lib/derpc/payments
+secrets:
+  settlement_key:
+    file: ${DERPC_SETTLEMENT_KEY_FILE:?set an absolute path to the settlement-key file}
+volumes:
+  payment-state:

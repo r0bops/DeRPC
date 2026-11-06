@@ -1,0 +1,9 @@
+# Supply a chmod 600 file containing `openssl rand -hex 32` output.
+services:
+  proxy:
+    environment:
+      DERPC_PERSONAL_TOKEN_FILE: /run/secrets/personal_token
+    secrets: [personal_token]
+secrets:
+  personal_token:
+    file: ${DERPC_PERSONAL_TOKEN_FILE:?set an absolute path to the token file}

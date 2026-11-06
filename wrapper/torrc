@@ -1,0 +1,13 @@
+SocksPort 0
+ControlPort 0
+Log notice stdout
+DataDirectory /var/lib/tor
+HiddenServiceDir /var/lib/tor/pool
+HiddenServiceVersion 3
+HiddenServicePort 80 127.0.0.1:8787
+# tor-js does not enable the client proof-of-work solver.
+HiddenServicePoWDefensesEnabled 0
+HiddenServiceDir /var/lib/tor/personal
+HiddenServiceVersion 3
+HiddenServicePort 80 127.0.0.1:8788
+HiddenServicePoWDefensesEnabled 0
