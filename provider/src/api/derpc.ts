@@ -136,6 +136,8 @@ export interface DeRPCStatus {
   transport: { state: TransportState; error?: string };
   /** Last observed anonymous fetch outcome; not a guarantee that every endpoint is reachable. */
   network?: { state: "ok" | "unavailable"; error?: string };
+  /** Cumulative transport.fetch invocations, including retries/failures; not completed requests or bytes. */
+  traffic?: { throughWorker: number };
   lightClient: { state: "waiting" | "syncing" | "verified" | "stale" | "failed"; header?: VerifiedHeader; error?: string; poll?: PollHealth };
   pin: { state: "waiting-for-operators" | "waiting-for-light-client" | "checking" | "verified" | "mismatch" | "failed"; workerHash?: Hex; block?: number; error?: string };
   operators: EndpointStatus[];
@@ -272,6 +274,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
 
   let transportError: string | undefined;
   let network: NonNullable<DeRPCStatus["network"]> = { state: "ok" };
+  let throughWorker = 0;
   let lightClient: { state: "waiting" | "syncing" | "verified" | "failed"; error?: string } = { state: "waiting" };
   let headerSource: VerifiedHeaderSource | undefined;
   let pool: Pool | undefined;
@@ -367,6 +370,8 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     ready: startedTransport.ready,
     state: () => startedTransport.state(),
     async fetch(url, init) {
+      throughWorker++;
+      notify();
       try {
         const response = await startedTransport.fetch(url, init);
         network = { state: "ok" };
@@ -909,6 +914,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
       checkpoint,
       transport: { state: transport.state(), ...(transportError ? { error: transportError } : {}) },
       network: { ...network },
+      traffic: { throughWorker },
       lightClient: lc,
       pin: pinStatus,
       operators: pool?.status() ?? [],

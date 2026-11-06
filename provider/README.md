@@ -80,7 +80,7 @@ DeRPC proves state at one block: the light client's verified finalized block, us
 - With no operators chosen, reads fail at once (`NoOperatorsChosenError`). Call `derpc.setOperators(list)` when the user chooses or changes their choice. Exclusions from the session carry over.
 - `derpc.status()` and the `onStatus` option report the worker, light client, worker pin and each operator's state. Use them for a progress or status screen. `onPoolEvent` reports each attempt, rejection and failover.
 - `derpc.status().lightClient.poll` reports the worst consecutive failure count and its error across optimistic and finality polling. Only a success for the affected kind clears its failures; a working optimistic endpoint cannot hide failing finality updates.
-- `derpc.status().network` reports the last observed fetch success or anonymity-network failure, separately from the worker's lifecycle. An `ok` state is not a reachability guarantee.
+- `derpc.status().network` reports the last observed fetch success or anonymity-network failure, separately from the worker's lifecycle. An `ok` state is not a reachability guarantee. `traffic.throughWorker` counts attempted transport fetches, including retries and failures, since this provider instance was created; it does not count successful responses or bytes.
 
 `beaconUrl` and `beaconUrls` configure startup candidates; initially chosen operators' `beaconUrl` values also contribute. They are all reached through the worker. Replacing the execution selection later does not replace the already-running light client's bootstrap configuration.
 

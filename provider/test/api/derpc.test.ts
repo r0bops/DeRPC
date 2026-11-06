@@ -98,6 +98,41 @@ async function rpcError(promise: Promise<unknown>): Promise<ProviderRpcError> {
 }
 
 describe("createDeRPC", () => {
+  it("includes successful consensus fetches in traffic even before operators are selected", async () => {
+    let fetches = 0;
+    const beaconUrls = Object.freeze(["https://beacon.example"]);
+    const derpc = createDeRPCWith({
+      startTransport: () => ({ pin: TOR_JS_PIN, ready: Promise.resolve(), state: () => "ready", close() {},
+        fetch: async () => { fetches++; return new Response("{}"); },
+      }),
+      startHeaders: async options => {
+        await options.fetch(`${options.beaconUrl}/eth/v1/beacon/light_client/optimistic_update`);
+        return { finalized: () => HEADER, assertFresh() {}, pollHealth: () => ({ consecutiveFailures: 0 }), close() {} };
+      },
+    }, { beaconUrls });
+    await derpc.ready;
+    expect(fetches).toBe(1);
+    expect(derpc.status().traffic).toEqual({ throughWorker: 1 });
+    expect(derpc.status().network).toEqual({ state: "ok" });
+    expect(derpc.status().operators).toEqual([]);
+    derpc.close();
+  });
+
+  it("counts attempted worker fetches including failures, but no locally refused reads", async () => {
+    const { derpc, sent } = setup({ operators: [A], fetchError: () => new NetworkUnavailableError("no circuit") });
+    expect(derpc.status().traffic).toEqual({ throughWorker: 0 });
+    await rpcError(derpc.provider.request(balanceOfSpecifier));
+    expect(sent.length).toBeGreaterThan(0);
+    expect(derpc.status().traffic!.throughWorker).toBe(sent.length);
+    const attempted = sent.length;
+    derpc.close();
+    await rpcError(derpc.provider.request(balanceOfSpecifier));
+    expect(derpc.status().traffic!.throughWorker).toBe(attempted);
+    const next = setup();
+    expect(next.derpc.status().traffic).toEqual({ throughWorker: 0 });
+    next.derpc.close();
+  });
+
   it("reports network outage separately from worker death and recovers without endpoint penalties", async () => {
     let unavailable = true;
     const states: string[] = [];
