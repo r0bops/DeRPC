@@ -72,10 +72,12 @@ function setup(opts: {
   bootError?: Error;
   headersError?: Error;
   headersAfter?: Promise<void>;
+  pinGate?: Promise<void>;
   onStatus?: (s: DeRPCStatus) => void;
+  onPoolEvent?: (event: { type: string }) => void;
 } = {}) {
   let fake!: ReturnType<typeof fakeTransport>;
-  const headers: VerifiedHeaderSource = { finalized: () => HEADER, close: () => {} };
+  const headers: VerifiedHeaderSource = { finalized: () => HEADER, assertFresh: () => {}, close: () => {} };
   const derpc = createDeRPCWith(
     {
       startTransport: (start) => (fake = fakeTransport(start, { bootError: opts.bootError, pinGate: opts.pinGate })).transport,
@@ -85,7 +87,12 @@ function setup(opts: {
         return headers;
       },
     },
-    { operators: opts.operators, worker: opts.pin ?? TOR_JS_PIN, onStatus: opts.onStatus },
+    {
+      operators: opts.operators,
+      worker: opts.pin ?? TOR_JS_PIN,
+      onStatus: opts.onStatus,
+      onPoolEvent: opts.onPoolEvent,
+    },
   );
   derpc.ready.catch(() => {});
   return { derpc, sent: fake.sent };
@@ -240,5 +247,27 @@ describe("createDeRPC", () => {
 
     expect(await derpc.provider.request({ method: "eth_blockNumber" })).toBe(TAG);
     expect(derpc.status().lightClient).toMatchObject({ state: "verified", header: { blockNumber: fixture.block.number } });
+  });
+
+  it("keeps a throwing onStatus callback from killing the session", async () => {
+    const { derpc } = setup({
+      operators: [A],
+      onStatus: () => {
+        throw new Error("app status exploded");
+      },
+    });
+
+    expect(await derpc.provider.request(balanceOfSpecifier)).toBe("0x0");
+  });
+
+  it("keeps a throwing onPoolEvent callback from failing a verified read", async () => {
+    const { derpc } = setup({
+      operators: [A],
+      onPoolEvent: () => {
+        throw new Error("app pool event exploded");
+      },
+    });
+
+    expect(await derpc.provider.request(balanceOfSpecifier)).toBe("0x0");
   });
 });
