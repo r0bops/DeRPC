@@ -1,0 +1,540 @@
+{
+  "schema": 1,
+  "date": "2026-11-06",
+  "kind": "all-onion-consensus-execution-and-fail-closed-check",
+  "deployment": {
+    "endpoint": "http://g7nasyegiclqszahjp6jnkdrvlzntfams6bgawi6caaprlleq4mc2eid.onion/rpc",
+    "identity": {
+      "ens": "check.derpc.eth",
+      "signer": "0x1111111111111111111111111111111111111111",
+      "service": "demo-proxy",
+      "registeredEns": false
+    },
+    "gatewayOwnership": "The same tester operates the local development gateway and onion proxy. This is not an independent gateway/operator pairing.",
+    "upstreams": {
+      "execution": "https://rpc.mevblocker.io",
+      "consensus": "https://ethereum-beacon-api.publicnode.com"
+    },
+    "paymentsEnabled": false,
+    "worker": {
+      "version": "tor-js 0.4.4",
+      "hash": "0x5b62f358ce7a2b94ee9bc3a0e6a08757db68fa08fc348276f31eda788aec818b"
+    },
+    "proxyImageId": "sha256:bb61fba119469f9c39fa58b9722388ceb15b50dd5b4a056403157a47556b15be",
+    "torImageId": "sha256:c2de0c95bb894c45bce8f7ff8e9cd9353964a866e113e1be587de6c3586778e0",
+    "torVersion": "0.4.9.11",
+    "runningWrapperSourceMatchesWorkspace": true
+  },
+  "historicalFailure": {
+    "observedAt": "2026-11-06T12:08:43.179Z",
+    "scope": "Earlier lifecycle check; cause was not fully instrumented.",
+    "consensusVerified": true,
+    "identityFirstAttemptTimeoutMs": 10003,
+    "identityRetryMs": 2860,
+    "workerPinRequestRemainingPoolBudgetMs": 17204,
+    "outcome": "Pool exhausted; no verified user result. Do not retroactively assign the later observed circuit failure to this earlier run."
+  },
+  "administrativeLocalReadiness": {
+    "started": "2026-11-06T14:51:38.385Z",
+    "kind": "administrative-loopback-wrapper-readiness",
+    "checks": [
+      {
+        "path": "/.well-known/derpc.json",
+        "status": 200,
+        "durationMs": 34
+      },
+      {
+        "path": "/eth/v1/beacon/light_client/finality_update",
+        "status": 200,
+        "durationMs": 1348
+      },
+      {
+        "path": "/rpc",
+        "method": "eth_getProof",
+        "status": 200,
+        "durationMs": 509,
+        "shape": {
+          "result": true,
+          "accountProof": 9,
+          "storageProof": 1
+        }
+      },
+      {
+        "path": "/rpc",
+        "method": "eth_getProof",
+        "status": 200,
+        "durationMs": 353,
+        "shape": {
+          "result": true,
+          "accountProof": 9,
+          "storageProof": 0
+        }
+      }
+    ],
+    "beaconBlock": "26356435",
+    "complete": true,
+    "limit": "Administrative readiness only: loopback and upstream response shapes, no authenticated consensus or anonymous browser claim."
+  },
+  "frozenRuntimeDiagnosis": {
+    "ok": true,
+    "startupMs": 53212,
+    "balanceMs": 24341,
+    "storageMs": 2888,
+    "blockNumber": 26356499,
+    "blockHash": "0x48d4f74ac910d2f26b4a62e7dd0f32dc76aa54d0575625fcf5a48f8890f81563",
+    "stateRoot": "0x38ff5c3df9b4eaaf719a15f3d55e07e928005edc20b93005aa217d3466fec4ea",
+    "pinVerified": true,
+    "allRequestsUseOnion": true,
+    "identityObserved": true,
+    "close": {
+      "error": {
+        "name": "TransportUnavailableError",
+        "message": "DeRPC: anonymous transport is closed; refusing to send (no direct fallback)"
+      },
+      "callsAfterClose": 0,
+      "observationMs": 1000,
+      "state": "closed"
+    },
+    "started": "2026-11-06T15:00:26.454Z",
+    "finished": "2026-11-06T15:01:50.787Z",
+    "checks": [
+      {
+        "phase": "worker-ready",
+        "atMs": 2999
+      },
+      {
+        "phase": "header-verified",
+        "atMs": 53212,
+        "blockNumber": 26356499
+      },
+      {
+        "phase": "balance-verified",
+        "durationMs": 24341,
+        "blockNumber": 26356499,
+        "pin": "verified"
+      },
+      {
+        "phase": "storage-verified",
+        "durationMs": 2888,
+        "blockNumber": 26356499
+      }
+    ],
+    "browserVersion": "Firefox; exact version not collected in diagnostic run",
+    "productionTimeoutOverrides": false,
+    "externalBrowserRequests": [
+      "https://cdn.jsdelivr.net/npm/tor-js@0.4.4/dist/anon-rpc-worker.js"
+    ],
+    "noDirectRpcOrBeacon": true,
+    "loadedLodestar": {
+      "sha256": "0cf7ed04e0b5f87eeec3dcedc31cc103b816fa498c1b93086f854fb729da8869",
+      "lifecycleController": true,
+      "abortGuard": true,
+      "stopAbort": true
+    },
+    "requestTimings": [
+      {
+        "phase": "worker-startup",
+        "atMs": 2999,
+        "timeoutMs": 60000,
+        "status": 200,
+        "headersMs": 42493,
+        "bodyBytes": 54402,
+        "completeMs": 43169,
+        "path": "/eth/v1/beacon/light_client/bootstrap/0x35bd26d77ecef24031f37b86d4be488fd66c472eb68c11595ca1f327a9a54f24"
+      },
+      {
+        "phase": "consensus-startup",
+        "atMs": 46495,
+        "timeoutMs": 60000,
+        "status": 200,
+        "headersMs": 1530,
+        "bodyBytes": 2518,
+        "completeMs": 1531,
+        "path": "/eth/v1/beacon/light_client/optimistic_update"
+      },
+      {
+        "phase": "consensus-startup",
+        "atMs": 48043,
+        "timeoutMs": 60000,
+        "status": 200,
+        "headersMs": 2982,
+        "bodyBytes": 2518,
+        "completeMs": 2983,
+        "path": "/eth/v1/beacon/light_client/optimistic_update"
+      },
+      {
+        "phase": "consensus-startup",
+        "atMs": 51027,
+        "timeoutMs": 60000,
+        "status": 200,
+        "headersMs": 1989,
+        "bodyBytes": 5071,
+        "completeMs": 2165,
+        "path": "/eth/v1/beacon/light_client/finality_update"
+      },
+      {
+        "phase": "consensus-startup",
+        "atMs": 53212,
+        "timeoutMs": 10000,
+        "status": 200,
+        "headersMs": 9672,
+        "bodyBytes": 129,
+        "completeMs": 9672,
+        "path": "/.well-known/derpc.json"
+      },
+      {
+        "phase": "worker-pin-and-balance",
+        "atMs": 62884,
+        "timeoutMs": 20000,
+        "rpcMethod": "eth_getProof",
+        "account": "0x700dA3193D35fA54Cd3fBf29B66f2a2A0385659e",
+        "status": 200,
+        "headersMs": 6425,
+        "bodyBytes": 9092,
+        "completeMs": 7325,
+        "path": "/rpc"
+      },
+      {
+        "phase": "worker-pin-and-balance",
+        "atMs": 65242,
+        "timeoutMs": 60000,
+        "status": 200,
+        "headersMs": 1728,
+        "bodyBytes": 2490,
+        "completeMs": 1729,
+        "path": "/eth/v1/beacon/light_client/optimistic_update"
+      },
+      {
+        "phase": "worker-pin-and-balance",
+        "atMs": 66983,
+        "timeoutMs": 60000,
+        "status": 200,
+        "headersMs": 2010,
+        "bodyBytes": 5043,
+        "completeMs": 2164,
+        "path": "/eth/v1/beacon/light_client/finality_update"
+      },
+      {
+        "phase": "worker-pin-and-balance",
+        "atMs": 70212,
+        "timeoutMs": 20000,
+        "rpcMethod": "eth_getProof",
+        "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "status": 200,
+        "headersMs": 7139,
+        "bodyBytes": 7971,
+        "completeMs": 7347,
+        "path": "/rpc"
+      },
+      {
+        "phase": "storage-proof",
+        "atMs": 77573,
+        "timeoutMs": 20000,
+        "rpcMethod": "eth_getProof",
+        "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "status": 200,
+        "headersMs": 1995,
+        "bodyBytes": 13982,
+        "completeMs": 2885,
+        "path": "/rpc"
+      }
+    ],
+    "sourceHashesBefore": {
+      "provider/src/api/derpc.ts": "59ecddfb2b36ddb8192bde2480ee443ff02e5bcec49b64a4602cc2ac918d576c",
+      "provider/src/api/eip1193.ts": "6a6f59f1a6ee6d877ee53a4ca909983f9345f1b28e61bc107e0c4365770e9e44",
+      "provider/src/operators/endpoint.ts": "dd39ec7064f61c7a5e73d85086aa794e5bd3410f9ec2bd0db4961bb1a6b3570d",
+      "provider/src/pool/pool.ts": "6e497c3e77d696ea4fe24735a3c561e63c4b6bd93b4d871e052842cc79f7ebb1",
+      "provider/src/light-client/header-source.ts": "64ec68f4cb018b3c8702f839594ee4e7e27c0b35edf32d9c5caab11981861af7",
+      "provider/src/transport/anon-transport.ts": "23354ea462c3bc793f774376adc7f97343f764cedb4f59ab841b96d2fe7af3e7",
+      "provider/src/transport/response-body.ts": "a0b3d4692e81cee31137bc67c8a9c85dad2732422080053e7917d6c0c810711a",
+      "provider/src/transport/json-rpc.ts": "427616e720bf80d963f76aab7d14b2883fad03487993551c522b4140b73757d6",
+      "provider/src/config/mainnet.ts": "411030131139204d1d954ec3ea545caa258ff2dba8fc8e3ab6c9b90ec2639ef9",
+      "patches/@lodestar__light-client@1.43.0.patch": "a0da4dcf9be9e10813ec2f8f1715c1585e52aa0a3acef83758c480ba944b775d",
+      "wrapper/src/server.ts": "db8861851cdbcfccc54623b0818a9cd73b59cf1571b54524682390fdc925b5d9",
+      "wrapper/src/proxy.ts": "3bc821988bfbc0359a5ee96afbb5182d95c2b5dd085193a42a5ddacb17c3e4e9"
+    },
+    "sourceHashesAfter": {
+      "provider/src/api/derpc.ts": "59ecddfb2b36ddb8192bde2480ee443ff02e5bcec49b64a4602cc2ac918d576c",
+      "provider/src/api/eip1193.ts": "6a6f59f1a6ee6d877ee53a4ca909983f9345f1b28e61bc107e0c4365770e9e44",
+      "provider/src/operators/endpoint.ts": "dd39ec7064f61c7a5e73d85086aa794e5bd3410f9ec2bd0db4961bb1a6b3570d",
+      "provider/src/pool/pool.ts": "6e497c3e77d696ea4fe24735a3c561e63c4b6bd93b4d871e052842cc79f7ebb1",
+      "provider/src/light-client/header-source.ts": "64ec68f4cb018b3c8702f839594ee4e7e27c0b35edf32d9c5caab11981861af7",
+      "provider/src/transport/anon-transport.ts": "23354ea462c3bc793f774376adc7f97343f764cedb4f59ab841b96d2fe7af3e7",
+      "provider/src/transport/response-body.ts": "a0b3d4692e81cee31137bc67c8a9c85dad2732422080053e7917d6c0c810711a",
+      "provider/src/transport/json-rpc.ts": "427616e720bf80d963f76aab7d14b2883fad03487993551c522b4140b73757d6",
+      "provider/src/config/mainnet.ts": "411030131139204d1d954ec3ea545caa258ff2dba8fc8e3ab6c9b90ec2639ef9",
+      "patches/@lodestar__light-client@1.43.0.patch": "a0da4dcf9be9e10813ec2f8f1715c1585e52aa0a3acef83758c480ba944b775d",
+      "wrapper/src/server.ts": "db8861851cdbcfccc54623b0818a9cd73b59cf1571b54524682390fdc925b5d9",
+      "wrapper/src/proxy.ts": "3bc821988bfbc0359a5ee96afbb5182d95c2b5dd085193a42a5ddacb17c3e4e9"
+    },
+    "changedSources": [],
+    "runtime": "Frozen provider snapshot before TTL edit; isolated temporary Vite server/cache; debug worker logs."
+  },
+  "diagnosis": {
+    "interpretation": "The slow diagnostic startup is consistent with a failed onion-service directory circuit followed by descriptor/rendezvous recovery. The host observed a long wait before response headers, while the pinned worker diagnostic logs place most of it before HTTP. Worker logs remain untrusted diagnostics, not proof of relay or operator conduct.",
+    "workerDiagnosticTimeline": [
+      {
+        "atWorkerSeconds": 1.723,
+        "event": "Connecting to the public onion."
+      },
+      {
+        "atWorkerSeconds": 37.655,
+        "event": "Circuit destroyed; hidden-service directory descriptor fetch failed."
+      },
+      {
+        "atWorkerSeconds": 38.55,
+        "event": "Setting up rendezvous point."
+      },
+      {
+        "atWorkerSeconds": 42.587,
+        "event": "Hidden-service circuit established."
+      },
+      {
+        "atWorkerSeconds": 43.105,
+        "event": "Connected; making HTTP request."
+      }
+    ],
+    "initialConnectionMsFromWorkerDiagnostics": 41382,
+    "initialBootstrapHeadersMs": 42493,
+    "initialBootstrapBodyCompleteMs": 43169,
+    "identityConnectionMsFromWorkerDiagnostics": 8152,
+    "identityHeadersMs": 9672,
+    "classification": "Observed onion descriptor/circuit/rendezvous delay; no observed proof-capability error or upstream TLS error.",
+    "changes": "No wrapper implementation, Tor configuration, security timeout or isolation policy was changed."
+  },
+  "finalCurrentSourceRun": {
+    "ok": true,
+    "startupMs": 15836,
+    "balanceMs": 18636,
+    "storageMs": 2387,
+    "blockNumber": 26356531,
+    "blockHash": "0x66c9435abb395d75cad97e322f82f17c3bdfdd9a0750278f6b6e05e1e677f9c0",
+    "stateRoot": "0xf9136d5083671dddfb67b8cec15c717f05d2ec5e635e7fdef44102610943d6b4",
+    "pinVerified": true,
+    "allRequestsUseOnion": true,
+    "identityObserved": true,
+    "close": {
+      "error": {
+        "name": "TransportUnavailableError",
+        "message": "DeRPC: anonymous transport is closed; refusing to send (no direct fallback)"
+      },
+      "callsAfterClose": 0,
+      "observationMs": 1000,
+      "state": "closed"
+    },
+    "started": "2026-11-06T15:08:06.772Z",
+    "finished": "2026-11-06T15:08:47.402Z",
+    "checks": [
+      {
+        "phase": "worker-ready",
+        "atMs": 3023
+      },
+      {
+        "phase": "header-verified",
+        "atMs": 15836,
+        "blockNumber": 26356531
+      },
+      {
+        "phase": "balance-verified",
+        "durationMs": 18636,
+        "blockNumber": 26356531,
+        "pin": "verified"
+      },
+      {
+        "phase": "storage-verified",
+        "durationMs": 2387,
+        "blockNumber": 26356531
+      }
+    ],
+    "browserVersion": "firefox/156.0.1",
+    "productionTimeoutOverrides": false,
+    "externalBrowserRequests": [
+      "https://cdn.jsdelivr.net/npm/tor-js@0.4.4/dist/anon-rpc-worker.js"
+    ],
+    "noDirectRpcOrBeacon": true,
+    "loadedLodestar": {
+      "sha256": "567ca6788ca7eb057f13f16a62b6e4b11841607531bc19b28b81936aa13a9212",
+      "lifecycleController": true,
+      "abortGuard": true,
+      "stopAbort": true
+    },
+    "requestTimings": [
+      {
+        "phase": "worker-startup",
+        "atMs": 3023,
+        "timeoutMs": 60000,
+        "status": 200,
+        "headersMs": 7122,
+        "bodyBytes": 54402,
+        "completeMs": 7828,
+        "path": "/eth/v1/beacon/light_client/bootstrap/0x35bd26d77ecef24031f37b86d4be488fd66c472eb68c11595ca1f327a9a54f24"
+      },
+      {
+        "phase": "consensus-startup",
+        "atMs": 11174,
+        "timeoutMs": 60000,
+        "status": 200,
+        "headersMs": 1350,
+        "bodyBytes": 2518,
+        "completeMs": 1365,
+        "path": "/eth/v1/beacon/light_client/optimistic_update"
+      },
+      {
+        "phase": "consensus-startup",
+        "atMs": 12665,
+        "timeoutMs": 60000,
+        "status": 200,
+        "headersMs": 1416,
+        "bodyBytes": 2518,
+        "completeMs": 1416,
+        "path": "/eth/v1/beacon/light_client/optimistic_update"
+      },
+      {
+        "phase": "consensus-startup",
+        "atMs": 14082,
+        "timeoutMs": 60000,
+        "status": 200,
+        "headersMs": 1543,
+        "bodyBytes": 5087,
+        "completeMs": 1731,
+        "path": "/eth/v1/beacon/light_client/finality_update"
+      },
+      {
+        "phase": "consensus-startup",
+        "atMs": 15836,
+        "timeoutMs": 10000,
+        "status": 200,
+        "headersMs": 5928,
+        "bodyBytes": 129,
+        "completeMs": 5929,
+        "path": "/.well-known/derpc.json"
+      },
+      {
+        "phase": "worker-pin-and-balance",
+        "atMs": 21765,
+        "timeoutMs": 20000,
+        "rpcMethod": "eth_getProof",
+        "account": "0x700dA3193D35fA54Cd3fBf29B66f2a2A0385659e",
+        "status": 200,
+        "headersMs": 4362,
+        "bodyBytes": 9092,
+        "completeMs": 4521,
+        "path": "/rpc"
+      },
+      {
+        "phase": "worker-pin-and-balance",
+        "atMs": 26289,
+        "timeoutMs": 20000,
+        "rpcMethod": "eth_getProof",
+        "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "status": 200,
+        "headersMs": 7877,
+        "bodyBytes": 7971,
+        "completeMs": 8192,
+        "path": "/rpc"
+      },
+      {
+        "phase": "worker-pin-and-balance",
+        "atMs": 27829,
+        "timeoutMs": 60000,
+        "status": 200,
+        "headersMs": 1569,
+        "bodyBytes": 2523,
+        "completeMs": 1570,
+        "path": "/eth/v1/beacon/light_client/optimistic_update"
+      },
+      {
+        "phase": "worker-pin-and-balance",
+        "atMs": 29413,
+        "timeoutMs": 60000,
+        "status": 200,
+        "headersMs": 1703,
+        "bodyBytes": 5092,
+        "completeMs": 1898,
+        "path": "/eth/v1/beacon/light_client/finality_update"
+      },
+      {
+        "phase": "storage-proof",
+        "atMs": 34490,
+        "timeoutMs": 20000,
+        "rpcMethod": "eth_getProof",
+        "account": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "status": 200,
+        "headersMs": 2217,
+        "bodyBytes": 13982,
+        "completeMs": 2386,
+        "path": "/rpc"
+      }
+    ],
+    "sourceHashesBefore": {
+      "provider/src/api/derpc.ts": "b291833aa6f92b763446e656ebbbf71ad39f132912789e20e39ea741f9b71581",
+      "provider/src/api/eip1193.ts": "6a6f59f1a6ee6d877ee53a4ca909983f9345f1b28e61bc107e0c4365770e9e44",
+      "provider/src/operators/endpoint.ts": "dd39ec7064f61c7a5e73d85086aa794e5bd3410f9ec2bd0db4961bb1a6b3570d",
+      "provider/src/pool/pool.ts": "6e497c3e77d696ea4fe24735a3c561e63c4b6bd93b4d871e052842cc79f7ebb1",
+      "provider/src/light-client/header-source.ts": "64ec68f4cb018b3c8702f839594ee4e7e27c0b35edf32d9c5caab11981861af7",
+      "provider/src/transport/anon-transport.ts": "23354ea462c3bc793f774376adc7f97343f764cedb4f59ab841b96d2fe7af3e7",
+      "provider/src/transport/response-body.ts": "a0b3d4692e81cee31137bc67c8a9c85dad2732422080053e7917d6c0c810711a",
+      "provider/src/transport/json-rpc.ts": "427616e720bf80d963f76aab7d14b2883fad03487993551c522b4140b73757d6",
+      "provider/src/config/mainnet.ts": "411030131139204d1d954ec3ea545caa258ff2dba8fc8e3ab6c9b90ec2639ef9",
+      "patches/@lodestar__light-client@1.43.0.patch": "a0da4dcf9be9e10813ec2f8f1715c1585e52aa0a3acef83758c480ba944b775d",
+      "wrapper/src/server.ts": "db8861851cdbcfccc54623b0818a9cd73b59cf1571b54524682390fdc925b5d9",
+      "wrapper/src/proxy.ts": "3bc821988bfbc0359a5ee96afbb5182d95c2b5dd085193a42a5ddacb17c3e4e9",
+      "wrapper/test/onion-availability.mjs": "f5340a0d3e2b7305ebda367572a9d9f0ebe62c2e1f8a4dc17afcd0d0af259c4b"
+    },
+    "sourceHashesAfter": {
+      "provider/src/api/derpc.ts": "b291833aa6f92b763446e656ebbbf71ad39f132912789e20e39ea741f9b71581",
+      "provider/src/api/eip1193.ts": "6a6f59f1a6ee6d877ee53a4ca909983f9345f1b28e61bc107e0c4365770e9e44",
+      "provider/src/operators/endpoint.ts": "dd39ec7064f61c7a5e73d85086aa794e5bd3410f9ec2bd0db4961bb1a6b3570d",
+      "provider/src/pool/pool.ts": "6e497c3e77d696ea4fe24735a3c561e63c4b6bd93b4d871e052842cc79f7ebb1",
+      "provider/src/light-client/header-source.ts": "64ec68f4cb018b3c8702f839594ee4e7e27c0b35edf32d9c5caab11981861af7",
+      "provider/src/transport/anon-transport.ts": "23354ea462c3bc793f774376adc7f97343f764cedb4f59ab841b96d2fe7af3e7",
+      "provider/src/transport/response-body.ts": "a0b3d4692e81cee31137bc67c8a9c85dad2732422080053e7917d6c0c810711a",
+      "provider/src/transport/json-rpc.ts": "427616e720bf80d963f76aab7d14b2883fad03487993551c522b4140b73757d6",
+      "provider/src/config/mainnet.ts": "411030131139204d1d954ec3ea545caa258ff2dba8fc8e3ab6c9b90ec2639ef9",
+      "patches/@lodestar__light-client@1.43.0.patch": "a0da4dcf9be9e10813ec2f8f1715c1585e52aa0a3acef83758c480ba944b775d",
+      "wrapper/src/server.ts": "db8861851cdbcfccc54623b0818a9cd73b59cf1571b54524682390fdc925b5d9",
+      "wrapper/src/proxy.ts": "3bc821988bfbc0359a5ee96afbb5182d95c2b5dd085193a42a5ddacb17c3e4e9",
+      "wrapper/test/onion-availability.mjs": "f5340a0d3e2b7305ebda367572a9d9f0ebe62c2e1f8a4dc17afcd0d0af259c4b"
+    },
+    "changedSources": [],
+    "runtime": "Current TTL-stable provider source; existing development Vite; fresh Firefox profile; normal warn worker logs."
+  },
+  "additionalSourceVerification": {
+    "observedAt": "2026-11-06T15:08:27.404617+00:00",
+    "scope": "additional source files requested immediately after final browser run began",
+    "hashes": {
+      "provider/src/api/derpc.ts": "b291833aa6f92b763446e656ebbbf71ad39f132912789e20e39ea741f9b71581",
+      "provider/src/api/directory-snapshot.ts": "57dd2f7ee9a4a1fb12efae1661e89c07b09f580043ffc53656524512bc4f069d",
+      "provider/src/api/eip1193.ts": "6a6f59f1a6ee6d877ee53a4ca909983f9345f1b28e61bc107e0c4365770e9e44",
+      "provider/src/api/viem.ts": "d3de0977312a6c0c426e8641f268e22fdc61098aa6a4b20b66765e3a61c3cd00",
+      "provider/src/execution/index.ts": "61ddd27262533b38b2bc43ebf384ea3206ecb94602d7eaa9287faa71d9eced1d",
+      "provider/src/execution/verified-call.ts": "0c73889387a5fcf7e5f48ebbda236b555465c9048bca09c877b4630568a4fbf8",
+      "provider/src/discovery/ens.ts": "911f95b59814ef36b39ed2927018651ca331373649926f46a663623868da2394",
+      "provider/src/discovery/registrar.ts": "f5c37e44434814f930a669b53b6860d5762ec08befdf69e52b362c8539f750d5"
+    },
+    "observedAfterAt": "2026-11-06T15:09:48.364324+00:00",
+    "hashesAfter": {
+      "provider/src/api/derpc.ts": "b291833aa6f92b763446e656ebbbf71ad39f132912789e20e39ea741f9b71581",
+      "provider/src/api/directory-snapshot.ts": "57dd2f7ee9a4a1fb12efae1661e89c07b09f580043ffc53656524512bc4f069d",
+      "provider/src/api/eip1193.ts": "6a6f59f1a6ee6d877ee53a4ca909983f9345f1b28e61bc107e0c4365770e9e44",
+      "provider/src/api/viem.ts": "d3de0977312a6c0c426e8641f268e22fdc61098aa6a4b20b66765e3a61c3cd00",
+      "provider/src/execution/index.ts": "61ddd27262533b38b2bc43ebf384ea3206ecb94602d7eaa9287faa71d9eced1d",
+      "provider/src/execution/verified-call.ts": "0c73889387a5fcf7e5f48ebbda236b555465c9048bca09c877b4630568a4fbf8",
+      "provider/src/discovery/ens.ts": "911f95b59814ef36b39ed2927018651ca331373649926f46a663623868da2394",
+      "provider/src/discovery/registrar.ts": "f5c37e44434814f930a669b53b6860d5762ec08befdf69e52b362c8539f750d5"
+    },
+    "changed": []
+  },
+  "limits": [
+    "Two bounded fresh-browser observations through the existing local gateway and onion service, not a reliability benchmark or public-site release validation.",
+    "The first run uses an explicitly frozen provider snapshot before the ENS snapshot-TTL change and diagnostic debug logging. The final run uses the TTL-stable current source and normal warn logging.",
+    "The browser verifies mainnet state through the onion. The demo wrapper itself forwards to public execution and beacon services; it is not an independent full-node deployment.",
+    "The mock ENS-shaped identity is a reciprocal local claim, not a registered or proven ENS operator record.",
+    "Loopback readiness probes test response availability and proof shape only; browser host verification supplies the authenticated proof result.",
+    "All production request, pool and freshness budgets remain unchanged. Test harness bounds only stop abandoned tests.",
+    "A fresh browser does not reset wrapper caches, Tor service state or network conditions.",
+    "Shutdown refusal and zero new transport calls were observed for one second after close; no general process-memory or infrastructure-log audit was performed.",
+    "The earlier failed runs remain availability failures. Current passes do not establish sustained uptime, independent ownership or account unlinkability.",
+    "HTTP request tracing distinguishes worker bundle downloads from RPC/beacon traffic; the gateway WebRTC connection is outside that HTTP trace."
+  ]
+}
