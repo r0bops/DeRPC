@@ -110,7 +110,13 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   // Status goes out only once createDeRPC has returned: the transport reports "booting" while it starts.
   let live = false;
   const notify = () => {
-    if (live) options.onStatus?.(status());
+    if (!live || !options.onStatus) return;
+    try {
+      options.onStatus(status());
+    } catch (error) {
+      // App callback failures must not take down DeRPC (#31).
+      console.error("DeRPC onStatus callback failed", error);
+    }
   };
 
   const { provider, emit } = createEip1193Provider({ chainId: CHAIN_ID, headers: () => headersReady, reader: readerForReads });
@@ -235,7 +241,14 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
           excluded,
           onEvent: (event) => {
             if (event.type === "invalid-proof" && event.endpoint) excluded.add(event.endpoint);
-            options.onPoolEvent?.(event);
+            if (options.onPoolEvent) {
+              try {
+                options.onPoolEvent(event);
+              } catch (error) {
+                // App callback failures must not turn a verified answer into an operator failure (#31).
+                console.error("DeRPC onPoolEvent callback failed", error);
+              }
+            }
             notify();
           },
         })
