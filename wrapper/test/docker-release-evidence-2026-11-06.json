@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-wrapper-docker-release-validation",
+  "scope": "Local Linux x64 archive from an explicitly dirty working tree; not the clean public release build. ARM64 native CI and publication are separate gates.",
+  "archive": "derpc-wrapper-0.1.0-linux-x64.tar.gz",
+  "archiveBytes": 99648194,
+  "archiveSha256": "f8679d0a9e6eaf399a5bfb060a5283f060c0165534e71a1c14e86b7f3126f3f2",
+  "build": {
+    "schemaVersion": 1,
+    "kind": "derpc-wrapper-docker-release",
+    "version": "0.1.0",
+    "platform": "linux/amd64",
+    "sourceSha": "6415b4054aa0c60c38a7f41c26e3e9e01acf3524",
+    "uncommittedChanges": true,
+    "builtAt": "2026-11-06T23:31:43.549Z",
+    "images": [
+      {
+        "reference": "derpc-wrapper:0.1.0-linux-x64",
+        "id": "sha256:166e9dcdb42adff70b461df9aee56eb74c30469a89428d9a6bd3fe3fa06ed903",
+        "os": "linux",
+        "architecture": "amd64"
+      },
+      {
+        "reference": "derpc-wrapper-tor:0.1.0-linux-x64",
+        "id": "sha256:b8095706e7f0661ecdbcb74140e85cd97a85c221bd858537e30250f802722a44",
+        "os": "linux",
+        "architecture": "amd64"
+      }
+    ],
+    "freeOnly": true,
+    "containsPrivateKeys": false,
+    "verification": "offline-container-checks; live onion and operator enrollment remain separate"
+  },
+  "offlineImageChecks": {
+    "schemaVersion": 1,
+    "kind": "derpc-wrapper-release-smoke",
+    "startedAt": "2026-11-06T23:31:39.541Z",
+    "ok": true,
+    "complete": true,
+    "scope": "Real packaged images; Docker network none; synthetic loopback-only upstream fixtures; no host ports or persistent volumes.",
+    "limitations": [
+      "Fixture proofs are intentionally synthetic and do not establish cryptographic correctness.",
+      "Tor configuration is checked offline; onion reachability and client anonymity are not tested."
+    ],
+    "images": {
+      "wrapper": {
+        "reference": "derpc-wrapper:0.1.0-linux-x64",
+        "id": "sha256:166e9dcdb42adff70b461df9aee56eb74c30469a89428d9a6bd3fe3fa06ed903",
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      "tor": {
+        "reference": "derpc-wrapper-tor:0.1.0-linux-x64",
+        "id": "sha256:b8095706e7f0661ecdbcb74140e85cd97a85c221bd858537e30250f802722a44",
+        "architecture": "amd64",
+        "os": "linux"
+      }
+    },
+    "checks": [
+      {
+        "name": "invalid configuration exits before serving",
+        "passed": true,
+        "durationMs": 1575
+      },
+      {
+        "name": "packaged main starts and serves exact operator and endpoint identity",
+        "passed": true,
+        "durationMs": 328
+      },
+      {
+        "name": "allowlisted RPCs forward through the real HTTP listener with finalized tags",
+        "passed": true,
+        "durationMs": 38
+      },
+      {
+        "name": "unsupported methods, notifications and mixed batches never reach upstream",
+        "passed": true,
+        "durationMs": 12
+      },
+      {
+        "name": "future state requests are refused before proof forwarding",
+        "passed": true,
+        "durationMs": 3
+      },
+      {
+        "name": "all four beacon routes pass and other paths are refused",
+        "passed": true,
+        "durationMs": 13
+      },
+      {
+        "name": "personal listener authenticates without forwarding credentials or sharing the public cache",
+        "passed": true,
+        "durationMs": 7
+      },
+      {
+        "name": "packaged check command validates the running fixture and prints its ENS proposal",
+        "passed": true,
+        "durationMs": 373
+      },
+      {
+        "name": "upstream shutdown fails requests instead of serving cached state or another destination",
+        "passed": true,
+        "durationMs": 9
+      },
+      {
+        "name": "SIGTERM exits cleanly and closes both listeners",
+        "passed": true,
+        "durationMs": 16
+      },
+      {
+        "name": "packaged Tor version and pool-only v3 loopback forwarding validate with networking disabled",
+        "passed": true
+      }
+    ],
+    "cleanup": {
+      "containersRemoved": true,
+      "temporaryFilesRemoved": true
+    },
+    "wrapperRuntime": {
+      "nodeVersion": "v24.22.2",
+      "architecture": "x64",
+      "checkEntrypoint": {
+        "available": true,
+        "exercised": true
+      }
+    },
+    "torVersion": "Tor version 0.4.9.11.",
+    "finishedAt": "2026-11-06T23:31:43.543Z"
+  },
+  "wrapperUnitTestsPassed": 58,
+  "wrapperTypecheckPassed": true,
+  "installWithoutHostNodePassed": true,
+  "configurationCreatedMode": "0600",
+  "existingConfigurationPreserved": true,
+  "archiveOmitsOperatorEnv": true,
+  "sourceSha256": {
+    "wrapper/src/setup.ts": "04d160949616176e05accf95e8168f27b47cdfbf9915f4c415a57d3cdc960b06",
+    "wrapper/src/check.ts": "8174eedc4c83fedffd8fa657700d93dd31d3d1cc088bf323e05ed25419c7a3b5",
+    "wrapper/Dockerfile.tor": "6c4f7979800307e064be77dd02efaa6ad47c13ca670165f109a626b5aa852888",
+    "wrapper/Dockerfile.tor.dockerignore": "96202d1df7fd52285f660545befd4fb6957331dffa266299eb96f8ede10e5e6d",
+    "wrapper/release/derpc-wrapper": "493f73a0caaad70a663f1ea0774712d017da1afd6baef2c1b1c02beba3b0228d",
+    "wrapper/release/compose.yaml": "6c9882150d5e49bde325ffb7cf41b95e96e22519757dcbb5ee73a8da108b2885",
+    "wrapper/release/torrc": "5c7c46418500ce88be7c9b4fb41102faebee0fe48f8c8c10670a384967500e2c",
+    "wrapper/release/.env.example": "268cb9c5d70bd7018dfb4bc430aceb7293ae695463e5bae29935a920d33ae062",
+    "wrapper/scripts/package-release.mjs": "0f60a9a61b5b7583f1633a4e88e2e1bb2c3275fbecad74a201e4ee919bb24de2",
+    "wrapper/test/release-smoke.mjs": "46c7f5a141f0b8a3a90ffc0fa4dee319ae899e2f57c4fc2d6db5737b171b9db5",
+    ".github/workflows/release-wrapper.yml": "643ff5d84865fe83cc7fd72ecc78957a474f5649f7ca3f9765d896a24553ccc8"
+  }
+}

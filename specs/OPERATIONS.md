@@ -186,6 +186,28 @@ The user explicitly authorized the follow-up commits and push after the failure
 investigation. Credentials, CARs, Python caches and unrelated integration changes
 remain outside these commits.
 
+### Downloadable operator packages, November 6
+
+The user selected Linux x64 and ARM64 and accepted Docker or a standalone binary.
+Prebuilt Docker archives reuse the existing Node wrapper and separate Tor service.
+They include images, checksums, Compose, a public configuration example and a
+launcher; operator hosts do not need Node, pnpm, a checkout or registry credentials.
+The free package exposes only the pool onion service. Onion keys stay in the
+explicit `derpc-wrapper_onion-keys` volume, and installation never replaces `.env`.
+
+The local x64 archive passed 58 wrapper tests, type checking, isolated image checks
+including the in-container self-test, and install/reinstall checks with no Node
+command in the host PATH. Its [evidence](../wrapper/test/docker-release-evidence-2026-11-06.json)
+explicitly records a dirty local build; it is not the clean release artifact.
+The workflow builds each architecture on its own native runner and requires both
+before creating an exact-commit draft. Existing release assets are never replaced.
+Public onion reachability, enrollment and real-node acceptance remain separate
+from these offline checks. See [operator instructions](../wrapper/release/README.md)
+and [maintainer workflow](../wrapper/README.md#downloadable-docker-releases).
+
+Commit boundaries: runtime/self-test and free-pool Tor configuration; release
+builder, image smoke test and workflow; then distribution documentation/evidence.
+
 ## Deployment boundaries
 
 | Component | Network and authority | Required evidence |

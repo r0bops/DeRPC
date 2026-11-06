@@ -2,7 +2,7 @@
 
 The wrapper puts a Tor v3 onion service in front of a filtering proxy. It does not verify responses: DeRPC's host still checks consensus, account, code and storage proofs. No Tor gateway is included.
 
-Requires Linux, Docker Compose, Node 24 (for the setup command), and synchronized mainnet execution and consensus nodes. Keep their APIs bound to `127.0.0.1`; this compose stack uses host networking so it can reach them without publishing the node APIs. A light client is not an operator node.
+Source-based setup requires Linux, Docker Compose, Node 24 (for the setup command), and synchronized mainnet execution and consensus nodes. Keep their APIs bound to `127.0.0.1`; this compose stack uses host networking so it can reach them without publishing the node APIs. A light client is not an operator node. The downloadable Docker package described below does not require Node on the operator host.
 
 ```sh
 export DERPC_ENS_NAME=alice.derpc.eth
@@ -15,6 +15,52 @@ pnpm --filter @derpc/wrapper run setup
 Use your own signer address and an operator label of 1–31 lowercase letters, digits or hyphens, starting and ending with a letter or digit. Setup starts the stack, checks the canonical tor-js specifier's slot-1 proof at the node's finalized block and a beacon finality update through the local wrapper, then prints records to publish. It never publishes ENS records or sends a transaction. A successful local self-test is not an onion reachability test; check that separately through the browser's pinned Anon-RPC worker. Use `run setup`: `pnpm setup` names pnpm's own built-in command.
 
 For a demonstration proxy, configure public upstreams and set `DERPC_DEMO_PROXY=true`. The identity document labels it `demo-proxy`: forwarding somebody else's node does not add an independent operator.
+
+## Downloadable Docker releases
+
+The release workflow builds separate **Linux x64 and ARM64** archives containing
+the wrapper and Tor images, Compose configuration, an environment example and the
+`derpc-wrapper` launcher. Operators need Docker Engine with Compose v2, Bash and
+coreutils; no source checkout, build tools, Node, pnpm or registry login is needed.
+This package starts the free pool service only. The source-based personal/payment
+configurations remain separate.
+
+Download the matching archive and `.sha256` file from [GitHub Releases](https://github.com/r0bops/DeRPC/releases),
+verify it with `sha256sum --check <archive-name>.sha256`, and extract it. Inside:
+
+```sh
+./derpc-wrapper install
+# Edit .env with your node URLs, ENS name, public signer and stable node ID.
+./derpc-wrapper up
+./derpc-wrapper check
+```
+
+The check command runs inside the image, checks finalized proof availability and
+beacon finality, and prints an unsigned ENS record proposal. It does not publish
+records or prove public onion reachability. Test that separately through Anon-RPC.
+`down` preserves the key volume; upgrades keep the same explicit Compose project.
+The archive's [operator instructions](release/README.md) explain configuration,
+backup, upgrades and the migration boundary for existing source-based deployments.
+
+Maintainers build a native package with:
+
+```sh
+node wrapper/scripts/package-release.mjs --version 0.1.0 --arch x64
+# On a native ARM64 Linux host, use --arch arm64.
+```
+
+Outputs are under `wrapper/out/releases/`. The builder tests the actual images
+with networking disabled, checks Tor's pool-only configuration, and installs and
+reinstalls the extracted archive with a PATH that contains no Node command.
+It records image IDs, the source commit, architecture, runtime checks and whether
+the local source had uncommitted changes. CI requires the exact clean commit.
+These checks do not establish public Tor availability or operator enrollment.
+
+The `release-wrapper.yml` workflow can be run manually to build artifacts without
+creating a release. A pushed `wrapper-vX.Y.Z` tag builds both architectures on
+native runners and creates a draft only after both pass. Manual draft creation
+requires `main` and an existing matching tag at the tested commit. Review and
+publish the draft to make downloads public; existing releases are never replaced.
 
 ## Several endpoints under one operator
 
