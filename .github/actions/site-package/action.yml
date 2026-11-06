@@ -43,24 +43,7 @@ runs:
       env:
         VITE_TOR_GATEWAYS: ${{ inputs.tor-gateways }}
       run: node scripts/check-release.mjs
-    - name: Install Kubo
-      shell: bash
-      env:
-        # The release and archive hash recorded in web/deployment-ens-ipfs-2026-11-06.json.
-        KUBO_VERSION: 0.43.1
-        KUBO_SHA256: 3f2bf974ab2a3ec6d997fac7d8cb46f59983a7cddd0b55ef998e6ce379155fb2
-      run: |
-        archive="kubo_v${KUBO_VERSION}_linux-amd64.tar.gz"
-        # The GitHub release first: dist.ipfs.tech was unreachable from hosted runners. Either source
-        # must match the recorded hash below, so the mirror is not trusted on its own.
-        for url in "https://github.com/ipfs/kubo/releases/download/v${KUBO_VERSION}/$archive" "https://dist.ipfs.tech/kubo/v${KUBO_VERSION}/$archive"; do
-          if curl -fsSL --connect-timeout 20 --max-time 180 --retry 2 -o "$RUNNER_TEMP/kubo.tar.gz" "$url"; then break; fi
-          rm -f "$RUNNER_TEMP/kubo.tar.gz"
-        done
-        test -f "$RUNNER_TEMP/kubo.tar.gz"
-        echo "${KUBO_SHA256}  $RUNNER_TEMP/kubo.tar.gz" | sha256sum --check --strict
-        tar -xzf "$RUNNER_TEMP/kubo.tar.gz" -C "$RUNNER_TEMP" kubo/ipfs
-        echo "IPFS_BIN=$RUNNER_TEMP/kubo/ipfs" >> "$GITHUB_ENV"
+    - uses: ./.github/actions/install-kubo
     - name: Package for IPFS
       id: package
       shell: bash
