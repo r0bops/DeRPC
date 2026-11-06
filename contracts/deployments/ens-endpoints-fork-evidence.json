@@ -1,0 +1,172 @@
+{
+  "checkedAt": "2026-11-06T16:15:26.034Z",
+  "localOnly": true,
+  "publicTransactionsSent": false,
+  "scope": "Actual ENS mainnet bytecode on a disposable local fork; fixture operators are not independent public enrollments",
+  "fork": {
+    "blockNumber": 26356882,
+    "blockHash": "0x89f749e31f5f390552a7f1c32799ea0412e610871be808fca72608c4d43f43a0",
+    "clientVersion": "anvil/v1.5.1"
+  },
+  "sourceHash": "0x08facfa5fbb51dbf29ad7fbb944e89b22855c04928783e112e9480a3739f529e",
+  "compiler": {
+    "version": "0.8.30+commit.73712a01.Emscripten.clang",
+    "optimizerRuns": 200,
+    "evmVersion": "shanghai"
+  },
+  "upstream": {
+    "VerifiableFactory": {
+      "address": "0x77510ba162dfea3d8989e3f0928a691b345730d2",
+      "runtimeCodeHash": "0xc251b434fe75ce3ca024e85883aafd7c1d0b8e382d747b537c5930018b144a91",
+      "normalizedRuntimeCodeHash": "0x2a7df71e60cc096d05d6f912bb5f866443c69754ab585a55f66f3f6a3f89b68f"
+    },
+    "UserRegistryImpl": {
+      "address": "0xfaa23592aca10a6d8875b18ea86954e8eb6d8d72",
+      "runtimeCodeHash": "0xb5b939d5a80a1d00351e4e0faa3529b8ee25dfcf436d64f781d415ccc8a3b7a9",
+      "normalizedRuntimeCodeHash": "0xcccecc70b7d7a9c01003f21790b0d9a143aa5c3cb6f18d373a06624903f4edf9"
+    },
+    "PermissionedResolverImpl": {
+      "address": "0x565b0f456a04ac9b48758190e90030623cff57c5",
+      "runtimeCodeHash": "0x25df12e14187ae568dca1861b918e01b6e24a671dea6089a6dbbe60c5d3ef640",
+      "normalizedRuntimeCodeHash": "0x230d1165b00f1b366b59fb2c1a351087610846d183d4b49ef39d6dd87b327f63"
+    },
+    "ETHRegistry": {
+      "address": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+      "runtimeCodeHash": "0xe2873b2a7becb1c9f1d017027d5b528ea4e797e609acaa7a4194694e718a0273",
+      "normalizedRuntimeCodeHash": "0xa2bc002e4d17398ab8fcb9c52553dd2f736f41f5abc21b17078ae2b6714c9ef7"
+    }
+  },
+  "checks": [
+    "Cold-owner migration is atomic: later inner-call failure rolls back revocation and records; paid and non-atomic/unreviewed migration evidence are rejected",
+    "Verified migration preserves original initialization history and limits the hot key to the entire plural record; singular/beacon/signer/payee and cross-operator writes deny",
+    "Post-audit reorg of the final observation rejects deployment verification",
+    "Plural lifecycle binds the full old/new list including beacon URLs; a concurrent edit to the other node, a forged old manifest observation and a head reorg during the finalized read are refused",
+    "Operator-wide delisting retains the plural record/token but clears admission; explicit reverse migration removes plural authority and restores only legacy authority",
+    "Fresh plural operator deployment completes every unsigned stage and canonical receipt/role verification with one dedicated resolver per operator"
+  ],
+  "freshDeployment": {
+    "operators": [
+      {
+        "name": "alice.derpc.eth",
+        "records": {
+          "derpc.endpoints": "{\"version\":1,\"endpoints\":[{\"id\":\"east\",\"url\":\"https://alice-east.example/rpc\",\"beaconUrl\":\"https://alice-east.example/beacon\"},{\"id\":\"west\",\"url\":\"https://alice-west.example/rpc\",\"beaconUrl\":\"https://alice-west.example/beacon\"}]}",
+          "derpc.endpoint": "",
+          "derpc.beacon": "",
+          "derpc.signer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "derpc.caps": "{\"chainId\":1,\"methods\":[\"eth_getProof\",\"eth_getCode\"]}"
+        }
+      },
+      {
+        "name": "bob.derpc.eth",
+        "records": {
+          "derpc.endpoints": "{\"version\":1,\"endpoints\":[{\"id\":\"east\",\"url\":\"https://bob-east.example/rpc\",\"beaconUrl\":\"https://bob-east.example/beacon\"},{\"id\":\"west\",\"url\":\"https://bob-west.example/rpc\",\"beaconUrl\":\"https://bob-west.example/beacon\"}]}",
+          "derpc.endpoint": "",
+          "derpc.beacon": "",
+          "derpc.signer": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+          "derpc.caps": "{\"chainId\":1,\"methods\":[\"eth_getProof\",\"eth_getCode\"]}"
+        }
+      }
+    ],
+    "stages": [
+      {
+        "stage": "deploy-ens-proxies",
+        "transactions": [
+          "deploy-registry",
+          "deploy-resolver-alice",
+          "deploy-resolver-bob"
+        ]
+      },
+      {
+        "stage": "deploy-registrar",
+        "transactions": [
+          "deploy-registrar"
+        ]
+      },
+      {
+        "stage": "configure-permissions-and-records",
+        "transactions": [
+          "grant-registrar",
+          "set-registry-parent",
+          "attach-subregistry",
+          "grant-endpoints-alice",
+          "grant-endpoints-bob"
+        ]
+      },
+      {
+        "stage": "register-or-renew-operators",
+        "transactions": [
+          "register-alice",
+          "register-bob"
+        ]
+      }
+    ],
+    "verification": {
+      "receipts": true,
+      "canonicalBlocks": true,
+      "minimumConfirmations": 12,
+      "stateMatchesConfig": true,
+      "hotKeyEventAudit": true
+    }
+  },
+  "complete": true,
+  "testResult": {
+    "focusedTestsPassed": 23,
+    "unitTestsPassed": 18,
+    "actualCodeForkTestsPassed": 5,
+    "forkRerunStartedAt": "2026-11-06T16:15:01Z",
+    "forkRerunDurationSeconds": 39.33,
+    "command": "DERPC_ENS_FORK_RPC=http://127.0.0.1:8855 DERPC_ENS_ENDPOINTS_REPORT=/tmp/derpc-ens-endpoints-report.json pnpm --filter @derpc/contracts exec vitest run test/ens-endpoints.test.mjs test/ens-plan.test.mjs test/ens-lifecycle.test.mjs test/ens-fork.test.mjs",
+    "note": "The three pure suites passed 18 tests independently; the final affected fork suite rerun passed 5 tests after the last lifecycle canonicality hardening. The command reproduces all 23 together."
+  },
+  "operations": [
+    {
+      "type": "legacy-to-plural",
+      "receiptBlock": "26356906",
+      "verified": {
+        "receipts": true,
+        "canonicalBlocks": true,
+        "minimumConfirmations": 12,
+        "stateMatchesConfig": true,
+        "hotKeyEventAudit": true
+      }
+    },
+    {
+      "type": "rotate-endpoints",
+      "verified": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      },
+      "finality": {
+        "status": "pending-finality",
+        "finalizedBlock": {
+          "number": "26356867",
+          "hash": "0x74d6a13befcb0aa5bb74b5b390c2d3923baaba217883275ebd93f1bef40cb104"
+        },
+        "clientRefreshVerified": false
+      },
+      "receipt": {
+        "blockNumber": "26356919",
+        "blockHash": "0x8271c3392b028ca58e7fc03d345932ad2acc15dcb73c3085b54dc0516b0f5164",
+        "transactionIndex": 0,
+        "from": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+        "to": "0x13d9580d3aef85dec3406418e8c2b4fd4c54b409",
+        "gasUsed": "95606",
+        "confirmations": "13"
+      }
+    },
+    {
+      "type": "plural-to-legacy",
+      "verified": {
+        "receipts": true,
+        "canonicalBlocks": true,
+        "minimumConfirmations": 12,
+        "stateMatchesConfig": true,
+        "hotKeyEventAudit": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,666 @@
+{
+  "localOnly": true,
+  "publicTransactionsSent": false,
+  "scope": "Reviewable calldata from a disposable actual-code mainnet fork. Fixture names and development accounts are not public registrations. Do not submit these examples on mainnet. Plural hot keys control every RPC and beacon URL in the complete list.",
+  "fork": {
+    "blockNumber": 26356882,
+    "blockHash": "0x89f749e31f5f390552a7f1c32799ea0412e610871be808fca72608c4d43f43a0",
+    "clientVersion": "anvil/v1.5.1"
+  },
+  "checkedAt": "2026-11-06T16:15:26.034Z",
+  "examples": [
+    {
+      "type": "legacy-to-plural",
+      "plan": {
+        "schemaVersion": 1,
+        "kind": "derpc-ens-unsigned-plan",
+        "chainId": 1,
+        "createdAt": "2026-11-06T16:15:26.069Z",
+        "sourceHash": "0x08facfa5fbb51dbf29ad7fbb944e89b22855c04928783e112e9480a3739f529e",
+        "compiler": {
+          "version": "0.8.30+commit.73712a01.Emscripten.clang",
+          "optimizerRuns": 200,
+          "evmVersion": "shanghai"
+        },
+        "preflight": {
+          "schemaVersion": 1,
+          "kind": "derpc-ens-preflight",
+          "chainId": 1,
+          "rpcOrigin": "http://127.0.0.1:8855",
+          "localOnly": true,
+          "checkedAt": "2026-11-06T16:15:26.064Z",
+          "blockNumber": "26356905",
+          "blockHash": "0x3ba2a83e8579f9c8ebf35da95c85510f9028549814027f83cb9441f2edd63610",
+          "timestamp": "1793981021",
+          "upstreamSource": "https://docs.ens.domains/learn/deployments/",
+          "upstreamSourceCommit": "4f47cbcc11462fb413196e6b5c0f8090247a6c08",
+          "upstream": {
+            "VerifiableFactory": {
+              "address": "0x77510ba162dfea3d8989e3f0928a691b345730d2",
+              "runtimeCodeHash": "0xc251b434fe75ce3ca024e85883aafd7c1d0b8e382d747b537c5930018b144a91",
+              "normalizedRuntimeCodeHash": "0x2a7df71e60cc096d05d6f912bb5f866443c69754ab585a55f66f3f6a3f89b68f"
+            },
+            "UserRegistryImpl": {
+              "address": "0xfaa23592aca10a6d8875b18ea86954e8eb6d8d72",
+              "runtimeCodeHash": "0xb5b939d5a80a1d00351e4e0faa3529b8ee25dfcf436d64f781d415ccc8a3b7a9",
+              "normalizedRuntimeCodeHash": "0xcccecc70b7d7a9c01003f21790b0d9a143aa5c3cb6f18d373a06624903f4edf9"
+            },
+            "PermissionedResolverImpl": {
+              "address": "0x565b0f456a04ac9b48758190e90030623cff57c5",
+              "runtimeCodeHash": "0x25df12e14187ae568dca1861b918e01b6e24a671dea6089a6dbbe60c5d3ef640",
+              "normalizedRuntimeCodeHash": "0x230d1165b00f1b366b59fb2c1a351087610846d183d4b49ef39d6dd87b327f63"
+            },
+            "ETHRegistry": {
+              "address": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+              "runtimeCodeHash": "0xe2873b2a7becb1c9f1d017027d5b528ea4e797e609acaa7a4194694e718a0273",
+              "normalizedRuntimeCodeHash": "0xa2bc002e4d17398ab8fcb9c52553dd2f736f41f5abc21b17078ae2b6714c9ef7"
+            }
+          },
+          "parent": {
+            "name": "derpc.eth",
+            "registry": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+            "status": 2,
+            "expiry": "1825433555",
+            "latestOwner": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+            "tokenId": "86421749974462203513281326918437045380435208352249783119946164121359903358976",
+            "resource": "86421749974462203513281326918437045380435208352249783119946164121359903358976",
+            "subregistry": "0x934fB7B34EbcFCd6c89D652648385428f6bfA80c",
+            "resolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59"
+          },
+          "trust": "Read-only administrative RPC observations; not light-client verified. No transactions sent."
+        },
+        "subregistry": "0x934fB7B34EbcFCd6c89D652648385428f6bfA80c",
+        "resolvers": {
+          "alice": "0x13D9580D3aEf85DEc3406418e8c2b4Fd4C54b409",
+          "bob": "0x4A51cC4a0838dB2C0EEEEd3B36b109E7b0C2e1C7"
+        },
+        "resumeConfig": {
+          "schemaVersion": 1,
+          "chainId": 1,
+          "parentName": "derpc.eth",
+          "curator": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+          "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          "deploymentId": "fork-planner-fixture",
+          "operators": [
+            {
+              "label": "alice",
+              "operator": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+              "coldOwner": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+              "hotKey": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+              "signer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+              "payee": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+              "expiry": 1793988215,
+              "caps": {
+                "chainId": 1,
+                "methods": [
+                  "eth_getProof",
+                  "eth_getCode"
+                ]
+              },
+              "endpoints": [
+                {
+                  "id": "east",
+                  "url": "https://alice-east.example/rpc",
+                  "beaconUrl": "https://alice-east.example/beacon"
+                },
+                {
+                  "id": "west",
+                  "url": "https://alice-west.example/rpc",
+                  "beaconUrl": "https://alice-west.example/beacon"
+                }
+              ]
+            },
+            {
+              "label": "bob",
+              "operator": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+              "coldOwner": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+              "hotKey": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+              "signer": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+              "payee": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+              "endpoint": "https://bob.example/rpc",
+              "expiry": 1793988215,
+              "caps": {
+                "chainId": 1,
+                "methods": [
+                  "eth_getProof",
+                  "eth_getCode"
+                ]
+              }
+            }
+          ],
+          "registrar": {
+            "address": "0x9d6C8761619195e85Fbf3F3837Dc201FF113609a",
+            "nonce": 11626
+          }
+        },
+        "roleTable": [
+          {
+            "resource": "UserRegistry root",
+            "account": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+            "roles": "SET_PARENT; REGISTRAR_ADMIN; RENEW_ADMIN",
+            "bitmap": "22301085480897544079999181647255793274192128"
+          },
+          {
+            "resource": "UserRegistry root",
+            "account": "0x9d6C8761619195e85Fbf3F3837Dc201FF113609a",
+            "roles": "REGISTRAR; RENEW",
+            "bitmap": "65537"
+          },
+          {
+            "resource": "alice resolver root",
+            "account": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            "roles": "SET_TEXT; SET_TEXT_ADMIN",
+            "bitmap": "5444517870735015415413993718908291383312"
+          },
+          {
+            "resource": "alice resolver key derpc.endpoints only",
+            "account": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+            "roles": "SET_TEXT",
+            "bitmap": "16"
+          },
+          {
+            "resource": "alice ENS name",
+            "account": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            "roles": "none (non-transferable)",
+            "bitmap": "0"
+          },
+          {
+            "resource": "bob resolver root",
+            "account": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+            "roles": "SET_TEXT; SET_TEXT_ADMIN",
+            "bitmap": "5444517870735015415413993718908291383312"
+          },
+          {
+            "resource": "bob resolver key derpc.endpoint only",
+            "account": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+            "roles": "SET_TEXT",
+            "bitmap": "16"
+          },
+          {
+            "resource": "bob ENS name",
+            "account": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+            "roles": "none (non-transferable)",
+            "bitmap": "0"
+          }
+        ],
+        "transactions": [
+          {
+            "id": "migrate-endpoint-mode-alice",
+            "purpose": "Cold-owner mode migration: revoke derpc.endpoint, clear obsolete records, publish derpc.endpoints, grant only its scoped role. The plural key controls the entire RPC/beacon list, not individual nodes.",
+            "walletRequest": {
+              "method": "eth_sendTransaction",
+              "params": [
+                {
+                  "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+                  "to": "0x13D9580D3aEf85DEc3406418e8c2b4Fd4C54b409",
+                  "data": "0xac9650d80000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000028000000000000000000000000000000000000000000000000000000000000003c000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000064dfa70d8b204bae5d96f5f6ca0b2343fa8bcb27141f0f412e0cc8a4b3732be5417f6f4b84000000000000000000000000000000000000000000000000000000000000001000000000000000000000000090f79bf6eb2c4f870365e785982e1f101e93b906000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000104c7279f88000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000001105616c6963650564657270630365746800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e64657270632e656e64706f696e740000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000104c7279f88000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000001105616c6963650564657270630365746800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c64657270632e626561636f6e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000204c7279f88000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000001105616c6963650564657270630365746800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f64657270632e656e64706f696e7473000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e57b2276657273696f6e223a312c22656e64706f696e7473223a5b7b226964223a2265617374222c2275726c223a2268747470733a2f2f616c6963652d656173742e6578616d706c652f727063222c22626561636f6e55726c223a2268747470733a2f2f616c6963652d656173742e6578616d706c652f626561636f6e227d2c7b226964223a2277657374222c2275726c223a2268747470733a2f2f616c6963652d776573742e6578616d706c652f727063222c22626561636f6e55726c223a2268747470733a2f2f616c6963652d776573742e6578616d706c652f626561636f6e227d5d7d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000184ccd3eaff000000000000000000000000000000000000000000000000000000000000004000000000000000000000000090f79bf6eb2c4f870365e785982e1f101e93b9060000000000000000000000000000000000000000000000000000000000000104c7279f88000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000001105616c6963650564657270630365746800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f64657270632e656e64706f696e7473000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                  "value": "0x0",
+                  "chainId": "0x1"
+                }
+              ]
+            },
+            "migration": {
+              "selected": "derpc.endpoints",
+              "obsolete": "derpc.endpoint",
+              "before": {
+                "roles": {
+                  "derpc.endpoint": "16",
+                  "derpc.endpoints": "0"
+                },
+                "counts": {
+                  "derpc.endpoint": "16",
+                  "derpc.endpoints": "0"
+                },
+                "records": {
+                  "derpc.endpoint": "https://alice.example/rpc",
+                  "derpc.endpoints": "",
+                  "derpc.beacon": ""
+                },
+                "ownerRoot": "5444517870735015415413993718908291383312",
+                "hotRoot": "0",
+                "rootCount": "5444517870735015415413993718908291383312",
+                "protectedRecords": {
+                  "derpc.signer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+                  "derpc.caps": "{\"chainId\":1,\"methods\":[\"eth_getProof\",\"eth_getCode\"]}",
+                  "derpc.gateways": "",
+                  "derpc.price": "",
+                  "derpc.payee": "",
+                  "derpc.paymentChain": "",
+                  "derpc.escrow": ""
+                }
+              }
+            },
+            "estimatedGas": "376783"
+          }
+        ],
+        "status": "needs-wallet-transactions",
+        "instructions": "Review and submit only this stage using the stated public wallet addresses. Wait for receipts, save resumeConfig, then rerun. This script never signs or sends transactions.",
+        "registrar": {
+          "address": "0x9d6C8761619195e85Fbf3F3837Dc201FF113609a",
+          "codeHash": "0x09633d8b817a0741dceb62f3b02b67a4339d062916175a6fb33ee1a290f1a78e",
+          "runtimeCodeHash": "0x09633d8b817a0741dceb62f3b02b67a4339d062916175a6fb33ee1a290f1a78e",
+          "registry": "0x934fB7B34EbcFCd6c89D652648385428f6bfA80c",
+          "subregistry": "0x934fB7B34EbcFCd6c89D652648385428f6bfA80c",
+          "arraySlot": "0",
+          "entrySlots": 3,
+          "maxOperators": 128
+        },
+        "stage": "migrate-endpoint-permissions-and-records"
+      },
+      "receiptBlock": "26356906",
+      "verified": {
+        "receipts": true,
+        "canonicalBlocks": true,
+        "minimumConfirmations": 12,
+        "stateMatchesConfig": true,
+        "hotKeyEventAudit": true
+      }
+    },
+    {
+      "type": "rotate-endpoints",
+      "plan": {
+        "schemaVersion": 1,
+        "kind": "derpc-ens-lifecycle-plan",
+        "chainId": 1,
+        "localOnly": true,
+        "createdAt": "2026-11-06T16:15:29.035Z",
+        "manifestHash": "0x6b0bb6b523435cb79b4e4b1efab1aee500556bec07e87aefcfd75d13e327ea85",
+        "sourceHash": "0x08facfa5fbb51dbf29ad7fbb944e89b22855c04928783e112e9480a3739f529e",
+        "action": {
+          "type": "rotate-endpoints",
+          "label": "alice",
+          "expectedEndpoints": [
+            {
+              "id": "east",
+              "url": "https://alice-east.example/rpc",
+              "beaconUrl": "https://alice-east.example/beacon"
+            },
+            {
+              "id": "west",
+              "url": "https://alice-west.example/rpc",
+              "beaconUrl": "https://alice-west.example/beacon"
+            }
+          ],
+          "newEndpoints": [
+            {
+              "id": "east",
+              "url": "https://rotated-east.example/rpc",
+              "beaconUrl": "https://rotated-east.example/beacon"
+            },
+            {
+              "id": "west",
+              "url": "https://alice-west.example/rpc",
+              "beaconUrl": "https://alice-west.example/beacon"
+            }
+          ]
+        },
+        "before": {
+          "block": {
+            "number": "26356918",
+            "hash": "0x8f9a2577a9b3862d1cbae2bac292df6d64be0ce6447c5e16c1b0f468eacd36b2",
+            "timestamp": 1793981021
+          },
+          "index": 0,
+          "entry": {
+            "label": "alice",
+            "operator": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            "expiry": 1793988215,
+            "active": true,
+            "payee": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+          },
+          "ens": {
+            "status": 2,
+            "expiry": "1793988215",
+            "latestOwner": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            "tokenId": "70564938991660933374592024341600875602376452319261984317470407481572850663424",
+            "resource": "70564938991660933374592024341600875602376452319261984317470407481572850663424"
+          },
+          "activeResource": "70564938991660933374592024341600875602376452319261984317470407481572850663424",
+          "dedicatedResolver": "0x13D9580D3aEf85DEc3406418e8c2b4Fd4C54b409",
+          "resolved": "0x13D9580D3aEf85DEc3406418e8c2b4Fd4C54b409",
+          "records": {
+            "derpc.endpoint": "",
+            "derpc.signer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            "derpc.caps": "{\"chainId\":1,\"methods\":[\"eth_getProof\",\"eth_getCode\"]}",
+            "derpc.beacon": "",
+            "derpc.gateways": "",
+            "derpc.price": "",
+            "derpc.payee": "",
+            "derpc.paymentChain": "",
+            "derpc.escrow": "",
+            "derpc.endpoints": "{\"version\":1,\"endpoints\":[{\"id\":\"east\",\"url\":\"https://alice-east.example/rpc\",\"beaconUrl\":\"https://alice-east.example/beacon\"},{\"id\":\"west\",\"url\":\"https://alice-west.example/rpc\",\"beaconUrl\":\"https://alice-west.example/beacon\"}]}"
+          },
+          "registryCount": "2",
+          "parentState": {
+            "status": 2,
+            "expiry": "1825433555",
+            "latestOwner": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+            "tokenId": "86421749974462203513281326918437045380435208352249783119946164121359903358976",
+            "resource": "86421749974462203513281326918437045380435208352249783119946164121359903358976"
+          },
+          "parentResolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59",
+          "permissions": [
+            {
+              "resolver": "0x13D9580D3aEf85DEc3406418e8c2b4Fd4C54b409",
+              "implementation": "0x565b0F456a04Ac9b48758190e90030623Cff57C5",
+              "ownerRoot": "5444517870735015415413993718908291383312",
+              "countRoot": "5444517870735015415413993718908291383312",
+              "hotRoot": "0",
+              "selectedEndpointKey": "derpc.endpoints",
+              "endpointRoles": {
+                "derpc.endpoint": "0",
+                "derpc.endpoints": "16"
+              },
+              "endpointCounts": {
+                "derpc.endpoint": "0",
+                "derpc.endpoints": "16"
+              }
+            },
+            {
+              "resolver": "0x4A51cC4a0838dB2C0EEEEd3B36b109E7b0C2e1C7",
+              "implementation": "0x565b0F456a04Ac9b48758190e90030623Cff57C5",
+              "ownerRoot": "5444517870735015415413993718908291383312",
+              "countRoot": "5444517870735015415413993718908291383312",
+              "hotRoot": "0",
+              "selectedEndpointKey": "derpc.endpoint",
+              "endpointRoles": {
+                "derpc.endpoint": "16",
+                "derpc.endpoints": "0"
+              },
+              "endpointCounts": {
+                "derpc.endpoint": "16",
+                "derpc.endpoints": "0"
+              }
+            }
+          ],
+          "upstream": {
+            "VerifiableFactory": "0xc251b434fe75ce3ca024e85883aafd7c1d0b8e382d747b537c5930018b144a91",
+            "UserRegistryImpl": "0xb5b939d5a80a1d00351e4e0faa3529b8ee25dfcf436d64f781d415ccc8a3b7a9",
+            "PermissionedResolverImpl": "0x25df12e14187ae568dca1861b918e01b6e24a671dea6089a6dbbe60c5d3ef640",
+            "ETHRegistry": "0xe2873b2a7becb1c9f1d017027d5b528ea4e797e609acaa7a4194694e718a0273"
+          }
+        },
+        "reviewExpiresAt": 1793981921,
+        "estimatedGas": "97436",
+        "walletRequest": {
+          "method": "eth_sendTransaction",
+          "params": [
+            {
+              "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+              "to": "0x13D9580D3aEf85DEc3406418e8c2b4Fd4C54b409",
+              "data": "0xc7279f88000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000001105616c6963650564657270630365746800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f64657270632e656e64706f696e7473000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e97b2276657273696f6e223a312c22656e64706f696e7473223a5b7b226964223a2265617374222c2275726c223a2268747470733a2f2f726f74617465642d656173742e6578616d706c652f727063222c22626561636f6e55726c223a2268747470733a2f2f726f74617465642d656173742e6578616d706c652f626561636f6e227d2c7b226964223a2277657374222c2275726c223a2268747470733a2f2f616c6963652d776573742e6578616d706c652f727063222c22626561636f6e55726c223a2268747470733a2f2f616c6963652d776573742e6578616d706c652f626561636f6e227d5d7d0000000000000000000000000000000000000000000000",
+              "value": "0x0",
+              "chainId": "0x1"
+            }
+          ]
+        },
+        "review": [
+          "Exactly one zero-value call; no grants, transfer, resolver replacement or payment activation.",
+          "Recheck this plan immediately before wallet submission. Existing contracts have no compare-and-swap or deadline guard; a raced or late transaction can still execute.",
+          "Delisting clears registrar admission and preserves the ENS token. Expired-but-active listings may renew; removed listings cannot.",
+          "Receipt confirmation is separate from finality. Effective client routing changes require a successful authenticated finalized directory refresh."
+        ]
+      },
+      "verified": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      },
+      "finality": {
+        "status": "pending-finality",
+        "finalizedBlock": {
+          "number": "26356867",
+          "hash": "0x74d6a13befcb0aa5bb74b5b390c2d3923baaba217883275ebd93f1bef40cb104"
+        },
+        "clientRefreshVerified": false
+      },
+      "receipt": {
+        "blockNumber": "26356919",
+        "blockHash": "0x8271c3392b028ca58e7fc03d345932ad2acc15dcb73c3085b54dc0516b0f5164",
+        "transactionIndex": 0,
+        "from": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+        "to": "0x13d9580d3aef85dec3406418e8c2b4fd4c54b409",
+        "gasUsed": "95606",
+        "confirmations": "13"
+      }
+    },
+    {
+      "type": "plural-to-legacy",
+      "plan": {
+        "schemaVersion": 1,
+        "kind": "derpc-ens-unsigned-plan",
+        "chainId": 1,
+        "createdAt": "2026-11-06T16:15:30.879Z",
+        "sourceHash": "0x08facfa5fbb51dbf29ad7fbb944e89b22855c04928783e112e9480a3739f529e",
+        "compiler": {
+          "version": "0.8.30+commit.73712a01.Emscripten.clang",
+          "optimizerRuns": 200,
+          "evmVersion": "shanghai"
+        },
+        "preflight": {
+          "schemaVersion": 1,
+          "kind": "derpc-ens-preflight",
+          "chainId": 1,
+          "rpcOrigin": "http://127.0.0.1:8855",
+          "localOnly": true,
+          "checkedAt": "2026-11-06T16:15:30.873Z",
+          "blockNumber": "26356931",
+          "blockHash": "0x712da377e099f5c2a1417594320240e1a1adff080e957440e3bb080a6be28a71",
+          "timestamp": "1793981021",
+          "upstreamSource": "https://docs.ens.domains/learn/deployments/",
+          "upstreamSourceCommit": "4f47cbcc11462fb413196e6b5c0f8090247a6c08",
+          "upstream": {
+            "VerifiableFactory": {
+              "address": "0x77510ba162dfea3d8989e3f0928a691b345730d2",
+              "runtimeCodeHash": "0xc251b434fe75ce3ca024e85883aafd7c1d0b8e382d747b537c5930018b144a91",
+              "normalizedRuntimeCodeHash": "0x2a7df71e60cc096d05d6f912bb5f866443c69754ab585a55f66f3f6a3f89b68f"
+            },
+            "UserRegistryImpl": {
+              "address": "0xfaa23592aca10a6d8875b18ea86954e8eb6d8d72",
+              "runtimeCodeHash": "0xb5b939d5a80a1d00351e4e0faa3529b8ee25dfcf436d64f781d415ccc8a3b7a9",
+              "normalizedRuntimeCodeHash": "0xcccecc70b7d7a9c01003f21790b0d9a143aa5c3cb6f18d373a06624903f4edf9"
+            },
+            "PermissionedResolverImpl": {
+              "address": "0x565b0f456a04ac9b48758190e90030623cff57c5",
+              "runtimeCodeHash": "0x25df12e14187ae568dca1861b918e01b6e24a671dea6089a6dbbe60c5d3ef640",
+              "normalizedRuntimeCodeHash": "0x230d1165b00f1b366b59fb2c1a351087610846d183d4b49ef39d6dd87b327f63"
+            },
+            "ETHRegistry": {
+              "address": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+              "runtimeCodeHash": "0xe2873b2a7becb1c9f1d017027d5b528ea4e797e609acaa7a4194694e718a0273",
+              "normalizedRuntimeCodeHash": "0xa2bc002e4d17398ab8fcb9c52553dd2f736f41f5abc21b17078ae2b6714c9ef7"
+            }
+          },
+          "parent": {
+            "name": "derpc.eth",
+            "registry": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+            "status": 2,
+            "expiry": "1825433555",
+            "latestOwner": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+            "tokenId": "86421749974462203513281326918437045380435208352249783119946164121359903358976",
+            "resource": "86421749974462203513281326918437045380435208352249783119946164121359903358976",
+            "subregistry": "0x934fB7B34EbcFCd6c89D652648385428f6bfA80c",
+            "resolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59"
+          },
+          "trust": "Read-only administrative RPC observations; not light-client verified. No transactions sent."
+        },
+        "subregistry": "0x934fB7B34EbcFCd6c89D652648385428f6bfA80c",
+        "resolvers": {
+          "alice": "0x13D9580D3aEf85DEc3406418e8c2b4Fd4C54b409",
+          "bob": "0x4A51cC4a0838dB2C0EEEEd3B36b109E7b0C2e1C7"
+        },
+        "resumeConfig": {
+          "schemaVersion": 1,
+          "chainId": 1,
+          "parentName": "derpc.eth",
+          "curator": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+          "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          "deploymentId": "fork-planner-fixture",
+          "operators": [
+            {
+              "label": "alice",
+              "operator": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+              "coldOwner": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+              "hotKey": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+              "signer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+              "payee": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+              "endpoint": "https://alice.example/rpc",
+              "expiry": 1793988215,
+              "caps": {
+                "chainId": 1,
+                "methods": [
+                  "eth_getProof",
+                  "eth_getCode"
+                ]
+              }
+            },
+            {
+              "label": "bob",
+              "operator": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+              "coldOwner": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+              "hotKey": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+              "signer": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+              "payee": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+              "endpoint": "https://bob.example/rpc",
+              "expiry": 1793988215,
+              "caps": {
+                "chainId": 1,
+                "methods": [
+                  "eth_getProof",
+                  "eth_getCode"
+                ]
+              }
+            }
+          ],
+          "registrar": {
+            "address": "0x9d6C8761619195e85Fbf3F3837Dc201FF113609a",
+            "nonce": 11626
+          }
+        },
+        "roleTable": [
+          {
+            "resource": "UserRegistry root",
+            "account": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+            "roles": "SET_PARENT; REGISTRAR_ADMIN; RENEW_ADMIN",
+            "bitmap": "22301085480897544079999181647255793274192128"
+          },
+          {
+            "resource": "UserRegistry root",
+            "account": "0x9d6C8761619195e85Fbf3F3837Dc201FF113609a",
+            "roles": "REGISTRAR; RENEW",
+            "bitmap": "65537"
+          },
+          {
+            "resource": "alice resolver root",
+            "account": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            "roles": "SET_TEXT; SET_TEXT_ADMIN",
+            "bitmap": "5444517870735015415413993718908291383312"
+          },
+          {
+            "resource": "alice resolver key derpc.endpoint only",
+            "account": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+            "roles": "SET_TEXT",
+            "bitmap": "16"
+          },
+          {
+            "resource": "alice ENS name",
+            "account": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            "roles": "none (non-transferable)",
+            "bitmap": "0"
+          },
+          {
+            "resource": "bob resolver root",
+            "account": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+            "roles": "SET_TEXT; SET_TEXT_ADMIN",
+            "bitmap": "5444517870735015415413993718908291383312"
+          },
+          {
+            "resource": "bob resolver key derpc.endpoint only",
+            "account": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+            "roles": "SET_TEXT",
+            "bitmap": "16"
+          },
+          {
+            "resource": "bob ENS name",
+            "account": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+            "roles": "none (non-transferable)",
+            "bitmap": "0"
+          }
+        ],
+        "transactions": [
+          {
+            "id": "migrate-endpoint-mode-alice",
+            "purpose": "Cold-owner mode migration: revoke derpc.endpoints, clear obsolete records, publish derpc.endpoint, grant only its scoped role. The plural key controls the entire RPC/beacon list, not individual nodes.",
+            "walletRequest": {
+              "method": "eth_sendTransaction",
+              "params": [
+                {
+                  "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+                  "to": "0x13D9580D3aEf85DEc3406418e8c2b4Fd4C54b409",
+                  "data": "0xac9650d80000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000028000000000000000000000000000000000000000000000000000000000000003c000000000000000000000000000000000000000000000000000000000000005200000000000000000000000000000000000000000000000000000000000000064dfa70d8b7856262b6b89c52a493ceb5a1e3c1a342b2cf5342a81b53b21bc65c2e4871ef3000000000000000000000000000000000000000000000000000000000000001000000000000000000000000090f79bf6eb2c4f870365e785982e1f101e93b906000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000104c7279f88000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000001105616c6963650564657270630365746800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f64657270632e656e64706f696e747300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000104c7279f88000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000001105616c6963650564657270630365746800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c64657270632e626561636f6e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000124c7279f88000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000001105616c6963650564657270630365746800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e64657270632e656e64706f696e74000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001968747470733a2f2f616c6963652e6578616d706c652f72706300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000184ccd3eaff000000000000000000000000000000000000000000000000000000000000004000000000000000000000000090f79bf6eb2c4f870365e785982e1f101e93b9060000000000000000000000000000000000000000000000000000000000000104c7279f88000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000001105616c6963650564657270630365746800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e64657270632e656e64706f696e7400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                  "value": "0x0",
+                  "chainId": "0x1"
+                }
+              ]
+            },
+            "migration": {
+              "selected": "derpc.endpoint",
+              "obsolete": "derpc.endpoints",
+              "before": {
+                "roles": {
+                  "derpc.endpoint": "0",
+                  "derpc.endpoints": "16"
+                },
+                "counts": {
+                  "derpc.endpoint": "0",
+                  "derpc.endpoints": "16"
+                },
+                "records": {
+                  "derpc.endpoint": "",
+                  "derpc.endpoints": "{\"version\":1,\"endpoints\":[{\"id\":\"east\",\"url\":\"https://rotated-east.example/rpc\",\"beaconUrl\":\"https://rotated-east.example/beacon\"},{\"id\":\"west\",\"url\":\"https://alice-west.example/rpc\",\"beaconUrl\":\"https://alice-west.example/beacon\"}]}",
+                  "derpc.beacon": ""
+                },
+                "ownerRoot": "5444517870735015415413993718908291383312",
+                "hotRoot": "0",
+                "rootCount": "5444517870735015415413993718908291383312",
+                "protectedRecords": {
+                  "derpc.signer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+                  "derpc.caps": "{\"chainId\":1,\"methods\":[\"eth_getProof\",\"eth_getCode\"]}",
+                  "derpc.gateways": "",
+                  "derpc.price": "",
+                  "derpc.payee": "",
+                  "derpc.paymentChain": "",
+                  "derpc.escrow": ""
+                }
+              }
+            },
+            "estimatedGas": "229988"
+          }
+        ],
+        "status": "needs-wallet-transactions",
+        "instructions": "Review and submit only this stage using the stated public wallet addresses. Wait for receipts, save resumeConfig, then rerun. This script never signs or sends transactions.",
+        "registrar": {
+          "address": "0x9d6C8761619195e85Fbf3F3837Dc201FF113609a",
+          "codeHash": "0x09633d8b817a0741dceb62f3b02b67a4339d062916175a6fb33ee1a290f1a78e",
+          "runtimeCodeHash": "0x09633d8b817a0741dceb62f3b02b67a4339d062916175a6fb33ee1a290f1a78e",
+          "registry": "0x934fB7B34EbcFCd6c89D652648385428f6bfA80c",
+          "subregistry": "0x934fB7B34EbcFCd6c89D652648385428f6bfA80c",
+          "arraySlot": "0",
+          "entrySlots": 3,
+          "maxOperators": 128
+        },
+        "stage": "migrate-endpoint-permissions-and-records"
+      },
+      "verified": {
+        "receipts": true,
+        "canonicalBlocks": true,
+        "minimumConfirmations": 12,
+        "stateMatchesConfig": true,
+        "hotKeyEventAudit": true
+      }
+    }
+  ]
+}

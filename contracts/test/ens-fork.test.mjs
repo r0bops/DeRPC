@@ -10,6 +10,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { compile } from '../scripts/compile.mjs';
 import { preparePlan, registrarBuild } from '../scripts/ens-plan.mjs';
 import { verifyDeployment } from '../scripts/ens-verify.mjs';
+import { validateForkLifecycle } from './ens-lifecycle-fork.mjs';
+import { validateForkEndpoints } from './ens-endpoints-fork.mjs';
 
 const forkRpc = process.env.DERPC_ENS_FORK_RPC;
 // Deployment records from ensdomains/contracts-v2 at 4f47cbcc11462fb413196e6b5c0f8090247a6c08.
@@ -452,6 +454,8 @@ describe.sequential.skipIf(!forkRpc)('actual ENSv2 contracts on a local mainnet 
         await expect(verifyDeployment({ config, stages, client, confirmations: 12, build })).rejects.toThrow(/hot-key event audit/);
       } finally { expect(await rpc('evm_revert', [authoritySnapshot])).toBe(true); }
       evidence.checks.push('Deployment verifier rejects a genuine extra hot-key grant for an unknown text resource');
+      evidence.lifecycle = await validateForkLifecycle({ manifest: verified, client, rpc, forkRpc, build, fork: evidence.fork });
+      evidence.endpoints = await validateForkEndpoints({ config, stages, manifest: verified, client, rpc, forkRpc, build, fork: evidence.fork });
       await validateForkDiscovery(config, finalPlan, build);
       evidence.complete = true;
     } finally {

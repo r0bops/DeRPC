@@ -1,0 +1,118 @@
+{
+  "localOnly": true,
+  "publicTransactionsSent": false,
+  "scope": "Reviewable calldata from a disposable actual-code mainnet fork. Fixture names and development accounts are not public registrations. Do not submit this example on mainnet.",
+  "fork": {
+    "blockNumber": 26356575,
+    "blockHash": "0x701e50b70b18eec42ca1c95b7edc142a487521210692a7b59a216bbc993ee960",
+    "clientVersion": "anvil/v1.5.1"
+  },
+  "plan": {
+    "schemaVersion": 1,
+    "kind": "derpc-ens-lifecycle-plan",
+    "chainId": 1,
+    "localOnly": true,
+    "createdAt": "2026-11-06T15:10:37.750Z",
+    "manifestHash": "0x538a3bffac026647c65ff1b326ae53dd2f8376fdb7e30e3513ffe398ea02a999",
+    "sourceHash": "0x08facfa5fbb51dbf29ad7fbb944e89b22855c04928783e112e9480a3739f529e",
+    "action": {
+      "type": "rotate-endpoint",
+      "label": "alice",
+      "expectedEndpoint": "https://alice.example/rpc",
+      "newEndpoint": "https://rotated-lifecycle.example/rpc"
+    },
+    "before": {
+      "block": {
+        "number": "26356598",
+        "hash": "0x39963fb9c8da1f7d885cd216b2b1d9ac32942794878ece2294884a5eb2f673db",
+        "timestamp": 1793977324
+      },
+      "index": 0,
+      "entry": {
+        "label": "alice",
+        "operator": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "expiry": 1793984519,
+        "active": true,
+        "payee": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+      },
+      "ens": {
+        "status": 2,
+        "expiry": "1793984519",
+        "latestOwner": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "tokenId": "70564938991660933374592024341600875602376452319261984317470407481572850663424",
+        "resource": "70564938991660933374592024341600875602376452319261984317470407481572850663424"
+      },
+      "activeResource": "70564938991660933374592024341600875602376452319261984317470407481572850663424",
+      "dedicatedResolver": "0x13D9580D3aEf85DEc3406418e8c2b4Fd4C54b409",
+      "resolved": "0x13D9580D3aEf85DEc3406418e8c2b4Fd4C54b409",
+      "records": {
+        "derpc.endpoint": "https://alice.example/rpc",
+        "derpc.signer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "derpc.caps": "{\"chainId\":1,\"methods\":[\"eth_getProof\",\"eth_getCode\"]}",
+        "derpc.beacon": "",
+        "derpc.gateways": "",
+        "derpc.price": "",
+        "derpc.payee": "",
+        "derpc.paymentChain": "",
+        "derpc.escrow": "",
+        "derpc.endpoints": ""
+      },
+      "registryCount": "2",
+      "parentState": {
+        "status": 2,
+        "expiry": "1825433555",
+        "latestOwner": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "tokenId": "86421749974462203513281326918437045380435208352249783119946164121359903358976",
+        "resource": "86421749974462203513281326918437045380435208352249783119946164121359903358976"
+      },
+      "parentResolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59",
+      "permissions": [
+        {
+          "resolver": "0x13D9580D3aEf85DEc3406418e8c2b4Fd4C54b409",
+          "implementation": "0x565b0F456a04Ac9b48758190e90030623Cff57C5",
+          "ownerRoot": "5444517870735015415413993718908291383312",
+          "countRoot": "5444517870735015415413993718908291383312",
+          "hotRoot": "0",
+          "endpointRole": "16",
+          "endpointCount": "16"
+        },
+        {
+          "resolver": "0x4A51cC4a0838dB2C0EEEEd3B36b109E7b0C2e1C7",
+          "implementation": "0x565b0F456a04Ac9b48758190e90030623Cff57C5",
+          "ownerRoot": "5444517870735015415413993718908291383312",
+          "countRoot": "5444517870735015415413993718908291383312",
+          "hotRoot": "0",
+          "endpointRole": "16",
+          "endpointCount": "16"
+        }
+      ],
+      "upstream": {
+        "VerifiableFactory": "0xc251b434fe75ce3ca024e85883aafd7c1d0b8e382d747b537c5930018b144a91",
+        "UserRegistryImpl": "0xb5b939d5a80a1d00351e4e0faa3529b8ee25dfcf436d64f781d415ccc8a3b7a9",
+        "PermissionedResolverImpl": "0x25df12e14187ae568dca1861b918e01b6e24a671dea6089a6dbbe60c5d3ef640",
+        "ETHRegistry": "0xe2873b2a7becb1c9f1d017027d5b528ea4e797e609acaa7a4194694e718a0273"
+      }
+    },
+    "reviewExpiresAt": 1793978224,
+    "estimatedGas": "99164",
+    "walletRequest": {
+      "method": "eth_sendTransaction",
+      "params": [
+        {
+          "from": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "to": "0x13D9580D3aEf85DEc3406418e8c2b4Fd4C54b409",
+          "data": "0xc7279f88000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000001105616c6963650564657270630365746800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e64657270632e656e64706f696e74000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002568747470733a2f2f726f74617465642d6c6966656379636c652e6578616d706c652f727063000000000000000000000000000000000000000000000000000000",
+          "value": "0x0",
+          "chainId": "0x1"
+        }
+      ]
+    },
+    "review": [
+      "Exactly one zero-value call; no grants, transfer, resolver replacement or payment activation.",
+      "Recheck this plan immediately before wallet submission. Existing contracts have no compare-and-swap or deadline guard; a raced or late transaction can still execute.",
+      "Delisting clears registrar admission and preserves the ENS token. Expired-but-active listings may renew; removed listings cannot.",
+      "Receipt confirmation is separate from finality. Effective client routing changes require a successful authenticated finalized directory refresh."
+    ]
+  },
+  "reproduction": "See contracts/README.md and contracts/test/ens-lifecycle-fork.mjs. The original fork manifest/state are temporary; use your verified public deployment manifest to prepare a real plan."
+}

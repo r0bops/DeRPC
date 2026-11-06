@@ -1,0 +1,322 @@
+{
+  "checkedAt": "2026-11-06T15:10:37.686Z",
+  "localOnly": true,
+  "publicTransactionsSent": false,
+  "scope": "Disposable mainnet-code fork; fixture operators are not independent public enrollments",
+  "fork": {
+    "blockNumber": 26356575,
+    "blockHash": "0x701e50b70b18eec42ca1c95b7edc142a487521210692a7b59a216bbc993ee960",
+    "clientVersion": "anvil/v1.5.1"
+  },
+  "sourceHash": "0x08facfa5fbb51dbf29ad7fbb944e89b22855c04928783e112e9480a3739f529e",
+  "compiler": {
+    "version": "0.8.30+commit.73712a01.Emscripten.clang",
+    "optimizerRuns": 200,
+    "evmVersion": "shanghai"
+  },
+  "upstream": {
+    "VerifiableFactory": {
+      "address": "0x77510ba162dfea3d8989e3f0928a691b345730d2",
+      "runtimeCodeHash": "0xc251b434fe75ce3ca024e85883aafd7c1d0b8e382d747b537c5930018b144a91",
+      "normalizedRuntimeCodeHash": "0x2a7df71e60cc096d05d6f912bb5f866443c69754ab585a55f66f3f6a3f89b68f"
+    },
+    "UserRegistryImpl": {
+      "address": "0xfaa23592aca10a6d8875b18ea86954e8eb6d8d72",
+      "runtimeCodeHash": "0xb5b939d5a80a1d00351e4e0faa3529b8ee25dfcf436d64f781d415ccc8a3b7a9",
+      "normalizedRuntimeCodeHash": "0xcccecc70b7d7a9c01003f21790b0d9a143aa5c3cb6f18d373a06624903f4edf9"
+    },
+    "PermissionedResolverImpl": {
+      "address": "0x565b0f456a04ac9b48758190e90030623cff57c5",
+      "runtimeCodeHash": "0x25df12e14187ae568dca1861b918e01b6e24a671dea6089a6dbbe60c5d3ef640",
+      "normalizedRuntimeCodeHash": "0x230d1165b00f1b366b59fb2c1a351087610846d183d4b49ef39d6dd87b327f63"
+    },
+    "ETHRegistry": {
+      "address": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+      "runtimeCodeHash": "0xe2873b2a7becb1c9f1d017027d5b528ea4e797e609acaa7a4194694e718a0273",
+      "normalizedRuntimeCodeHash": "0xa2bc002e4d17398ab8fcb9c52553dd2f736f41f5abc21b17078ae2b6714c9ef7"
+    }
+  },
+  "checks": [
+    "Exact reviewed sender/destination/calldata/value, manifest provenance, block preconditions, chain and unknown hot-key grants fail closed; signer/payee and cross-operator writes denied by actual ENS code",
+    "Allowed hot-key endpoint rotation has canonical before/receipt/current state evidence; twelve confirmations stay separate from an injected pending-finality tag; inconsistent receipt-block hashes rejected",
+    "Another managed-contract write in the same receipt block is rejected instead of being hidden by an end-of-block state match",
+    "Expired-but-active lease recovers through the existing registrar, retaining owner/token/dedicated resolver; expiry bounds and unauthorized renewal reject; expired endpoint rotation refuses",
+    "Curator renewal and registrar delisting verified; delisting preserves token/owner/resolver/expiry, clears admission, and prevents renewal or implicit relisting"
+  ],
+  "complete": true,
+  "testResult": {
+    "files": 2,
+    "testsPassed": 11,
+    "command": "DERPC_ENS_FORK_RPC=http://127.0.0.1:8855 pnpm --filter @derpc/contracts exec vitest run test/ens-lifecycle.test.mjs test/ens-fork.test.mjs"
+  },
+  "operations": [
+    {
+      "action": {
+        "type": "rotate-endpoint",
+        "label": "alice",
+        "expectedEndpoint": "https://alice.example/rpc",
+        "newEndpoint": "https://rotated-lifecycle.example/rpc"
+      },
+      "receipt": {
+        "blockNumber": "26356599",
+        "blockHash": "0x6fc43914fa42b1b795ad1c9ea0f8fe9fc07d326be3f773bd34e711b236433289",
+        "transactionIndex": 0,
+        "from": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+        "to": "0x13d9580d3aef85dec3406418e8c2b4fd4c54b409",
+        "gasUsed": "97182",
+        "confirmations": "13"
+      },
+      "verification": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      },
+      "finality": {
+        "status": "pending-finality",
+        "finalizedBlock": {
+          "number": "26356598",
+          "hash": "0x39963fb9c8da1f7d885cd216b2b1d9ac32942794878ece2294884a5eb2f673db"
+        },
+        "clientRefreshVerified": false
+      },
+      "before": {
+        "entry": {
+          "label": "alice",
+          "operator": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "expiry": 1793984519,
+          "active": true,
+          "payee": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+        },
+        "ens": {
+          "status": 2,
+          "expiry": "1793984519",
+          "latestOwner": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "tokenId": "70564938991660933374592024341600875602376452319261984317470407481572850663424",
+          "resource": "70564938991660933374592024341600875602376452319261984317470407481572850663424"
+        },
+        "endpoint": "https://alice.example/rpc"
+      },
+      "after": {
+        "entry": {
+          "label": "alice",
+          "operator": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "expiry": 1793984519,
+          "active": true,
+          "payee": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+        },
+        "ens": {
+          "status": 2,
+          "expiry": "1793984519",
+          "latestOwner": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "tokenId": "70564938991660933374592024341600875602376452319261984317470407481572850663424",
+          "resource": "70564938991660933374592024341600875602376452319261984317470407481572850663424"
+        },
+        "endpoint": "https://rotated-lifecycle.example/rpc"
+      }
+    },
+    {
+      "action": {
+        "type": "renew",
+        "label": "alice",
+        "expectedExpiry": 1793984519,
+        "expiry": 1793988120,
+        "authority": "operator"
+      },
+      "receipt": {
+        "blockNumber": "26356613",
+        "blockHash": "0x71f9402860af72d952abed3238c51989588cf4027eda346085e38e72aba6af1f",
+        "transactionIndex": 0,
+        "from": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "to": "0x7e420f43836ac21a6be6c494018a7a62697c54a3",
+        "gasUsed": "58510",
+        "confirmations": "13"
+      },
+      "verification": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      },
+      "finality": {
+        "status": "pending-finality",
+        "finalizedBlock": {
+          "number": "26356561",
+          "hash": "0x29510ea73b0ffa6d5d554c9f3fb3476ee8ff8192dad132a3ca6af7165c913878"
+        },
+        "clientRefreshVerified": false
+      },
+      "before": {
+        "entry": {
+          "label": "alice",
+          "operator": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "expiry": 1793984519,
+          "active": true,
+          "payee": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+        },
+        "ens": {
+          "status": 0,
+          "expiry": "1793984519",
+          "latestOwner": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "tokenId": "70564938991660933374592024341600875602376452319261984317470407481572850663424",
+          "resource": "70564938991660933374592024341600875602376452319261984317470407481572850663425"
+        },
+        "endpoint": "https://rotated-lifecycle.example/rpc"
+      },
+      "after": {
+        "entry": {
+          "label": "alice",
+          "operator": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "expiry": 1793988120,
+          "active": true,
+          "payee": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+        },
+        "ens": {
+          "status": 2,
+          "expiry": "1793988120",
+          "latestOwner": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "tokenId": "70564938991660933374592024341600875602376452319261984317470407481572850663424",
+          "resource": "70564938991660933374592024341600875602376452319261984317470407481572850663424"
+        },
+        "endpoint": "https://rotated-lifecycle.example/rpc"
+      }
+    },
+    {
+      "action": {
+        "type": "renew",
+        "label": "alice",
+        "expectedExpiry": 1793984519,
+        "expiry": 1793988119,
+        "authority": "curator"
+      },
+      "receipt": {
+        "blockNumber": "26356612",
+        "blockHash": "0xc94bd776c9e882dbb23c1883d6556aa870178943718955cc294218047cc9b1f7",
+        "transactionIndex": 0,
+        "from": "0x9e15a220cc2cfcfa3381c5488434291eb65eaa78",
+        "to": "0x7e420f43836ac21a6be6c494018a7a62697c54a3",
+        "gasUsed": "66831",
+        "confirmations": "13"
+      },
+      "verification": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      },
+      "finality": {
+        "status": "pending-finality",
+        "finalizedBlock": {
+          "number": "26356560",
+          "hash": "0xdae6b94234cd188f564137e0ba21f437015e88f61a4a080601b63b06d9a31f9e"
+        },
+        "clientRefreshVerified": false
+      },
+      "before": {
+        "entry": {
+          "label": "alice",
+          "operator": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "expiry": 1793984519,
+          "active": true,
+          "payee": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+        },
+        "ens": {
+          "status": 2,
+          "expiry": "1793984519",
+          "latestOwner": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "tokenId": "70564938991660933374592024341600875602376452319261984317470407481572850663424",
+          "resource": "70564938991660933374592024341600875602376452319261984317470407481572850663424"
+        },
+        "endpoint": "https://rotated-lifecycle.example/rpc"
+      },
+      "after": {
+        "entry": {
+          "label": "alice",
+          "operator": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "expiry": 1793988119,
+          "active": true,
+          "payee": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+        },
+        "ens": {
+          "status": 2,
+          "expiry": "1793988119",
+          "latestOwner": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "tokenId": "70564938991660933374592024341600875602376452319261984317470407481572850663424",
+          "resource": "70564938991660933374592024341600875602376452319261984317470407481572850663424"
+        },
+        "endpoint": "https://rotated-lifecycle.example/rpc"
+      }
+    },
+    {
+      "action": {
+        "type": "delist",
+        "label": "alice"
+      },
+      "receipt": {
+        "blockNumber": "26356625",
+        "blockHash": "0xa4aa5fbf7e9c729823dbc41c97ea13fc890655db2d6c0c510139c98159b1aa7f",
+        "transactionIndex": 0,
+        "from": "0x9e15a220cc2cfcfa3381c5488434291eb65eaa78",
+        "to": "0x7e420f43836ac21a6be6c494018a7a62697c54a3",
+        "gasUsed": "29890",
+        "confirmations": "13"
+      },
+      "verification": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      },
+      "finality": {
+        "status": "pending-finality",
+        "finalizedBlock": {
+          "number": "26356573",
+          "hash": "0x8ea694a61f707dab8474beb64b9022c1b5eef64d2127f432efe088042282165c"
+        },
+        "clientRefreshVerified": false
+      },
+      "before": {
+        "entry": {
+          "label": "alice",
+          "operator": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "expiry": 1793988119,
+          "active": true,
+          "payee": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+        },
+        "ens": {
+          "status": 2,
+          "expiry": "1793988119",
+          "latestOwner": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "tokenId": "70564938991660933374592024341600875602376452319261984317470407481572850663424",
+          "resource": "70564938991660933374592024341600875602376452319261984317470407481572850663424"
+        },
+        "endpoint": "https://rotated-lifecycle.example/rpc"
+      },
+      "after": {
+        "entry": {
+          "label": "alice",
+          "operator": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "expiry": 1793988119,
+          "active": false,
+          "payee": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+        },
+        "ens": {
+          "status": 2,
+          "expiry": "1793988119",
+          "latestOwner": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          "tokenId": "70564938991660933374592024341600875602376452319261984317470407481572850663424",
+          "resource": "70564938991660933374592024341600875602376452319261984317470407481572850663424"
+        },
+        "endpoint": "https://rotated-lifecycle.example/rpc"
+      }
+    }
+  ]
+}

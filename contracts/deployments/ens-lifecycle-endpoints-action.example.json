@@ -1,0 +1,12 @@
+{
+  "type": "rotate-endpoints",
+  "label": null,
+  "expectedEndpoints": [
+    { "id": "east", "url": null, "beaconUrl": null },
+    { "id": "west", "url": null, "beaconUrl": null }
+  ],
+  "newEndpoints": [
+    { "id": "east", "url": null, "beaconUrl": null },
+    { "id": "west", "url": null, "beaconUrl": null }
+  ]
+}
