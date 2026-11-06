@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@derpc/provider": "workspace:*",
-    "viem": "2.57.8"
+    "viem": "2.57.8",
+    "@derpc/payments": "workspace:*"
   },
   "devDependencies": {
     "happy-dom": "^21.0.4",

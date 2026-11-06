@@ -37,6 +37,9 @@ importers:
 
   frontend:
     dependencies:
+      '@derpc/payments':
+        specifier: workspace:*
+        version: link:../payments
       '@derpc/provider':
         specifier: workspace:*
         version: link:../provider
