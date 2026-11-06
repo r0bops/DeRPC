@@ -17,3 +17,6 @@ node_modules/
 dist/
 dist-local/
 out/
+
+# Local dev service logs
+.dev-logs/

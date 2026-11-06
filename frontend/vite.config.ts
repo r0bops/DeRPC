@@ -1,8 +1,34 @@
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin } from "vite";
 import { TOR_JS_DEMO_GATEWAY } from "../provider/src/config/mainnet.ts";
 import { findNonPublicAddresses, releaseGateways } from "./build/gateways.ts";
+
+// Dev server only: the demo page POSTs its call events here, and they're appended as JSON lines to
+// .dev-logs/calls.log for scripts/show-logs.sh. Not part of production builds.
+function devCallLog(): Plugin {
+  const dir = fileURLToPath(new URL("../.dev-logs", import.meta.url));
+  return {
+    name: "derpc-dev-call-log",
+    apply: "serve",
+    configureServer(server) {
+      mkdirSync(dir, { recursive: true });
+      server.middlewares.use("/__derpc-log", (req, res) => {
+        if (req.method !== "POST") return void res.writeHead(405).end();
+        let body = "";
+        req.on("data", (chunk) => {
+          body += chunk;
+          if (body.length > 64_000) req.destroy();
+        });
+        req.on("end", () => {
+          for (const line of body.split("\n").filter(Boolean)) appendFileSync(resolve(dir, "calls.log"), line + "\n");
+          res.writeHead(204).end();
+        });
+      });
+    },
+  };
+}
 
 export default defineConfig(({ command, mode }) => {
   const release = command === "build" && mode !== "lan";
@@ -11,7 +37,7 @@ export default defineConfig(({ command, mode }) => {
     // Relative asset paths so the build also loads from IPFS gateways and derpc.eth.limo.
     base: "./",
     ...(release ? { envDir: false as const, define: { "import.meta.env.VITE_TOR_GATEWAYS": JSON.stringify(gateways!.join(",")) } } : {}),
-    plugins: release ? [refuseNonPublicAddresses()] : [],
+    plugins: release ? [refuseNonPublicAddresses()] : [devCallLog()],
     server: { port: 5173, strictPort: true },
     build: {
       target: "es2022",
