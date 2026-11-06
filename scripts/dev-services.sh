@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Start the local side services for DeRPC development:
 #   1. our own tor-js-gateway (UDP 12298), unless one is already running
-#   2. the Vite dev server (pnpm dev), in the foreground
+#   2. one Vite dev server on port 5174 (pnpm dev:site), in the foreground:
+#      the directory at /, the live demo at /demo/
 # Ctrl-C stops the dev server and the gateway this script started.
 # Usage: scripts/dev-services.sh [--force]   (--force rebuilds Vite's dependency cache)
 set -euo pipefail
@@ -68,8 +69,9 @@ fi
 
 cd "$ROOT"
 [ -d node_modules ] || pnpm install
+echo "site: http://localhost:5174/   demo: http://localhost:5174/demo/"
 if [ "${1:-}" = "--force" ]; then
-  pnpm --filter frontend exec vite --force
+  pnpm --filter web exec vite --force
 else
-  pnpm dev
+  pnpm dev:site
 fi

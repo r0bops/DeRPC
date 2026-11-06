@@ -41,7 +41,7 @@ function runHelper(options: { logged: string; existing?: string; shell?: string;
   });
   expect(result.error).toBeUndefined();
   expect(result.status, result.stderr).toBe(0);
-  expect(readFileSync(calls, "utf8")).toBe("dev\n");
+  expect(readFileSync(calls, "utf8")).toBe("dev:site\n");
   return { env: existsSync(envFile) ? readFileSync(envFile, "utf8") : undefined, stdout: result.stdout, stderr: result.stderr };
 }
 

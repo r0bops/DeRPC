@@ -1,9 +1,42 @@
 import { cpSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { defineConfig, type Plugin } from "vite";
+import { createServer, defineConfig, type Plugin, type ViteDevServer } from "vite";
 
 const root = dirname(fileURLToPath(import.meta.url));
+const demoRoot = resolve(root, "../frontend");
+// Survives this config being reloaded, so a restart can close the demo server it started before.
+const demoKey = Symbol.for("derpc.dev.demo-server");
+const demoSlot = globalThis as { [demoKey]?: ViteDevServer };
+
+// Dev server only: serve the live demo (frontend/) under /demo/ on this server's port, the same layout
+// `pnpm build:site` produces. The demo keeps its own Vite config, environment files and dev call log.
+function demoUnderSite(): Plugin {
+  return {
+    name: "derpc-demo-under-site",
+    apply: "serve",
+    async configureServer(server) {
+      await demoSlot[demoKey]?.close();
+      const demo = await createServer({
+        root: demoRoot,
+        configFile: resolve(demoRoot, "vite.config.ts"),
+        base: "/demo/",
+        // A separate cache, so this doesn't fight a standalone demo server (pnpm dev) over one directory.
+        cacheDir: resolve(demoRoot, "node_modules/.vite-site"),
+        optimizeDeps: { force: server.config.optimizeDeps.force },
+        server: { middlewareMode: true, ws: { server: server.httpServer ?? undefined } },
+      });
+      demoSlot[demoKey] = demo;
+      server.httpServer?.once("close", () => void demo.close());
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url ?? "").split("?")[0] ?? "";
+        if (path === "/demo") return void res.writeHead(302, { Location: "/demo/" }).end();
+        if (path.startsWith("/demo/") || path === "/__derpc-log") return void demo.middlewares(req, res, next);
+        next();
+      });
+    },
+  };
+}
 
 const brandFiles: [string, string][] = [
   ["derpc-lockup.svg", resolve(root, "../brand/derpc-lockup.svg")],
@@ -43,7 +76,7 @@ export default defineConfig({
   // Favicon lives in web/public. Lockup and 512 logo are served from /brand at dev and copied into dist on build,
   // so git does not store the same blob twice (the pre-push hook rejects duplicate hashes).
   publicDir: "public",
-  plugins: [brandPublicAssets()],
+  plugins: [brandPublicAssets(), demoUnderSite()],
   server: { port: 5174, strictPort: true },
   build: { target: "es2022" },
 });

@@ -4,10 +4,11 @@
   "type": "module",
   "packageManager": "pnpm@11.22.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "pnpm --filter frontend dev",
+    "dev:site": "pnpm --filter web dev",
     "dev:web": "pnpm --filter web dev",
     "build": "pnpm --filter frontend build",
     "build:web": "pnpm --filter web build",

@@ -44,14 +44,9 @@ export function logo(): string {
   return `<img src="${asset("derpc-lockup.svg")}" alt="DeRPC" width="152" height="36" />`;
 }
 
+// The demo sits under /demo/ in the release bundle and on the dev server (see vite.config.ts).
 export function demoHref(): string {
-  if (!import.meta.env.DEV) return "./demo/";
-  const url = new URL(window.location.href);
-  url.port = "5173";
-  url.pathname = "/";
-  url.search = "";
-  url.hash = "";
-  return url.href;
+  return "./demo/";
 }
 
 export function nav(active: "directory" | "operate" | null): string {
@@ -67,6 +62,7 @@ export function nav(active: "directory" | "operate" | null): string {
         <nav class="nav__links" aria-label="Primary">
           ${link("#/directory", "Directory", "directory")}
           ${link("#/operate", "Run an operator", "operate")}
+          <a class="nav__link" href="${escapeHtml(demoHref())}">Dashboard</a>
           <a class="nav__link" href="https://github.com/r0bops/DeRPC" target="_blank" rel="noreferrer">GitHub</a>
         </nav>
         <span class="nav__spacer"></span>
