@@ -1,149 +1,276 @@
 # DeRPC
 
-**A decentralized RPC pool for Ethereum, in development.** The browser demo routes reads through [Anon-RPC](https://github.com/ethereum/anon-rpc), checks account, storage and code proofs against a light client, and switches endpoints after a failed read. There is no direct RPC fallback.
+**A decentralized RPC pool for private, verified Ethereum reads.**
 
-Built at ETHGlobal Mumbai, Nov 5–7, 2026. This is a work in progress; the status below is as of Nov 5.
+DeRPC runs in the browser. It sends requests through [Anon-RPC](https://github.com/ethereum/anon-rpc), checks responses against a light client, and retries failed reads within the user's manual selection or explicit automatic policy. Selection and verification happen on the user's device, with no central DeRPC proxy and no direct RPC fallback.
 
-> You don't need to trust operators for correctness; you only need to limit what they can learn about you.
+The first version is a read provider for apps and wallet integrations, with an EIP-1193 interface and a viem transport. **Ethereum mainnet reads only; experimental and not ready for production.** Built at ETHGlobal Mumbai, November 5–7, 2026.
 
-## The idea
+[ENS/IPFS deployment](web/README.md#ensipfs-deployment) · [Run it](#run-it) · [Integrate](#use-it-in-a-browser-app) · [Supported reads](#supported-reads) · [Status](#status-and-next-steps) · [Validation](#validation) · [Privacy](#privacy-and-trust)
 
-### The problem
+## What's implemented
 
-- A few large RPC providers see who is asking (the IP address) and what they ask.
-- Wallets trust whatever the RPC returns, so a lying node goes unnoticed.
-- Anon-RPC fixes the first point (who is asking), but not the second (whether the answer is true).
+The current release target is the **free pool**. Reading needs no wallet connection or deposit; payment controls remain off by default.
 
-### What DeRPC does
+| Component | Available now |
+|---|---|
+| Verified browser provider | Anonymous execution and beacon requests, finalized headers, account/storage proofs, code-hash checks and an on-chain worker-pin check. EIP-1193 and viem interfaces. |
+| Operator selection | Manual selection or explicit Balanced, Fastest and Reliable modes; operator-first grouping, exact allowlists, account affinity, bounded sibling failover and local proof-failure exclusion. |
+| Dashboard and directory | Grouped operator choices and node observations, verified reads, simulated corruption, lifecycle evidence tracking and unsigned onboarding fragments. Export does not register a node. |
+| Local EVM | Explicitly enabled, bounded calls against authenticated mainnet state, including general fully on-chain ENS resolution. Raw remote call results are not trusted. |
+| ENS discovery and tooling | Curated registrar, proven membership/records, scoped resolver permissions, unsigned deployment plans and receipt verification. Real independent operator registrations remain pending. |
+| Operator wrapper | Filtered execution/beacon proxy, Tor onion service, reciprocal identity checks, a separately authenticated personal service, Docker packaging and restoration checks. |
+| Test payments and sponsorship | Prepaid escrow, vouchers signed after verification, durable settlement, delegated spending limits and a coordinator that independently verifies completion. Public paid-session rollout remains pending. |
 
-DeRPC is a client-side provider that runs on the user's device. It wraps an Anon-RPC worker rather than replacing it:
+The query escrow is deployed on **Hoodi (chain 560048)** at `0x9053513aCA73bAc0aF6a9942fd93832fd313B0bb`, with a [checked deployment manifest](contracts/deployments/payment-hoodi-deployment-2026-11-06.json) and [second-source verification](contracts/deployments/payment-hoodi-crosscheck-2026-11-06.json). This is separate from Ethereum mainnet read verification; it does not establish a completed public paid-read/settlement cycle.
 
-1. **Anonymous transport.** Every RPC and beacon request goes through a sandboxed tor-js worker, so the endpoint sees a Tor exit instead of the user's IP. A Nym pin is configured, but its runtime has not been validated here.
-2. **Verification in the host.** The worker is untrusted code, so verification lives outside it. A sync-committee light client, started from a pinned checkpoint, gives a verified state root. Each `eth_getProof` (EIP-1186) answer is checked against that root.
-3. **Local endpoint selection.** Pick a public keyless endpoint, exclude it locally if its proof fails, and retry another through the worker. Selection is random within preferred and fallback tiers; transient failures put an endpoint on cooldown. The attempt count is bounded, but the total-time limit needs the fix listed below.
-4. **Fail closed.** If the anonymity network is down or an answer can't be proven, the read returns an error. DeRPC never makes a direct RPC request.
-
-Wallet integrators are the first audience, demonstrated through a browser app.
-
-### What it does not do
-
-- **It hides who is asking, not what is asked.** Endpoints still see query content and timing.
-- **Its verified reader supports balance, nonce, code and storage.** The block number comes from the verified header. There is no public JSON-RPC provider interface yet; generic `eth_call`, logs and transactions are outside this reader. Checking arbitrary execution would need local execution against proven state, which is later work.
-- **Isolation between accounts depends on the worker.** tor-js 0.4.4 documents a separate circuit per isolation key. We have observed it once but not proven it, so DeRPC makes no unlinkability claim yet.
-- **The endpoint list is curated** for now. Several URLs don't prove several independent operators.
-- **The roots of trust are the pinned checkpoint and the pinned worker hash.** The app refuses a checkpoint older than 7 days.
-
-## What works today
-
-- **Anonymous transport in the browser.** The real tor-js 0.4.4 worker runs in `@anon-rpc/browser-harness`.
-  - Booting it makes zero RPC requests. The harness needs two reads from the worker's on-chain specifier contract (`workerHash()` and `workerResolvers()`); DeRPC answers both from a local pin and refuses any other call. The harness hash-checks the downloaded bundle before running it.
-  - Once the worker fails, every call errors. Nothing falls back to a direct request.
-  - Boot took 3.0 s through our own `tor-js-gateway` and 6.6 s on the tor-js demo gateway. One demo-gateway run took 49 s, because its fast bootstrap timed out and tor-js downloaded the Tor directory itself.
-- **Real mainnet proofs through Tor.** `eth_getProof` at the finalized block works through the worker on dRPC, MEV Blocker, BlockRazor and Blast: 13.7 KB per proof, 0.9–4.8 s each. publicnode is unreliable for proofs through Tor.
-- **Verified headers.** The Lodestar light client (1.43.0) starts from a pinned mainnet checkpoint, with every beacon request going through the worker.
-  - It reports a finalized execution header (block number, block hash, state root) only after a sync-committee-signed update verifies.
-  - It refuses a checkpoint older than 7 days and a finalized header older than 30 minutes.
-  - It polls for head updates instead of opening the beacon node's event stream, because `EventSource` would connect outside the worker.
-- **A light-client security fix.** Lodestar 1.43.0 lets a beacon endpoint plant a fake finalized header, and with it a fake state root. Lodestar fixed this in its core repo (PR #9419) after the light client had moved out. DeRPC ships the fix as a local patch, with a regression test that replays the attack.
-- **Verified account, storage and code reads.** The host checks EIP-1186 proofs against the verified state root, derives balances and nonces, and checks code against the proven code hash. Tests cover altered claims, wrong addresses/slots/roots, absence proofs, and truncated or padded proofs. WETH balances use its known `balanceOf` mapping at slot 3; this is not generic token support.
-- **On-chain worker-pin verification.** After startup, the demo proves the mainnet specifier's `workerHash` in slot 1 and compares it with the local pin. Its read gate waits for that proof and refuses reads if the check fails. Lower-level library helpers still require the integrator to compose this gate explicitly.
-- **Endpoint failover.** The pool selects among dRPC, MEV Blocker and BlockRazor first, with Blast and PublicNode as fallbacks. Invalid proofs cause local exclusion; timeouts and other transient errors cause cooldowns. Verified values are cached locally. Retry isolation keys are derived from the account key; stronger circuit-isolation guarantees remain unproven.
-- **A demo page** showing worker startup, the verified header, worker-pin status, ETH/WETH balances, verified code and pool events. Controls inject a clearly labeled corrupt response and close the worker. Its resource-timing table shows some direct connections; it does not capture every browser connection or the WebRTC gateway link.
-
-**Still pending:** the EIP-1193/viem provider, complete failure-path coverage, submission materials, and the QA fixes below. The shutdown demo closes the worker; it is not a separate test of every network outage or worker crash.
-
-### QA checklist — Nov 5
-
-- [x] Workspace type checking and the production build pass.
-- [x] All 68 provider tests pass, including the Lodestar finality regression, worker-pin gate, pool selection, exclusion, cooldown and failover tests.
-- [x] A fresh Firefox profile runs the production build through tor-js: the pin gate passes, and ETH balance, WETH balance and contract-code reads verify.
-- [x] All five candidate execution endpoints and both beacon endpoints respond through Tor in this run. One of four Tor-exit probes fails with a TLS `CONNRESET`; the other three report `IsTor=true`.
-- [x] In the production Firefox demo, an inflated balance is rejected, the simulated endpoint is excluded, and another endpoint supplies verified results.
-- [x] Closing the worker makes all three subsequent reads fail with `TransportUnavailableError`.
-- [x] Browser request events show only local page assets and jsDelivr, with no direct RPC or beacon HTTP requests during successful reads, simulated corruption/failover or worker shutdown. This does not audit the WebRTC gateway connection or establish every failure path.
-- [ ] Render worker and network errors as text. A controlled worker error containing HTML executed an event handler in the demo page.
-- [ ] Fix polling recovery after an invalid update. The transport records an unverified slot before validation; one rejected high-slot response suppresses later valid updates.
-- [ ] Recheck the requested block's freshness before returning a read. A proof response can currently succeed after its header expires while the request is pending.
-- [ ] Enforce the pool's total deadline during an attempt. A pending request can outlive the budget indefinitely, and a late successful response is still accepted. The current check only prevents starting further attempts.
-- [ ] Keep one verified block across retries and its cache entry. A head change between attempts currently changes the requested block while retaining the original cache key.
-- [ ] Complete cancellation, crash, pool-exhaustion and actual network-loss coverage through the finished provider, including browser traffic inspection.
-
-The five reproduced QA issues mean this prototype is not ready for production. The production build also reports browser-externalized Node modules and a large main bundle; its successful Firefox run does not establish support for every browser.
-
-### Traffic outside the worker
-
-| Traffic | Through the worker? | Notes |
-|---|---|---|
-| RPC reads (`eth_getProof`) | Yes | |
-| Light-client beacon requests (bootstrap, updates) | Yes | Polled, no event stream |
-| Worker bootstrap reads (`workerHash()`, `workerResolvers()`) | No request is made | Answered from the local pin. After startup, slot 1 is proven through the worker before the demo serves verified reads. |
-| Worker bundle download | No, direct | From jsDelivr. Hash-checked, but it shows the server that this IP is loading tor-js. |
-| Tor gateway connection | No, direct (WebRTC) | The gateway sees the client's IP but only relays encrypted Tor traffic |
-| Page assets | No, direct | Served by whoever hosts the page |
-
-## CROPS
-
-The lead property is **Private**, and **Secure** backs it up: the proofs let DeRPC use endpoints it doesn't trust.
-
-- **C (censorship resistant):** The app is a static build with no required DeRPC RPC proxy. Endpoints and Tor gateways are replaceable lists (set your own gateway with `VITE_TOR_GATEWAYS`), and endpoint failover works in the demo. Availability still depends on reachable endpoints and a Tor gateway; failed routes never trigger direct RPC fallback.
-- **O (open source):** MIT. `pnpm install && pnpm dev` builds and runs it from this repo alone, with no keys or accounts. The one recurring step is refreshing the pinned checkpoint, which is refused after 7 days.
-- **P (private):** RPC and beacon endpoints see each query and its timing, but from a Tor exit's IP instead of the user's. The Tor gateway sees the user's IP but only encrypted traffic, and the exit sees which endpoint is contacted but not the content, because TLS runs inside the worker. jsDelivr sees the IP that downloads the worker, and the page host sees visitors as any website does. There are no analytics or DeRPC servers, and account isolation is not yet proven.
-- **S (secure):** DeRPC is read-only, with no wallet keys or signing. The host verifies headers, account/storage/code proofs and the worker pin, relying on the pinned checkpoint, bundle hash and light-client consensus assumptions. The five open QA issues above must be fixed before production use.
+The free runtime groups **up to eight endpoints under one ENS operator identity**, with operator-first selection and node-local health/failover. The versioned record, wrapper identity and local integration work are documented in [M1](specs/ENS_TOR_MILESTONE.md). Public multi-endpoint enrollment, a reliable hosted demo, operator/node staking, traffic-based stake requirements and slashing remain [release gates or later work](#status-and-next-steps).
 
 ## Run it
 
-Tested with Node 24.16.0 and pnpm 11.22.0. The workspace pins the pnpm version in `package.json`.
+Use Node 24 and pnpm 11.22.0, the version pinned in `package.json`. The free verified-read demo needs no wallet, API key or funds. Optional payment demonstrations require a wallet and test funds.
+
+The public deployment target is `derpc.eth.limo`, with the directory and dashboard on IPFS. The [release package is prepared](web/deployment-ens-ipfs-2026-11-06.json); persistent public pinning, the owner-signed ENS contenthash update and a working public Tor gateway remain pending. The temporary Vercel deployments were removed at the team's request. Follow the [ENS/IPFS instructions](web/README.md#ensipfs-deployment) for publication and the [release gates](#status-and-next-steps) before relying on public reads.
 
 ```sh
 pnpm install
-pnpm dev                              # check page at http://localhost:5173
-pnpm --filter @derpc/provider test    # provider tests (recorded beacon/proof data, no network)
-pnpm typecheck
-pnpm build
+pnpm dev
 ```
 
-- **Tor gateway.** By default the page uses the tor-js demo gateway, which has limited capacity and may disappear. To use your own [`tor-js-gateway`](https://github.com/ethereum/tor-js), copy `frontend/.env.example` to `frontend/.env.local` and set `VITE_TOR_GATEWAYS`.
-- **Checkpoint.** The pinned checkpoint dates from Nov 5, 2026, and is refused after 7 days. Refresh `MAINNET_CHECKPOINT` in `provider/src/config/mainnet.ts` before running it after Nov 12.
+Open [localhost:5173](http://localhost:5173). The workspace contains three pages:
 
-## Roadmap
+| Page | What it shows |
+|---|---|
+| [`/`](http://localhost:5173/) | The operator dashboard: choose routing and operators, inspect local observations, read verified ETH/WETH balances and code, reject a simulated bad response, and close the worker. |
+| [`/example.html`](http://localhost:5173/example.html) | A small integration using only the public provider API and viem, including an unsupported-method error. |
+| [`/network-check.html`](http://localhost:5173/network-check.html) | Transport diagnostics: Tor exit checks, candidate RPC/beacon probes and worker logs. Uses public test addresses; probes are not verified application reads. |
 
-Progress is tracked in [issue #1](https://github.com/r0bops/DeRPC/issues/1).
+In the main demo, select operators manually or apply Balanced, Fastest or Reliable routing over all eligible free entries or a restricted list. An empty restriction stops reads. A fresh browser profile starts with none selected; later visits restore authorized bootstrap preferences, while saved ENS preferences wait for proven discovery. Wait for the worker, light client and worker-pin check, then run the reads. In Manual mode the corruption control alters a response locally to demonstrate rejection and failover; it is not evidence that a real operator lied. Closing the worker demonstrates failure without direct fallback; reload to start again.
 
-### This weekend
+Optional ENS discovery takes the deployed ENSv2 registry and registrar pin, with separate list/record verification labels. Test payments start off: select a real paid operator from that directory, load the receipt-verified escrow manifest produced by [the deployment commands](contracts/README.md#test-payment-deployment), then connect a wallet funded on the matching test chain. The UI checks the network and escrow runtime before requesting a deposit. The wrapper must also be configured for that escrow and funded for settlement. A verified deployment file alone does not demonstrate a successful paid read or payout; those receipts remain release gates. Personal onion addresses, tokens and session signing keys stay in memory.
 
-| Phase | Goal | Status |
-|---|---|---|
-| P0 | Choose the light client, worker and chain | **Done.** Lodestar light client 1.43.0, tor-js 0.4.4, Ethereum mainnet; Nym remains an untested backup |
-| P1 | A real anonymous network path | **Passed.** Proofs and light-client data arrive through Tor, with no direct RPC. Isolation-key behavior is still unproven. |
-| P2 | One verified read path: ETH balance and one ERC-20 balance checked against verified state, and the worker pin proven on-chain | **Implemented in the demo; QA sign-off pending.** Proofs and the pin gate work. Error rendering, polling recovery and read freshness need fixes. |
-| P3 | A working pool: at least two endpoints, random selection, local exclusion, bounded anonymous failover | **Three-step browser demo passes; QA sign-off pending.** Total-deadline enforcement, stable block binding and remaining failure tests are open. |
-| P4 | An EIP-1193 provider and viem transport, plus a demo screen | **Partial.** Pool demo exists; the integrator interface is not built. |
-| P5 | Threat model, failure tests, docs and demo video | **Partial.** README and QA checklist exist; threat model, full failure coverage and submission materials remain. |
+### Gateway and checkpoint
 
-The browser demo shows three things:
+The default configuration uses the tor-js demonstration gateway; its availability is not guaranteed, and the public-gateway QA check remains unresolved. To use your own [tor-js gateway](https://github.com/ethereum/tor-js), copy [`frontend/.env.example`](frontend/.env.example) to `frontend/.env.local` and set `VITE_TOR_GATEWAYS` to comma-separated KPS addresses (`ip:port:certhash`, without a `kps:` prefix). Integrators can pass the same list as `createDeRPC({ gateways })`. The [operations guide](specs/OPERATIONS.md) covers gateway and release checks.
 
-1. The page reads a verified balance through the pooled reader and shows the selected endpoint and verified block.
-2. A clearly labeled corrupt response fails the proof check. The endpoint is excluded locally, and another endpoint supplies a verified answer.
-3. With the anonymity worker closed, DeRPC fails closed and makes no direct RPC request.
+The light client starts from a trusted checkpoint in [`provider/src/config/mainnet.ts`](provider/src/config/mainnet.ts). The shipped checkpoint is dated **November 5, 2026**; startup rejects checkpoints older than seven days and cross-checks the configured epoch against the verified bootstrap. Refresh the root and epoch together from a trusted, recent finalized checkpoint before running an older checkout. A `checkpoint` option can override the shipped pair.
 
-**Stretch, only if the core demo is done early:** an operator registry under `derpc.eth` on ENSv2. DeRPC would read it through Anon-RPC and prove it with the same light client.
+Run `pnpm dev:site` to serve the directory and the demo from one port instead: the directory at [localhost:5174](http://localhost:5174) and the demo pages under [`/demo/`](http://localhost:5174/demo/), the same layout as the static site. The operator onboarding page exports a local configuration draft; it does not deploy contracts, register ENS names or start services. Other networks are listed for reference; verified reads remain Ethereum mainnet only.
 
-### After the hackathon
+To build and preview the directory and demo as one static site, supply a public gateway in the shell:
 
-1. **Wallet and app adoption.** A stable provider interface, measured performance, and a first external integration, with Kohaku as the target.
-2. **Server-side agents.** An isolated runtime that carries real anonymous traffic, with the same verification and failure guarantees.
-3. **More EVM chains.** Each needs its own authenticated headers, proof format, finality rules and working endpoints. Transport compatibility alone isn't enough.
-4. **Distributed operator discovery.** A replaceable registry with explicit governance. Open registration needs Sybil resistance.
-5. **Client-side scoring.** Local success and latency measurements, random exploration, and limits on how much traffic any one operator gets.
-6. **Signed accountability.** Responses bound to operator, request, chain and block, so misbehavior can be shown to others before any penalty.
-7. **Optional operator economics.** Credits or payments only after demand and privacy are worked out. No token is required.
-8. **Richer verified reads and query privacy.** `eth_call` through local execution against proven state, and research into private information retrieval.
+```sh
+VITE_TOR_GATEWAYS='PUBLIC_IP:PORT:CERTHASH' pnpm build:site
+VITE_TOR_GATEWAYS='PUBLIC_IP:PORT:CERTHASH' node scripts/check-release.mjs
+pnpm --filter web preview
+```
 
-**Known risk:** the Lodestar light client is no longer maintained and doesn't support the next fork (Gloas). Mainnet has no Gloas date yet; once it does, the light client must be replaced. It sits behind a small interface so it can be swapped.
+Replace the gateway placeholder before building. Deploy **`web/dist/`**: the directory lives at `/`, and the demo, integrator example and diagnostics live under `/demo/`. Both builds use relative assets for IPFS gateway paths. `pnpm build:web` builds only the directory; `pnpm build` builds only the demo in `frontend/dist/`.
 
-## Built with
+Use the same gateway setting for the build and release check. The offline checker validates checkpoint freshness and build markers, public gateway inputs, assembled pages/assets, initial payment controls and known local-file/address patterns. It returns a nonzero exit status on errors; `--json` emits a report. Public gateway reachability, fresh-browser behavior and the committee-transition test remain separate live gates.
 
-[`@anon-rpc/browser-harness`](https://github.com/ethereum/anon-rpc), the [tor-js](https://github.com/ethereum/tor-js) worker, the [Lodestar](https://github.com/ChainSafe/lodestar) light client, TypeScript, Vite, pnpm and Vitest.
+Release demo builds ignore `.env` files, require an explicit public gateway, append the demo gateway as a fallback, and scan emitted assets for non-public addresses. For a LAN gateway, use `pnpm --filter frontend build:local`; it reads `frontend/.env.local` and writes `frontend/dist-local/`, which is not for deployment.
+
+## Use it in a browser app
+
+`@derpc/provider` is currently a **private workspace package**, not a published npm release. The runnable example is [`frontend/src/example.ts`](frontend/src/example.ts). Browser bundlers also need the BLS WASM alias in [`frontend/vite.config.ts`](frontend/vite.config.ts): `@chainsafe/bls` → `@chainsafe/bls/herumi`.
+
+```ts
+import { createDeRPC, MAINNET_OPERATORS } from "@derpc/provider";
+import { derpcTransport } from "@derpc/provider/viem";
+import { createPublicClient } from "viem";
+import { mainnet } from "viem/chains";
+
+// Example values: in an app, take these from the user's selection.
+const userChoice = ["mevblocker.derpc.eth", "blockrazor.derpc.eth"];
+const derpc = createDeRPC({
+  operators: MAINNET_OPERATORS.filter((op) => userChoice.includes(op.ens)),
+});
+const client = createPublicClient({
+  chain: mainnet,
+  transport: derpcTransport(derpc),
+});
+
+try {
+  await derpc.ready;
+  const balance = await client.getBalance({
+    address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    blockTag: "finalized",
+  });
+  console.log(balance); // ETH held by the WETH contract, in wei
+} finally {
+  derpc.close(); // In an app, close when the provider is no longer needed.
+}
+```
+
+**Pass `blockTag: "finalized"`.** viem defaults to `"latest"`, which DeRPC refuses. The built-in `.derpc.eth` names are mock identifiers in a curated bootstrap list, not registered operator identities. Automatic adoption from ENS requires both proven registrar membership and proven records. See the [ENS and payment release gates](specs/OPERATIONS.md).
+
+To opt into automatic routing instead of supplying a manual selection:
+
+```ts
+const derpc = createDeRPC({
+  operators: [...MAINNET_OPERATORS],
+  selection: "balanced", // also "fastest" or "reliable"
+  allowedOperators: ["mevblocker.derpc.eth", "blockrazor.derpc.eth"],
+});
+```
+
+Omitting `allowedOperators` permits all eligible free candidates in the supplied source; `[]` permits none. Automatic modes use recent local verified outcomes and retain an account's operator while it remains eligible. They do not certify honesty or global uptime, and they do not select personal credentials, paid sessions or simulated corrupt operators. See [routing policy details](provider/README.md#automatic-selection).
+
+`createDeRPC()` starts the worker and light client immediately. Execution reads require an explicit operator selection, while beacon sync can begin before that selection.
+
+| API | Behavior |
+|---|---|
+| `derpc.provider` | EIP-1193 `request`, `on` and `removeListener`; usable without viem. |
+| `derpc.ready` | Waits for the worker and a fresh verified header. State reads separately wait for the on-chain worker-pin check. |
+| `derpc.reader` | Returns `{ value, block }` so callers can show the verified block. Includes token balances for a supplied storage layout. |
+| `derpc.setOperators(operators)` | Changes the selected pool, cancels work using the previous selection and carries existing session exclusions forward. |
+| `derpc.setRouting(policy, operators?)` | Atomically changes Manual/Balanced/Fastest/Reliable selection and an optional exact allowlist; automatic modes remain free-only. |
+| `derpc.refreshDirectory(options)` | Manual mode retains valid chosen names; automatic mode requires proven membership and records before adopting eligible entries. Proven snapshots expire and require a newer verified refresh. |
+| `derpc.verifiedCall(input)` | Opt-in host execution against proven state; disabled by default. See the [provider guide](provider/README.md#verified-local-execution). |
+| `derpc.status()` | Reports transport, light-client, checkpoint, pin and operator state. `onStatus` and `onPoolEvent` provide updates. |
+| `derpc.close()` | Aborts pending work and closes the worker and header source. Paid sessions must flush their final voucher before closing transport. |
+
+The viem transport disables viem's own retries so the pool controls which operators see each request.
+
+## Supported reads
+
+All state reads target the light client's **verified finalized block**, which can lag the chain head. This is a limited read provider, with no signing or transaction submission.
+
+| Method | Result and verification |
+|---|---|
+| `eth_getBalance` | Balance from a verified account proof. |
+| `eth_getTransactionCount` | Nonce from a verified account proof. |
+| `eth_getCode` | Bytecode checked against the proven account's code hash. |
+| `eth_getStorageAt` | Storage value checked against the proven storage root. |
+| `eth_blockNumber` | The verified finalized block number from the light client. |
+| `eth_chainId`, `net_version`, `eth_accounts` | Local metadata: `"0x1"`, `"1"`, and `[]`. |
+
+State methods accept an omitted block selector, `"finalized"`, or a hex block number matching the current verified block. `{ blockNumber }` and `{ blockHash }` selectors must also match that block. Other blocks and tags such as `"latest"`, `"pending"` and `"safe"` are refused. Historical reads are not supported.
+
+By default, other methods are refused rather than forwarded, including `eth_call`, logs, gas estimation and writes. A normal viem `readContract()` therefore fails unless the application explicitly enables the bounded local executor with `verifiedCalls: { eip1193: true }`. `verifiedCalls: true` instead enables only the explicit `derpc.verifiedCall()` API. Both execute in the host against proven state; neither trusts a raw remote call result. The demo's WETH balance uses its known storage mapping at slot 3 through `derpc.reader.getTokenBalance()`; this does not establish generic ERC-20 support. See [the provider guide](provider/README.md) for limits and ENS/payment integration.
+
+Provider errors use `4200` for unsupported methods, `-32602` for invalid inputs/block selectors, `-32002` for unavailable verified reads, `4900` for recognized transport disconnection, and `-32603` for unexpected failures. Mapped errors include the underlying name in `data.reason`. Inspect that reason and provider status when reporting failures; neither an error nor a timeout enables direct fallback.
+
+## How it works
+
+1. **Bootstrap without a direct RPC call.** The harness receives the worker hash and resolver list from local pinned configuration, downloads the bundle and checks its hash before running it.
+2. **Authenticate the state root.** A host-side Lodestar light client verifies sync-committee updates from a trusted checkpoint. Beacon requests go through the worker, including polling for updates; no direct event stream is opened.
+3. **Verify the worker pin.** Through the selected operators, DeRPC proves the specifier contract's `workerHash` storage and compares it with the local pin before serving account, code or storage reads.
+4. **Verify each answer.** The host checks EIP-1186 account/storage proofs against the authenticated state root and checks bytecode against its proven hash. Verification stays outside the untrusted worker.
+5. **Handle failures locally.** Manual pools use priority tiers; automatic pools use the selected local routing policy. Both exclude endpoints whose proofs fail, give transient failures a cooldown and retry sequentially within attempt and time limits. Exclusions last for the running provider instance, not a global ban. Optional paid reads reserve bounded credit before requests and sign vouchers only after verification; a completion/signing failure cannot trigger payment to another operator through a retry.
+
+DeRPC supplies the pool, proof verifier, pin gate, transport adapters, provider API and demo. It reuses the [Anon-RPC browser harness](https://github.com/ethereum/anon-rpc), [tor-js](https://github.com/ethereum/tor-js), [Lodestar](https://github.com/ChainSafe/lodestar) and [viem](https://github.com/wevm/viem). The workspace pins harness 0.4.0, tor-js 0.4.4, Lodestar 1.43.0 and viem 2.57.8.
+
+The [Lodestar patch](patches/@lodestar__light-client@1.43.0.patch) backports finality-validation fixes, disables unsafe forced committee updates, and stops abandoned startup/synchronization loops. Its regression tests are part of the normal suite. Keep the dependency pins, overrides and patch in [`pnpm-workspace.yaml`](pnpm-workspace.yaml) when reproducing the build; fork compatibility must be checked before upgrading or adding networks.
+
+## Status and next steps
+
+As of **November 6, 2026**, the core provider, dashboard, wrapper, contracts and payment modules are implemented. The free browser flow has recorded local-gateway and onion evidence; public release is not yet cleared. The [roadmap](specs/ROADMAP.md) and [operations guide](specs/OPERATIONS.md) distinguish implementation from deployment and verification gates.
+
+| Area | Remaining work |
+|---|---|
+| Free public release | Reliable public gateway and all-onion path, fresh-browser hosted checks, a recent trusted checkpoint and live cold-start validation across a committee period. |
+| ENS lifecycle: M1-A | Two independent operators with real registrations, proven discovery, restricted rotation and delisting observed after finalized refresh. Bounded snapshot validity and unsigned lifecycle tooling are current integration work; they do not establish a live deployment. |
+| Multiple endpoints: M1-B | Separate operator and endpoint identities, endpoint-level failover and several endpoints under one ENS name without increasing that operator's selection weight. Both M1-A and M1-B are required for [M1 completion](specs/ENS_TOR_MILESTONE.md). |
+| Payments, after the free release | Public funding/read/settlement/refund demonstration, deployment of a configured app coordinator and external readiness reviews. The Hoodi escrow deployment alone does not satisfy these gates. |
+| Later economics | Specify and implement operator/node staking, traffic measurement, stake adjustment and accountability. Query escrow is not a staking contract. |
+
+Startup recovery (#34) and outage reporting (#35) are closed implementation issues; their regression checks remain relevant to the public release.
+
+For operating a service, start with the [wrapper runbook](wrapper/README.md). Use the [contract guide](contracts/README.md) for ENS and escrow administration, and the [sponsored-read guide](payments/examples/README.md) for app-funded requests. The latter requires an application-supplied authenticated header/funding source and protected coordinator; it does not establish a conforming anonymous Node runtime.
+
+Additional EVM chains need their own authenticated headers, proof/finality rules and tested endpoints; JSON-RPC compatibility alone is insufficient. Nym has a pin in the configuration but has not been validated as a runtime here.
+
+## Privacy and trust
+
+The standalone [threat model](THREAT_MODEL.md) describes the browser, ENS, wrapper and payment trust boundaries, implemented controls and remaining evidence gates.
+
+RPC and beacon endpoints still see query content and timing; Tor changes the route they observe. Account isolation depends on worker behavior and remains unproven. A curated endpoint list, several URLs or mock ENS names do not establish independent operators or decentralized discovery. An ENS list stays curated while the parent owner can repoint its registry and a curator controls admission.
+
+**Paid queries are linkable to the paying account.** A funded session and its signed cumulative vouchers intentionally link reads to that payer. Test payments demonstrate a mechanism, not operator income. The host holds a disposable session key when payments are enabled; signing capability and private session keys never enter the untrusted worker. SDK limits constrain normal use; the deposit is the hard on-chain limit if that key is compromised. Personal-node tokens are kept in memory and sent through the worker to the selected service in request headers; they must not be published in ENS or persisted in browser storage.
+
+| Traffic | Route and exposure |
+|---|---|
+| Execution reads, including proofs and code | Through the worker and Tor, using an exit or an onion connection. Operators see query content. |
+| Beacon bootstrap and updates | Through the worker and Tor. The beacon endpoint sees those requests. |
+| ENS discovery and endpoint identity checks | Through the worker. Discovery probes all candidates with identity requests and the same public worker-pin proof, without user-account queries. Anonymity does not make an unverified directory result proven. |
+| Payment vouchers and paid read credentials | Through the worker to the chosen operator. They link requests to its funded payment session. |
+| Wallet deposit, top-up and refund transactions | Through the user's wallet and its configured payment-chain RPC, outside the worker. The payer and transactions are public on-chain; that RPC may also observe the wallet's IP. |
+| Operator settlement and deployment administration | Through the operator/admin payment or ENS RPC, outside the browser read worker. These connections never serve as a direct fallback for client reads. |
+| Harness bootstrap calls | Answered locally from the pin; no RPC request. The on-chain hash is then proven through the worker. |
+| Worker bundle download | Before the worker exists, tries the selected gateway's hash-addressed KPS mirror first, then the declared bundle resolvers, including HTTPS CDNs. Bytes remain hash-checked. The serving gateway/CDN sees the downloader's connection; successful gateway delivery avoids an additional CDN request. |
+| Tor gateway connection | Direct over WebRTC. The gateway sees the client's IP and relays encrypted Tor traffic. |
+| Page assets | Direct from the page host, which sees visitors' IPs. |
+
+The demo's direct-connections table is a resource-timing aid, not a complete traffic audit: it does not capture the WebRTC gateway link and may omit other requests. There are no third-party analytics in the app.
+
+The wrapper contains no Tor gateway, and the client refuses declared or independently known same-operator gateway/RPC pairings. Undisclosed common ownership remains unknown. Local wrapper demonstrations run by this team may use both its gateway and its public-node proxy; that arrangement is a disclosed test configuration, not evidence of operator independence or resistance to timing correlation.
+
+Correctness relies on the trusted checkpoint, light-client consensus assumptions, host verifier and shipped application code. A bundle hash identifies worker code; it does not prove the worker provides anonymity. Freshness checks reject headers older than 30 minutes both when accessed and before pending verified reads return. This prototype has not had an independent security audit.
+
+### CROPS
+
+- **C — Censorship resistance:** A static app with local selection and verification; no required DeRPC RPC proxy. Operators and gateways are replaceable, but unavailable routes still cause reads to fail.
+- **O — Open source:** MIT, buildable from this repo with public dependencies. Free reads need network access and a recent checkpoint, with no account or API key; optional paid tests need a wallet and test funds.
+- **P — Privacy:** RPC and beacon traffic uses Tor by default. Queries remain visible to endpoints; the gateway, bundle resolver and page host see the connections described above. No analytics; no account-unlinkability claim.
+- **S — Security:** The read provider does not expose wallet signing or transaction submission. Optional payments keep a limited session signer in the host; the untrusted worker gets no private key. Host-side verification checks supported answers against authenticated state. The experimental contracts and unresolved release gates limit production use.
+
+## Development
+
+The durable payment-store tests require Linux and util-linux `flock`, in addition to Node 24 and pnpm. Default contract tests use local chains; live browser, Docker and ENS fork checks have separate setup in their package guides.
+
+```sh
+pnpm -r test
+pnpm typecheck
+pnpm --filter @derpc/contracts compile
+pnpm --filter frontend build:local
+```
+
+The automated tests use recorded fixtures, generated cryptographic proofs, test doubles and local-chain integration. They do not validate current live-network reachability. The production build still reports externalized Node modules and a large bundle. Live browser tests remain necessary for transport failures, privacy checks and browser compatibility.
+
+### Validation
+
+The November 6 final default workspace run passed **1,004 tests** in the working tree: 65 contracts, 68 payments, 576 provider, 58 wrapper and 237 frontend. Five opt-in ENS fork tests were skipped by that command; affected contract/provider suites also passed in focused follow-up checks. Workspace type checking, the combined static-site build and the offline 46-file release check passed. The [QA report](specs/QA_REPORT.md#local-release-completion--november-6-1612-utc) records scope, live checks and remaining gates. These checks extend the earlier 656-test committed snapshot at `96439b4`; the new work remains uncommitted.
+
+| Evidence | What was observed |
+|---|---|
+| [Five-endpoint roster check](provider/test/fixtures/automatic-roster-live-2026-11-06.json) | All five configured public endpoints returned verified reads through Tor in Firefox at block 26356307. Mock ENS names remained explicitly labeled. |
+| [Automatic-routing check](provider/test/fixtures/automatic-routing-live-2026-11-06.json) | Balanced/Fastest/Reliable behavior, retained account affinity, empty-list refusal and one exact allowed operator at block 26356339; worker pin verified, no direct RPC/beacon requests observed, and shutdown refused further reads. |
+| [Onion and local-execution check](wrapper/test/live-evidence-2026-11-06.json) | Real pinned-worker onion reads, host verification of an ENSv2 resolver call, personal authentication, identity rejection and failover. The gateway and proxy were run by the same tester. |
+| [General ENS execution](provider/test/fixtures/ens-mainnet-execution-evidence-2026-11-06.json) | Nine offline checks using actual mainnet ENS bytecode and account/storage proofs, including forged-state rejection. Administrative capture and an injected root are distinct from light-client or Tor evidence. |
+| [Multi-endpoint wrapper packaging](wrapper/test/multiendpoint-packaging-evidence-2026-11-06.json) | Built-image node identities, invalid configuration refusal and 58 wrapper tests. This isolated packaging check sent no public transactions. |
+| [Sibling onion failover and general ENS](wrapper/test/multiendpoint-evidence-2026-11-06.json) | Two warmed test onions, controlled failure, sibling affinity, explicitly selected fallback, general ENS resolution and shutdown at verified mainnet block 26356914. Same-party proxies and mock operator identity; no public ENS enrollment. |
+| [ENS fork checks](contracts/deployments/ens-fork-evidence.json) and [discovery integration](contracts/deployments/ens-fork-discovery-evidence.json) | Actual ENS contract bytecode, permissions and deployment verification, plus a separate locally constructed proof-root integration. These are not public operator registrations. |
+| [Payment container lifecycle](wrapper/test/payment-container-evidence-2026-11-06.json) | Local-chain paid reads, restart recovery, settlement and unused-deposit refunds; distinct from the public Hoodi deployment. |
+| [Gateway bundle delivery](provider/test/transport/kps-bootstrap-live-2026-11-06.json) | Fresh Firefox loaded the hash-checked worker through the local gateway with no CDN request, then refused a fetch after close. Bundle delivery only; no execution/consensus proof was requested in this check. |
+| [Browser timing diagnostics](frontend/test/direct-connections-browser-evidence-2026-11-06.json) | Normal/private Chromium cache and missing-API cases on both pages. Transport was stubbed for these UI checks; this is not a live anonymity observation. |
+| [QA report](specs/QA_REPORT.md) | Earlier full-project review, reproduced defects and their corrections, with the public-gateway and release limitations preserved. |
+
+These are dated functional observations, not uptime guarantees, general latency benchmarks or an independent security audit. The browser checks used the local development gateway; they do not clear the hosted public-gateway release gate.
+
+### Repository guide
+
+| Location | Contents |
+|---|---|
+| [`provider/src/api/`](provider/src/api/) | Public provider, lifecycle and viem transport. |
+| [`provider/src/transport/`](provider/src/transport/) | Anon-RPC startup, local bootstrap and fetch/JSON-RPC adapters. |
+| [`provider/src/light-client/`](provider/src/light-client/) | Verified headers and anonymous beacon polling. |
+| [`provider/src/verify/`](provider/src/verify/) | Proof verification, verified reads and worker-pin checks. |
+| [`provider/src/pool/`](provider/src/pool/) | Operator selection, retries, exclusions and caching. |
+| [`provider/src/discovery/`](provider/src/discovery/) · [`provider/src/operators/`](provider/src/operators/) | ENS membership/record discovery, endpoint validation and identity checks. |
+| [`provider/src/execution/`](provider/src/execution/) | Bounded local EVM execution against authenticated state. |
+| [`provider/src/config/mainnet.ts`](provider/src/config/mainnet.ts) | Checkpoint, worker pins, curated operators and known token layouts. |
+| [`frontend/`](frontend/) | Operator dashboard, routing and payment controls, minimal integration and diagnostics. |
+| [`web/`](web/) · [`brand/`](brand/) | Directory, product pages, onboarding drafts and brand assets. |
+| [`wrapper/`](wrapper/) | Operator/personal onion services, filtered proxy and durable settlement. |
+| [`payments/`](payments/) | Client sessions, delegated budgets, durable coordinator and sponsored-read examples. |
+| [`contracts/`](contracts/) | Escrow and ENS registrar contracts, deployment/lifecycle tools and public/local evidence. |
+| [`specs/`](specs/) · [`THREAT_MODEL.md`](THREAT_MODEL.md) | Decisions, milestone gates, operations, QA and security boundaries. |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Request flow, verification boundaries and trust assumptions. |
+| [`FEEDBACK.md`](FEEDBACK.md) · [Submission packet](specs/SUBMISSION_DRAFT.md) | Partner observations, prepared form text and a timed human-narrated demo runbook. |
+
+Each package keeps its tests alongside its implementation. [REPO_LAYOUT.md](REPO_LAYOUT.md) maps the full repository; [AI_USAGE.md](AI_USAGE.md) records assisted work and attribution still awaiting team completion.
 
 ## License
 
