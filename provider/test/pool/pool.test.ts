@@ -131,6 +131,33 @@ describe("createPool", () => {
     expect(h.pool.status().find((s) => s.url === "a")?.state).toBe("cooldown");
   });
 
+  it("cools an endpoint down after a rate-limit response, then answers from another", async () => {
+    const rateLimited = () => { throw new Error("RPC HTTP 429: rate limited"); };
+    const h = harness(PREFERRED, { a: rateLimited, b: ok, c: ok });
+
+    await expect(h.read()).resolves.toBe("ok");
+
+    expect(h.pool.status().find((s) => s.url === "a")?.state).toBe("cooldown");
+    expect(h.calls.map((c) => c.url)).toEqual(["a", "b"]);
+    expect(h.events.slice(0, 4)).toEqual(["attempt a", "transient-failure a", "attempt b", "success b"]);
+  });
+
+  it("lists every attempt when all chosen endpoints fail with transient errors", async () => {
+    const h = harness(PREFERRED, { a: exitTimeout, b: exitTimeout, c: exitTimeout });
+
+    const error = await h.read().then(
+      () => undefined,
+      (e: unknown) => e,
+    );
+    expect(error).toBeInstanceOf(PoolExhaustedError);
+    expect((error as InstanceType<typeof PoolExhaustedError>).attempts).toEqual([
+      { endpoint: "a", kind: "transient-failure", error: "Failed to connect: tor: operation timed out at exit" },
+      { endpoint: "b", kind: "transient-failure", error: "Failed to connect: tor: operation timed out at exit" },
+      { endpoint: "c", kind: "transient-failure", error: "Failed to connect: tor: operation timed out at exit" },
+    ]);
+    expect(h.events.at(-1)).toBe("exhausted");
+  });
+
   it("retries on a fresh Tor circuit, with an isolation key derived from the same account's key", async () => {
     const h = harness(PREFERRED, { a: exitTimeout, b: exitTimeout, c: ok });
 
