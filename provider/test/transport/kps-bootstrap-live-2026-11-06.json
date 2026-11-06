@@ -1,0 +1,60 @@
+{
+  "capturedAt": "2026-11-06T16:08:13.180Z",
+  "scope": "Fresh Firefox profile; real pinned tor-js bundle and worker through the existing local development KPS gateway with a temporary current-NIC address override. No mock or proxy bundle, execution RPC, consensus request, transaction, or public deployment.",
+  "source": "provider/src/transport/pinned-bootstrap.ts",
+  "sourceSha256": "0a2f13fe7a9dac7b9ea6d21b6dee62463164962c9171b129525a195e61736b86",
+  "configuredGatewayCount": 1,
+  "gatewaySelection": "Temporary active-NIC override; existing gateway port and public key retained; no environment changes",
+  "externalHttpRequests": [],
+  "browser": "firefox/156.0.1",
+  "result": {
+    "ready": true,
+    "workerHash": "0x5b62f358ce7a2b94ee9bc3a0e6a08757db68fa08fc348276f31eda788aec818b",
+    "bundleAcceptedMs": 2112,
+    "workerReadyMs": 5755,
+    "states": [
+      "booting",
+      "ready",
+      "closed",
+      "closed"
+    ],
+    "frameCountBeforeClose": 1,
+    "frameCountAfterClose": 0,
+    "closedReadError": "TransportUnavailableError"
+  },
+  "pageErrors": [],
+  "noCdnRequest": true,
+  "sourceUnchanged": true,
+  "passed": true,
+  "method": [
+    "Start an isolated Vite page importing the production startAnonTransport and TOR_JS_PIN/withGateways.",
+    "Use the configured gateway port and public key with the currently active LAN address; do not modify environment files or existing services.",
+    "Record every browser HTTP(S) request whose origin differs from the isolated local Vite server.",
+    "Observe iframe creation after the harness completes bundle hash verification, then await transport.ready.",
+    "Close the transport, count remaining iframes, and assert a subsequent fetch is refused before it sends."
+  ],
+  "priorAttempt": {
+    "capturedAt": "2026-11-06T16:02:27.101Z",
+    "configuration": "Existing environment retained an address from the previous network; that address was absent from current interface addresses.",
+    "passed": false,
+    "result": {
+      "ready": false,
+      "error": "worker readiness exceeded 90000 ms live-test limit",
+      "states": [
+        "booting",
+        "closed"
+      ],
+      "bundleAcceptedMs": 13722
+    },
+    "externalHttpRequests": [
+      "https://cdn.jsdelivr.net/npm/tor-js@0.4.4/dist/anon-rpc-worker.js"
+    ],
+    "diagnosis": "The unreachable selected gateway fell back to the hash-checked public bundle URL. The worker then failed to become ready through the stale gateway within the 90-second test deadline. A temporary address-only override produced the successful run above."
+  },
+  "limitations": [
+    "This validates one existing local development gateway, not a newly deployed or publicly reachable gateway.",
+    "Public bundle resolver fallbacks remain enabled and can contact a CDN if KPS acquisition fails; there is no direct RPC fallback.",
+    "Upstream KPS connection dialing has a deadline, but the harness bundle body has no explicit deadline or abort signal. Closing during initial bundle acquisition can still complete that acquisition later; this change does not patch that upstream lifecycle limitation.",
+    "No execution RPC, consensus proof, on-chain pin proof, or paid request was exercised in this isolated bundle-delivery check."
+  ]
+}

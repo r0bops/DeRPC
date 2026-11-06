@@ -17,9 +17,9 @@ export interface WorkerPin {
   specifier: `0x${string}`;
   /** keccak256 of the worker bundle; also the ABI return data of `workerHash()`. */
   workerHash: `0x${string}`;
-  /** Decoded `workerResolvers()` (informational; the raw value below is what the harness reads). */
+  /** Recorded resolver hints; bootstrap can prepend the configured gateway's hash-addressed KPS mirror. */
   resolvers: readonly string[];
-  /** Raw ABI return data of `workerResolvers()` as read from the contract. */
+  /** Recorded ABI answer; retained unchanged, with a derived answer used for gateway-first bootstrap. */
   resolversRaw: `0x${string}`;
   /** Worker config delivered as `anonRpcWorker.config` (worker-defined schema). */
   config: Record<string, unknown>;
