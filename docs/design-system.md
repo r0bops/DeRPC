@@ -8,47 +8,47 @@ This document defines how DeRPC looks, reads and behaves: the brand, the tokens,
 
 ## Contents
 
-1. [Product context](#1-product-context)  
-2. [Design principles](#2-design-principles)  
-3. [Brand](#3-brand)  
-4. [Logo](#4-logo)  
-5. [Color](#5-color)  
-6. [Typography](#6-typography)  
-7. [Layout, space, shape and elevation](#7-layout-space-shape-and-elevation)  
-8. [Imagery and iconography](#8-imagery-and-iconography)  
-9. [Components](#9-components)  
-10. [Motion and interaction](#10-motion-and-interaction)  
-11. [Accessibility](#11-accessibility)  
-12. [Content and voice](#12-content-and-voice)  
-13. [The front end](#13-the-front-end)  
-14. [Users](#14-users)  
-15. [Implementation status](#15-implementation-status)  
+1. [Product context](#1-product-context)
+2. [Design principles](#2-design-principles)
+3. [Brand](#3-brand)
+4. [Logo](#4-logo)
+5. [Color](#5-color)
+6. [Typography](#6-typography)
+7. [Layout, space, shape and elevation](#7-layout-space-shape-and-elevation)
+8. [Imagery and iconography](#8-imagery-and-iconography)
+9. [Components](#9-components)
+10. [Motion and interaction](#10-motion-and-interaction)
+11. [Accessibility](#11-accessibility)
+12. [Content and voice](#12-content-and-voice)
+13. [The front end](#13-the-front-end)
+14. [Users](#14-users)
+15. [Implementation status](#15-implementation-status)
 16. [Governance](#16-governance)
 
 ---
 
-## 1\. Product context
+## 1. Product context
 
 DeRPC is Ethereum developer infrastructure with two parts:
 
-- **A transport.** A drop-in replacement for the viem transport (`transport: derpc()`). Reads travel through an anonymity network (Anon-RPC), so the operator never sees the caller's IP address, and every answer is checked against a proof from a light client. If no private route or no proof is available, the call fails. It never falls back to a direct request.  
-- **A directory.** An open, searchable list of RPC operators. Each operator stakes, is named with ENS (for example `mor.ops.derpc.eth`), and earns a score from uptime that independent watchers can verify. Apps pay operators per read.
+- **A provider.** A client-side library for viem (`createDeRPC` plus `derpcTransport`, package `@derpc/provider`). Reads travel through an anonymity network (Anon-RPC), so the operator does not see the caller's IP address, and every answer is checked against a proof from a light client. If no private route or no proof is available, the call fails. It never falls back to a direct request. Today this works on Ethereum mainnet only, for finalized state; it is not a drop-in for every RPC method.
+- **A directory.** A list of RPC operators and the networks each one says it serves. The app developer chooses the operators; DeRPC never picks one. Only Ethereum mainnet is verified. Other networks are listed from each operator's own documentation and are labeled "not verified". ENS names, staking, scores and payments are roadmap; ENS names in the directory are mock and are badged as such.
 
 The design problem is **trust**. The product asks developers to route their users' reads through a stranger's node, and to believe that the answer is correct. The interface has to make privacy, verification and accountability legible at a glance, without sounding like marketing.
 
-## 2\. Design principles
+## 2. Design principles
 
-1. **Show proof, not promises.** Every claim the product makes (verified, private, staked) is backed by something the user can see: a score, a stake, a proof indicator. Where a number is not real yet, the interface says so.  
-2. **Verified is rare, so it is loud.** Lime marks the verified node and nothing else that means "checked". When lime appears, something was proven.  
-3. **Infrastructure, not a wallet.** The tone is precise and calm: dense tables, tabular numerals, code snippets. No gradients, mascots, coins, or locks.  
-4. **Fail closed, in design as in code.** Empty and error states say what happened and what DeRPC refused to do. They never suggest an unsafe workaround.  
-5. **Two ways in, one model.** People search by network ("who serves Base?") or by operator ("what does this operator run?"). Both views share the same rows, scores and vocabulary.  
+1. **Show proof, not promises.** Every claim the product makes (verified, private, served) is backed by something the user can see: a proof indicator or a source link. Where something is not real yet, the interface says so.
+2. **Verified is rare, so it is loud.** Lime marks the verified node and nothing else that means "checked". When lime appears, something was proven.
+3. **Infrastructure, not a wallet.** The tone is precise and calm: dense tables, tabular numerals, code snippets. No gradients, mascots, coins, or locks.
+4. **Fail closed, in design as in code.** Empty and error states say what happened and what DeRPC refused to do. They never suggest an unsafe workaround.
+5. **Two ways in, one model.** People search by network ("who serves Base?") or by operator ("what does this operator run?"). Both views share the same chips and vocabulary.
 6. **Small, fast, hostable anywhere.** No framework, hash routing, self-hosted font. The site must load from IPFS and `derpc.eth.limo`.
 
-## 3\. Brand
+## 3. Brand
 
-|  |  |
-| :---- | :---- |
+| | |
+| --- | --- |
 | **Name** | DeRPC. Always written exactly like this: capital D, lowercase e, capitals RPC. Never "Derpc", "DERPC" or "De-RPC". |
 | **Reading** | "De" for decentralized, "RPC" for the interface developers already use. |
 | **Descriptor** | Private, verified RPC for Ethereum. |
@@ -56,7 +56,7 @@ The design problem is **trust**. The product asks developers to route their user
 | **Typeface** | Inter. |
 | **Colors** | Primary: lime, ink, white. Secondary: cobalt. |
 
-## 4\. Logo
+## 4. Logo
 
 ### Concept
 
@@ -68,8 +68,8 @@ The primary logo is the **lockup on ink**: white pixels, a lime node, "De" in wh
 
 ![Logo variations](assets/logo-variations.png)
 
-| \# | Variation | File | Use it for |
-| :---- | :---- | :---- | :---- |
+| # | Variation | File | Use it for |
+| --- | --- | --- | --- |
 | 01 | **Primary lockup** | `brand/derpc-lockup.svg` (transparent), `derpc-lockup-on-ink.svg` (with background) | Default. Site navigation, footer, slides, video titles, README header. Always on ink or another very dark surface. |
 | 02 | **Stacked lockup** | `brand/derpc-lockup-stacked.svg` | Square or narrow spaces: social cards, posters, loading screens. |
 | 03 | **Mark** | `brand/derpc-mark.svg` | When the name is already visible nearby: avatars, section markers. |
@@ -89,7 +89,7 @@ Keep an empty margin of at least **1p** on every side, where **p is one pixel pi
 ### Minimum size
 
 | Variation | Digital | Print |
-| :---- | :---- | :---- |
+| --- | --- | --- |
 | Lockup (horizontal) | 96 px wide | 25 mm wide |
 | Stacked lockup | 64 px wide | 18 mm wide |
 | Mark | 24 px high | 6 mm high |
@@ -99,27 +99,27 @@ Mono variations lose the node's detail below 32 px mark height. Use the primary 
 
 ### Color rules
 
-- The logo never contains cobalt. Cobalt is a product-UI color.  
-- "RPC" is lime only on dark surfaces. Lime text on white has a contrast ratio of 1.26:1, so on white and lime surfaces the wordmark is ink.  
+- The logo never contains cobalt. Cobalt is a product-UI color.
+- "RPC" is lime only on dark surfaces. Lime text on white has a contrast ratio of 1.26:1, so on white and lime surfaces the wordmark is ink.
 - The lime node is the same pixel in every variation: on the right side of the bowl, in the middle row.
 
 ### Do not
 
-- Recolor individual pixels, or add a second accent.  
-- Rotate, skew, stretch, outline, add shadows, glows or gradients.  
-- Rearrange the mark and the wordmark, or change their proportions.  
-- Retype the wordmark in another typeface or weight. Use the supplied files.  
-- Place the lime-on-ink lockup on a busy photo. Use mono white instead.  
+- Recolor individual pixels, or add a second accent.
+- Rotate, skew, stretch, outline, add shadows, glows or gradients.
+- Rearrange the mark and the wordmark, or change their proportions.
+- Retype the wordmark in another typeface or weight. Use the supplied files.
+- Place the lime-on-ink lockup on a busy photo. Use mono white instead.
 - Use the logo as a bullet, a loading spinner or a decorative pattern.
 
-## 5\. Color
+## 5. Color
 
 ### Roles
 
 **Primary** colors carry the brand and most of the interface. **Secondary** color is reserved for data and interaction.
 
 | Token | Hex | Group | Role |
-| :---- | :---- | :---- | :---- |
+| --- | --- | --- | --- |
 | `--lime` | `#C8F63C` | Primary | Brand accent. Wordmark "RPC", primary buttons, key highlights, and the verified node. |
 | `--ink` | `#0A0A0F` | Primary | Dark surfaces (nav, hero, footer). Primary text on light surfaces. |
 | `--white` | `#FFFFFF` | Primary | Light surfaces (content pages, cards). Primary text on dark. |
@@ -141,7 +141,7 @@ On a typical page, aim for roughly: **white or ink 80%**, **lime 5 to 10%**, **c
 ### Contrast (WCAG 2.1)
 
 | Foreground on background | Ratio | Result |
-| :---- | :---- | :---- |
+| --- | --- | --- |
 | White on ink | 19.75:1 | AAA |
 | Lime on ink | 15.71:1 | AAA |
 | Ink on lime | 15.71:1 | AAA (button label) |
@@ -161,94 +161,94 @@ Decorative strokes (for example the cobalt ring in the route diagram) may use co
 ### Color meaning
 
 | Meaning | Treatment |
-| :---- | :---- |
+| --- | --- |
 | **Verified / proven** | Lime pixel: an 11 px rounded square with a 1.5 px ink ring on white (`.ok-dot`), the lime check in the route diagram, the lime last point on the uptime chart. |
 | **Primary action** | Lime button with ink label. On a white page where a lime button would be too loud (secondary actions), use an ink button. |
 | **Data / score / link** | Cobalt. |
-| **Planned or not proven** | A neutral chip ("Proofs planned"). Never a warning color. |
-| **Demo data** | The "Demo data" badge in the nav and a note under every demo table. |
+| **Listed, not verified** | A dashed neutral chip ("BASE", "Listed, not verified"). Never a warning color on the chip; the explanatory notice on a network page may use the warning surface. |
+| **Mock or roadmap** | The "MOCK ENS" badge on ENS names, and a "roadmap" label on pages that describe things that do not exist yet. The nav badge reads "Hackathon build". |
 
 DeRPC has no red/amber/green status scheme. Failure is described in words, not in a color, and "not verified" is the absence of the lime indicator.
 
-## 6\. Typography
+## 6. Typography
 
-**Typeface: Inter** (variable), self-hosted through `@fontsource-variable/inter`. The wordmark uses ExtraBold at default tracking (0), outlined in the logo files. Addresses, ENS names and code use the system monospace stack. Numbers that are compared use tabular numerals (`font-variant-numeric: tabular-nums`).
+**Typeface: Inter** (variable), self-hosted through `@fontsource-variable/inter`. The wordmark uses ExtraBold with tracking -0.04 em. Addresses, ENS names and code use the system monospace stack. Numbers that are compared use tabular numerals (`font-variant-numeric: tabular-nums`).
 
 | Role | Size | Weight | Tracking | Line height | Use |
-| :---- | :---- | :---- | :---- | :---- | :---- |
-| Display | `clamp(44px, 6.4vw, 88px)` | 800 | \-0.042 em | 0.98 | Landing headline only |
-| H1 | `clamp(34px, 4.4vw, 56px)` | 800 | \-0.045 em | 1.0 | Page titles |
-| H2 | `clamp(32px, 4vw, 52px)` | 800 | \-0.04 em | 1.04 | Section titles |
-| Detail title | `clamp(28px, 4vw, 44px)` | 800 | \-0.045 em | 1.05 | Operator or network name |
-| Stat / metric value | 34 px / 30 px | 750 / 800 | \-0.04 em | 1.2 | Large numbers |
-| Card title (H3) | 18 to 28 px | 650 to 700 | \-0.02 to \-0.035 em | 1.2 | Cards, panels, steps |
+| --- | --- | --- | --- | --- | --- |
+| Display | `clamp(44px, 6.4vw, 88px)` | 800 | -0.042 em | 0.98 | Landing headline only |
+| H1 | `clamp(34px, 4.4vw, 56px)` | 800 | -0.045 em | 1.0 | Page titles |
+| H2 | `clamp(32px, 4vw, 52px)` | 800 | -0.04 em | 1.04 | Section titles |
+| Detail title | `clamp(28px, 4vw, 44px)` | 800 | -0.045 em | 1.05 | Operator or network name |
+| Stat / metric value | 34 px / 30 px | 750 / 800 | -0.04 em | 1.2 | Large numbers |
+| Card title (H3) | 18 to 28 px | 650 to 700 | -0.02 to -0.035 em | 1.2 | Cards, panels, steps |
 | Lead | 19 px | 400 | 0 | 1.5 | First paragraph under a headline |
 | Subtitle | 18 px | 400 | 0 | 1.55 | Under section titles |
 | Body | 15 px | 400 | 0 | 1.55 | Default text |
 | UI / table | 14 to 15 px | 500 to 650 | 0 | 1.4 | Buttons, rows, inputs |
 | Caption | 13 px | 400 to 600 | 0 | 1.4 | Hints, metadata |
-| Label | 12 to 13 px | 700 | \+0.04 em, uppercase | 1.2 | Section kickers, table headers |
+| Label | 12 to 13 px | 700 | +0.04 em, uppercase | 1.2 | Section kickers, table headers |
 | Code | 13 to 13.5 px | 400 | 0 | 1.7 to 1.75 | Snippets (mono) |
 
 Rules:
 
-- Headlines are sentence case and end with a period when they are statements ("Find an RPC you can verify.").  
-- Uppercase is only for labels (12 to 13 px, 700, \+0.04 em).  
-- Do not use weights below 400 or italics. Emphasis is weight or color, never underline (underline is for links only).  
-- Keep line length under about 70 characters for body text.  
+- Headlines are sentence case and end with a period when they are statements ("Find an RPC you can verify.").
+- Uppercase is only for labels (12 to 13 px, 700, +0.04 em).
+- Do not use weights below 400 or italics. Emphasis is weight or color, never underline (underline is for links only).
+- Keep line length under about 70 characters for body text.
 - Show an ENS name or address in mono. Never truncate an ENS name; truncate addresses in the middle (`0x1234…abcd`).
 
-## 7\. Layout, space, shape and elevation
+## 7. Layout, space, shape and elevation
 
 ### Grid and containers
 
-- Max content width **1200 px** (`--container`), side gutter **28 px** (`--gutter`).  
-- Navigation height **68 px**, sticky.  
-- Page rhythm on the landing: ink hero → ink stat strip → white sections (96 px vertical padding) → ink footer.  
-- Content pages (directory, detail, operate): ink nav → white page → ink footer.  
-- Two-column layouts use `1.4fr / 1fr` (detail pages) or `1.15fr / 0.85fr` (hero). Gap 18 px for cards, 56 px in the hero.  
+- Max content width **1200 px** (`--container`), side gutter **28 px** (`--gutter`).
+- Navigation height **68 px**, sticky.
+- Page rhythm on the landing: ink hero → ink stat strip → white sections (96 px vertical padding) → ink footer.
+- Content pages (directory, detail, operate): ink nav → white page → ink footer.
+- Two-column layouts use `1.4fr / 1fr` (detail pages) or `1.15fr / 0.85fr` (hero). Gap 18 px for cards, 56 px in the hero.
 - **Breakpoint: 960 px.** Below it, layouts collapse to one column, nav links hide, metrics become 2-up, and tables scroll horizontally.
 
 ### Space
 
-A 4 px base scale (`--sp-1` to `--sp-24`): 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 96\. Card padding is 28 px (36 px for panels, 20 px for metrics). Section padding is 96 px.
+A 4 px base scale (`--sp-1` to `--sp-24`): 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 96. Card padding is 28 px (36 px for panels, 20 px for metrics). Section padding is 96 px.
 
 ### Shape
 
 | Token | Value | Use |
-| :---- | :---- | :---- |
+| --- | --- | --- |
 | `--r-sm` | 8 px | Small elements |
 | `--r-md` | 14 px | Metrics, code snippets |
 | `--r-lg` | 22 px | Cards, panels, tables, code card |
 | `--r-pill` | 999 px | Buttons, chips, search, segmented control |
-| 12 px |  | Avatars (40 px), form inputs, step number tiles |
-| 20 px |  | Large avatar (72 px) |
+| 12 px | | Avatars (40 px), form inputs, step number tiles |
+| 20 px | | Large avatar (72 px) |
 
 ### Elevation
 
 Flat by default. Cards on white have a 1 px `--line` border and a very soft shadow (`--shadow`). Only the hero code card floats (`--shadow-float`). There are no drop shadows on buttons or text.
 
-## 8\. Imagery and iconography
+## 8. Imagery and iconography
 
-- **No stock imagery, no illustrations, no 3D.** The visual language is type, the pixel motif and diagrams.  
-- **The signature graphic is the route diagram:** *your app → private route → operators → verified*. Nodes are circles, links are thin lines, and the end of the path is the lime check. Use it to explain, not to decorate.  
-- **Pixel grid pattern:** a 56 px grid of 4.5% white lines on ink, fading downward, used behind heroes.  
-- **Icons** are drawn inline in SVG: rounded caps and joins, a 2.2 to 2.6 px stroke on a 24 px grid, `currentColor`. The current set is arrow, check and search. Add icons only when text alone would be slower.  
-- **Avatars** are 40 px (72 px on detail pages) rounded squares with two initials, in one of four fixed pairs: ink/lime, lime/ink, soft/ink, ink/white. The pair is chosen deterministically from the operator name so it is stable across visits.  
+- **No stock imagery, no illustrations, no 3D.** The visual language is type, the pixel motif and diagrams.
+- **The signature graphic is the route diagram:** *your app → private route → operators → verified*. Nodes are circles, links are thin lines, and the end of the path is the lime check. Use it to explain, not to decorate.
+- **Pixel grid pattern:** a 56 px grid of 4.5% white lines on ink, fading downward, used behind heroes.
+- **Icons** are drawn inline in SVG: rounded caps and joins, a 2.2 to 2.6 px stroke on a 24 px grid, `currentColor`. The current set is arrow, check and search. Add icons only when text alone would be slower.
+- **Avatars** are 40 px (72 px on detail pages) rounded squares with two initials, in one of four fixed pairs: ink/lime, lime/ink, soft/ink, ink/white. The pair is chosen deterministically from the operator name so it is stable across visits.
 - **Charts** use cobalt for the line, a cobalt gradient to transparent as the area fill, and a lime point with an ink ring for the latest verified measurement.
 
-## 9\. Components
+## 9. Components
 
 Values below match `web/src/styles.css`. "Tokens" refer to `web/src/tokens.css`.
 
 ### Navigation
 
-Ink bar, 68 px, sticky, 1 px bottom border at 8% white. Left to right: logo (36 px mark \+ wordmark 22 px / 800), links (14 px / 550, pill hover at 14% white, active state is the same fill), spacer, **Demo data** badge (outlined pill, hidden on mobile), lime "Open directory" button (small). On mobile the links hide.
+Ink bar, 68 px, sticky, 1 px bottom border at 8% white. Left to right: logo (36 px mark + wordmark 22 px / 800), links (14 px / 550, pill hover at 14% white, active state is the same fill), spacer, **Hackathon build** badge (outlined pill, hidden on mobile), lime "Open directory" button (small). On mobile the links hide.
 
 ### Buttons
 
 | Variant | Background | Label | Use |
-| :---- | :---- | :---- | :---- |
+| --- | --- | --- | --- |
 | **Lime** | `--lime` (hover `--lime-hover`) | ink | Primary action. One per view. |
 | **Ink** | `--ink` (hover `#22222C`) | white | Primary action on a lime panel; secondary action on white. |
 | **Ghost** | transparent, 1.5 px currentColor border | inherits | Secondary action on dark. |
@@ -261,7 +261,7 @@ Ink with the pixel grid. Left: eyebrow pill, display headline with the key word 
 
 ### Code card
 
-Radius 22, `--ink-raised` fill, 1 px `--line-on-ink` border, header row with three muted dots, a filename and a lime "API preview" tag. Code is 13.5 px / 1.75. Syntax colors: keywords `--cobalt-300`, strings lime, comments `#6D6D80`, function names white at weight 600\. Below the code: the route diagram.
+Radius 22, `--ink-raised` fill, 1 px `--line-on-ink` border, header row with three muted dots, a filename and a lime "API preview" tag. Code is 13.5 px / 1.75. Syntax colors: keywords `--cobalt-300`, strings lime, comments `#6D6D80`, function names white at weight 600. Below the code: the route diagram.
 
 ### Stat strip
 
@@ -287,32 +287,20 @@ Pill track in `--soft`, 4 px padding. Each option is 14 px / 650 with 8 × 18 pa
 
 White card with radius 22 and `--shadow`. Header row: 12 px / 700 uppercase `--mute`, `#FAFAF8` fill, 14 × 20 padding. Body rows: 16 × 20 padding, 1 px `--line` separators, hover fill `#F8F8FF`, whole row clickable. Numeric columns use tabular numerals. Two column sets:
 
-- **Networks:** network (avatar \+ name \+ chain ID), operators, median price per 1k reads, best latency, verification, chevron.  
-- **Operators:** operator (avatar \+ ENS name \+ label · region), networks (chips, first 3 then "+n"), score, verified uptime, stake, price per 1k reads, latency.
+- **Networks:** network (avatar + name + chain ID), verification, operators listing it, chevron.
+- **Operators:** operator (avatar + name + ENS name with MOCK ENS badge), network chips (verified filled, listed dashed), Tor tier, endpoint host, chevron. Endpoint and chevron hide on mobile.
 
 ### Chip
 
-12.5 px / 600, 3 × 9 padding, pill, `--soft` fill with a 1 px `--line` border. Used for network symbols and short statuses ("Proofs planned"). Chips that navigate are links.
-
-### Score
-
-Bold tabular number followed by a 52 × 6 px bar: track `#E6E6DC`, fill `--cobalt`. The number is the source of truth; the bar is an echo.
+12.5 px / 600, 3 × 9 padding, pill, `--soft` fill with a 1 px `--line` border. Used for network symbols (filled ink with a lime dot when verified, dashed when only listed) and short statuses ("Tier 1", "MOCK ENS"). Chips that navigate are links.
 
 ### Verified indicator
 
-A lime 11 px rounded square with a 1.5 px ink ring, then a 13 px / 600 ink label (for example "Proofs on"). This is the only status indicator in the product.
+A lime 11 px rounded square with a 1.5 px ink ring, then a 13 px / 600 ink label (for example "Reads proven"). This is the only status indicator in the product.
 
 ### Metric card
 
 Radius 14, 20 px padding. Label 13 px / 600 `--mute`; value 30 px / 800 tabular; caption 13 px. Four across on desktop, two on mobile.
-
-### Uptime chart (sparkline)
-
-120 px high, cobalt 2.5 px line, area gradient from 22% cobalt to transparent, last point in lime with an ink ring. Always accompanied by a sentence saying who measured it and against what.
-
-### Bar rows (score breakdown)
-
-Label (110 px) · 8 px bar (`--cobalt` on `#ECECE2`) · value (40 px, bold, right aligned). Used for the four components of an operator's score.
 
 ### Key-value list
 
@@ -330,20 +318,20 @@ Label 13 px / 650 above. Input 46 px, radius 12, 1.5 px `--line-2` border, same 
 
 Numbered rows separated by hairlines. A 36 px ink circle with a lime numeral, a 17 px / 650 title, a 14 px description, then the controls.
 
-### Demo-data notice
+### Mock and unverified notices
 
-Whenever a view shows fixture data, show the lime-square marker and the sentence "Demo data. Scores and uptime will come from independent watchers once the registry is live." under the table. The nav badge stays visible on every page.
+ENS names are mock until the registry exists: show the "MOCK ENS" badge next to every name. A network that DeRPC cannot verify shows a "Listed, not verified" chip, and its page opens with a notice saying DeRPC does not prove answers on that network. Every network entry links to the source it came from.
 
 ### Footer
 
 Ink, 40 / 56 px padding. Logo, one line of description, and the event line. Text color `--grey-400-on-ink`.
 
-## 10\. Motion and interaction
+## 10. Motion and interaction
 
 Motion is functional and short.
 
 | Interaction | Behavior |
-| :---- | :---- |
+| --- | --- |
 | Hover (row, button, link) | Background change, 100 to 120 ms ease. No movement. |
 | Press (button) | 1 px downward shift. |
 | Focus | Cobalt border plus a 4 px `--cobalt-100` halo on inputs. Buttons and links must show a visible focus outline. |
@@ -353,43 +341,41 @@ Motion is functional and short.
 
 No parallax, no scroll-triggered animation, no autoplay. Smooth scrolling is enabled for in-page anchors. **To do:** honor `prefers-reduced-motion` when any animation is added.
 
-## 11\. Accessibility
+## 11. Accessibility
 
 Target: WCAG 2.1 AA.
 
-- Contrast ratios are listed in [section 5](#contrast-wcag-21). Never use cobalt for text on ink, or lime for text on white.  
-- Meaning is never carried by color alone. Verified is a shape (a square) and a label ("Proofs on"), not just a hue.  
-- Interactive controls are at least 36 px high; primary controls are 44 to 48 px.  
-- Inputs have visible labels or `aria-label`. The segmented control uses `aria-pressed`. Decorative SVGs are `aria-hidden`; informative ones have a `role="img"` and a label (the route diagram, the uptime chart).  
+- Contrast ratios are listed in [section 5](#contrast-wcag-21). Never use cobalt for text on ink, or lime for text on white.
+- Meaning is never carried by color alone. Verified is a shape (a square) and a label ("Proofs on"), not just a hue.
+- Interactive controls are at least 36 px high; primary controls are 44 to 48 px.
+- Inputs have visible labels or `aria-label`. The segmented control uses `aria-pressed`. Decorative SVGs are `aria-hidden`; informative ones have a `role="img"` and a label (the route diagram, the uptime chart).
 - Text can be resized to 200% without loss. Layout is fluid below 960 px.
 
-**In place:**
+**Known gaps (to fix):**
 
-1. Every table row has a real link (`<a>`) in its first cell, so rows are reachable by keyboard and announced as links. The row click handler is a shortcut on top.  
-2. Below 640 px, tables become stacked cards with labeled values. Between 641 and 960 px they scroll inside their card and hide the networks and stake columns.  
-3. A skip-to-content link is the first focusable element.  
-4. `prefers-reduced-motion` turns off transitions and smooth scrolling.  
-5. No page scrolls sideways from 320 px up.
+1. Table rows navigate through a click handler on the row. Rows need a real link (`<a>`) in the first cell so they are reachable by keyboard and announced as links.
+2. The mobile tables scroll sideways. They should become stacked cards below 640 px.
+3. There is no skip-to-content link.
+4. `prefers-reduced-motion` is not yet handled (there is little motion to reduce).
+5. There is no dark mode for content pages. This is intentional for now.
 
-**Known gap:** there is no dark mode for content pages. This is intentional for now.
-
-## 12\. Content and voice
+## 12. Content and voice
 
 ### Voice
 
 Precise, calm, plain. We say what the system does and what it refuses to do. We prefer a concrete number to an adjective.
 
 | Do | Don't |
-| :---- | :---- |
+| --- | --- |
 | "Reads go through an anonymity network. Operators never see your IP address." | "Military-grade privacy." |
 | "If no private route exists, the call fails." | "Never worry about leaks again." |
-| "Demo data" next to any invented number. | Present fixture data as live. |
+| A source link next to every claim about what an operator serves. | Present a listed network as verified. |
 | "Verified by proof." | "Trustless" without saying what is verified. |
 
 ### Vocabulary
 
 | Use | Avoid |
-| :---- | :---- |
+| --- | --- |
 | **operator** | node provider, miner, validator (unless it is one) |
 | **network** (Ethereum, Base) | chain, when the user is choosing where to read from |
 | **verified**, **proof** | secure, safe, guaranteed |
@@ -400,30 +386,33 @@ Precise, calm, plain. We say what the system does and what it refuses to do. We 
 
 ### Patterns
 
-- **Sentence case** everywhere (buttons, headings, labels). Title Case only for proper nouns.  
-- **Buttons are verbs:** "Browse operators", "Open directory", "Run an operator".  
-- **Numbers:** tabular, with units next to the value: `99.97%`, `12 ETH`, `$0.18`, `142 ms`. Price is always "per 1k reads". Latency in ms. Dates as "Nov 2026".  
-- **ENS names** appear in full and in mono where space allows.  
-- **Empty states** name the search and offer the way out: *No operator matches "xyz".* (A clear-search link is a planned improvement.)  
-- **Errors** say what was refused and why, never how to bypass: *Refusing to send: no private route is available.*  
+- **Sentence case** everywhere (buttons, headings, labels). Title Case only for proper nouns.
+- **Buttons are verbs:** "Browse operators", "Open directory", "Run an operator".
+- **Numbers:** tabular, with units next to the value: `99.97%`, `12 ETH`, `$0.18`, `142 ms`. Price is always "per 1k reads". Latency in ms. Dates as "Nov 2026".
+- **ENS names** appear in full and in mono where space allows.
+- **Empty states** name the search and offer the way out: *No operator matches "xyz".* (A clear-search link is a planned improvement.)
+- **Errors** say what was refused and why, never how to bypass: *Refusing to send: no private route is available.*
 - **Placeholders** are examples, not instructions: `Search networks, e.g. Base or 8453`.
 
-## 13\. The front end
+## 13. The front end
 
 ### Overview
 
-`web/` is a small single-page site: **TypeScript \+ Vite, no UI framework**, hash routing, Inter self-hosted. The production bundle is about 23 kB of JavaScript and 14 kB of CSS (gzip about 8 kB and 4 kB). It is built with relative asset paths so it runs from IPFS and `derpc.eth.limo`.
+`web/` is a small single-page site: **TypeScript + Vite, no UI framework**, hash routing, Inter self-hosted. The production bundle is about 23 kB of JavaScript and 14 kB of CSS (gzip about 8 kB and 4 kB). It is built with relative asset paths so it runs from IPFS and `derpc.eth.limo`.
 
 ```
 web/
   index.html           shell, metadata, favicon
-  vite.config.ts       publicDir is ../brand, so the logo kit ships as-is
+  public/favicon.svg   favicon cut
   src/
     main.ts            hash router: route string -> page function -> innerHTML
     tokens.css         design tokens (this document)
     styles.css         component styles
-    ui.ts              logo mark, nav, footer, icons, avatar, score, sparkline, formatting
-    data.ts            DEMO DATA: networks, operators, helpers
+    ui.ts              logo mark, nav, footer, icons, avatar, formatting
+    directory/
+      model.ts         types and validateDirectory()
+      operators.ts     NETWORKS and OPERATORS, each network with a source link
+      directory.css    chips, notices, filters
     pages/
       landing.ts       #/
       directory.ts     #/directory  (by network | by operator)
@@ -437,13 +426,13 @@ The older `frontend/` package is a separate **P1 check page** that boots the rea
 ### Routes
 
 | Route | Page | Purpose |
-| :---- | :---- | :---- |
+| --- | --- | --- |
 | `#/` | Landing | Explain the product in one screen and send people to the directory or to the operator flow. |
-| `#/directory` | Directory | Find who serves a network, or inspect operators. Search, sort, toggle view. |
-| `#/directory?by=operator&q=base&sort=price` | Directory (shared state) | The same page with state in the URL. Shareable. |
-| `#/network/:id` | Network detail | One network: summary metrics, the operators that serve it, and the integration snippet. |
-| `#/operator/:ens` | Operator profile | One operator: score, uptime, price, stake, score breakdown, ENS record, pin snippet. |
-| `#/operate` | Run an operator | Preview of onboarding: name, stake and price, endpoint and networks. |
+| `#/directory` | Directory | Find who serves a network, or inspect operators. Search, filter to verified networks, toggle view. |
+| `#/directory?by=networks&q=base&verified=1` | Directory (shared state) | The same page with state in the URL. Shareable. |
+| `#/network/:id` | Network detail | One network: verification status, the operators that list it with their sources. |
+| `#/operator/:ens` | Operator profile | One operator: tier, endpoint host, networks with sources, warnings, snippet that uses only this operator. |
+| `#/operate` | Run an operator | Roadmap page for onboarding: name, stake and price, endpoint and networks. |
 | anything else | Not found | Explains and links back to the directory. |
 
 ### Information architecture
@@ -458,45 +447,46 @@ Every page is reachable in two clicks from the landing. The nav is the same ever
 
 ### Pages
 
-**Landing.** An ink hero states the promise ("RPC you can trust and nobody can watch."), explains it in one paragraph, and offers two actions. The code card shows the intended API (`transport: derpc()`) with the route diagram underneath. A stat strip gives four facts (operators, networks, ETH staked, zero direct fallbacks). A white section explains three guarantees (private by route, verified by proof, open by stake). Two panels address the two audiences: app builders and operators.
+**Landing.** An ink hero states the promise ("RPC you can trust and nobody can watch."), explains it in one paragraph, and offers two actions. The code card shows the working API (`createDeRPC`, `derpcTransport`, `blockTag: "finalized"`) with the route diagram underneath. A stat strip gives three facts: operators you can choose, listed networks that are verified, and zero direct fallbacks. A white section explains three guarantees (private by route, verified by proof, chosen by you). Two panels address the two audiences: app builders and operators; the operator panel is marked roadmap.
 
-**Directory.** A segmented control switches between *By network* and *By operator*; one search field filters the active view. *By network* lists networks with operator count, median price, best latency and verification status. *By operator* lists operators with networks, score, verified uptime, stake, price and latency, and adds a sort control (score, price, latency). Rows open the detail pages. The view, query and sort live in the URL.
+**Directory.** A segmented control switches between *By operator* and *By network*; one search field filters the active view, and a checkbox limits it to verified networks. *By operator* lists each operator with its network chips (a filled ETH chip for verified, dashed chips for listed) and its Tor tier. *By network* lists networks with their verification status and the operators that list them. The view, query and filter live in the URL.
 
-**Network detail.** Four metrics (operators, median price, best latency, top score), a table of operators serving the network (same columns and behavior as the directory), and an integration snippet for that network.
+**Network detail.** Chain ID and verification status. For an unverified network, a notice says DeRPC cannot verify reads there yet. A table of operators listing the network, with their Tor tier, whether DeRPC tested them there, and a source link. For Ethereum, a note about the finalized-block lag.
 
-**Operator profile.** The ENS name is the title. Four metrics (score, verified uptime, price, stake); a 30-day uptime chart with a sentence on who measured it; a score breakdown (verified uptime, correctness, latency, stake); the ENS record (name, endpoint, region, networks, operating since); and a snippet to pin this operator.
+**Operator profile.** The name is the title, with the MOCK ENS badge. A notice appears when the operator has warnings (for example a vendor shutdown announcement). Metrics for Tor tier and endpoint host, a table of networks with tested status and source, an about card, and a snippet that uses only this operator with the real API.
 
-**Run an operator.** A three-step preview (choose a name under `.ops.derpc.eth`, set stake and price, publish endpoint and networks) beside a card that explains what operators get (identity, score, revenue, privacy). The submit button is disabled and says "soon", with a tooltip explaining that the registry contracts are not deployed.
+**Run an operator.** A roadmap page describing the planned registry, staking and publishing steps. The submit button is disabled and says "soon".
 
-### Data model (demo)
+### Data model
 
 ```ts
-interface Network  { id; name; chainId; short; verified }
-interface Operator { ens; label; region; stakeEth; score; uptime; latencyMs;
-                     pricePer1k; networks[]; since; watchers; url; about }
+type Verification = "light-client" | "unverified";
+interface Network { id; name; short; chainId; verification }
+interface OperatorNetwork { network; tested; source; note? }
+interface DirectoryOperator { ens; operator; website; endpoint; tier; networks; warnings? }
 ```
 
-All of it is fixture data in `src/data.ts`. The replacement sources are: the ENS operator registry (name, endpoint, networks, stake), watcher measurements (uptime, latency, correctness), and the payment layer (price).
+The directory is static data in `web/src/directory/operators.ts`. `validateDirectory` rejects a verified network other than chain ID 1, `tested: true` on an unverifiable network, missing or non-https sources, and duplicates. `provider/test/config/directory-sync.test.ts` fails if the operators drift from the provider's `MAINNET_OPERATORS`. The planned replacement sources are the ENS registry and watcher measurements.
 
 ### States
 
 | State | Behavior |
-| :---- | :---- |
+| --- | --- |
 | Loading | Not needed with fixtures. With live data: skeleton rows with the same dimensions as table rows; no spinners. |
 | Empty search | One row: *No operator matches "…"*. |
 | Unknown route / operator / network | "Not found" page. |
-| Demo data | Nav badge on every page and a note under every table. |
+| Mock or roadmap | MOCK ENS badge on names; roadmap label on pages about things that do not exist. |
 | Verified vs not | Lime indicator present or absent (see section 5). |
 | Disabled action | Reduced opacity, `title` states the reason. |
 
 ### Responsive behavior
 
-Below 960 px: single column, hero code card below the text, nav links hidden, metrics 2-up, tables scroll horizontally, some columns hidden (networks, stake). The hero headline scales fluidly between 44 and 88 px.
+Below 960 px: single column, hero code card below the text, nav links hidden, metrics 2-up, tables scroll horizontally, some columns hidden (endpoint). The hero headline scales fluidly between 44 and 88 px.
 
 ### Screens
 
-|  |  |
-| :---- | :---- |
+| | |
+| --- | --- |
 | ![Landing](assets/screens/home.png) | ![Directory by network](assets/screens/directory-networks.png) |
 | Landing | Directory, by network |
 | ![Directory by operator](assets/screens/directory-operators.png) | ![Operator profile](assets/screens/operator.png) |
@@ -506,76 +496,74 @@ Below 960 px: single column, hero code card below the text, nav links hidden, me
 
 Mobile: [landing](assets/screens/mobile-home.png), [directory](assets/screens/mobile-directory.png).
 
-## 14\. Users
+## 14. Users
 
 DeRPC has two main audiences and three supporting ones.
 
 ### Primary
 
-**1\. App developer** *(dapp developer using viem)*
+**1. App developer** *(dapp developer using viem)*
 
-- **Goal:** read chain state without leaking users' IP addresses and without trusting a single provider's answers.  
-- **Pain:** public RPC providers see every query and IP; there is no way to check an answer; switching providers means rewriting config.  
-- **Tasks:** find an operator for a network; compare price and latency; pin one or let the transport choose; copy a snippet.  
-- **Success:** one line changed in their client, reads that still work, and a clear failure when privacy or proof is not possible.  
+- **Goal:** read chain state without leaking users' IP addresses and without trusting a single provider's answers.
+- **Pain:** public RPC providers see every query and IP; there is no way to check an answer; switching providers means rewriting config.
+- **Tasks:** find an operator for a network; compare price and latency; pin one or let the transport choose; copy a snippet.
+- **Success:** one line changed in their client, reads that still work, and a clear failure when privacy or proof is not possible.
 - **Where in the UI:** landing → directory (by network) → network detail → snippet.
 
-**2\. Operator** *(a person or team that runs nodes)*
+**2. Operator** *(a person or team that runs nodes)*
 
-- **Goal:** turn node capacity into income and a public track record.  
-- **Pain:** no neutral identity, no transparent score, hard to be discovered without a brand.  
-- **Tasks:** pick an ENS name, stake, publish an endpoint and networks, watch their score and uptime, adjust price.  
-- **Success:** appearing in the directory with a score that others can verify, and being paid per read.  
+- **Goal:** turn node capacity into income and a public track record.
+- **Pain:** no neutral identity, no transparent score, hard to be discovered without a brand.
+- **Tasks:** pick an ENS name, stake, publish an endpoint and networks, watch their score and uptime, adjust price.
+- **Success:** appearing in the directory with a score that others can verify, and being paid per read.
 - **Where in the UI:** landing → run an operator → operator profile (their own).
 
 ### Supporting
 
-**3\. Wallet or infrastructure team.** Needs reliability and pinned operators for production: filters by score, uptime and region; stable ENS names to pin. Same pages as the app developer, with more weight on the operator profile.
+**3. Wallet or infrastructure team.** Needs reliability and pinned operators for production: filters by score, uptime and region; stable ENS names to pin. Same pages as the app developer, with more weight on the operator profile.
 
-**4\. Watcher** *(independent verifier)*. Probes operators and publishes measurements that feed the score. No UI in this version; they appear in the interface as "3 independent watchers" on the operator profile.
+**4. Watcher** *(independent verifier)*. Probes operators and publishes measurements that feed the score. No UI in this version; they do not appear in the interface yet.
 
-**5\. Reviewer** *(hackathon judge or mentor)*. Needs to understand the product in 60 seconds and to tell what is real from what is a demo. The landing explains it on one screen, the "Demo data" badge and notes separate fixtures from facts, and [section 15](#15-implementation-status) lists what is built.
+**5. Reviewer** *(hackathon judge or mentor)*. Needs to understand the product in 60 seconds and to tell what is real from what is a demo. The landing explains it on one screen, the MOCK ENS badges, the "Listed, not verified" chips and the source links separate what DeRPC proves from what it only lists, and [section 15](#15-implementation-status) lists what is built.
 
 ### Key questions the interface answers
 
 | The user asks | Where it is answered |
-| :---- | :---- |
+| --- | --- |
 | What does this do for me? | Landing hero and the three guarantees. |
-| Who can serve Base, and at what price? | Directory, by network → network detail. |
-| Can I trust this operator? | Operator profile: score, verified uptime, stake, breakdown. |
-| How do I use it? | Snippets on the landing, network and operator pages. |
+| Who says they serve Base? | Directory, by network → network detail. |
+| Can I trust this operator? | Operator profile: networks with sources, warnings, Tor tier. Scores and stake are not built. |
+| How do I use it? | The code card on the landing and the snippet on the operator page. |
 | How do I become an operator? | Run an operator. |
-| What is real today? | Demo-data notices and the status table below. |
+| What is real today? | Verification chips, notices and the status table below. |
 
 ### Journeys
 
 | Journey | Steps | Success signal |
-| :---- | :---- | :---- |
-| **Choose a provider** | Landing → "Browse operators" → by network → pick Ethereum → sort by score → open the top operator | The user sees a score, 30-day verified uptime, price and stake before deciding. |
-| **Integrate** | Network detail → copy the snippet → paste into a viem client | The snippet is correct for the network; failures are explicit. (Transport not shipped yet.) |
-| **Become an operator** | Landing → "Run an operator" → choose a name → stake and price → publish endpoint | The operator sees how their ENS name and score will appear. (Registration is disabled until the registry is deployed.) |
+| --- | --- | --- |
+| **Choose operators** | Landing → "Browse operators" → by network → pick Ethereum → open an operator | The user sees which networks it serves, which are verified, the source for each, and any warning before deciding. |
+| **Integrate** | Operator page → copy the snippet → paste into a viem client | The snippet uses the real API (`createDeRPC`, `derpcTransport`, `blockTag: "finalized"`); unverifiable reads fail closed. |
+| **Become an operator** | Landing → "Run an operator" → choose a name → stake and price → publish endpoint | The operator sees what the registry will ask for. (Roadmap: registration is disabled until the registry is deployed.) |
 
-## 15\. Implementation status
+## 15. Implementation status
 
 This is the honest state of the product the design describes. Update it as things ship.
 
 | Area | Status | Notes |
-| :---- | :---- | :---- |
+| --- | --- | --- |
 | Brand, logo kit, tokens | **Done** | `brand/`, `web/src/tokens.css` |
-| Landing, directory, detail pages | **Done, demo data** | `web/`. Numbers are fixtures. |
-| Search by network and by operator | **Done** | State in the URL. |
+| Landing, directory, detail pages | **Done** | `web/`. Static directory with a source per network. ENS names are mock. |
+| Search by network and by operator | **Done** | State in the URL. Other networks are listed, not verified. |
 | Run an operator (UI) | **Preview** | Submit disabled. |
 | Anonymous worker (Anon-RPC), pinned config | **Built** | `provider/`, by the team. |
 | Light-client header verification | **Built** | `provider/`, shown on the P1 page in `frontend/`. |
 | P1 network check page | **Built** | `frontend/`, separate from `web/`. |
-| Fail closed on worker failure | **Built** | `provider/`. A worker that dies after startup fails reads with `TransportUnavailableError`. |
-| Forced sync committee updates | **Off** | `patches/`. The light client stalls instead of adopting an unsafe committee. |
-| `derpc()` viem transport | **Not built** | Snippets are labeled "API preview". |
-| ENS operator registry | **Planned** | Replaces fixtures in `data.ts`. |
-| Watchers and score | **Planned** | Replaces fixture scores. |
+| `createDeRPC` and `derpcTransport` | **Built** | `provider/`. Ethereum mainnet only, finalized state only. |
+| ENS operator registry | **Planned** | Replaces the static list in `web/src/directory/operators.ts`. |
+| Watchers and score | **Planned** | Not shown in the interface yet. |
 | Staking and payments | **Planned** | Prepaid balance is the first design. |
 
-## 16\. Governance
+## 16. Governance
 
 **Source of truth:** tokens in `web/src/tokens.css`, logo files in `brand/`, this document for the rules. If code and document disagree, fix the one that is wrong in the same change.
 
@@ -583,23 +571,22 @@ This is the honest state of the product the design describes. Update it as thing
 
 **Adding a component.** Use existing tokens only; no new hex values in components. Document it in section 9 with its states. Check contrast, keyboard focus, and the 960 px breakpoint.
 
-**Adding copy.** Follow section 12\. Anything that shows a number must say where the number comes from, or carry the demo-data marker.
+**Adding copy.** Follow section 12. Anything that claims what an operator serves must link to where that claim comes from, and nothing may call a network verified unless the light client verifies it.
 
 **Pull request checklist**
 
-- [ ] Uses tokens, no raw colors (except decorative SVG)  
-- [ ] Lime is used only for the brand accent, primary actions or a verified state  
-- [ ] Cobalt is not used for text on ink, and is not in the logo  
-- [ ] Text meets the contrast table  
-- [ ] Works at 390 px and 1440 px wide  
-- [ ] Keyboard: every action is reachable, focus is visible  
-- [ ] Copy is in sentence case and uses the vocabulary table  
-- [ ] `pnpm --filter web typecheck` and `pnpm --filter web build` pass  
+- [ ] Uses tokens, no raw colors (except decorative SVG)
+- [ ] Lime is used only for the brand accent, primary actions or a verified state
+- [ ] Cobalt is not used for text on ink, and is not in the logo
+- [ ] Text meets the contrast table
+- [ ] Works at 390 px and 1440 px wide
+- [ ] Keyboard: every action is reachable, focus is visible
+- [ ] Copy is in sentence case and uses the vocabulary table
+- [ ] `pnpm --filter web typecheck` and `pnpm --filter web build` pass
 - [ ] This document is updated if behavior or tokens changed
 
 **Versioning.** Version this document with the repository. Breaking visual changes (logo, primary colors, typeface) bump the minor version and are recorded below.
 
 | Version | Date | Change |
-| :---- | :---- | :---- |
+| --- | --- | --- |
 | 0.1 | 2026-11-06 | First version: brand, logo kit, tokens, components, front end, users. |
-
