@@ -723,6 +723,8 @@ p {
   align-items: flex-start;
   padding: 36px;
   border-radius: var(--r-lg);
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .panel--dark {
