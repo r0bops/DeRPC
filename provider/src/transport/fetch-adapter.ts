@@ -1,10 +1,16 @@
 import type { AnonTransport } from "./anon-transport.ts";
+import { MAX_RESPONSE_BYTES, readResponseBody } from "./response-body.ts";
 
 export interface FetchAdapterOptions {
   /** Requests under different keys should not be linkable (worker-dependent). */
   isolationKey: string;
+  /** Bound for both the response headers and the response body. Default 60 s. */
   timeoutMs?: number;
+  /** Refuse a response body larger than this. Default 16 MiB. */
+  maxBodyBytes?: number;
 }
+
+const DEFAULT_BODY_MS = 60_000;
 
 /**
  * Present the anonymous transport as a standard fetch, for libraries that take one (the light
@@ -17,14 +23,25 @@ export function asFetch(transport: AnonTransport, opts: FetchAdapterOptions): ty
     const method = init.method ?? request?.method ?? "GET";
     const headers = Object.fromEntries(new Headers(init.headers ?? request?.headers).entries());
     const body = init.body !== undefined && init.body !== null ? await bodyOf(init.body) : request ? await requestBody(request) : undefined;
-    return transport.fetch(url, {
+    const signal = init.signal ?? request?.signal ?? undefined;
+    const timeoutMs = opts.timeoutMs ?? DEFAULT_BODY_MS;
+    const deadline = performance.now() + timeoutMs;
+    const upstream = await transport.fetch(url, {
       method,
       headers,
       body,
-      signal: init.signal ?? request?.signal ?? undefined,
+      signal,
       isolationKey: opts.isolationKey,
-      timeoutMs: opts.timeoutMs,
+      timeoutMs,
     });
+    // The transport's timeout covers the headers; a stuck or unbounded body would stop the light
+    // client's polling loop forever (#28). Read it here under the same deadline.
+    const bytes = await readResponseBody(upstream, {
+      timeoutMs: deadline - performance.now(),
+      maxBytes: opts.maxBodyBytes ?? MAX_RESPONSE_BYTES,
+      signal,
+    });
+    return new Response(bytes.byteLength > 0 ? bytes : null, { status: upstream.status, statusText: upstream.statusText, headers: upstream.headers });
   };
   return adapted as typeof fetch;
 }

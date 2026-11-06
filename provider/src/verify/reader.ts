@@ -4,7 +4,11 @@ import { bytesToHex, hexToBytes, leftPad, type Hex } from "./hex.ts";
 import { ProofVerificationError, verifyAccountProof, verifyCode, verifyStorageProof, type AccountProof } from "./index.ts";
 
 /** Sends one JSON-RPC request to an execution endpoint through the anonymous transport. */
-export type JsonRpcSend = (method: string, params: unknown[], opts: { isolationKey: string }) => Promise<unknown>;
+export type JsonRpcSend = (
+  method: string,
+  params: unknown[],
+  opts: { isolationKey: string; signal?: AbortSignal },
+) => Promise<unknown>;
 
 /** A token whose balances live in a documented `mapping(address => uint256)` storage slot. */
 export interface TokenConfig {
