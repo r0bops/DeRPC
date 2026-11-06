@@ -1,117 +1,207 @@
-import type { PageResult } from "../page.ts";
-import type { Operator } from "../data.ts";
-import { getNetwork, networks, operators } from "../data.ts";
-import { demoNote, escapeHtml, icon } from "../ui.ts";
-import { emptyRow, networkTable, operatorTable } from "../components/tables.ts";
+import "../directory/directory.css";
 
-type DirectoryView = "network" | "operator";
-type SortKey = "score" | "price" | "latency";
+import { NETWORKS, OPERATORS } from "../directory/operators.ts";
+import {
+  host,
+  isVerified,
+  operatorsFor,
+  type DirectoryOperator,
+  type NetworkId,
+} from "../directory/model.ts";
+import type { PageResult } from "../page.ts";
+import { avatarTone, escapeHtml, icon } from "../ui.ts";
+
+type DirectoryView = "operators" | "networks";
 
 interface DirectoryState {
   by: DirectoryView;
   q: string;
-  sort: SortKey;
-}
-
-function parseView(value: string | null): DirectoryView {
-  return value === "operator" ? "operator" : "network";
-}
-
-function parseSort(value: string | null): SortKey {
-  return value === "price" || value === "latency" ? value : "score";
+  verifiedOnly: boolean;
 }
 
 function parseState(params: URLSearchParams): DirectoryState {
+  const by = params.get("by");
   return {
-    by: parseView(params.get("by")),
+    by: by === "networks" || by === "network" ? "networks" : "operators",
     q: params.get("q") ?? "",
-    sort: parseSort(params.get("sort")),
+    verifiedOnly: params.get("verified") === "1",
   };
-}
-
-function searchPlaceholder(view: DirectoryView): string {
-  return view === "network"
-    ? "Search networks, e.g. Base or 8453"
-    : "Search operators, ENS names, regions or networks";
 }
 
 function buildUrl(state: DirectoryState): string {
   const params = new URLSearchParams();
-  if (state.by === "operator") {
-    params.set("by", "operator");
-  }
-  if (state.q.trim()) {
-    params.set("q", state.q.trim());
-  }
-  if (state.by === "operator" && state.sort !== "score") {
-    params.set("sort", state.sort);
-  }
-  const query = params.toString();
-  return "#/directory" + (query ? "?" + query : "");
+  params.set("by", state.by);
+  if (state.q.trim()) params.set("q", state.q.trim());
+  if (state.verifiedOnly) params.set("verified", "1");
+  return `#/directory?${params}`;
 }
 
-function visibleNetworks(state: DirectoryState) {
-  const query = state.q.trim().toLowerCase();
-  if (!query) {
-    return networks;
-  }
-  return networks.filter((network) =>
-    [network.name, network.id, network.short, String(network.chainId)]
-      .join(" ")
-      .toLowerCase()
-      .includes(query),
+function initials(text: string): string {
+  return text
+    .split(/[\s.]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]!.toUpperCase())
+    .join("");
+}
+
+function personAvatar(label: string, seed: string): string {
+  return `<span class="avatar ${avatarTone(seed)}" aria-hidden="true">${escapeHtml(initials(label))}</span>`;
+}
+
+export function netChip(id: NetworkId): string {
+  const network = NETWORKS.find((item) => item.id === id);
+  const verified = isVerified(NETWORKS, id);
+  const label = network?.short ?? id;
+  const title = `${network?.name ?? id}: ${verified ? "reads proven by DeRPC" : "listed, not verified by DeRPC"}`;
+  return `<span class="net-chip ${verified ? "v" : "l"}" title="${escapeHtml(title)}">${escapeHtml(label)}</span>`;
+}
+
+export function tierChip(tier: 1 | 2): string {
+  return `<span class="tier t${tier}">Tier ${tier}</span>`;
+}
+
+export const mockBadge =
+  '<span class="mock" title="Placeholder name: nothing is registered under derpc.eth yet">mock ENS</span>';
+
+function matchesOperator(operator: DirectoryOperator, query: string): boolean {
+  if (!query) return true;
+  return (
+    operator.ens.includes(query) ||
+    operator.operator.toLowerCase().includes(query) ||
+    host(operator.endpoint).includes(query) ||
+    operator.networks.some((entry) => {
+      const network = NETWORKS.find((item) => item.id === entry.network);
+      return (
+        entry.network.includes(query) ||
+        network?.name.toLowerCase().includes(query) ||
+        String(network?.chainId) === query
+      );
+    })
   );
 }
 
-function visibleOperators(state: DirectoryState): Operator[] {
+function operatorRows(state: DirectoryState): string {
   const query = state.q.trim().toLowerCase();
-  const filtered = query
-    ? operators.filter((operator) =>
-        [
-          operator.label,
-          operator.ens,
-          operator.name,
-          operator.region,
-          ...operator.networks.map((id) => getNetwork(id)?.name ?? id),
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(query),
-      )
-    : operators;
+  const rows = OPERATORS.filter((operator) => matchesOperator(operator, query)).sort(
+    (a, b) => a.tier - b.tier || a.operator.localeCompare(b.operator),
+  );
+  if (rows.length === 0) {
+    return `<tr><td colspan="5" class="empty">No operator matches “${escapeHtml(state.q)}”.</td></tr>`;
+  }
+  return rows
+    .map((operator) => {
+      const href = `#/operator/${escapeHtml(operator.ens)}`;
+      const networks = state.verifiedOnly
+        ? operator.networks.filter((entry) => isVerified(NETWORKS, entry.network))
+        : operator.networks;
+      return `
+        <tr data-href="${href}">
+          <td>
+            <a class="row-link" href="${href}">
+              ${personAvatar(operator.operator, operator.ens)}
+              <span>
+                <span class="row-title">${escapeHtml(operator.operator)}</span>
+                <span class="row-hint">${escapeHtml(operator.ens)} ${mockBadge}</span>
+              </span>
+            </a>
+          </td>
+          <td data-label="Networks"><div class="chip-row">${networks.map((entry) => netChip(entry.network)).join("")}</div></td>
+          <td data-label="Tor tier" class="hide-m">${tierChip(operator.tier)}</td>
+          <td data-label="Endpoint" class="mono hide-m">${escapeHtml(host(operator.endpoint))}</td>
+          <td class="col-chevron hide-m">${icon("chevron")}</td>
+        </tr>
+      `;
+    })
+    .join("");
+}
 
-  return [...filtered].sort((a, b) => {
-    if (state.sort === "price") {
-      return a.pricePer1k - b.pricePer1k;
-    }
-    if (state.sort === "latency") {
-      return a.latencyMs - b.latencyMs;
-    }
-    return b.score - a.score;
-  });
+function networkRows(state: DirectoryState): string {
+  const query = state.q.trim().toLowerCase();
+  const rows = NETWORKS.filter(
+    (network) =>
+      (!state.verifiedOnly || network.verification === "light-client") &&
+      (!query ||
+        network.name.toLowerCase().includes(query) ||
+        String(network.chainId) === query ||
+        network.id.includes(query)),
+  );
+  if (rows.length === 0) {
+    return `<tr><td colspan="4" class="empty">No network matches “${escapeHtml(state.q)}”.</td></tr>`;
+  }
+  return rows
+    .map((network) => {
+      const href = `#/network/${network.id}`;
+      const operators = operatorsFor(OPERATORS, network.id);
+      const verified = network.verification === "light-client";
+      return `
+        <tr data-href="${href}">
+          <td>
+            <a class="row-link" href="${href}">
+              ${personAvatar(network.short, network.id)}
+              <span>
+                <span class="row-title">${escapeHtml(network.name)}</span>
+                <span class="row-hint">Chain ID ${network.chainId}</span>
+              </span>
+            </a>
+          </td>
+          <td data-label="Verification">${
+            verified
+              ? '<span class="ok-dot">Reads proven</span>'
+              : '<span class="net-chip l">Listed, not verified</span>'
+          }</td>
+          <td data-label="Operators">${operators.map((operator) => escapeHtml(operator.operator)).join(", ")} <span class="row-hint">(${operators.length})</span></td>
+          <td class="col-chevron hide-m">${icon("chevron")}</td>
+        </tr>
+      `;
+    })
+    .join("");
 }
 
 function resultsMarkup(state: DirectoryState): string {
-  if (state.by === "network") {
-    const rows = visibleNetworks(state);
-    const table =
-      rows.length === 0
-        ? `<div class="table-card"><table class="data-table"><caption class="sr-only">Networks in the DeRPC directory</caption><tbody>${emptyRow(6, "network", state.q.trim())}</tbody></table></div>`
-        : networkTable(rows, "Networks in the DeRPC directory");
-    return table + demoNote();
+  if (state.by === "networks") {
+    return `
+      <div class="table-card">
+        <table class="data-table">
+          <caption class="sr-only">Networks in the DeRPC directory</caption>
+          <thead>
+            <tr>
+              <th scope="col">Network</th>
+              <th scope="col">Verification</th>
+              <th scope="col">Operators listing it</th>
+              <th scope="col"><span class="sr-only">Open</span></th>
+            </tr>
+          </thead>
+          <tbody>${networkRows(state)}</tbody>
+        </table>
+      </div>
+    `;
   }
-
-  const rows = visibleOperators(state);
-  const table =
-    rows.length === 0
-      ? `<div class="table-card"><table class="data-table"><caption class="sr-only">Operators in the DeRPC directory</caption><tbody>${emptyRow(8, "operator", state.q.trim())}</tbody></table></div>`
-      : operatorTable(rows, "Operators in the DeRPC directory");
-  return table + demoNote();
+  return `
+    <div class="table-card">
+      <table class="data-table">
+        <caption class="sr-only">Operators in the DeRPC directory</caption>
+        <thead>
+          <tr>
+            <th scope="col">Operator</th>
+            <th scope="col">Networks</th>
+            <th scope="col" class="hide-m">Tor tier</th>
+            <th scope="col" class="hide-m">Endpoint</th>
+            <th scope="col"><span class="sr-only">Open</span></th>
+          </tr>
+        </thead>
+        <tbody>${operatorRows(state)}</tbody>
+      </table>
+    </div>
+  `;
 }
 
 export function directoryPage(params: URLSearchParams): PageResult {
   const state = parseState(params);
-  const placeholder = searchPlaceholder(state.by);
+  const placeholder =
+    state.by === "operators"
+      ? "Search operators, ENS names, endpoints or networks"
+      : "Search networks, e.g. Base or 8453";
 
   return {
     title: "Directory",
@@ -121,49 +211,50 @@ export function directoryPage(params: URLSearchParams): PageResult {
           <div class="page__head">
             <div>
               <p class="kicker">Directory</p>
-              <h1 class="page-title">Who serves what.</h1>
-              <p class="page-lead">Search by network or by operator. Every row opens the same underlying record: ENS name, stake, score and price.</p>
+              <h1 class="page-title">Choose who serves your reads.</h1>
+              <p class="page-lead">DeRPC never picks an operator for you. It proves every answer on Ethereum mainnet. Other networks are listed from each operator's own documentation and are not verified yet.</p>
             </div>
           </div>
 
           <div class="toolbar">
             <div class="segmented" role="group" aria-label="Directory view">
-              <button class="segmented__btn" type="button" data-view="network" aria-pressed="${state.by === "network"}">By network</button>
-              <button class="segmented__btn" type="button" data-view="operator" aria-pressed="${state.by === "operator"}">By operator</button>
+              <button class="segmented__btn" type="button" data-view="operators" aria-pressed="${state.by === "operators"}">By operator</button>
+              <button class="segmented__btn" type="button" data-view="networks" aria-pressed="${state.by === "networks"}">By network</button>
             </div>
             <div class="search">
               ${icon("search")}
               <label class="sr-only" for="directory-search">Search the directory</label>
               <input id="directory-search" type="search" placeholder="${placeholder}" value="${escapeHtml(state.q)}" autocomplete="off" />
             </div>
-            <div class="select" id="directory-sort"${state.by === "network" ? " hidden" : ""}>
-              <label class="sr-only" for="directory-sort-select">Sort operators</label>
-              <select id="directory-sort-select">
-                <option value="score"${state.sort === "score" ? " selected" : ""}>Sort: Score</option>
-                <option value="price"${state.sort === "price" ? " selected" : ""}>Sort: Price</option>
-                <option value="latency"${state.sort === "latency" ? " selected" : ""}>Sort: Latency</option>
-              </select>
-              ${icon("chevron").replace("<svg ", '<svg class="select__icon" ')}
-            </div>
+            <label class="filter">
+              <input type="checkbox" id="directory-verified" ${state.verifiedOnly ? "checked" : ""} />
+              Verified networks only
+            </label>
           </div>
 
+          <p class="legend">
+            <span><span class="net-chip v">ETH</span> reads proven by DeRPC</span>
+            <span><span class="net-chip l">BASE</span> listed by the operator, not verified</span>
+            <span>${tierChip(1)} ${tierChip(2)} reliability through Tor, measured Nov 5</span>
+          </p>
+
           <div id="directory-results">${resultsMarkup(state)}</div>
+          <p class="demo-note"><span class="demo-note__square" aria-hidden="true"></span><span>ENS names are placeholders until the registry exists. Scores, stake and prices are not part of this build.</span></p>
         </div>
       </div>
     `,
     bind(root) {
       const results = root.querySelector<HTMLElement>("#directory-results");
       const search = root.querySelector<HTMLInputElement>("#directory-search");
-      const sortWrap = root.querySelector<HTMLElement>("#directory-sort");
-      const sort = root.querySelector<HTMLSelectElement>("#directory-sort-select");
-      if (!results || !search || !sortWrap || !sort) {
-        return;
-      }
+      const verified = root.querySelector<HTMLInputElement>("#directory-verified");
+      if (!results || !search || !verified) return;
 
       const update = () => {
         results.innerHTML = resultsMarkup(state);
-        sortWrap.hidden = state.by !== "operator";
-        search.placeholder = searchPlaceholder(state.by);
+        search.placeholder =
+          state.by === "operators"
+            ? "Search operators, ENS names, endpoints or networks"
+            : "Search networks, e.g. Base or 8453";
         root.querySelectorAll<HTMLButtonElement>("[data-view]").forEach((button) => {
           button.setAttribute("aria-pressed", String(button.dataset.view === state.by));
         });
@@ -173,7 +264,7 @@ export function directoryPage(params: URLSearchParams): PageResult {
       root.querySelectorAll<HTMLButtonElement>("[data-view]").forEach((button) => {
         button.addEventListener("click", () => {
           const view = button.dataset.view;
-          if (view === "network" || view === "operator") {
+          if (view === "operators" || view === "networks") {
             state.by = view;
             update();
           }
@@ -185,23 +276,9 @@ export function directoryPage(params: URLSearchParams): PageResult {
         update();
       });
 
-      sort.addEventListener("change", () => {
-        const value = sort.value;
-        if (value === "score" || value === "price" || value === "latency") {
-          state.sort = value;
-          update();
-        }
-      });
-
-      results.addEventListener("click", (event) => {
-        const target = event.target as HTMLElement;
-        if (!target.closest("[data-clear-search]")) {
-          return;
-        }
-        state.q = "";
-        search.value = "";
+      verified.addEventListener("change", () => {
+        state.verifiedOnly = verified.checked;
         update();
-        search.focus();
       });
 
       update();

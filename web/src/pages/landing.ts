@@ -1,5 +1,5 @@
 import type { PageResult } from "../page.ts";
-import { networks, operators } from "../data.ts";
+import { NETWORKS, OPERATORS } from "../directory/operators.ts";
 import { codeCard, icon } from "../ui.ts";
 
 export function landingPage(): PageResult {
@@ -25,11 +25,11 @@ export function landingPage(): PageResult {
         <div class="container">
           <div class="stats__grid">
             <div class="stat">
-              <div class="stat__value">${operators.length}</div>
+              <div class="stat__value">${OPERATORS.length}</div>
               <div class="stat__caption">Operators</div>
             </div>
             <div class="stat">
-              <div class="stat__value">${networks.length}</div>
+              <div class="stat__value">${NETWORKS.length}</div>
               <div class="stat__caption">Networks</div>
             </div>
             <div class="stat">
@@ -41,7 +41,7 @@ export function landingPage(): PageResult {
               <div class="stat__caption">Direct fallbacks</div>
             </div>
           </div>
-          <p class="stats__note">The five public mainnet endpoints shipped with the demo. Staking, payments and the ENS operator registry are roadmap, not live.</p>
+          <p class="stats__note">Five operators you can choose today. Only Ethereum mainnet is verified. Staking, payments and the ENS operator registry are roadmap, not live.</p>
         </div>
       </section>
 

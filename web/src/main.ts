@@ -1,7 +1,8 @@
 import "@fontsource-variable/inter";
 import "./styles.css";
 
-import { getNetwork, getOperator } from "./data.ts";
+import { NETWORKS, OPERATORS } from "./directory/operators.ts";
+import { getNetwork, getOperator } from "./directory/model.ts";
 import type { PageResult } from "./page.ts";
 import { bindCopyButtons, bindTableRows, footer, nav } from "./ui.ts";
 import { directoryPage } from "./pages/directory.ts";
@@ -60,13 +61,11 @@ function resolvePage(route: Route): PageResult {
   }
   if (route.path.startsWith("/network/")) {
     const id = safeDecode(route.path.slice("/network/".length));
-    const network = getNetwork(id);
-    return network ? networkPage(network) : notFoundPage();
+    return getNetwork(NETWORKS, id) ? networkPage(id) : notFoundPage();
   }
   if (route.path.startsWith("/operator/")) {
     const value = safeDecode(route.path.slice("/operator/".length));
-    const operator = getOperator(value);
-    return operator ? operatorPage(operator) : notFoundPage();
+    return getOperator(OPERATORS, value) ? operatorPage(value) : notFoundPage();
   }
   if (route.path === "/operate") {
     return operatePage();

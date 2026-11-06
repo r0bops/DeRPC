@@ -1,5 +1,3 @@
-import type { Operator } from "./data.ts";
-
 export function asset(name: string): string {
   return import.meta.env.BASE_URL + name;
 }
@@ -62,7 +60,7 @@ export function nav(active: "directory" | "operate" | null): string {
           <a class="nav__link" href="https://github.com/r0bops/DeRPC" target="_blank" rel="noreferrer">GitHub</a>
         </nav>
         <span class="nav__spacer"></span>
-        <span class="nav__badge"><span class="ok-dot" aria-hidden="true"></span>Demo data</span>
+        <span class="nav__badge"><span class="ok-dot" aria-hidden="true"></span>Hackathon build</span>
         <a class="btn btn--lime btn--small" href="#/directory">Open directory</a>
       </div>
     </header>
@@ -94,8 +92,14 @@ export function avatarTone(name: string): string {
   return tones[sum % tones.length] ?? "avatar--ink-lime";
 }
 
-export function avatar(operator: Operator, large = false): string {
-  return `<span class="avatar ${avatarTone(operator.name)}${large ? " avatar--lg" : ""}" aria-hidden="true">${escapeHtml(operator.initials)}</span>`;
+export function avatar(label: string, seed = label, large = false): string {
+  const initials = label
+    .split(/[\s.]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]!.toUpperCase())
+    .join("");
+  return `<span class="avatar ${avatarTone(seed)}${large ? " avatar--lg" : ""}" aria-hidden="true">${escapeHtml(initials)}</span>`;
 }
 
 export function networkAvatar(name: string, short: string, large = false): string {
@@ -122,7 +126,7 @@ export function scoreMarkup(score: number): string {
 }
 
 export function demoNote(): string {
-  return `<p class="demo-note"><span class="demo-note__square" aria-hidden="true"></span><span>Demo data. Scores and uptime will come from independent watchers once the registry is live.</span></p>`;
+  return `<p class="demo-note"><span class="demo-note__square" aria-hidden="true"></span><span>ENS names are placeholders until the registry exists. Scores, stake and prices are not part of this build.</span></p>`;
 }
 
 export function copyButton(text: string): string {

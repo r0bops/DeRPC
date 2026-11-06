@@ -1,197 +1,167 @@
-import type { Operator } from "../data.ts";
-import {
-  formatEth,
-  formatMonth,
-  formatPrice,
-  formatUptime,
-  getNetwork,
-  uptimeSeries,
-} from "../data.ts";
+import "../directory/directory.css";
+
+import { NETWORKS, OPERATORS } from "../directory/operators.ts";
+import { TIER_TEXT, getNetwork, getOperator, host, isVerified } from "../directory/model.ts";
 import type { PageResult } from "../page.ts";
-import {
-  avatar,
-  chip,
-  escapeHtml,
-  icon,
-  snippet,
-  verified,
-} from "../ui.ts";
+import { avatarTone, escapeHtml, icon, snippet } from "../ui.ts";
+import { mockBadge, tierChip } from "./directory.ts";
+import { notFoundPage } from "./not-found.ts";
 
-function uptimeChart(operator: Operator): string {
-  const series = uptimeSeries(operator);
-  const rawMin = Math.min(...series);
-  const rawMax = Math.max(...series);
-  const min = rawMin - 0.08;
-  const max = rawMax + 0.08;
-  const range = Math.max(0.1, max - min);
-  const points = series.map((value, index) => {
-    const x = 10 + (index / (series.length - 1)) * 580;
-    const y = 102 - ((value - min) / range) * 84;
-    return [x, y] as const;
-  });
-  const first = points[0] ?? ([10, 102] as const);
-  const last = points[points.length - 1] ?? first;
-  const line = points
-    .map(([x, y], index) => `${index === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`)
-    .join(" ");
-  const area = `${line} L${last[0].toFixed(1)} 108 L${first[0].toFixed(1)} 108 Z`;
-  const gradient = `uptime-gradient-${operator.name}`;
-  const title = `uptime-title-${operator.name}`;
-  const desc = `uptime-desc-${operator.name}`;
-
-  return `
-    <svg class="chart" viewBox="0 0 600 120" role="img" aria-labelledby="${title} ${desc}">
-      <title id="${title}">30-day verified uptime for ${escapeHtml(operator.ens)}</title>
-      <desc id="${desc}">Daily uptime measured by ${operator.watchers} independent watchers. The latest verified measurement is ${formatUptime(operator.uptime)}.</desc>
-      <defs>
-        <linearGradient id="${gradient}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#2B2BFF" stop-opacity="0.22" />
-          <stop offset="1" stop-color="#2B2BFF" stop-opacity="0" />
-        </linearGradient>
-      </defs>
-      <path d="${area}" fill="url(#${gradient})" />
-      <path d="${line}" fill="none" stroke="#2B2BFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-      <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="4.5" fill="#C8F63C" stroke="#0A0A0F" stroke-width="2" />
-    </svg>
-  `;
+function initials(text: string): string {
+  return text
+    .split(/[\s.]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]!.toUpperCase())
+    .join("");
 }
 
-function pinSnippet(operator: Operator): string {
+function personAvatar(label: string, seed: string, large = false): string {
+  return `<span class="avatar ${avatarTone(seed)}${large ? " avatar--lg" : ""}" aria-hidden="true">${escapeHtml(initials(label))}</span>`;
+}
+
+function pinSnippet(ens: string): string {
   return `import { createDeRPC, MAINNET_OPERATORS } from "@derpc/provider";
 import { derpcTransport } from "@derpc/provider/viem";
 import { createPublicClient } from "viem";
 import { mainnet } from "viem/chains";
 
-const derpc = createDeRPC({ operators: MAINNET_OPERATORS.filter((o) => o.ens === "${operator.ens}") });
-const client = createPublicClient({ chain: mainnet, transport: derpcTransport(derpc) });`;
+const derpc = createDeRPC({ operators: MAINNET_OPERATORS.filter((o) => o.ens === "${ens}") });
+const client = createPublicClient({ chain: mainnet, transport: derpcTransport(derpc) });
+// Pass blockTag: "finalized". DeRPC proves state at the verified finalized block only.`;
 }
 
-function scoreRows(operator: Operator): string {
-  const rows: Array<[string, number]> = [
-    ["Verified uptime", operator.breakdown.uptime],
-    ["Correctness", operator.breakdown.correctness],
-    ["Latency", operator.breakdown.latency],
-    ["Stake", operator.breakdown.stake],
-  ];
+export function operatorPage(ens: string): PageResult {
+  const operator = getOperator(OPERATORS, ens);
+  if (!operator) return notFoundPage();
 
-  return rows
-    .map(
-      ([label, value]) => `
-        <div class="bar-row">
-          <span class="bar-row__label">${label}</span>
-          <span class="bar-row__track"><span class="bar-row__fill" style="width:${value}%"></span></span>
-          <span class="bar-row__value">${value}</span>
-        </div>
-      `,
-    )
-    .join("");
-}
-
-export function operatorPage(operator: Operator): PageResult {
-  const verifiedNetworks = operator.networks.filter((id) => getNetwork(id)?.verified).length;
-  const networkChips = operator.networks
-    .map((id) => {
-      const network = getNetwork(id);
-      return chip(network?.name ?? id, `#/network/${id}`);
-    })
-    .join("");
+  const verifiedCount = operator.networks.filter((entry) => isVerified(NETWORKS, entry.network)).length;
 
   return {
-    title: `${operator.ens} · Operator`,
+    title: operator.operator,
     html: `
       <div class="page">
         <div class="container">
-          <a class="back-link" href="#/directory?by=operator">${icon("arrowLeft")}All operators</a>
+          <a class="back-link" href="#/directory?by=operators">${icon("arrowLeft")}All operators</a>
           <div class="page__head">
             <div class="detail-head">
-              ${avatar(operator, true)}
+              ${personAvatar(operator.operator, operator.ens, true)}
               <div>
                 <p class="kicker">Operator</p>
-                <h1 class="page-title">${escapeHtml(operator.ens)}</h1>
+                <h1 class="page-title">${escapeHtml(operator.operator)}</h1>
                 <div class="detail-meta">
-                  <span>${escapeHtml(operator.label)}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>${escapeHtml(operator.region)}</span>
-                  <span aria-hidden="true">·</span>
-                  ${verified(verifiedNetworks > 0, `Proofs on ${verifiedNetworks} network${verifiedNetworks === 1 ? "" : "s"}`)}
+                  <span class="mono">${escapeHtml(operator.ens)}</span>
+                  ${mockBadge}
                 </div>
               </div>
             </div>
           </div>
-          <p class="page-lead">${escapeHtml(operator.about)}</p>
+
+          ${(operator.warnings ?? [])
+            .map(
+              (warning) =>
+                `<div class="notice warn" role="note"><span><b>Before you choose this operator.</b> ${escapeHtml(warning)}</span></div>`,
+            )
+            .join("")}
 
           <div class="metrics">
             <div class="metric">
-              <div class="metric__label">Score</div>
-              <div class="metric__value">${operator.score.toFixed(1)}</div>
-              <div class="metric__caption">Out of 100</div>
+              <div class="metric__label">Networks listed</div>
+              <div class="metric__value">${operator.networks.length}</div>
             </div>
             <div class="metric">
-              <div class="metric__label">Verified uptime</div>
-              <div class="metric__value">${formatUptime(operator.uptime)}</div>
-              <div class="metric__caption">${operator.watchers} independent watchers</div>
+              <div class="metric__label">Verified by DeRPC</div>
+              <div class="metric__value">${verifiedCount}</div>
+              <div class="metric__caption">Ethereum mainnet only</div>
             </div>
             <div class="metric">
-              <div class="metric__label">Price</div>
-              <div class="metric__value">${formatPrice(operator.pricePer1k)}</div>
-              <div class="metric__caption">Per 1k reads</div>
+              <div class="metric__label">Tor reliability</div>
+              <div class="metric__value">Tier ${operator.tier}</div>
+              <div class="metric__caption">measured Nov 5</div>
             </div>
             <div class="metric">
-              <div class="metric__label">Stake</div>
-              <div class="metric__value">${formatEth(operator.stakeEth)} ETH</div>
-              <div class="metric__caption">Bonded</div>
+              <div class="metric__label">Endpoint</div>
+              <div class="metric__value metric__value--host">${escapeHtml(host(operator.endpoint))}</div>
             </div>
           </div>
 
           <div class="detail-grid">
             <div class="stack">
-              <div class="chart-card">
-                <div class="card-head">
-                  <div>
-                    <h2>30-day verified uptime</h2>
-                    <p>Daily measurements</p>
-                  </div>
-                  <span class="verified"><span class="ok-dot" aria-hidden="true"></span>${operator.watchers} watchers</span>
-                </div>
-                ${uptimeChart(operator)}
-                <p class="chart__note">Measured by ${operator.watchers} independent watchers against the light client. Latest verified measurement: ${formatUptime(operator.uptime)}.</p>
-              </div>
               <div class="card">
                 <div class="card-head">
                   <div>
-                    <h2>Score breakdown</h2>
-                    <p>Four components, one public number</p>
+                    <h2>Networks</h2>
+                    <p>Each claim links to the page that backs it. “Tested” means DeRPC ran proven reads through this operator.</p>
                   </div>
-                  <span class="score__value">${operator.score.toFixed(1)}</span>
                 </div>
-                <div class="bars">${scoreRows(operator)}</div>
+                <div class="table-card table-card--flush">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Network</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Tested</th>
+                        <th scope="col">Source</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${operator.networks
+                        .map((entry) => {
+                          const network = getNetwork(NETWORKS, entry.network)!;
+                          const verified = isVerified(NETWORKS, entry.network);
+                          return `
+                            <tr>
+                              <td>
+                                <span class="row-title">${escapeHtml(network.name)}</span>
+                                <span class="row-hint">Chain ID ${network.chainId}</span>
+                              </td>
+                              <td>${
+                                verified
+                                  ? '<span class="ok-dot">Reads proven</span>'
+                                  : '<span class="net-chip l">Listed, not verified</span>'
+                              }</td>
+                              <td>${entry.tested ? "Yes" : "No"}</td>
+                              <td class="src">
+                                <a href="${escapeHtml(entry.source)}" target="_blank" rel="noopener">${escapeHtml(host(entry.source))}</a>
+                                ${entry.note ? `<span class="row-hint">${escapeHtml(entry.note)}</span>` : ""}
+                              </td>
+                            </tr>
+                          `;
+                        })
+                        .join("")}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
             <div class="stack">
               <div class="card">
                 <div class="card-head">
                   <div>
-                    <h2>ENS record</h2>
-                    <p>Resolved from the operator registry</p>
+                    <h2>About this operator</h2>
+                    <p>Facts, not scores.</p>
                   </div>
-                  <span class="chip">Resolved</span>
                 </div>
                 <dl class="kv">
                   <dt>Name</dt>
-                  <dd class="mono">${escapeHtml(operator.ens)}</dd>
+                  <dd class="mono">${escapeHtml(operator.ens)} ${mockBadge}</dd>
                   <dt>Endpoint</dt>
                   <dd class="mono">${escapeHtml(operator.endpoint)}</dd>
-                  <dt>Region</dt>
-                  <dd>${escapeHtml(operator.region)}</dd>
-                  <dt>Networks</dt>
-                  <dd><div class="chip-row">${networkChips}</div></dd>
-                  <dt>Operating since</dt>
-                  <dd>${formatMonth(operator.since)}</dd>
-                  <dt>Stake</dt>
-                  <dd>${formatEth(operator.stakeEth)} ETH</dd>
+                  <dt>Website</dt>
+                  <dd><a class="src" href="${escapeHtml(operator.website)}" target="_blank" rel="noopener">${escapeHtml(host(operator.website))}</a></dd>
+                  <dt>Tor tier</dt>
+                  <dd>${tierChip(operator.tier)}<span class="row-hint">${escapeHtml(TIER_TEXT[operator.tier])}</span></dd>
                 </dl>
               </div>
-              <div>${snippet("API preview", pinSnippet(operator))}</div>
+              <div>
+                <div class="card-head" style="margin-bottom:12px">
+                  <div>
+                    <h2>Use only this operator</h2>
+                    <p>Works today on Ethereum mainnet with <span class="mono">blockTag: "finalized"</span>.</p>
+                  </div>
+                </div>
+                ${snippet("client.ts", pinSnippet(operator.ens))}
+              </div>
             </div>
           </div>
         </div>

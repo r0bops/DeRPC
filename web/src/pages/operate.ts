@@ -1,14 +1,14 @@
-import { networks } from "../data.ts";
+import { NETWORKS } from "../directory/operators.ts";
 import type { PageResult } from "../page.ts";
-import { icon } from "../ui.ts";
+import { escapeHtml, icon } from "../ui.ts";
 
 function networkChoices(): string {
-  return networks
+  return NETWORKS
     .map(
       (network, index) => `
         <label>
-          <input type="checkbox" name="networks" value="${network.id}"${index === 0 ? " checked" : ""} />
-          <span>${network.name}</span>
+          <input type="checkbox" name="networks" value="${escapeHtml(network.id)}"${index === 0 ? " checked" : ""} />
+          <span>${escapeHtml(network.name)}</span>
         </label>
       `,
     )
