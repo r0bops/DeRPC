@@ -107,7 +107,7 @@ function operatorRows(state: DirectoryState): string {
             </a>
           </td>
           <td data-label="Networks"><div class="chip-row">${networks.map((entry) => netChip(entry.network)).join("")}</div></td>
-          <td data-label="Live health"><span class="row-hint">Not checked here</span></td>
+          <td data-label="Live health"><a class="check-link" href="${escapeHtml(demoHref())}?operator=${encodeURIComponent(operator.ens)}#routing">Check in dashboard</a></td>
           <td data-label="Tor tier" class="hide-m">${tierChip(operator.tier)}</td>
           <td data-label="Endpoint" class="mono hide-m">${escapeHtml(host(operator.endpoint))}</td>
           <td class="col-chevron hide-m">${icon("chevron")}</td>
@@ -148,7 +148,7 @@ function networkRows(state: DirectoryState): string {
           </td>
           <td data-label="Verification">${
             verified
-              ? '<span class="ok-dot">Reads proven</span>'
+              ? '<span class="verified"><span class="ok-dot" aria-hidden="true"></span>Reads proven</span>'
               : '<span class="net-chip l">Listed, not verified</span>'
           }</td>
           <td data-label="Operators">${operators.map((operator) => escapeHtml(operator.operator)).join(", ")} <span class="row-hint">(${operators.length})</span></td>
@@ -204,10 +204,22 @@ export function directoryPage(params: URLSearchParams): PageResult {
     state.by === "operators"
       ? "Search operators, ENS names, endpoints or networks"
       : "Search networks, e.g. Base or 8453";
+  const verifiedNetworks =
+    NETWORKS.filter((network) => network.verification === "light-client")
+      .map((network) => network.name)
+      .join(", ") || "None yet";
 
   return {
     title: "Directory",
     html: `
+      <section class="facts" aria-label="Directory at a glance">
+        <dl class="container facts__grid">
+          <div class="facts__item"><dt>Operators listed</dt><dd>${OPERATORS.length} · names are placeholders</dd></div>
+          <div class="facts__item"><dt>Networks listed</dt><dd>${NETWORKS.length} · from operators' own documentation</dd></div>
+          <div class="facts__item"><dt>Verified by proof</dt><dd><span class="ok-dot" aria-hidden="true"></span>${escapeHtml(verifiedNetworks)}</dd></div>
+          <div class="facts__item"><dt>Live health</dt><dd>Checked on your device, in the dashboard</dd></div>
+        </dl>
+      </section>
       <div class="page">
         <div class="container">
           <div class="page__head">

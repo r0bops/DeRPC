@@ -1607,6 +1607,11 @@ a.chip:hover {
 
 .operator-draft-review {
   margin-top: var(--sp-6);
+  scroll-margin-top: calc(var(--nav-h) + var(--sp-4));
+}
+
+.operator-draft-review h2 {
+  scroll-margin-top: calc(var(--nav-h) + var(--sp-4));
 }
 
 .operator-draft-review pre {
@@ -1616,6 +1621,39 @@ a.chip:hover {
   overflow: auto;
   background: var(--soft);
   font: 13px/1.6 var(--font-mono);
+}
+
+.operator-config-next-title {
+  margin-top: var(--sp-6);
+  font-size: 15px;
+}
+
+.operator-config-next {
+  margin: var(--sp-3) 0;
+  padding-left: var(--sp-5);
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+
+.operator-config-next li + li {
+  margin-top: var(--sp-3);
+}
+
+#operator-deployment-fields {
+  margin-bottom: var(--sp-4);
+}
+
+#operator-deployment-fields summary {
+  min-height: var(--sp-10);
+  padding: var(--sp-2) 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+#operator-deployment-fields .field {
+  margin-top: var(--sp-4);
 }
 
 .operator-onboarding-aside {
@@ -1777,7 +1815,6 @@ a.chip:hover {
     max-width: 620px;
   }
 
-  .nav__links,
   .nav__badge {
     display: none;
   }
@@ -2008,6 +2045,133 @@ a.chip:hover {
   .nav .btn--small {
     padding: 0 10px;
     font-size: 13px;
+  }
+}
+
+/* Phone navigation and touch targets */
+
+/* Under 860px the links no longer fit beside the brand and the button, so they get their own row.
+   The header sticks at a negative offset: the brand row scrolls away and the link row stays pinned. */
+@media (max-width: 860px) {
+  :root {
+    --nav-brand-row: 56px;
+    --nav-link-row: 48px;
+    --nav-h: calc(var(--nav-brand-row) + var(--nav-link-row));
+  }
+
+  .nav {
+    top: calc(-1 * var(--nav-brand-row));
+    height: auto;
+  }
+
+  .nav__inner {
+    flex-wrap: wrap;
+    gap: 0 12px;
+    height: auto;
+  }
+
+  .nav__brand {
+    height: var(--nav-brand-row);
+  }
+
+  .nav__links {
+    order: 1;
+    /* Pulled out by the links' own padding, so their text lines up with the brand. */
+    flex: 0 0 calc(100% + 24px);
+    height: var(--nav-link-row);
+    margin-inline: -12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nav__links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav__link {
+    flex: none;
+    min-height: 44px;
+  }
+}
+
+/* GitHub stays in the footer; on the narrowest screens the row keeps the product pages. */
+@media (max-width: 480px) {
+  .nav__link[target="_blank"] {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  /* Three product links still fit on one line at 320px. */
+  .nav__links {
+    flex-basis: calc(100% + 16px);
+    margin-inline: -8px;
+  }
+
+  .nav__link {
+    padding-inline: 8px;
+  }
+}
+
+/* The page head stacks on phones; its button needs room below the text. */
+@media (max-width: 640px) {
+  .page__head > .btn {
+    margin-top: 20px;
+  }
+}
+
+/* Touch input at any width: controls reach 44px. Mouse and trackpad keep the denser sizes. */
+@media (pointer: coarse) {
+  .skip-link,
+  .nav__brand,
+  .nav__link {
+    min-height: 44px;
+  }
+
+  .footer__links {
+    row-gap: 0;
+  }
+
+  .footer__links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .btn--small {
+    height: 44px;
+  }
+
+  .segmented__btn,
+  .copy-btn,
+  #operator-deployment-fields summary,
+  .operator-wrapper-guide summary {
+    min-height: 44px;
+  }
+
+  .back-link,
+  .row-link,
+  .text-link,
+  .filter,
+  .check-link,
+  a.src,
+  .src a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .back-link {
+    margin-block: -12px 6px;
+  }
+
+  .operator-onboarding button,
+  .operator-onboarding a.btn {
+    min-height: 44px;
+  }
+
+  .filter {
+    gap: 8px;
   }
 }
 

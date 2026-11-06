@@ -55,7 +55,7 @@ export function operatorPage(ens: string): PageResult {
                 </div>
               </div>
             </div>
-            <a class="btn btn--lime" href="${escapeHtml(demoHref())}?operator=${encodeURIComponent(operator.ens)}#operator-dashboard">Choose in dashboard ${icon("arrow")}</a>
+            <a class="btn btn--lime" href="${escapeHtml(demoHref())}?operator=${encodeURIComponent(operator.ens)}#routing">Choose in dashboard ${icon("arrow")}</a>
           </div>
 
           ${(operator.warnings ?? [])
