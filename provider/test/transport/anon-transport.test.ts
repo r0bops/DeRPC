@@ -57,7 +57,7 @@ const harness = vi.hoisted(() => {
 
 vi.mock("@anon-rpc/browser-harness", () => ({ AnonRpcWorker: harness.FakeWorker }));
 
-import { startAnonTransport, TransportUnavailableError } from "../../src/transport/anon-transport.ts";
+import { startAnonTransport, NetworkUnavailableError, TransportUnavailableError } from "../../src/transport/anon-transport.ts";
 import type { TransportState } from "../../src/transport/anon-transport.ts";
 import type { WorkerPin } from "../../src/config/mainnet.ts";
 
@@ -84,6 +84,35 @@ afterEach(() => {
 });
 
 describe("startAnonTransport", () => {
+  it("classifies its own request timeout as a network outage without killing the worker", async () => {
+    const { transport, worker } = start();
+    worker.resolveReady();
+    await transport.ready;
+    vi.spyOn(worker, "fetch").mockImplementation((...args: unknown[]) => {
+      const signal = (args[1] as RequestInit).signal!;
+      return new Promise((_, reject) => signal.addEventListener("abort", () => reject(signal.reason), { once: true }));
+    });
+    await expect(transport.fetch("https://rpc.test/", { timeoutMs: 5 })).rejects.toBeInstanceOf(NetworkUnavailableError);
+    expect(transport.state()).toBe("ready");
+    transport.close();
+  });
+
+  it("preserves caller cancellation instead of labeling it a network outage", async () => {
+    const { transport, worker } = start();
+    worker.resolveReady();
+    await transport.ready;
+    vi.spyOn(worker, "fetch").mockImplementation((...args: unknown[]) => {
+      const signal = (args[1] as RequestInit).signal!;
+      return new Promise((_, reject) => signal.addEventListener("abort", () => reject(signal.reason), { once: true }));
+    });
+    const controller = new AbortController(), reason = new Error("caller stopped this read");
+    const read = transport.fetch("https://rpc.test/", { signal: controller.signal });
+    controller.abort(reason);
+    await expect(read).rejects.toBe(reason);
+    expect(transport.state()).toBe("ready");
+    transport.close();
+  });
+
   it("fails before readiness", async () => {
     const { transport, worker } = start();
     worker.fail(new Error("worker error: boot"));

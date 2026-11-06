@@ -1,6 +1,6 @@
 # Project QA — November 6, 2026
 
-The default automated suite and the live local-gateway verified-read/failover/shutdown flow pass, but this review does **not** clear the public release gate. The built release could not connect through the public demonstration gateway in a fresh Firefox session. The initial review reproduced seven medium-priority defects and two lower-priority configuration issues; the parallel follow-up below records their local corrections. Payments remain off and independent-operator ENS onboarding remains deferred, as specified in [CONTEXT.md](CONTEXT.md).
+This report records dated QA snapshots. The latest branch integration below passed the combined automated suite and a fresh public-gateway verified-read/shutdown check. Earlier failures and their narrower historical conclusions remain recorded in their own sections. Payments remain off and independent-operator ENS onboarding remains deferred, as specified in [CONTEXT.md](CONTEXT.md).
 
 The initial review covers the working tree based on `cccee83`, including the pending provider, frontend, contracts, payments, wrapper and website changes. A SHA-256 inventory of 253 source/document files was unchanged between the start and end of that review, before adding this report. Node 24.16.0 and pnpm 11.22.0 were used. That review left implementation files unchanged; the subsequently authorized fixes are recorded separately below. Neither exercise constitutes an independent security audit.
 
@@ -42,9 +42,47 @@ Issues #35, #38 and #39 are closed on GitHub, but their described failures are r
 - **PR #64, `16f4ca38`:** its five-file patch applies cleanly and is not duplicated in main. However, `lsof -iUDP:12298` matches either endpoint of a UDP connection. A real owned socket bound to local port 60090 and connected to remote loopback port 12298 made the check succeed, without sending a datagram; that client is not a locally bound gateway. Check the local port and add that negative case. Six mocked helper tests passed in an isolated temporary copy after allowing subprocess execution; they do not cover this false positive or establish an actual macOS run. Bash and benchmark syntax checks passed. The new Chrome evidence's source hash matches current `verified-call.ts`, and its five-sample 45.1 ms median is scoped to generated proofs without Tor/network latency. Its 98,606 gzip bytes describe the isolated benchmark output, including fixture/bootstrap code, not a measured incremental production-page cost. Prefer that wording and describe raw calldata as not forwarded, without implying the operator cannot infer the call from access patterns. Evidence is in `/tmp/derpc-pr64-review/`.
 - **`front-presentation`, `ee500fb9`:** isolated evaluation of the branch's exact `renderTraffic()` function reports `100% through Anon-RPC` and `0 direct` both when timings are empty and when they include a direct request to a custom operator absent from the built-in host list. Missing `performance.getEntriesByType` throws. Its numerator counts fetch attempts before dispatch; its denominator mixes those attempts with incomplete ResourceTiming observations. Replace the percentage with explicitly scoped attempted/observed counts, use the existing bounded collector and missing-API handling, and cover custom/ENS endpoints and cleared buffers. This branch would otherwise undo #19's honest uncertainty behavior. Reproduction and results are `/tmp/derpc-front-presentation-review.mjs` and `.json`.
 
-### Continuation commit status
+### Suggested remaining commit split for this continuation
 
-The remaining browser, cold-start, VPS, release-pipeline and registrar checks are recorded in focused local commits. The updated `origin/main` contains related work under different commits; the local histories are being reconciled before the team pushes. This checkout has not pushed or changed issue/PR state. The branch fixes described above remain separate from the completion of #19 and #27.
+The committee-authenticity regressions and manual cold-start harness already appear in local commits `d4d3ccd`, `54a578b` and `e17bcf7`, created by the separate committer. Do not duplicate those changes. The remaining working-tree additions split as follows:
+
+1. `frontend: verify diagnostics in Firefox private windows` — `frontend/test/direct-connections-firefox.mjs` and `frontend/test/direct-connections-firefox-evidence-2026-11-06.json`.
+2. `test: record successful period-1904 cold start` — `provider/test/light-client/period-1904-evidence-2026-11-06.json`.
+3. `docs: record completed checks and branch integration gaps` — `README.md`, `THREAT_MODEL.md`, `AI_USAGE.md`, `REPO_LAYOUT.md`, and the matching updates to `specs/CONTEXT.md`, `specs/ROADMAP.md`, `specs/OPERATIONS.md`, `specs/QA_REPORT.md` and `specs/SUBMISSION_DRAFT.md`.
+
+At the time of this earlier read-only continuation, no staging, commits, push, merge, deployment or issue/PR updates occurred. Its integration recommendations were subsequently implemented and validated in the later branch integration section below.
+
+## Completed pending-work commits — November 6
+
+At the team's subsequent request, the completed pending work was captured separately from the active release-automation task and committed by topic: explicit-only release gateways, VPS service templates, public gateway/browser evidence, ENS/IPNS publication records, publishing/recovery instructions and release-status documentation. All 36 project files in the final captured snapshot are present; local security-report/cache metadata was excluded. The teammate's node-configuration documentation commit was also retained.
+
+The final frontend suite passed **275 tests** after the gateway and IPFS-checker changes. Together with the unchanged provider/contracts/payments/wrapper runs above, that is **1,068 passing default tests**, with five opt-in ENS fork tests skipped. All package typechecks passed, the final single-gateway build passed, and the offline release check accepted all **63 files**. The read-only IPFS checker now rejects symlinks/special files and conflicting or incomplete CLI modes before checking files/network results; delegated provider listings are explicitly narrower than retrieval proof. VPS scripts passed syntax checks and service-unit validation reported only absent local deployment binaries.
+
+Previously recorded publication evidence describes the deployed CID, not this newly integrated source. Committing and merging this work does not republish that site or execute the VPS installer. The separate new release-automation implementation remains with its owning agent.
+
+## Reviewed branch integration — November 6, 21:52 UTC
+
+The six divergent branch heads were reviewed against main `c183ecd86a9f906fcf0983c518d6441e98ad851b` in an isolated checkout. Useful changes were reconciled in scoped commits before recording the branch ancestry; older implementations already superseded by main were retained as history, not restored over the current code. The shared checkout's separate deployment changes were not included. Before the final integration, main advanced to `ec37572c` by merging PR #64 at `0149c90a`; that merge was incorporated, preserving its gateway implementation and additional mixed-socket regression.
+
+| Branch | Resolution |
+| --- | --- |
+| `provider-fixes` (`27ee186e`) | Port cache isolation, network failure attribution, EIP-1898 selector validation, readonly inputs and asynchronous validation; retain newer ENS, multi-endpoint, routing and payment guards. |
+| `gateway-check` (`ffacc2e7`) | Retain the existing main release checks, which include stronger certificate and fallback validation. |
+| `threat-model` (`bce3557b`) | Retain the broader current threat model and implemented local EVM scope; update committee evidence instead of restoring older claims. |
+| `web-directory` (`f0f5aba4`) | Retain the current site; correct the selected-operator example, favicon path and multi-endpoint capability wording. |
+| `issue-review-fixes` (`0149c90a`, merged as #64) | Port portable gateway detection with local-port negative cases, and qualify benchmark, call-access-pattern and payee claims. |
+| `front-presentation` (`ee500fb9`) | Port slow-start diagnostics and attempted-request counts. Keep bounded ResourceTiming observations separate; never calculate an anonymity percentage from incompatible/incomplete counts. |
+
+Validation of the combined implementation:
+
+- **1,050 default tests passed:** provider 602, frontend 257, contracts 65, payments 68, wrapper 58. The later main reconciliation added its mixed-socket regression; the focused gateway suite was rerun on the combined 13 cases. Five opt-in ENS fork tests remain skipped in this default run. The final syntax-only compatibility change additionally passed 48 provider regressions. Initial restricted runs that could not spawn child processes or bind loopback ports were rerun with that access; they were environment failures, not hidden product failures.
+- All five package typechecks passed. The web and frontend production builds and assembled-site offline checks passed. Existing bundle-size warnings remain; building an artifact does not publish it.
+- [Six integrated Firefox cases](../frontend/test/direct-connections-firefox-integration-evidence-2026-11-06.json) passed on the actual main and network-check pages: normal/private warm caches, cleared timing buffers and unavailable timing APIs. An independent HTTP observer confirmed cached responses and one fixture-server hit. The UI transport is deliberately stubbed, so this is diagnostic behavior evidence, not a Tor claim. [The earlier #19 evidence](../frontend/test/direct-connections-firefox-evidence-2026-11-06.json) is preserved with its historical source hashes.
+- [Fresh integrated live Firefox evidence](../provider/test/light-client/period-1904-integration-evidence-2026-11-06.json) passed through the existing public gateway at 21:51 UTC: period-1904 committee verification, worker pin and balance proof at finalized block **26358539**, no direct RPC/beacon requests, no page errors, no calls after close and no remaining worker iframe. All 38 recorded source/runtime hashes were unchanged. The original checkpoint and production timeouts were preserved; forced updates remained disabled. [The original 19:54 cold start](../provider/test/light-client/period-1904-evidence-2026-11-06.json) remains separately recorded.
+
+The integration review also caught and fixed failed-circuit reuse across logical reads, terminal startup errors swallowed by the upstream client, loss of total-budget diagnostics, and a TypeScript syntax compatibility issue in transitive payment imports. Network failures renew isolation keys without cooldown or ranking penalties; cached result/header mutations cannot change future verified answers. Payment completion remains terminal and no direct fallback was added.
+
+The CI workflow checks and packages pushes/PRs. `release-ens.yml` now supports publication from current `main` through the restricted VPS handler after source, pin and public-content checks; a manual package-only run is available. ENS transactions remain separate. This branch integration does not activate payments, establish independent operator enrollment or complete an external security review.
 
 ## Local release completion — November 6, 16:12 UTC
 

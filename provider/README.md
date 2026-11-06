@@ -80,6 +80,7 @@ DeRPC proves state at one block: the light client's verified finalized block, us
 - With no operators chosen, reads fail at once (`NoOperatorsChosenError`). Call `derpc.setOperators(list)` when the user chooses or changes their choice. Exclusions from the session carry over.
 - `derpc.status()` and the `onStatus` option report the worker, light client, worker pin and each operator's state. Use them for a progress or status screen. `onPoolEvent` reports each attempt, rejection and failover.
 - `derpc.status().lightClient.poll` reports the worst consecutive failure count and its error across optimistic and finality polling. Only a success for the affected kind clears its failures; a working optimistic endpoint cannot hide failing finality updates.
+- `derpc.status().network` reports the last observed fetch success or anonymity-network failure, separately from the worker's lifecycle. An `ok` state is not a reachability guarantee. `traffic.throughWorker` counts attempted transport fetches, including retries and failures, since this provider instance was created; it does not count successful responses or bytes.
 
 `beaconUrl` and `beaconUrls` configure startup candidates; initially chosen operators' `beaconUrl` values also contribute. They are all reached through the worker. Replacing the execution selection later does not replace the already-running light client's bootstrap configuration.
 
@@ -209,7 +210,7 @@ For a server coordinator, `@derpc/payments/node` provides the Linux/Node 24 dura
 - Each account's reads retain their assigned operator while it remains eligible, limiting disclosure to other operators. Failover and explicit changes can expose that account to another operator. Each account also gets its own isolation key; whether separate keys give separate Tor circuits depends on the worker.
 - Onion endpoints use the same isolation keys as exit connections; there is no onion-specific key. The key selects the worker's circuit, and whether two onion reads stay unlinkable to their operator is unproven, as it is for exits.
 - An answer that fails proof verification excludes that operator for the session. This is local evidence only: the worker could also have altered the answer.
-- A timeout, rate limit or Tor exit failure rests the operator for 60 s. The read moves to another chosen operator on a fresh circuit. When none is left, it gives a resting one another try on a fresh circuit. An excluded operator is never retried.
+- Endpoint HTTP/RPC failures and rate limits rest the endpoint for 60 s. An anonymity-network failure can trigger another anonymous attempt but does not put an endpoint on cooldown or count against its performance observations. If every attempt fails on the anonymity network, the read reports `NetworkUnavailableError`. When no eligible endpoint is left, the pool can retry a resting one with a fresh isolation key. An excluded endpoint is never retried.
 - Ordinary proof/code reads allow at most 3 attempts and 30 s total, with a 20 s fetch timeout. Verified local calls use their executor's configured total deadline (60 s by default); directory refresh defaults to 120 s for the whole scan. Verified basic-read results are cached per verified block, on the device.
 
 ## Cancellation
@@ -223,7 +224,7 @@ Errors are `ProviderRpcError` with an EIP-1193 `code`, and `data.reason` naming 
 | Code | When | `data.reason` |
 |---|---|---|
 | `4200` | The method can't be proven, so it is refused | — |
-| `4900` | The anonymous network is gone (worker failed to start, failed, or closed) | `TransportUnavailableError` |
+| `4900` | The worker failed to start, failed, or closed; or the read failed on the anonymity network | `TransportUnavailableError`, `NetworkUnavailableError` |
 | `-32602` | Bad address or slot, or a block DeRPC can't prove | — |
 | `-32002` | DeRPC refused for safety, or couldn't get a proven answer | `NoOperatorsChosenError`, `PoolExhaustedError`, `WorkerPinMismatchError`, `StaleHeaderError`, `StaleCheckpointError`, … |
 | `-32603` | Anything unexpected | the error's name |

@@ -5,7 +5,7 @@ import { createDeRPCWith, simulatedLyingOperator, type DeRPCOperator, type DeRPC
 import { ProviderRpcError } from "../../src/api/eip1193.ts";
 import { TOR_JS_PIN, type WorkerPin } from "../../src/config/mainnet.ts";
 import { StaleCheckpointError, type VerifiedHeader, type VerifiedHeaderSource } from "../../src/light-client/header-source.ts";
-import { TransportUnavailableError, type AnonTransport, type StartOptions, type TransportState } from "../../src/transport/anon-transport.ts";
+import { NetworkUnavailableError, TransportUnavailableError, type AnonTransport, type StartOptions, type TransportState } from "../../src/transport/anon-transport.ts";
 import fixture from "../fixtures/mainnet-worker-pin.json" with { type: "json" };
 
 type Hex = `0x${string}`;
@@ -26,7 +26,7 @@ const balanceOfSpecifier = { method: "eth_getBalance", params: [SPECIFIER, "fina
  * A worker that answers the recorded specifier proofs (slot 1, or no slots) at the recorded block.
  * Like the real transport, it reports "booting" before it returns.
  */
-function fakeTransport(start: StartOptions, opts: { bootError?: Error } = {}) {
+function fakeTransport(start: StartOptions, opts: { bootError?: Error; fetchError?: () => Error | undefined } = {}) {
   let state: TransportState = "booting";
   const sent: { url: string; method: string; params: any[] }[] = [];
   const ready = opts.bootError ? Promise.reject(opts.bootError) : Promise.resolve();
@@ -50,6 +50,8 @@ function fakeTransport(start: StartOptions, opts: { bootError?: Error } = {}) {
       if (state === "failed" || state === "closed") throw new TransportUnavailableError(state);
       const { id, method, params } = JSON.parse(String(init.body));
       sent.push({ url, method, params });
+      const error = opts.fetchError?.();
+      if (error) throw error;
       if (url.includes("down.example")) throw new Error("tor: operation timed out at exit");
       const result = answer(method, params);
       const body = result === undefined ? { jsonrpc: "2.0", id, error: { code: -32000, message: "no recorded answer" } } : { jsonrpc: "2.0", id, result };
@@ -64,18 +66,19 @@ function fakeTransport(start: StartOptions, opts: { bootError?: Error } = {}) {
 }
 
 function setup(opts: {
-  operators?: DeRPCOperator[];
+  operators?: readonly DeRPCOperator[];
   pin?: WorkerPin;
   bootError?: Error;
   headersError?: Error;
   headersAfter?: Promise<void>;
+  fetchError?: () => Error | undefined;
   onStatus?: (s: DeRPCStatus) => void;
 } = {}) {
   let fake!: ReturnType<typeof fakeTransport>;
   const headers: VerifiedHeaderSource = { finalized: () => HEADER, assertFresh: () => {}, pollHealth: () => ({ consecutiveFailures: 0 }), close: () => {} };
   const derpc = createDeRPCWith(
     {
-      startTransport: (start) => (fake = fakeTransport(start, { bootError: opts.bootError })).transport,
+      startTransport: (start) => (fake = fakeTransport(start, { bootError: opts.bootError, fetchError: opts.fetchError })).transport,
       startHeaders: async () => {
         await opts.headersAfter;
         if (opts.headersError) throw opts.headersError;
@@ -95,6 +98,61 @@ async function rpcError(promise: Promise<unknown>): Promise<ProviderRpcError> {
 }
 
 describe("createDeRPC", () => {
+  it("includes successful consensus fetches in traffic even before operators are selected", async () => {
+    let fetches = 0;
+    const beaconUrls = Object.freeze(["https://beacon.example"]);
+    const derpc = createDeRPCWith({
+      startTransport: () => ({ pin: TOR_JS_PIN, ready: Promise.resolve(), state: () => "ready", close() {},
+        fetch: async () => { fetches++; return new Response("{}"); },
+      }),
+      startHeaders: async options => {
+        await options.fetch(`${options.beaconUrl}/eth/v1/beacon/light_client/optimistic_update`);
+        return { finalized: () => HEADER, assertFresh() {}, pollHealth: () => ({ consecutiveFailures: 0 }), close() {} };
+      },
+    }, { beaconUrls });
+    await derpc.ready;
+    expect(fetches).toBe(1);
+    expect(derpc.status().traffic).toEqual({ throughWorker: 1 });
+    expect(derpc.status().network).toEqual({ state: "ok" });
+    expect(derpc.status().operators).toEqual([]);
+    derpc.close();
+  });
+
+  it("counts attempted worker fetches including failures, but no locally refused reads", async () => {
+    const { derpc, sent } = setup({ operators: [A], fetchError: () => new NetworkUnavailableError("no circuit") });
+    expect(derpc.status().traffic).toEqual({ throughWorker: 0 });
+    await rpcError(derpc.provider.request(balanceOfSpecifier));
+    expect(sent.length).toBeGreaterThan(0);
+    expect(derpc.status().traffic!.throughWorker).toBe(sent.length);
+    const attempted = sent.length;
+    derpc.close();
+    await rpcError(derpc.provider.request(balanceOfSpecifier));
+    expect(derpc.status().traffic!.throughWorker).toBe(attempted);
+    const next = setup();
+    expect(next.derpc.status().traffic).toEqual({ throughWorker: 0 });
+    next.derpc.close();
+  });
+
+  it("reports network outage separately from worker death and recovers without endpoint penalties", async () => {
+    let unavailable = true;
+    const states: string[] = [];
+    const { derpc } = setup({ operators: Object.freeze([A]),
+      fetchError: () => unavailable ? new NetworkUnavailableError("no usable circuit") : undefined,
+      onStatus: status => { if (status.network) states.push(status.network.state); },
+    });
+    const error = await rpcError(derpc.provider.request(balanceOfSpecifier));
+    expect(error).toMatchObject({ code: 4900, data: { reason: "NetworkUnavailableError" } });
+    expect(derpc.status()).toMatchObject({ transport: { state: "ready" }, network: { state: "unavailable", error: "no usable circuit" } });
+    expect(derpc.status().operators.every(endpoint => endpoint.state === "eligible" && !endpoint.observations)).toBe(true);
+    unavailable = false;
+    await expect(derpc.provider.request(balanceOfSpecifier)).resolves.toBe("0x0");
+    expect(derpc.status().network).toEqual({ state: "ok" });
+    expect(states).toContain("unavailable");
+    derpc.setOperators(Object.freeze([B]));
+    derpc.setRouting({ selection: "manual" }, Object.freeze([A]));
+    derpc.close();
+  });
+
   it("reads nothing, not even the worker-pin check, until the user chooses operators", async () => {
     const { derpc, sent } = setup();
     await derpc.ready;

@@ -19,6 +19,8 @@ Tools used:
 
 ---
 
+The team subsequently authorized branch reconciliation and merging into `main` through a reviewed integration branch. This authorization is separate from site publication and production deployment.
+
 ## Authored by humans, no AI assistance
 
 *Pending. The team fills this in.*
@@ -48,8 +50,9 @@ Tools used:
   - OpenAI Codex specified the versioned multi-endpoint ENS record, stable operator/node identities, permission migration, free-only boundary and operator-first selection for M1-B, and divided implementation responsibilities for parallel work.
   - OpenAI Codex documented the M1-B code/fork/browser checkpoint, authenticated owner continuity, unsigned onboarding fragments, imported lifecycle-evidence limits and general ENS resolution, preserving the independent-enrollment, hosted-gateway and later payment gates.
   - OpenAI Codex documented the full-project QA results, reproduced defects and remaining live-release gates in `specs/QA_REPORT.md`, distinguishing automated checks, injected failure reproductions and live browser observations.
-  - OpenAI Codex documented the Firefox warm-cache/private-window validation and successful live period-1904 cold start, preserving the public-hosting and checkpoint-expiry limits. It also reviewed the remaining branches against current main, recorded missing fixes separately from superseded branch work and corrected status assumptions based only on closed issues.
+  - OpenAI Codex documented Firefox private-window diagnostics, authenticated period-1904 cold starts and branch reconciliation, preserving historical source hashes and deployment limits.
   - OpenAI Codex recorded the team's mainnet-alpha iteration decision and subsequent ENS/IPFS hosting correction, documented IPFS packaging and same-VPS pinning/gateway operation, including the supplied host, service runbook and explicit release-gateway selection after reviewing upstream selection behavior, and separated historical hosted asset checks from anonymous startup and on-chain website/operator updates in the context, roadmap and operations notes. Codex subsequently recorded the owner-signed website publication, matching HTTPS assets and the actual ENS-domain browser checks. It then prepared a dedicated stable IPNS publisher and documented independent resolution, signed-record verification, encrypted-backup restoration, initial network failures, renewal settings and the publishing-key trust boundary. After the owner signed, Codex verified the IPNS switch through two RPC sources and checked the actual ENS gateway's IPNS headers and all 55 website files, recording the migration evidence separately from the initial publication checks. Observation of a full renewal cycle remains pending.
+  - OpenAI Codex documented GitHub-triggered IPNS releases, restricted SSH authority, durable ordering and uncertain-publication checks; recorded the installed same-CID rehearsal and public verification separately from the pending first complete Actions run in `scripts/vps/GITHUB_RELEASE.md`, the deployment evidence and planning/operations notes.
 - **Human role:**
   - Supplied the source material: prize pages, event rules, the EF mentor's feedback and the planning conversations.
   - Made the decisions:

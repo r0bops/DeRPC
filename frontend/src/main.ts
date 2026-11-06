@@ -52,6 +52,10 @@ const gateways = String(import.meta.env.VITE_TOR_GATEWAYS ?? "")
   .map((s) => s.trim())
   .filter(Boolean);
 const gatewayLabel = gateways.length ? `configured gateway (${gateways.length})` : "demo gateway";
+const SLOW_BOOT_MS = 30_000;
+// Worker logs are untrusted diagnostics, never a transport state or a read-control input.
+const GATEWAY_DIAL_REPORTED = /dial .*timed out|all gateways failed/i;
+let gatewayDialReported = false;
 
 // Dev-only fault injection, never in production builds:
 //   ?fault=bad-worker-hash  boot from a wrong worker hash: the harness must reject the bundle, and nothing is read
@@ -113,6 +117,7 @@ let servedBy: string[] = [];
 let readsInProgress = false;
 let verifiedCallInProgress = false;
 let paymentPanel: ReturnType<typeof mountPaymentPanel> | undefined;
+let statusOperatorUrls: readonly string[] = [];
 const observations = new OperatorObservations();
 const payments = new PaymentClient({ onChange: () => paymentPanel?.render() });
 
@@ -134,6 +139,7 @@ const derpc = createDeRPC({
     logEvent(e);
   },
   onWorkerLog: (line) => {
+    if (GATEWAY_DIAL_REPORTED.test(line.text)) gatewayDialReported = true;
     if (sensitiveSession) return; // personal credentials or paid requests must not enter the development log
     devLog("worker", line);
     const log = $("worker-log");
@@ -156,12 +162,26 @@ const MAINNET_GENESIS = 1606824023;
 function renderStatus(s: DeRPCStatus) {
   const now = performance.now();
   const t = s.transport;
+  statusOperatorUrls = s.operators.map(operator => operator.url);
   if (t.state === "ready") workerReadyAt ??= now;
   setText($("worker-status"),
-    t.state === "booting" ? [plain(`booting ${s.worker.name} via ${gatewayLabel}… ${seconds(now - pageStarted)}`)]
+    t.state === "booting" ? [
+      plain(`booting ${s.worker.name} via ${gatewayLabel}… ${seconds(now - pageStarted)}`),
+      ...(gatewayDialReported ? [plain(" · "), tag("worker log reports a gateway dial failure", "warn"), plain(" — waiting for transport status. Reads cannot complete until the worker is ready; no direct RPC fallback.")]
+      : now - pageStarted >= SLOW_BOOT_MS ? [plain(" · "), tag("taking longer than usual", "warn"), plain(" — anonymous transport is still starting. Check the worker log or network check for diagnostics. Reads cannot complete until it is ready; no direct RPC fallback.")]
+      : []),
+    ]
     : t.state === "ready" ? [tag("ready", "ok"), plain(` — ${s.worker.name} via ${gatewayLabel}, after ${seconds(workerReadyAt! - pageStarted)}`)]
     : t.state === "failed" ? [tag("failed", "bad"), plain(` — ${t.error ?? "unknown error"} (no direct fallback)`)]
     : [tag("closed", "bad"), plain(" — anonymous network cut; DeRPC never falls back to a direct request")]);
+  const outage = s.network?.state === "unavailable";
+  setText($("network-status"), outage
+    ? [tag("Anonymous request failed", "warn"), plain(` — ${s.network?.error ?? "network unavailable"}. Retry a read when the route recovers; no direct RPC fallback.`)]
+    : []);
+  const attempts = s.traffic?.throughWorker;
+  $("traffic").textContent = attempts === undefined
+    ? "Anonymous request-attempt count unavailable."
+    : `Anonymous request attempts: ${attempts} fetch attempt${attempts === 1 ? "" : "s"} handed to Anon-RPC since this page started.`;
 
   const lc = s.lightClient;
   const checkpointDays = ((Date.now() / 1000 - (MAINNET_GENESIS + s.checkpoint.epoch * 384)) / 86400).toFixed(1);
@@ -263,11 +283,12 @@ function updateReadControls(status: DeRPCStatus) {
   $<HTMLButtonElement>("cut-network").disabled = status.transport.state !== "ready";
   const message = snapshot.blocked ? "ENS-authorized reads are paused. Refresh the proven directory in the ENS panel; you can still narrow the selection or stop reads."
     : routeUnavailable ? "The anonymous route is unavailable. No direct RPC fallback is used."
+    : status.network?.state === "unavailable" ? "The last observed anonymous request failed. You can retry; requests still require the anonymous route and proof verification."
     : !hasOperators ? "Apply a nonempty operator selection to begin verified reads."
     : "Each supported read is verified. ENS membership changes require a new finalized verified refresh.";
   const statusElement = $("read-policy-status");
   if (statusElement.textContent !== message) statusElement.textContent = message;
-  statusElement.className = snapshot.blocked ? "warn" : "muted";
+  statusElement.className = snapshot.blocked || status.network?.state === "unavailable" ? "warn" : "muted";
 }
 
 // ---- 2 · Choose your operators ----
@@ -641,11 +662,12 @@ function logEvent(e: PoolEvent) {
   if (e.type === "invalid-proof") paymentPanel?.rejection(e.endpoint ? label(e.endpoint) : "Operator");
   if (e.type === "success" && e.endpoint) servedBy.push(label(e.endpoint));
   const li = document.createElement("li");
-  li.className = e.type === "success" ? "ok" : e.type === "transient-failure" ? "warn" : e.type === "attempt" ? "" : "bad";
+  li.className = e.type === "success" ? "ok" : e.type === "transient-failure" || e.type === "network-unavailable" ? "warn" : e.type === "attempt" ? "" : "bad";
   const parts = [new Date(e.at).toISOString().slice(11, 19), e.type];
   if (e.endpoint) parts.push(label(e.endpoint));
   if (e.attempt) parts.push(`attempt ${e.attempt}`);
   if (e.type === "invalid-proof") parts.push("excluded locally");
+  if (e.type === "network-unavailable") parts.push("anonymous route unavailable; no operator verdict");
   if (e.detail) parts.push(e.detail.slice(0, 160));
   li.textContent = parts.join(" · ");
   $("pool-events").prepend(li);
@@ -655,7 +677,10 @@ function logEvent(e: PoolEvent) {
 const directConnections = mountDirectConnections({
   body: $("direct"),
   status: $("direct-status"),
-  rpcUrls: [...MAINNET_OPERATORS.map((o) => o.url), ...MAINNET_BEACON_ENDPOINTS],
+  rpcUrls: () => [
+    ...MAINNET_OPERATORS.map(o => o.url), ...MAINNET_BEACON_ENDPOINTS, ...statusOperatorUrls,
+    ...[...available, ...chosen].flatMap(o => [o.url, ...(o.beaconUrl ? [o.beaconUrl] : [])]),
+  ],
   bundleUrls: TOR_JS_PIN.resolvers,
 });
 

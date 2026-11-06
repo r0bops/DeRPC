@@ -63,10 +63,11 @@ ipns://k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc
 It resolves to the same release CID. Independent resolution, signed-record checks
 and encrypted-backup restoration passed; see [the evidence](deployment-ipns-2026-11-06.json).
 **The one-time ENS Content hash switch is confirmed.** Two administrative RPC
-sources checked the owner's receipt and record; all 55 HTTPS files match, and
-gateway headers identify the IPNS path. See [publication evidence](ens-ipns-publication-2026-11-06.json).
-Future releases reuse this key without another ENS transaction.
-The key authorizes changes to downloaded application code. Renewal is
+sources checked the owner's receipt and record with 18 confirmations, without
+claiming finalization. All 55 HTTPS files match and gateway headers identify the
+IPNS path; fresh Firefox passed all 17 checks. See [publication evidence](ens-ipns-publication-2026-11-06.json).
+Future releases reuse this key without another ENS transaction. The key authorizes
+changes to downloaded application code. Renewal is
 configured every four hours, but a full cycle has not yet been observed.
 Follow the [IPNS runbook](../scripts/vps/IPNS.md) for publication, monitoring and recovery.
 
@@ -139,6 +140,13 @@ the signed IPNS record and all website files through `derpc.eth.limo`. It preser
 ENS IPNS contenthash and sends no Ethereum transaction. GitHub never receives the
 IPNS private key; the constrained server command uses the key already on the VPS.
 
+The VPS command and `main`-only GitHub environment are installed. The live rehearsal
+verified all 55 files through native IPFS and HTTPS, including the exact accepted
+release and renewed signed record after a publish timeout. The first complete run
+of the final workflow on GitHub remains a separate gate. See the
+[readiness evidence](deployment-github-ipns-2026-11-06.json) and
+[release/retry runbook](../scripts/vps/GITHUB_RELEASE.md).
+
 Both workflows use [`scripts/package-ipfs.mjs`](../scripts/package-ipfs.mjs), which
 applies the packaging settings above and writes `web/out/ipfs-release/` (`site.car`
 and `manifest.json`). Locally: `IPFS_BIN=/path/to/ipfs node scripts/package-ipfs.mjs`
@@ -153,7 +161,7 @@ One-time setup, by the team:
 | Repository variable | `DERPC_TOR_GATEWAYS` | Explicit public KPS gateway address(es), `ip:port:certhash`, comma-separated |
 | Environment `ens-production`, variable | `DERPC_PIN_HOST` | `derpc-deploy@host` for the IPFS VPS |
 | Environment `ens-production`, variable | `DERPC_PIN_KNOWN_HOSTS` | The VPS SSH host-key line, checked out of band |
-| Environment `ens-production`, variable | `DERPC_PIN_PEER_ID` | The IPFS node peer ID (`ipfs id`) for independent retrieval |
+| Environment `ens-production`, variable | `DERPC_PIN_PEER_ID` | The IPFS node peer ID for the advisory provider listing; the verifier fixes the expected VPS peer separately |
 | Environment `ens-production`, secret | `DERPC_PIN_SSH_KEY` | SSH private key for the restricted deploy account |
 
 Install the restricted handler on the VPS with

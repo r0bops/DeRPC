@@ -91,6 +91,11 @@ key directly. Set the host, SSH host key, peer ID and matching SSH private key i
 GitHub `ens-production` environment. The workflow verifies the pinned CID before it
 requests publication. See [release pipeline notes](../../web/README.md#continuous-integration-and-release-pipeline).
 
+The command is installed and its same-CID SSH rehearsal passed the independent
+publication checks. The production environment permits only `main`.
+[GITHUB_RELEASE.md](GITHUB_RELEASE.md) explains durable ordering, uncertainty after
+publish timeouts and the remaining first full GitHub Actions run.
+
 ## Publish a release
 
 Build and check the site using the exact public address printed by the gateway.

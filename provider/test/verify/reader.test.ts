@@ -40,6 +40,15 @@ function recordedEndpoint(tamper?: (method: string, result: any) => any) {
 const verifiedHeaders = { finalized: () => VERIFIED };
 
 describe("createVerifiedReader", () => {
+  it.each(["token", "holder"])("rejects invalid %s input asynchronously without sending", async invalid => {
+    const endpoint = recordedEndpoint();
+    const reader = createVerifiedReader({ headers: verifiedHeaders, send: endpoint.send });
+    const request = reader.getTokenBalance(invalid === "token" ? { ...WETH_TOKEN, balanceSlot: -1 } : WETH_TOKEN, invalid === "holder" ? "0xbad" : HOLDER as Hex);
+    expect(request).toBeInstanceOf(Promise);
+    await expect(request).rejects.toMatchObject({ name: "InputError" });
+    expect(endpoint.calls).toEqual([]);
+  });
+
   it("returns a proven ETH balance at the verified block, asking for that exact block under the account's key", async () => {
     const endpoint = recordedEndpoint();
     const reader = createVerifiedReader({ headers: verifiedHeaders, send: endpoint.send });

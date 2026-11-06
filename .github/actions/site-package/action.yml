@@ -33,9 +33,6 @@ runs:
     - name: Test
       shell: bash
       run: pnpm -r --workspace-concurrency=1 --if-present test
-    - name: Test the restricted VPS release command
-      shell: bash
-      run: python3 -B -m unittest discover -s scripts/vps -p 'test_*.py'
     - name: Build the site
       shell: bash
       env:
@@ -47,6 +44,9 @@ runs:
         VITE_TOR_GATEWAYS: ${{ inputs.tor-gateways }}
       run: node scripts/check-release.mjs
     - uses: ./.github/actions/install-kubo
+    - name: Test the restricted VPS release command and real offline CAR validation
+      shell: bash
+      run: DERPC_TEST_IPFS="$IPFS_BIN" python3 -B -m unittest discover -s scripts/vps -p 'test_*.py'
     - name: Package for IPFS
       id: package
       shell: bash

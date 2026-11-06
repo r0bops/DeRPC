@@ -187,6 +187,6 @@
     "Initial network failures and later DNS/TLS/routing timeouts are disclosed in verification.",
     "Initial publisher checks reused earlier immutable-CID asset evidence. Separate post-switch HTTPS verification retrieved all 55 files and checked IPNS path headers; see the ENS publication evidence.",
     "The VPS IPNS key now authorizes website-version changes without another Ethereum signature.",
-    "Current CI workflow pins releases but does not publish IPNS yet."
+    "GitHub IPNS automation is implemented and installed with a live rehearsal; its first complete Actions run is pending. See web/deployment-github-ipns-2026-11-06.json."
   ]
 }

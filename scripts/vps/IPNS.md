@@ -58,6 +58,12 @@ workflow-run watermark and accepts only the fixed website IPNS identity. Use the
 manual commands above for recovery or a deliberately supervised update; do not race
 an active workflow release.
 
+The restricted command and `main`-only GitHub environment are installed and passed
+a same-CID rehearsal. A timed-out publish was accepted only after checking the
+exact durable release tuple, renewed public signature and all HTTPS files.
+[GITHUB_RELEASE.md](GITHUB_RELEASE.md) covers automatic releases, retries and the
+remaining first complete Actions-run check.
+
 ## Renewal and availability
 
 Kubo 0.43.1 runs as `derpc-ipfs.service`, enabled at boot. Its explicit settings are:

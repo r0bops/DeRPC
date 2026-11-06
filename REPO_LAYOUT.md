@@ -14,9 +14,9 @@ REPO_LAYOUT.md     — this file
 LICENSE            — MIT
 .gitignore         — excludes upstream clones, local agent instruction files, .env files and build output
 .github/workflows/ci.yml — on pull requests and main: type check, tests, release build, offline release check and an IPFS package artifact
-.github/workflows/release-ens.yml — manual release: package with the release gateway, pin on the team IPFS node, check public retrieval; sends no transaction
+.github/workflows/release-ens.yml — package on main; optionally pins, verifies and publishes the stable IPNS site through a restricted VPS command; sends no Ethereum transaction
 .github/actions/site-package/ — the build, check and packaging steps both workflows share
-.github/actions/install-kubo/ — downloads the pinned Kubo release and verifies its recorded SHA-256
+.github/actions/install-kubo/ — shared pinned Kubo download and archive-hash verification
 frontend/.env.example — VITE_TOR_GATEWAYS: our own tor-js gateway address(es); copy to .env.local
 package.json       — workspace root: demo/directory dev and build scripts, combined build:site, and typecheck (pnpm)
 pnpm-workspace.yaml — provider, frontend, web, wrapper, payments and contract packages, Lodestar/ssz pins and patch registration
@@ -138,6 +138,7 @@ web/
 ├── deployment-mainnet-alpha-2026-11-06.json — historical static deployment and browser evidence, marked removed after the ENS/IPFS hosting decision
 ├── deployment-ens-ipfs-2026-11-06.json — published IPFS release, asset/CAR checks, ENS transaction and public HTTPS browser evidence
 ├── deployment-ipns-2026-11-06.json — stable IPNS name, public signed record, independent resolution, encrypted-backup restore evidence and ENS activation status
+├── deployment-github-ipns-2026-11-06.json — restricted SSH rehearsal, GitHub environment scope, native/IPNS/HTTPS checks and remaining first Actions-run gate
 ├── ens-ipns-publication-2026-11-06.json — owner-signed IPNS switch, two-source receipt/record checks, HTTPS asset hashes and browser evidence
 ├── deployment-vps-2026-11-06.json — gateway/IPFS services, binary hashes, restart checks and fresh-node public IPFS retrieval evidence
 ├── ens-website-transaction-2026-11-06.json — unsigned mainnet contenthash update, decoded fields, two-source simulation and current resolver authorities
@@ -239,8 +240,10 @@ scripts/
 ├── assemble-site.mjs — copies the release demo into web/dist/demo after both builds pass
 ├── check-release.mjs — offline assembled-site checks for checkpoint/gateway inputs, page assets and accidental local files
 ├── package-ipfs.mjs — offline IPFS packaging of web/dist: CAR, root CID, ENSIP-7 contenthash and a per-file SHA-256 manifest in web/out/ipfs-release/
-├── verify-ipfs.mjs  — compares a pinned release with its manifest: through public gateways, from a directory fetched from the pinning node, or by provider listing
-└── vps/             — initial Ubuntu/systemd installation, bounded gateway/IPFS service units and public gateway configuration template; IPNS.md covers the dedicated website key, renewal and encrypted recovery; identities and backups stay outside the repo; pin-car.sh is the forced command for the release deploy key (accepts one CAR and its root CID)
+├── verify-ipfs.mjs  — compares a pinned release with its manifest through a local directory, an explicit provider, or public gateways
+├── verify-site-release.mjs — independently checks a pinned CID or signed IPNS publication and every website file
+├── check-site-package.mjs — binds Actions artifacts and durable publication acceptance to the exact tested release
+└── vps/             — Ubuntu/systemd gateway/IPFS services, restricted release-site handler/installer/tests, GITHUB_RELEASE.md for deployment and retry operations, and IPNS.md for recovery; identities and backups stay outside the repo
 ```
 
 ## /reference — upstream context (not committed)

@@ -38,6 +38,14 @@ flowchart LR
 
 The payment and administrative paths in this diagram are separate from the verified read transport. They cannot serve as read fallbacks.
 
+GitHub website automation gives the restricted deployment credential and authorized
+`main` workflow the ability to publish new application code through the VPS's fixed
+IPNS key. The key stays on the VPS, but that separation does not remove the workflow's
+publishing authority. The environment is restricted to `main`; CAR validation,
+commit binding, durable release ordering and independent signed-record/HTTPS checks
+guard deployment mistakes. They cannot make a deliberately malicious authorized
+release safe. See [release operations](scripts/vps/GITHUB_RELEASE.md).
+
 ## Threats and controls
 
 | Threat | Implemented control | Residual risk or completion gate |
