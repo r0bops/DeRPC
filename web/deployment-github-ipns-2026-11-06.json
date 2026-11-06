@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "kind": "derpc-github-ipns-automation-readiness",
-  "checkedAt": "2026-11-06T22:22:37.289195+00:00",
-  "status": "installed-and-rehearsed-awaiting-complete-github-actions-run",
+  "checkedAt": "2026-11-06T23:09:38.431190+00:00",
+  "status": "verifier-fixes-ready-for-github-validation",
   "repository": "r0bops/DeRPC",
   "branch": "main",
   "workflow": ".github/workflows/release-ens.yml",
@@ -933,6 +933,218 @@
     "The native publish call timed out after saving the local signed record. Exact accepted-release state plus an independently verified newer public record and all HTTPS files passed. The workflow requires those checks after an uncertain publish.",
     "Native retrieval uses a fresh node in auto routing mode with an explicit VPS connection; it does not assert all blocks came exclusively from that peer or autonomous discovery.",
     "Earlier none-routing native retrieval attempts timed out; auto routing passed without loosening hash, size or time bounds.",
-    "An actual complete automatic GitHub run still needs the final reviewed workflow changes on main. No Ethereum transaction was sent for this automation."
-  ]
+    "Automatic runs 42305110614 and 42307096196 failed verification. The latter updated IPNS. The user subsequently authorized committing and pushing the local verifier fixes; this evidence snapshot precedes the resulting Actions run. No Ethereum transaction was sent."
+  ],
+  "failureInvestigation": {
+    "checkedAt": "2026-11-06T22:48:23.814941+00:00",
+    "runId": 42305110614,
+    "runUrl": "https://github.com/r0bops/DeRPC/actions/runs/42305110614",
+    "sourceSha": "f001361c45f6f5521936c58bc7d7f91583262976",
+    "failedStep": "Retrieve and verify the pinned CID independently",
+    "pinReceipt": {
+      "canonicalDagImported": true,
+      "carBytes": 2367193,
+      "carSha256": "050001d7562790d62e45fa3227009c7652bf3a78336c471a6ce07992571f624d",
+      "cid": "bafybeihcdcxiz7vhlstbkkszmws43l327xqlbtenipxl3syg5c5d5otoki",
+      "ok": true,
+      "pinnedAt": "2026-11-06T22:31:16.039543+00:00",
+      "publishAuthorized": true,
+      "schemaVersion": 1,
+      "sourceSha": "f001361c45f6f5521936c58bc7d7f91583262976",
+      "status": "pinned",
+      "validatedOffline": true
+    },
+    "verification": {
+      "schemaVersion": 1,
+      "kind": "derpc-site-release-verification",
+      "phase": "pinned",
+      "startedAt": "2026-11-06T22:31:16.192Z",
+      "expectedIpnsName": "k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc",
+      "expectedOrigin": "https://derpc.eth.limo",
+      "ok": false,
+      "limits": {
+        "totalMs": 480000,
+        "requestMs": 30000,
+        "retryMs": 20000,
+        "manifestBytes": 1048576,
+        "recordBytes": 16384,
+        "listingBytes": 1048576,
+        "fileBytes": 16777216,
+        "totalBytes": 134217728,
+        "files": 2000
+      },
+      "attempts": [],
+      "cid": "bafybeihcdcxiz7vhlstbkkszmws43l327xqlbtenipxl3syg5c5d5otoki",
+      "manifestFilesSha256": "038bb41cd32a756700def504e643877ebd913b1c5c45292c7145616c46d4aaa7",
+      "lastStep": {
+        "stage": "list-ipfs-directory",
+        "path": "/",
+        "at": "2026-11-06T22:31:16.934Z"
+      },
+      "kuboVersion": "0.43.1",
+      "error": "The operation was aborted due to timeout",
+      "ownedResourcesCleaned": true,
+      "finishedAt": "2026-11-06T22:31:47.981Z",
+      "manifestSha256": "1423e57cde4c832c43855c8aed73acc520308e624d010695e74e7a31650718c2"
+    },
+    "publicationSkipped": true,
+    "previousWebsiteStillReturnedHttp200": true,
+    "observedPreviousWebsiteCid": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me",
+    "finding": "The first root-directory read timed out at 30 seconds after a successful peer connection. The pinned verifier had no retry path; the 480-second total budget did not provide retries. The exact network cause is unproven.",
+    "fix": "Make at most three attempts for timed-out connect/list/cat operations on the same isolated node; preserve 30-second request and 480-second total bounds, all byte/hash checks, and failure/cleanup evidence.",
+    "fixCommittedByAgent": true,
+    "localChecks": [
+      {
+        "verifier": "unchanged verifier",
+        "ok": true,
+        "startedAt": "2026-11-06T22:45:00.818Z",
+        "finishedAt": "2026-11-06T22:45:30.238Z",
+        "cid": "bafybeihcdcxiz7vhlstbkkszmws43l327xqlbtenipxl3syg5c5d5otoki",
+        "filesChecked": 55,
+        "bytes": 2587478,
+        "attempts": [],
+        "ownedResourcesCleaned": true
+      },
+      {
+        "verifier": "local bounded-timeout-retry fix",
+        "ok": true,
+        "startedAt": "2026-11-06T22:47:23.818Z",
+        "finishedAt": "2026-11-06T22:47:44.948Z",
+        "cid": "bafybeihcdcxiz7vhlstbkkszmws43l327xqlbtenipxl3syg5c5d5otoki",
+        "filesChecked": 55,
+        "bytes": 2587478,
+        "attempts": [],
+        "ownedResourcesCleaned": true
+      }
+    ],
+    "fixValidation": {
+      "releaseVerifierTestsPassed": 61,
+      "newRegressionCases": 20,
+      "frontendTypecheckPassed": true,
+      "diffWhitespacePassed": true,
+      "sourceSha256": {
+        "scripts/verify-site-release.mjs": "e07b92cfa69efd065a94ce463ba016daf71c34d05c269076f20f47802318a4bf",
+        "frontend/test/site-release.test.ts": "b881f9f15e7b59812d85221ae2896f80512aacbe8a04497a9bc77b8c7aefb577"
+      }
+    },
+    "nextRun": {
+      "id": 42307096196,
+      "url": "https://github.com/r0bops/DeRPC/actions/runs/42307096196",
+      "sourceSha": "3c5003cd5186e1101f1998be7115114a5843be15",
+      "trigger": "separate team push while investigating",
+      "containsLocalRetryFix": false,
+      "conclusion": "failure",
+      "failedStep": "Verify the public IPNS record and all ENS website files",
+      "publicationState": {
+        "ipnsName": "k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc",
+        "keyIdentityMatches": true,
+        "ok": true,
+        "publication": {
+          "accepted": {
+            "carSha256": "4e1b10dd7476fe8f99846fad8a8c4c0e62872ab31b28197a83706bfb99daa86d",
+            "cid": "bafybeihchfdebcwesdidytlsgdlsrb2erhlyrlirk53xdrcvatbs5ysr2e",
+            "runId": 42307096196,
+            "runNumber": 6,
+            "sourceSha": "3c5003cd5186e1101f1998be7115114a5843be15"
+          },
+          "acceptedAt": "2026-11-06T22:47:36.931546+00:00",
+          "attemptedAt": "2026-11-06T22:47:36.931586+00:00",
+          "detail": "Publication may have succeeded; verify the public signed record. Exact release retry is allowed.",
+          "exactRetry": false,
+          "finishedAt": "2026-11-06T22:49:06.963157+00:00",
+          "httpsVerified": false,
+          "ipnsName": "k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc",
+          "lastSuccessful": null,
+          "schemaVersion": 1,
+          "status": "publish-uncertain"
+        }
+      },
+      "publicCheck": {
+        "ok": false,
+        "startedAt": "2026-11-06T22:49:08.898Z",
+        "finishedAt": "2026-11-06T22:57:08.901Z",
+        "error": "The operation was aborted due to timeout",
+        "lastStep": {
+          "stage": "hash-https-file",
+          "path": "assets/index-Dp5B9GpU.css",
+          "attempt": 24,
+          "filesAlreadyChecked": 1,
+          "at": "2026-11-06T22:57:01.233Z"
+        },
+        "attemptCount": 24,
+        "errors": {
+          "IPNS target is stale or differs from release CID": 3,
+          "HTTPS root differs: assets/index-Dp5B9GpU.css": 21
+        },
+        "originalReportSha256": "554504575a0358f356c6a8e52cc7cadee39ca4472e543ad170531b0ce88cdf99",
+        "artifactUrl": "https://github.com/r0bops/DeRPC/actions/runs/42307096196"
+      }
+    },
+    "cacheBindingFix": {
+      "finding": "Canonical unchanged CSS bytes matched the new manifest but the response retained the prior release root header. The same URL with a release-CID query returned identical bytes and the exact new root. This was observed locally and explains the second run's repeated CSS root-header failures; no incorrect CSS bytes were observed.",
+      "behavior": "Check canonical HTTP status, IPNS path, canonical directory-root header, and expected bytes first. Only a mismatched valid root header triggers a release-specific query; that response must match the expected root, IPNS path and hash. Count both response bodies against the existing byte budget. Preserve both headers in evidence.",
+      "liveVerification": {
+        "ok": true,
+        "startedAt": "2026-11-06T23:03:30.442Z",
+        "finishedAt": "2026-11-06T23:04:47.194Z",
+        "cid": "bafybeihchfdebcwesdidytlsgdlsrb2erhlyrlirk53xdrcvatbs5ysr2e",
+        "manifestSha256": "f01fc5985dcb4b228543f0e5de86ca1d582288ed019d95aaf74ca48f012de3c9",
+        "manifestFilesSha256": "5d3c03ad6b7da92c13b76a52871d29672603449db2480da9b22d92959920b348",
+        "signedRecord": {
+          "signatureVerified": true,
+          "name": "k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc",
+          "target": "/ipfs/bafybeihchfdebcwesdidytlsgdlsrb2erhlyrlirk53xdrcvatbs5ysr2e",
+          "validity": "2026-11-08T22:47:36.961738003Z",
+          "sequence": 1,
+          "ttlNanoseconds": 300000000000
+        },
+        "filesChecked": 55,
+        "bytes": 2587822,
+        "retrievedBytes": 3292186,
+        "refreshedBindingCount": 39,
+        "attempts": [
+          {
+            "attempt": 1,
+            "durationMs": 254,
+            "ok": false,
+            "error": "IPNS target is stale or differs from release CID"
+          },
+          {
+            "attempt": 2,
+            "durationMs": 170,
+            "ok": false,
+            "error": "IPNS target is stale or differs from release CID"
+          },
+          {
+            "attempt": 3,
+            "durationMs": 36275,
+            "ok": true
+          }
+        ],
+        "ownedResourcesCleaned": true,
+        "fullReportSha256": "3a8ff5b2d22d5f589cbfbf84dc33ab1aa738ea785c3f12fd20ac8dab75be86b4",
+        "canonicalCssAndRefreshedBinding": {
+          "path": "assets/index-Dp5B9GpU.css",
+          "bytes": 33910,
+          "sha256": "6ff5520d09abcb49f5a927acd756bcce7c649bb6265b6d67afcef96ecf827475",
+          "ipfsPath": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/assets/index-Dp5B9GpU.css",
+          "ipfsRoots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeia4pieiqv6phjtsmq5mmwvs26x5oqzio4xpy5myz5whkrxr5g6gdu,bafkreidp6vja2cnlzne7lkjhvtlvnpgoprsjxnrglnwwpl6o7fxm7atuou",
+          "gatewayBindingRefresh": {
+            "url": "https://derpc.eth.limo/assets/index-Dp5B9GpU.css?derpc-release=bafybeihchfdebcwesdidytlsgdlsrb2erhlyrlirk53xdrcvatbs5ysr2e",
+            "bytes": 33910,
+            "sha256": "6ff5520d09abcb49f5a927acd756bcce7c649bb6265b6d67afcef96ecf827475",
+            "ipfsPath": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/assets/index-Dp5B9GpU.css",
+            "ipfsRoots": "bafybeihchfdebcwesdidytlsgdlsrb2erhlyrlirk53xdrcvatbs5ysr2e,bafybeie22ioepsjtjw2ipaxb64djdfl6vea7b7bixlmjy6hr23bmv5lzcu,bafkreidp6vja2cnlzne7lkjhvtlvnpgoprsjxnrglnwwpl6o7fxm7atuou"
+          }
+        },
+        "reproduce": "IPFS_BIN=/path/to/kubo-0.43.1/ipfs node scripts/verify-site-release.mjs --manifest release/manifest.json --phase published --out published-check.json",
+        "manifestArtifactRun": "https://github.com/r0bops/DeRPC/actions/runs/42307096196",
+        "qualification": "Local read-only verification of the actual Actions-built and VPS-published release. This is not a successful GitHub Actions run and does not deploy the verifier changes."
+      },
+      "successfulActionsRunRequired": true
+    },
+    "fixCommit": "40c96cebe30209da14dd88c3e37aac9120036727",
+    "userAuthorizedCommitAndPush": true
+  },
+  "sourceSha256Scope": "Original installed/rehearsed verifier source. Current local fix hashes are recorded under failureInvestigation.fixValidation."
 }

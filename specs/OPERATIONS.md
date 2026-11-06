@@ -146,9 +146,33 @@ Validation: 58 JavaScript release checks, 22 Python command checks including act
 offline CAR validation, frontend type checking, actionlint 1.7.12 and shell syntax.
 The [evidence](../web/deployment-github-ipns-2026-11-06.json) distinguishes the local
 same-CID rehearsal's sentinel run/source values from a real GitHub Actions run.
-The first full run of the final workflow remains to be observed after the team's
-reviewed changes reach `main`. Existing unrelated integration changes retain their
+The first automatic run, [42305110614](https://github.com/r0bops/DeRPC/actions/runs/42305110614),
+passed the build and VPS pin but timed out after 30 seconds at its first independent
+IPFS root listing. It skipped publication. A later unchanged fresh-node check
+retrieved all 55 files of the same CID. The exact network delay remains unproven.
+The verifier now makes up to three attempts for timed-out connect/list/cat calls
+on the same isolated daemon, retaining the 30-second request and eight-minute total
+bounds. Integrity failures remain terminal. Seven regression cases bring the
+verifier suite to 48 passing tests; frontend type checking and a live 55-file check
+also passed. The user subsequently authorized committing and pushing the fixes.
+
+A separate team push started run 42307096196 while investigating; it passed native
+retrieval and published using the original verifier. Its HTTPS check failed for
+eight minutes on unchanged CSS with a cached old root header, despite matching
+file bytes and a valid signed new IPNS target. The verifier now checks every normal
+URL's bytes first; a stale but valid root header additionally requires a
+release-specific query response with the exact new root, IPNS path and expected
+hash. Both response bodies count toward the byte limit. All 55 live HTTPS files
+passed with the final fix locally. The final verifier suite passed 61 tests and
+frontend type checking, including 20 new regressions across both failures. A
+complete successful Actions run remains pending. Existing unrelated integration changes retain their
 own validation requirements. See [GITHUB_RELEASE.md](../scripts/vps/GITHUB_RELEASE.md).
+
+Authorized follow-up commits: `40c96ce` (`release: harden website deployment verification`)
+for `scripts/verify-site-release.mjs` and `frontend/test/site-release.test.ts`, then
+`docs: record deployment timeout and verification` for `scripts/vps/GITHUB_RELEASE.md`,
+`web/deployment-github-ipns-2026-11-06.json`, `specs/CONTEXT.md`, `specs/OPERATIONS.md`,
+`specs/ROADMAP.md` and `AI_USAGE.md`. The later deployment does not contain this local fix.
 
 Suggested team split, reconciling with any already recorded local commits:
 
@@ -158,8 +182,9 @@ Suggested team split, reconciling with any already recorded local commits:
 3. `docs: record GitHub IPNS release readiness` — public rehearsal evidence and
    matching runbook/context/roadmap/layout/threat/AI attribution updates.
 
-No agent Git staging, commit or push was performed in this session. Keep credentials,
-CARs, Python caches and unrelated integration changes outside these groups.
+The user explicitly authorized the follow-up commits and push after the failure
+investigation. Credentials, CARs, Python caches and unrelated integration changes
+remain outside these commits.
 
 ## Deployment boundaries
 

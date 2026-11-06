@@ -24,8 +24,11 @@ Branch review reproduced closed issues #35 (network-outage attribution), #38 (mu
 
 **GitHub publication:** the automatic `main` workflow, restricted VPS command and
 production environment are configured. Local command checks and a same-CID live
-rehearsal passed, including public verification after a publish timeout. Observe
-the first complete Actions run after the reviewed changes reach `main`; see
+rehearsal passed, including public verification after a publish timeout. The first
+automatic run failed before publication on a 30-second IPFS listing timeout; the
+next published but failed on unchanged assets with cached old root headers. Local
+fixes passed live retrieval and all 55 HTTPS files. The user authorized their
+commit and push; verify the resulting Actions deployment against its exact commit. See
 [readiness evidence](../web/deployment-github-ipns-2026-11-06.json).
 
 ## Operator dashboard workflow (latest Nov 6 direction)

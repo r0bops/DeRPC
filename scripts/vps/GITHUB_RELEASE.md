@@ -8,7 +8,8 @@ an Ethereum transaction: `derpc.eth` keeps its existing IPNS contenthash.
 The VPS command and GitHub environment are configured. The [readiness evidence](../../web/deployment-github-ipns-2026-11-06.json)
 records a live rehearsal of the current CID, independent IPFS/HTTPS retrieval and
 the remaining first complete Actions-run gate. A local rehearsal is not a GitHub
-deployment. The team owns commits and pushes; agents have not done them in this session.
+deployment. The user explicitly authorized committing and pushing the verifier
+fixes after the failure investigation.
 
 ## Release sequence
 
@@ -20,12 +21,19 @@ deployment. The team owns commits and pushes; agents have not done them in this 
    root and complete DAG. It imports only that root's canonical DAG and retains old pins.
 4. A fresh verifier retrieves the CID over IPFS and hashes every file. It explicitly
    connects to the VPS and uses auto routing; it does not claim exclusive delivery
-   from that peer or automatic discovery. The provider-listing check is advisory.
+   from that peer or automatic discovery. Timed-out connect, directory-list and
+   file-read operations make at most three attempts on the same isolated node, with
+   20-second backoff, 30-second requests and the existing eight-minute total budget.
+   Invalid entries, size/hash mismatches and other errors still stop immediately.
+   The provider-listing check is advisory.
 5. Recheck the current GitHub `main` SHA. If it changed, leave the CID pinned and
    stop. Otherwise ask the VPS to publish the fixed `derpc-website` IPNS name.
 6. Verify the exact accepted release tuple on the VPS, the public record's signature,
-   target and expiry, and every HTTPS file's hash, IPNS path and root CID. Keep the
-   receipts and verification reports as GitHub artifacts for 90 days.
+   target and expiry, and every normal HTTPS URL's file hash and IPNS path. If an
+   unchanged asset retains an older root header, also fetch its release-specific
+   query URL and require the same hash, exact IPNS path and new root CID. Both
+   responses count against the byte budget; evidence preserves both sets of headers.
+   Keep receipts and verification reports as GitHub artifacts for 90 days.
 
 The deployment key can request pins and publication of this website. Treat access
 to it, the production workflow and `main` as authority to change downloaded
@@ -59,6 +67,26 @@ or reviewer was added. Repository administrators retain their normal authority.
 | `DERPC_PIN_SSH_KEY` | `ens-production` secret | Restricted SSH credential, never an Ethereum or IPNS key |
 
 ## Retries and recovery
+
+The first automatic run, [42305110614](https://github.com/r0bops/DeRPC/actions/runs/42305110614),
+passed packaging and VPS pinning but timed out on its first root-directory read
+after connecting to the public peer. The original pinned verifier had no retries;
+IPNS publication was skipped. A later fresh-node check retrieved and hashed all 55
+files from that same CID. This identifies an availability timeout, not a failed
+build or rejected credential; the underlying network delay was not established.
+The timeout retries above address the early failure while preserving every
+integrity gate. Retry evidence records the operation, path, attempt and outcome.
+
+The subsequent run, [42307096196](https://github.com/r0bops/DeRPC/actions/runs/42307096196),
+passed native retrieval and published the new IPNS target, but its HTTPS check
+failed repeatedly on the unchanged CSS file's old `X-Ipfs-Roots` header. Its bytes
+already matched the new manifest; a request with `?derpc-release=<expected-CID>`
+returned identical bytes with the new root. The updated verifier checks the normal
+URL's bytes first, then verifies that fresh binding when necessary. Wrong bytes at
+the normal URL cannot be hidden by the query response. All 55 live files passed
+with the fix locally; neither failed Actions run contains it. The user subsequently
+authorized committing and pushing the fixes. Require a complete successful Actions
+run for the new commit before recording CI deployment success.
 
 Workflow concurrency avoids overlapping releases, but does not establish commit
 order. The VPS also locks operations and fsyncs the accepted run number, run ID,
