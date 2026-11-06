@@ -16,6 +16,7 @@ LICENSE            — MIT
 .github/workflows/ci.yml — on pull requests and main: type check, tests, release build, offline release check and an IPFS package artifact
 .github/workflows/release-ens.yml — manual release: package with the release gateway, pin on the team IPFS node, check public retrieval; sends no transaction
 .github/actions/site-package/ — the build, check and packaging steps both workflows share
+.github/actions/install-kubo/ — shared pinned Kubo download and archive-hash verification
 frontend/.env.example — VITE_TOR_GATEWAYS: our own tor-js gateway address(es); copy to .env.local
 package.json       — workspace root: demo/directory dev and build scripts, combined build:site, and typecheck (pnpm)
 pnpm-workspace.yaml — provider, frontend, web, wrapper, payments and contract packages, Lodestar/ssz pins and patch registration
