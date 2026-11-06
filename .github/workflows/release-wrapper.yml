@@ -180,7 +180,7 @@ jobs:
               raise SystemExit('Release source differs from the tested workflow commit.')
           tag = f'wrapper-v{version}'
           base = os.environ['GITHUB_API_URL'].rstrip('/') + '/repos/' + os.environ['GITHUB_REPOSITORY']
-          def get(path, missing_ok=False):
+          def get(path):
               request = urllib.request.Request(base + path, headers={
                   'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
                   'Accept': 'application/vnd.github+json',
@@ -190,8 +190,6 @@ jobs:
                   with urllib.request.urlopen(request, timeout=30) as response:
                       return json.load(response)
               except urllib.error.HTTPError as error:
-                  if missing_ok and error.code == 404:
-                      return None
                   raise SystemExit(f'GitHub verification failed with HTTP {error.code}.') from None
           ref = get('/git/ref/tags/' + tag)
           if ref.get('ref') != 'refs/tags/' + tag:
@@ -205,9 +203,19 @@ jobs:
               target = get('/git/tags/' + target['sha'])['object']
           if target.get('type') != 'commit' or target.get('sha') != sha:
               raise SystemExit('Version tag must already point to the exact tested commit.')
-          existing = get('/releases/tags/' + tag, missing_ok=True)
-          if existing is not None:
-              raise SystemExit('A release already exists for this tag; its draft or published assets are left untouched.')
+          # Lookup-by-tag can return 404 for an existing draft. The authenticated
+          # release list includes drafts; inspect every page within a fixed bound.
+          for page in range(1, 11):
+              releases = get(f'/releases?per_page=100&page={page}')
+              if (not isinstance(releases, list) or len(releases) > 100
+                      or any(not isinstance(item, dict) or not isinstance(item.get('tag_name'), str) for item in releases)):
+                  raise SystemExit('GitHub returned an invalid release list; refusing to create a draft.')
+              if any(item['tag_name'] == tag for item in releases):
+                  raise SystemExit('A release already exists for this tag; its draft or published assets are left untouched.')
+              if len(releases) < 100:
+                  break
+          else:
+              raise SystemExit('Release listing exceeded the 1000-release search bound; refusing to create a draft.')
           body = f'''Prebuilt DeRPC operator wrapper {version} for Linux x64 and ARM64.
 
           Each archive includes the wrapper and Tor Docker images, Compose configuration, and the launcher. The operator host requires Docker Engine with Docker Compose; Node.js and a source build are not required.
