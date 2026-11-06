@@ -26,7 +26,7 @@ const balanceOfSpecifier = { method: "eth_getBalance", params: [SPECIFIER, "fina
  * A worker that answers the recorded specifier proofs (slot 1, or no slots) at the recorded block.
  * Like the real transport, it reports "booting" before it returns.
  */
-function fakeTransport(start: StartOptions, opts: { bootError?: Error } = {}) {
+function fakeTransport(start: StartOptions, opts: { bootError?: Error; pinGate?: Promise<void> } = {}) {
   let state: TransportState = "booting";
   const sent: { url: string; method: string; params: any[] }[] = [];
   const ready = opts.bootError ? Promise.reject(opts.bootError) : Promise.resolve();
@@ -50,6 +50,9 @@ function fakeTransport(start: StartOptions, opts: { bootError?: Error } = {}) {
       if (state === "failed" || state === "closed") throw new TransportUnavailableError(state);
       const { id, method, params } = JSON.parse(String(init.body));
       sent.push({ url, method, params });
+      if (opts.pinGate && method === "eth_getProof" && params[0]?.toLowerCase() === SPECIFIER.toLowerCase() && params[2] === TAG && params[1].length === 1) {
+        await opts.pinGate;
+      }
       if (url.includes("down.example")) throw new Error("tor: operation timed out at exit");
       const result = answer(method, params);
       const body = result === undefined ? { jsonrpc: "2.0", id, error: { code: -32000, message: "no recorded answer" } } : { jsonrpc: "2.0", id, result };
@@ -75,7 +78,7 @@ function setup(opts: {
   const headers: VerifiedHeaderSource = { finalized: () => HEADER, close: () => {} };
   const derpc = createDeRPCWith(
     {
-      startTransport: (start) => (fake = fakeTransport(start, { bootError: opts.bootError })).transport,
+      startTransport: (start) => (fake = fakeTransport(start, { bootError: opts.bootError, pinGate: opts.pinGate })).transport,
       startHeaders: async () => {
         await opts.headersAfter;
         if (opts.headersError) throw opts.headersError;
@@ -189,6 +192,21 @@ describe("createDeRPC", () => {
     expect(error.code).toBe(4900);
     expect(events).toHaveLength(1);
     expect(derpc.status().transport.state).toBe("closed");
+  });
+
+  it("refuses a read waiting on the pin check when the user removes every operator", async () => {
+    let release!: () => void;
+    const pinGate = new Promise<void>((resolve) => (release = resolve));
+    const { derpc, sent } = setup({ operators: [A], pinGate });
+    await derpc.ready;
+
+    const pending = derpc.provider.request(balanceOfSpecifier);
+    derpc.setOperators([]);
+    release();
+
+    const error = await rpcError(pending);
+    expect(error.data).toEqual({ reason: "NoOperatorsChosenError" });
+    expect(sent.map((s) => [s.url, s.params[1].length])).toEqual([[A.url, 1]]); // the pin proof, never the account read
   });
 
   it("rejects a simulated lying operator, and keeps it excluded when the choice changes", async () => {

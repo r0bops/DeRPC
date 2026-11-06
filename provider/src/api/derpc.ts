@@ -19,7 +19,7 @@ import { asFetch } from "../transport/fetch-adapter.ts";
 import { createJsonRpcSend } from "../transport/json-rpc.ts";
 import type { AccountProof } from "../verify/index.ts";
 import type { JsonRpcSend, VerifiedReader } from "../verify/reader.ts";
-import { checkWorkerPin, gateReader, WorkerPinChainError, WorkerPinMismatchError } from "../verify/worker-pin.ts";
+import { checkWorkerPin, WorkerPinChainError, WorkerPinMismatchError } from "../verify/worker-pin.ts";
 import { createEip1193Provider, ProviderRpcError, type Eip1193Provider } from "./eip1193.ts";
 
 type Hex = `0x${string}`;
@@ -81,6 +81,7 @@ export interface DeRPCDeps {
 }
 
 const CHAIN_ID = 1; // mainnet only, for now
+const READ_METHODS = ["getBalance", "getTransactionCount", "getCode", "getStorageAt", "getTokenBalance"] as const;
 
 /**
  * Private, verified Ethereum reads. Boots the pinned anonymity worker, syncs the light client through it,
@@ -210,7 +211,20 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
     }
     if (!pool) throw new NoOperatorsChosenError();
     startPinCheck();
-    return gateReader(pooledReader(pool, headers), pinCheck!);
+    const check = pinCheck!;
+    check.catch(() => {});
+    // Look up the pool again when the read actually sends: the choice may have changed while the
+    // pin check ran, and removing every operator must refuse the read (#29).
+    const gated: Record<string, unknown> = {};
+    for (const name of READ_METHODS) {
+      gated[name] = async (...args: unknown[]) => {
+        await check;
+        if (disconnected) throw new TransportUnavailableError("closed");
+        if (!pool) throw new NoOperatorsChosenError();
+        return (pooledReader(pool, headers)[name] as (...a: unknown[]) => Promise<unknown>)(...args);
+      };
+    }
+    return gated as unknown as VerifiedReader;
   }
 
   function setOperators(operators: readonly DeRPCOperator[]) {
@@ -252,7 +266,7 @@ export function createDeRPCWith(deps: DeRPCDeps, options: DeRPCOptions = {}): De
   }
 
   const reader = {} as Record<keyof VerifiedReader, (...args: never[]) => Promise<unknown>>;
-  for (const name of ["getBalance", "getTransactionCount", "getCode", "getStorageAt", "getTokenBalance"] as const) {
+  for (const name of READ_METHODS) {
     reader[name] = async (...args: never[]) => ((await readerForReads())[name] as (...a: never[]) => Promise<unknown>)(...args);
   }
 
