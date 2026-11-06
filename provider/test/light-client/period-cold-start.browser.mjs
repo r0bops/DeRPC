@@ -99,7 +99,7 @@ export async function runPeriodColdStart(options) {
     }
     return response;
   };
-  let transport, d, phase = 'worker-startup', outcome = {};
+  let transport, d, activeClientId, phase = 'worker-startup', outcome = {};
   const bounded = async (promise, ms, label) => {
     let timer;
     try { return await Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(Error(`${label} exceeded harness bound ${ms}ms`)), ms); })]); }
@@ -107,6 +107,7 @@ export async function runPeriodColdStart(options) {
   };
   const transition = () => {
     for (const accepted of events) {
+      if (accepted.clientId !== activeClientId) continue;
       if (!accepted.returnedNormally || !accepted.acceptedHead || accepted.signaturePeriod !== TARGET || accepted.after.allowForcedUpdates !== false) continue;
       const installed = accepted.after.installedCommittees.find(committee => committee.period === TARGET);
       const safe = events.find(candidate => candidate.clientId === accepted.clientId && candidate.returnedNormally && candidate.signaturePeriod === TARGET - 1 &&
@@ -134,11 +135,19 @@ export async function runPeriodColdStart(options) {
         };
         return transport;
       },
-      startHeaders: options => startVerifiedHeaderSource({ ...options,
-        fetch: observeFetch(options.fetch),
-        fetchForAttempt: attempt => observeFetch(options.fetchForAttempt ? options.fetchForAttempt(attempt) : options.fetch),
-        onLog: (level, message) => headerLogs.push({ level, message, at: new Date().toISOString() }),
-      }),
+      startHeaders: async options => {
+        const headers = await startVerifiedHeaderSource({ ...options,
+          fetch: observeFetch(options.fetch),
+          fetchForAttempt: attempt => observeFetch(options.fetchForAttempt ? options.fetchForAttempt(attempt) : options.fetch),
+          onLog: (level, message) => headerLogs.push({ level, message, at: new Date().toISOString() }),
+        });
+        // Abandoned startup attempts have terminally aborted lifecycles. Bind the evidence to
+        // the one client whose header source actually returned, not an earlier discarded attempt.
+        const active = [...clients].filter(([client]) => client.lifecycle?.signal.aborted === false);
+        if (active.length !== 1) { headers.close(); throw Error('Cannot identify one active verified header client'); }
+        activeClientId = active[0][1];
+        return headers;
+      },
     }, { checkpoint: ORIGINAL, worker: TOR_JS_PIN, gateways: [gateway], beaconUrl: beacons[0], beaconUrls: beacons.slice(1),
       operators: rpcs.map((url, index) => ({ id: `live-proof-${index}`, url, priority: index })),
       onPoolEvent: event => poolEvents.push(event),
@@ -176,5 +185,5 @@ export async function runPeriodColdStart(options) {
   outcome.boundaryValidated = mode === 'live' && startedAt >= boundaryMs && outcome.readPeriod === TARGET && !!outcome.transition && outcome.functionalPass;
   return clean({ mode, startedAt: new Date(startedAt).toISOString(), startPeriod: period(Math.floor((startedAt / 1000 - GENESIS.mainnet.genesisTime) / 12)),
     checkpoint: ORIGINAL, boundary: { period: TARGET, slot: TARGET * SLOTS_PER_PERIOD, at: new Date(boundaryMs).toISOString() },
-    productionTimeoutOverrides: false, outcome, initializations, fetched, events, traffic, headerLogs, poolEvents });
+    productionTimeoutOverrides: false, activeClientId, outcome, initializations, fetched, events, traffic, headerLogs, poolEvents });
 }
