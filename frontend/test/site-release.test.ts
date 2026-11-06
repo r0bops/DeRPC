@@ -89,6 +89,129 @@ describe("independent native IPFS retrieval", () => {
     await expect(verifyPinned(validateManifest(manifest()), wrongSize)).rejects.toThrow(/size differs/);
     await expect(verifyPinned(validateManifest(manifest()), { ...pinnedFixture(), limits: { ...LIMITS, totalBytes: 7 } })).rejects.toThrow(/total byte/);
   });
+
+  it("recovers a root listing timeout on the same fresh node and still verifies every file", async () => {
+    const fixture = pinnedFixture(), originalList = fixture.node.list;
+    const list = vi.fn(originalList).mockRejectedValueOnce(new DOMException("cold root lookup timed out", "TimeoutError"));
+    fixture.node.list = list;
+    const createNode = vi.fn(async () => fixture.node), sleep = vi.fn(async () => {});
+    const report = await verifySiteRelease({ manifest: manifest(), phase: "pinned" }, { createNode, sleep });
+
+    expect(report).toMatchObject({ ok: true, ownedResourcesCleaned: true, verification: { filesChecked: 2, bytes: 8, noExtraEntries: true } });
+    expect(report.verification.files).toEqual([
+      { path: "demo/index.html", bytes: 4, sha256: hash("demo") },
+      { path: "index.html", bytes: 4, sha256: hash("site") },
+    ]);
+    expect(createNode).toHaveBeenCalledOnce();
+    expect(list.mock.calls.map(([path]) => path)).toEqual([`/ipfs/${CID}`, `/ipfs/${CID}`, `/ipfs/${CID}/demo`]);
+    expect(fixture.node.command.mock.calls.filter(([args]) => args[0] === "swarm")).toHaveLength(1);
+    expect(sleep).toHaveBeenCalledOnce();
+    expect(sleep.mock.calls[0]).toEqual([LIMITS.retryMs, expect.any(AbortSignal)]);
+    expect(report.attempts).toEqual([
+      expect.objectContaining({ stage: "list-ipfs-directory", path: "/", attempt: 1, ok: false, retryable: true, error: "cold root lookup timed out", durationMs: expect.any(Number) }),
+      expect.objectContaining({ stage: "list-ipfs-directory", path: "/", attempt: 2, ok: true, durationMs: expect.any(Number) }),
+    ]);
+    expect(fixture.node.close).toHaveBeenCalledOnce();
+  });
+
+  it("limits persistent root timeouts to three attempts and cleans the node without accepting any file", async () => {
+    const fixture = pinnedFixture();
+    const list = vi.fn(async () => { throw new DOMException("root lookup timed out", "TimeoutError"); });
+    fixture.node.list = list;
+    const createNode = vi.fn(async () => fixture.node), sleep = vi.fn(async () => {});
+    const report = await verifySiteRelease({ manifest: manifest(), phase: "pinned" }, { createNode, sleep });
+
+    expect(report).toMatchObject({ ok: false, ownedResourcesCleaned: true });
+    expect(report.error).toMatch(/timed out/);
+    expect(report.verification).toBeUndefined();
+    expect(createNode).toHaveBeenCalledOnce();
+    expect(list).toHaveBeenCalledTimes(3);
+    expect(sleep).toHaveBeenCalledTimes(2);
+    expect(report.attempts.map((entry: { attempt: number; ok: boolean }) => [entry.attempt, entry.ok])).toEqual([[1, false], [2, false], [3, false]]);
+    expect(fixture.node.command.mock.calls.some(([args]) => args[0] === "cat")).toBe(false);
+    expect(fixture.node.close).toHaveBeenCalledOnce();
+  });
+
+  it("retries a timed-out file read without accepting its incomplete bytes or skipping other files", async () => {
+    const fixture = pinnedFixture(), original = fixture.node.command.getMockImplementation()!;
+    let firstCat = true;
+    fixture.node.command.mockImplementation(async args => {
+      if (args[0] === "cat" && firstCat) {
+        firstCat = false;
+        throw Object.assign(new Error("Kubo cat deadline exceeded"), { code: "DERPC_KUBO_TIMEOUT" });
+      }
+      return original(args);
+    });
+    const sleep = vi.fn(async () => {});
+    const report = await verifySiteRelease({ manifest: manifest(), phase: "pinned" }, { createNode: async () => fixture.node, sleep });
+
+    expect(report).toMatchObject({ ok: true, ownedResourcesCleaned: true, verification: { filesChecked: 2, bytes: 8 } });
+    expect(fixture.node.command.mock.calls.filter(([args]) => args[0] === "cat").map(([args]) => args[1])).toEqual([
+      `/ipfs/${CID}/demo/index.html`, `/ipfs/${CID}/demo/index.html`, `/ipfs/${CID}/index.html`,
+    ]);
+    expect(report.attempts).toEqual([
+      expect.objectContaining({ stage: "hash-ipfs-file", path: "demo/index.html", attempt: 1, ok: false, retryable: true }),
+      expect.objectContaining({ stage: "hash-ipfs-file", path: "demo/index.html", attempt: 2, ok: true }),
+    ]);
+    expect(sleep).toHaveBeenCalledOnce();
+    expect(fixture.node.close).toHaveBeenCalledOnce();
+  });
+
+  it("recovers a peer-connect timeout before making any directory request", async () => {
+    const fixture = pinnedFixture();
+    fixture.node.command.mockRejectedValueOnce(Object.assign(new Error("Kubo swarm deadline exceeded"), { code: "DERPC_KUBO_TIMEOUT" }));
+    const report = await verifySiteRelease({ manifest: manifest(), phase: "pinned" }, { createNode: async () => fixture.node, sleep: async () => {} });
+
+    expect(report).toMatchObject({ ok: true, verification: { filesChecked: 2 } });
+    expect(fixture.node.command.mock.calls.slice(0, 2).map(([args]) => args)).toEqual([
+      ["swarm", "connect", PROVIDER_PEER], ["swarm", "connect", PROVIDER_PEER],
+    ]);
+    expect(report.attempts).toEqual([
+      expect.objectContaining({ stage: "connect-public-provider", attempt: 1, ok: false, retryable: true }),
+      expect.objectContaining({ stage: "connect-public-provider", attempt: 2, ok: true }),
+    ]);
+  });
+
+  it("keeps hash mismatches terminal after a successful transient recovery", async () => {
+    const fixture = pinnedFixture(), originalList = fixture.node.list;
+    fixture.node.list = vi.fn(originalList).mockRejectedValueOnce(new DOMException("cold root", "TimeoutError"));
+    const input = manifest(); input.files["demo/index.html"] = hash("wrong");
+    const sleep = vi.fn(async () => {});
+    const report = await verifySiteRelease({ manifest: input, phase: "pinned" }, { createNode: async () => fixture.node, sleep });
+
+    expect(report).toMatchObject({ ok: false, ownedResourcesCleaned: true });
+    expect(report.error).toMatch(/file hash differs/);
+    expect(sleep).toHaveBeenCalledOnce();
+    expect(fixture.node.command.mock.calls.filter(([args]) => args[0] === "cat")).toHaveLength(1);
+    expect(report.attempts).toHaveLength(2); // Only the root lookup was retried; the mismatching file was not.
+    expect(fixture.node.close).toHaveBeenCalledOnce();
+  });
+
+  it("does not retry byte-limit violations from the directory transport", async () => {
+    const fixture = pinnedFixture();
+    const list = vi.fn(async () => { throw new Error("response exceeds byte limit"); });
+    fixture.node.list = list;
+    const sleep = vi.fn(async () => {});
+    const report = await verifySiteRelease({ manifest: manifest(), phase: "pinned" }, { createNode: async () => fixture.node, sleep });
+
+    expect(report).toMatchObject({ ok: false, ownedResourcesCleaned: true });
+    expect(report.error).toMatch(/byte limit/);
+    expect(list).toHaveBeenCalledOnce(); expect(sleep).not.toHaveBeenCalled();
+    expect(report.attempts).toEqual([expect.objectContaining({ attempt: 1, ok: false, retryable: false })]);
+  });
+
+  it("aborts retry backoff at the overall deadline without starting another network operation", async () => {
+    const fixture = pinnedFixture();
+    const list = vi.fn(async () => { throw new DOMException("root lookup timed out", "TimeoutError"); });
+    fixture.node.list = list;
+    const report = await verifySiteRelease({ manifest: manifest(), phase: "pinned", limits: { ...LIMITS, totalMs: 25, retryMs: 1000 } }, { createNode: async () => fixture.node });
+
+    expect(report).toMatchObject({ ok: false, ownedResourcesCleaned: true });
+    expect(list).toHaveBeenCalledOnce();
+    expect(report.attempts).toHaveLength(1);
+    expect(fixture.node.command.mock.calls.some(([args]) => args[0] === "cat")).toBe(false);
+    expect(fixture.node.close).toHaveBeenCalledOnce();
+  });
 });
 
 describe("signed IPNS and website publication", () => {
@@ -114,6 +237,80 @@ describe("signed IPNS and website publication", () => {
     ]);
     expect(fixture.fetchImpl.mock.calls.map(([url]) => url)).toEqual([RECORD_URL, `${WEBSITE_ORIGIN}/demo/index.html`, `${WEBSITE_ORIGIN}/index.html`]);
   });
+  it("accepts identical canonical cached bytes only with a separately verified release-specific binding", async () => {
+    const fixture = publishedFixture();
+    fixture.fetchImpl.mockImplementation(async (url: string) => {
+      if (url === RECORD_URL) return new Response("signed-record");
+      const parsed = new URL(url), path = parsed.pathname.slice(1);
+      return https(path, pages[path], parsed.searchParams.get("derpc-release") === CID ? CID : OLD);
+    });
+    const result = await verifyPublished(validateManifest(manifest()), { ...fixture, limits: { ...LIMITS, fileBytes: 4, totalBytes: 16 } });
+
+    expect(result).toMatchObject({ filesChecked: 2, bytes: 8, retrievedBytes: 16 });
+    for (const file of result.files) {
+      expect(file).toMatchObject({ sha256: hash(pages[file.path]), ipfsRoots: `${OLD},bafkreifile`, gatewayBindingRefresh: {
+        url: `${WEBSITE_ORIGIN}/${file.path}?derpc-release=${CID}`, bytes: 4, sha256: hash(pages[file.path]),
+        ipfsPath: `/ipns/${WEBSITE_NAME}/${file.path}`, ipfsRoots: `${CID},bafkreifile`,
+      } });
+    }
+    expect(fixture.fetchImpl.mock.calls.map(([url]) => url)).toEqual([
+      RECORD_URL,
+      `${WEBSITE_ORIGIN}/demo/index.html`, `${WEBSITE_ORIGIN}/demo/index.html?derpc-release=${CID}`,
+      `${WEBSITE_ORIGIN}/index.html`, `${WEBSITE_ORIGIN}/index.html?derpc-release=${CID}`,
+    ]);
+  });
+  it("never conceals wrong canonical bytes behind a correct release-specific response", async () => {
+    const fixture = publishedFixture();
+    fixture.fetchImpl.mockImplementation(async (url: string) => {
+      if (url === RECORD_URL) return new Response("signed-record");
+      const parsed = new URL(url), path = parsed.pathname.slice(1), refreshed = parsed.searchParams.has("derpc-release");
+      return https(path, refreshed ? pages[path] : "stale", refreshed ? CID : OLD);
+    });
+
+    await expect(verifyPublished(validateManifest(manifest()), fixture)).rejects.toThrow(/HTTPS file hash differs/);
+    expect(fixture.fetchImpl.mock.calls.some(([url]) => new URL(url).searchParams.has("derpc-release"))).toBe(false);
+  });
+  it.each(["old-root", "root-later", "wrong-path", "wrong-bytes", "missing-root", "partial-status"])("rejects refreshed %s evidence despite matching canonical bytes", async kind => {
+    const fixture = publishedFixture();
+    fixture.fetchImpl.mockImplementation(async (url: string) => {
+      if (url === RECORD_URL) return new Response("signed-record");
+      const parsed = new URL(url), path = parsed.pathname.slice(1);
+      if (!parsed.searchParams.has("derpc-release")) return https(path, pages[path], OLD);
+      expect(parsed.searchParams.get("derpc-release")).toBe(CID);
+      if (kind === "missing-root") return new Response(pages[path], { headers: { "x-ipfs-path": `/ipns/${WEBSITE_NAME}/${path}` } });
+      if (kind === "root-later") return new Response(pages[path], { headers: { "x-ipfs-path": `/ipns/${WEBSITE_NAME}/${path}`, "x-ipfs-roots": `${OLD},${CID}` } });
+      if (kind === "partial-status") return new Response(pages[path], { status: 206, headers: { "x-ipfs-path": `/ipns/${WEBSITE_NAME}/${path}`, "x-ipfs-roots": CID } });
+      return https(path, kind === "wrong-bytes" ? "wrong" : pages[path], kind === "old-root" ? OLD : CID, kind === "wrong-path" ? `/ipfs/${CID}/${path}` : undefined);
+    });
+
+    await expect(verifyPublished(validateManifest(manifest()), fixture)).rejects.toThrow(/Published release did not verify/);
+    expect(fixture.fetchImpl.mock.calls.filter(([url]) => new URL(url).searchParams.has("derpc-release"))).toHaveLength(1);
+  });
+  it.each(["", "not-a-cid", CID.slice(0, -1) + "b", CID.slice(0, 7) + "z" + CID.slice(8)])("rejects malformed canonical root %j before a binding refresh", async root => {
+    const fixture = publishedFixture();
+    fixture.fetchImpl.mockImplementation(async (url: string) => {
+      if (url === RECORD_URL) return new Response("signed-record");
+      const parsed = new URL(url), path = parsed.pathname.slice(1);
+      return https(path, pages[path], parsed.searchParams.has("derpc-release") ? CID : root);
+    });
+
+    await expect(verifyPublished(validateManifest(manifest()), fixture)).rejects.toThrow();
+    expect(fixture.fetchImpl.mock.calls.some(([url]) => new URL(url).searchParams.has("derpc-release"))).toBe(false);
+  });
+  it("counts canonical and refreshed response bodies against the aggregate download bound", async () => {
+    const fixture = publishedFixture();
+    fixture.fetchImpl.mockImplementation(async (url: string) => {
+      if (url === RECORD_URL) return new Response("signed-record");
+      const parsed = new URL(url), path = parsed.pathname.slice(1);
+      return https(path, pages[path], parsed.searchParams.has("derpc-release") ? CID : OLD);
+    });
+
+    await expect(verifyPublished(validateManifest(manifest()), { ...fixture, limits: { ...LIMITS, totalBytes: 11 } })).rejects.toThrow(/byte limit/);
+    // The first file used eight bytes (canonical + refresh). Only three remain for the second canonical response.
+    expect(fixture.fetchImpl.mock.calls.map(([url]) => url)).toEqual([
+      RECORD_URL, `${WEBSITE_ORIGIN}/demo/index.html`, `${WEBSITE_ORIGIN}/demo/index.html?derpc-release=${CID}`, `${WEBSITE_ORIGIN}/index.html`,
+    ]);
+  });
   it("retries a stale signed target before fetching any website files", async () => {
     const fixture = publishedFixture(); fixture.node.command.mockResolvedValueOnce(Buffer.from(JSON.stringify(inspection(OLD))));
     const result = await verifyPublished(validateManifest(manifest()), { ...fixture, maxAttempts: 2 });
@@ -133,7 +330,7 @@ describe("signed IPNS and website publication", () => {
     const fixture = publishedFixture();
     fixture.fetchImpl.mockImplementation(async (url: string) => {
       if (url === RECORD_URL) return new Response("signed-record");
-      const path = url.slice(WEBSITE_ORIGIN.length + 1);
+      const path = new URL(url).pathname.slice(1);
       if (kind === "missing") return new Response("missing", { status: 404 });
       if (kind === "absent-headers") return new Response(pages[path]);
       if (kind === "root-later") return new Response(pages[path], { headers: { "x-ipfs-path": `/ipns/${WEBSITE_NAME}/${path}`, "x-ipfs-roots": `${OLD},${CID}` } });
@@ -215,7 +412,7 @@ describe("resource and time bounds", () => {
   });
   it("bounds native process output and kills a stalled subprocess", async () => {
     await expect(runCommand(process.execPath, ["-e", "process.stdout.write('x'.repeat(100))"], { maxBytes: 8 })).rejects.toThrow(/byte limit/);
-    await expect(runCommand(process.execPath, ["-e", "setInterval(()=>{},1000)"], { timeoutMs: 30 })).rejects.toThrow(/deadline/);
+    await expect(runCommand(process.execPath, ["-e", "process.stdout.write('partial'); setInterval(()=>{},1000)"], { timeoutMs: 30 })).rejects.toMatchObject({ message: expect.stringMatching(/deadline/), code: "DERPC_KUBO_TIMEOUT" });
   });
   it("cleans the isolated node after success, partial failure and overall deadline", async () => {
     const success = pinnedFixture();

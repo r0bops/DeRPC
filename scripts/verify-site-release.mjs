@@ -95,7 +95,7 @@ export function runCommand(binary, args, { env, signal, maxBytes = LIMITS.listin
     const chunks = []; let size = 0, stderrSize = 0, failure;
     const fail = error => { failure ??= error; child.kill("SIGKILL"); };
     const label = args.find(arg => !arg.startsWith("--")) ?? "command";
-    const abort = () => fail(new Error(`Kubo ${label} deadline exceeded`));
+    const abort = () => fail(Object.assign(new Error(`Kubo ${label} deadline exceeded`), { code: "DERPC_KUBO_TIMEOUT" }));
     scoped.addEventListener("abort", abort, { once: true });
     child.stdout.on("data", chunk => { size += chunk.length; if (size > maxBytes) fail(new Error("Kubo output exceeds byte limit")); else chunks.push(chunk); });
     child.stderr.on("data", chunk => { stderrSize += chunk.length; if (stderrSize > 65536) fail(new Error("Kubo diagnostics exceed byte limit")); });
@@ -177,9 +177,29 @@ export async function createFreshKubo({ phase, signal, ipfs = process.env.IPFS_B
 }
 
 /** Enumerates every link before reading any file. Empty extra directories and symlinks also fail. */
-export async function verifyPinned(manifest, { node, signal, limits = LIMITS, onStep = () => {} }) {
-  onStep({ stage: "connect-public-provider" });
-  await node.command(["swarm", "connect", PROVIDER_PEER]);
+export async function verifyPinned(manifest, { node, signal, limits = LIMITS, sleep = pause, now = Date.now, maxAttempts = 3, onAttempt = () => {}, onStep = () => {} }) {
+  // A newly connected peer can time out before its first block arrives. Keep the
+  // same isolated daemon, bounded requests and overall deadline while retrying
+  // timeouts only. Parsing and integrity failures below are never retried.
+  const retrieve = async (step, operation) => {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      signal.throwIfAborted();
+      onStep({ ...step, attempt });
+      const began = now();
+      try {
+        const result = await operation();
+        if (attempt > 1) onAttempt({ ...step, attempt, durationMs: now() - began, ok: true });
+        return result;
+      } catch (error) {
+        const retryable = error?.name === "TimeoutError" || error?.code === "DERPC_KUBO_TIMEOUT";
+        onAttempt({ ...step, attempt, durationMs: now() - began, ok: false, retryable, error: String(error.message).slice(0, 500) });
+        signal.throwIfAborted();
+        if (!retryable || attempt === maxAttempts) throw error;
+        await sleep(limits.retryMs, signal);
+      }
+    }
+  };
+  await retrieve({ stage: "connect-public-provider" }, () => node.command(["swarm", "connect", PROVIDER_PEER]));
   const expectedFiles = new Set(Object.keys(manifest.files)), expectedDirectories = new Set([""]);
   for (const path of expectedFiles) {
     const parts = path.split("/");
@@ -189,8 +209,7 @@ export async function verifyPinned(manifest, { node, signal, limits = LIMITS, on
   while (pending.length) {
     signal.throwIfAborted();
     const directory = pending.pop(); seenDirectories.add(directory);
-    onStep({ stage: "list-ipfs-directory", path: directory || "/" });
-    const response = await node.list(`/ipfs/${manifest.cid}${directory ? `/${directory}` : ""}`, { maxBytes: limits.listingBytes });
+    const response = await retrieve({ stage: "list-ipfs-directory", path: directory || "/" }, () => node.list(`/ipfs/${manifest.cid}${directory ? `/${directory}` : ""}`, { maxBytes: limits.listingBytes }));
     requireThat(response.length <= limits.listingBytes, "directory listing exceeds byte limit");
     const listing = JSON.parse(response.toString());
     requireThat(Array.isArray(listing.Objects) && listing.Objects.length === 1 && Array.isArray(listing.Objects[0].Links), "invalid IPFS directory listing");
@@ -215,8 +234,7 @@ export async function verifyPinned(manifest, { node, signal, limits = LIMITS, on
   const files = []; let bytes = 0;
   for (const path of expectedFiles) {
     signal.throwIfAborted();
-    onStep({ stage: "hash-ipfs-file", path, filesAlreadyChecked: files.length });
-    const body = await node.command(["cat", `/ipfs/${manifest.cid}/${path}`], { maxBytes: Math.min(limits.fileBytes, limits.totalBytes - bytes) });
+    const body = await retrieve({ stage: "hash-ipfs-file", path, filesAlreadyChecked: files.length }, () => node.command(["cat", `/ipfs/${manifest.cid}/${path}`], { maxBytes: Math.min(limits.fileBytes, limits.totalBytes - bytes) }));
     bytes += body.length;
     requireThat(body.length <= limits.fileBytes && bytes <= limits.totalBytes, "release exceeds byte limit");
     requireThat(body.length === found.get(path), `IPFS file size differs: ${path}`);
@@ -249,20 +267,40 @@ export async function verifyPublished(manifest, { node, signal, limits = LIMITS,
       requireThat(inspected.length <= limits.recordBytes, "IPNS inspection exceeds byte limit");
       const inspection = JSON.parse(inspected.toString());
       const binding = verifyIpnsInspection(inspection, manifest.cid, now());
-      const files = []; let bytes = 0;
+      const files = []; let bytes = 0, retrievedBytes = 0;
       for (const [path, expected] of Object.entries(manifest.files)) {
         onStep({ stage: "hash-https-file", path, attempt, filesAlreadyChecked: files.length });
-        const response = await fetchBounded(`${WEBSITE_ORIGIN}/${path}`, { fetchImpl, signal, maxBytes: Math.min(limits.fileBytes, limits.totalBytes - bytes), timeoutMs: limits.requestMs });
+        const response = await fetchBounded(`${WEBSITE_ORIGIN}/${path}`, { fetchImpl, signal, maxBytes: Math.min(limits.fileBytes, limits.totalBytes - retrievedBytes), timeoutMs: limits.requestMs });
+        retrievedBytes += response.bytes.length;
         const ipfsPath = response.headers.get("x-ipfs-path"), roots = response.headers.get("x-ipfs-roots");
         requireThat(ipfsPath === `/ipns/${WEBSITE_NAME}/${path}`, `HTTPS IPNS path differs: ${path}`);
-        requireThat(roots && roots.length <= 8192 && roots.split(",").map(root => root.trim())[0] === manifest.cid, `HTTPS root differs: ${path}`);
+        const root = roots?.split(",")[0].trim();
+        requireThat(roots && roots.length <= 8192 && root.length === 59 && /^bafybei[a-z2-7]{52}$/.test(root) && ("abcdefghijklmnopqrstuvwxyz234567".indexOf(root.at(-1)) & 3) === 0, `HTTPS root is missing or invalid: ${path}`);
+        contenthashFromCid(root); // Require the same dag-pb/sha2-256 header as a manifest root.
         const digest = sha256(response.bytes); bytes += response.bytes.length;
         requireThat(digest === expected, `HTTPS file hash differs: ${path}`);
-        files.push({ path, bytes: response.bytes.length, sha256: digest, ipfsPath, ipfsRoots: roots });
+        let gatewayBindingRefresh;
+        if (root !== manifest.cid) {
+          // Unchanged assets can retain a cached root header across IPNS releases.
+          // The normal URL must already match the manifest bytes. Independently
+          // require the same bytes and exact new root on a release-specific URL;
+          // cache busting must never conceal stale content at the normal URL.
+          onStep({ stage: "refresh-https-binding", path, attempt, filesAlreadyChecked: files.length });
+          const url = `${WEBSITE_ORIGIN}/${path}?derpc-release=${manifest.cid}`;
+          const fresh = await fetchBounded(url, { fetchImpl, signal, maxBytes: Math.min(limits.fileBytes, limits.totalBytes - retrievedBytes), timeoutMs: limits.requestMs });
+          retrievedBytes += fresh.bytes.length;
+          const freshPath = fresh.headers.get("x-ipfs-path"), freshRoots = fresh.headers.get("x-ipfs-roots");
+          requireThat(freshPath === `/ipns/${WEBSITE_NAME}/${path}`, `HTTPS refreshed IPNS path differs: ${path}`);
+          requireThat(freshRoots && freshRoots.length <= 8192 && freshRoots.split(",")[0].trim() === manifest.cid, `HTTPS refreshed root differs: ${path}`);
+          const freshDigest = sha256(fresh.bytes);
+          requireThat(freshDigest === expected, `HTTPS refreshed file hash differs: ${path}`);
+          gatewayBindingRefresh = { url, bytes: fresh.bytes.length, sha256: freshDigest, ipfsPath: freshPath, ipfsRoots: freshRoots };
+        }
+        files.push({ path, bytes: response.bytes.length, sha256: digest, ipfsPath, ipfsRoots: roots, ...(gatewayBindingRefresh && { gatewayBindingRefresh }) });
       }
       verifyIpnsInspection(inspection, manifest.cid, now());
       attempts.push({ attempt, durationMs: now() - began, ok: true }); onAttempt(attempts.at(-1));
-      return { recordSource: RECORD_URL, recordSha256: sha256(record.bytes), recordBytes: record.bytes.length, binding, origin: WEBSITE_ORIGIN, filesChecked: files.length, bytes, files, attempts };
+      return { recordSource: RECORD_URL, recordSha256: sha256(record.bytes), recordBytes: record.bytes.length, binding, origin: WEBSITE_ORIGIN, filesChecked: files.length, bytes, retrievedBytes, files, attempts };
     } catch (error) {
       attempts.push({ attempt, durationMs: now() - began, ok: false, error: String(error.message).slice(0, 500) }); onAttempt(attempts.at(-1));
       signal.throwIfAborted();
@@ -287,7 +325,7 @@ export async function verifySiteRelease({ manifest, phase, ipfs, limits = LIMITS
     report.kuboVersion = node.version;
     const onStep = entry => { report.lastStep = { ...entry, at: new Date().toISOString() }; };
     report.verification = phase === "pinned"
-      ? await verifyPinned(checked, { node, signal, limits, onStep })
+      ? await verifyPinned(checked, { ...dependencies, node, signal, limits, onStep, onAttempt: entry => report.attempts.push(entry) })
       : await verifyPublished(checked, { ...dependencies, node, signal, limits, onStep, onAttempt: entry => report.attempts.push(entry) });
     signal.throwIfAborted();
     report.ok = true;
@@ -337,7 +375,7 @@ async function cli(args) {
   } catch (error) { report = { schemaVersion: 1, kind: "derpc-site-release-verification", phase: options["--phase"], ok: false, error: String(error.message).slice(0, 1000) }; }
   finally { process.removeListener("SIGTERM", stop); process.removeListener("SIGINT", stop); }
   writeFileSync(resolve(options["--out"]), JSON.stringify(report, null, 2) + "\n", { mode: 0o600 });
-  console.log(JSON.stringify({ ok: report.ok, phase: report.phase, cid: report.cid, filesChecked: report.verification?.filesChecked, error: report.error }));
+  console.log(JSON.stringify({ ok: report.ok, phase: report.phase, cid: report.cid, filesChecked: report.verification?.filesChecked, error: report.error, ...(!report.ok && { lastStep: report.lastStep, attempts: report.attempts }) }));
   if (!report.ok) process.exitCode = 1;
 }
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
