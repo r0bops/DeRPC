@@ -74,7 +74,7 @@ The primary logo is the **lockup on ink**: white pixels, a lime node, "De" in wh
 | 02 | **Stacked lockup** | `brand/derpc-lockup-stacked.svg` | Square or narrow spaces: social cards, posters, loading screens. |
 | 03 | **Mark** | `brand/derpc-mark.svg` | When the name is already visible nearby: avatars, section markers. |
 | 04 | **App icon** | `brand/derpc-app-icon.svg`, `derpc-logo-512.png`, `derpc-logo-1024.png` | App icon, social avatar, the 512 × 512 project logo for hackathon and directory submissions. |
-| 05 | **Favicon cut** | `brand/derpc-favicon.svg` | 16 to 64 px. Pixels are enlarged and spaced so the D stays readable. |
+| 05 | **Favicon cut** | `web/public/favicon.svg` (single copy; not duplicated under `brand/`) | 16 to 64 px. Pixels are enlarged and spaced so the D stays readable. |
 | 06 | **On white** | `brand/derpc-lockup-on-white.svg`, `derpc-mark-on-white.svg` | Documents, white pages and print where ink is not available. Pixels and wordmark in ink; the node stays lime, with a 4 px ink outline so it remains visible. |
 | 07 | **On lime** | `brand/derpc-lockup-on-lime.svg` | Lime panels and stickers. Everything in ink; the node turns white. |
 | 08 | **Mono white** | `brand/derpc-lockup-mono-white.svg` | One-color use on photos, cobalt or other colored fields. The node becomes a hollow square. |
