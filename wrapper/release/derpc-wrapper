@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+command=${1:-help}
+if (( $# > 1 )); then echo 'Use: ./derpc-wrapper install|up|check|status|logs|down' >&2; exit 2; fi
+case "$command" in
+  help|--help|-h)
+    echo 'Use: ./derpc-wrapper install|up|check|status|logs|down'
+    echo 'Install loads the bundled images and creates .env if absent. Edit .env before up.'
+    echo 'Check tests the local running wrapper and prints an unsigned ENS record proposal.'
+    echo 'Down stops this project and preserves its onion-key volume.'
+    exit 0 ;;
+  install|up|check|status|logs|down) ;;
+  *) echo 'Unknown command. Run ./derpc-wrapper help.' >&2; exit 2 ;;
+esac
+
+cd -- "$root"
+verify_files() { sha256sum --check --strict SHA256SUMS >/dev/null; }
+verify_platform() {
+  [[ $(uname -s) = Linux ]] || { echo 'This release requires a Linux host.' >&2; exit 1; }
+  local machine
+  case $(uname -m) in x86_64) machine=x64 ;; aarch64|arm64) machine=arm64 ;; *) echo 'Unsupported host CPU.' >&2; exit 1 ;; esac
+  [[ $(cat ARCH) = "$machine" ]] || { echo 'Download the release matching this host CPU.' >&2; exit 1; }
+  local daemon
+  daemon=$(docker info --format '{{.OSType}}/{{.Architecture}}')
+  case "$machine:$daemon" in x64:linux/x86_64|x64:linux/amd64|arm64:linux/aarch64|arm64:linux/arm64) ;;
+    *) echo 'The Docker daemon must use the same Linux architecture as this host.' >&2; exit 1 ;;
+  esac
+}
+verify_images() {
+  local ref expected extra actual
+  while read -r ref expected extra; do
+    [[ -n "$ref" && "$expected" =~ ^sha256:[a-f0-9]{64}$ && -z "$extra" ]] || { echo 'Invalid image lock.' >&2; exit 1; }
+    actual=$(docker image inspect --format '{{.Id}}' "$ref")
+    [[ "$actual" = "$expected" ]] || { echo "Image differs from this release: $ref. Run install again." >&2; exit 1; }
+  done < images.lock
+}
+compose() { docker compose --project-name derpc-wrapper --project-directory "$root" --env-file "$root/.env" -f "$root/compose.yaml" "$@"; }
+
+case "$command" in
+  install)
+    verify_files
+    verify_platform
+    docker load --input images.tar
+    verify_images
+    if [[ ! -e .env && ! -L .env ]]; then (umask 077; cp --no-clobber .env.example .env); fi
+    echo 'Images loaded. Edit .env, then run ./derpc-wrapper up and ./derpc-wrapper check.' ;;
+  up)
+    verify_files
+    verify_platform
+    verify_images
+    [[ -f .env ]] || { echo 'Run install and edit .env first.' >&2; exit 1; }
+    compose up -d --no-build --pull never ;;
+  check)
+    verify_files
+    verify_images
+    onion=$(compose exec -T tor cat /var/lib/tor/pool/hostname)
+    compose exec -T -e "DERPC_ONION_HOSTNAME=$onion" proxy node src/check.ts ;;
+  status) compose ps ;;
+  logs) compose logs --tail 200 --follow ;;
+  down) compose down ;;
+esac

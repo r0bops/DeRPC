@@ -198,6 +198,7 @@ wrapper/
 ├── compose.personal.yaml      — optional token secret for the unpublished personal listener
 ├── compose.payments.yaml      — settlement-key secret and persistent payment-state volume
 ├── torrc                      — pool/personal onion services; proof-of-work disabled
+├── release/                   — downloadable free-pool Compose, launcher, public env example, pool-only torrc and operator instructions
 ├── src/
 │   ├── proxy.ts                — body-aware RPC/beacon allowlists, budgets and finalized cache
 │   ├── server.ts, main.ts      — loopback HTTP listeners and environment configuration

@@ -1,0 +1,27 @@
+services:
+  proxy:
+    image: "DERPC_WRAPPER_IMAGE_PLACEHOLDER"
+    pull_policy: never
+    network_mode: host
+    environment:
+      DERPC_EXECUTION_URL: ${DERPC_EXECUTION_URL:-http://127.0.0.1:8545}
+      DERPC_BEACON_URL: ${DERPC_BEACON_URL:-http://127.0.0.1:5052}
+      DERPC_ENS_NAME: ${DERPC_ENS_NAME:?set the operator ENS name in .env}
+      DERPC_SIGNER: ${DERPC_SIGNER:?set the public signer address in .env}
+      DERPC_ENDPOINT_ID: ${DERPC_ENDPOINT_ID:?set a stable node ID in .env}
+      DERPC_DEMO_PROXY: ${DERPC_DEMO_PROXY:-false}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  tor:
+    image: "DERPC_TOR_IMAGE_PLACEHOLDER"
+    pull_policy: never
+    network_mode: host
+    volumes:
+      - onion-keys:/var/lib/tor
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+volumes:
+  onion-keys:

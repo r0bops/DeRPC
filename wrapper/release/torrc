@@ -1,0 +1,9 @@
+SocksPort 0
+ControlPort 0
+Log notice stdout
+DataDirectory /var/lib/tor
+HiddenServiceDir /var/lib/tor/pool
+HiddenServiceVersion 3
+HiddenServicePort 80 127.0.0.1:8787
+# The pinned tor-js worker does not implement the client proof-of-work solver.
+HiddenServicePoWDefensesEnabled 0

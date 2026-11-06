@@ -1,3 +1,5 @@
 **
 !Dockerfile.tor
 !torrc
+!release/
+!release/torrc
