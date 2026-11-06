@@ -38,6 +38,20 @@ export interface StartOptions {
 
 const DEFAULT_TIMEOUT_MS = 60_000;
 
+/** The anonymity network is unreachable (exit timeout, circuit reset, worker request timeout). */
+export class NetworkUnavailableError extends Error {
+  override name = "NetworkUnavailableError";
+  readonly code?: string | number;
+  readonly kind?: string;
+  readonly torKind?: string;
+  constructor(message: string, options: { cause?: unknown; code?: string | number; kind?: string; torKind?: string } = {}) {
+    super(message, options.cause === undefined ? undefined : { cause: options.cause });
+    this.code = options.code;
+    this.kind = options.kind;
+    this.torKind = options.torKind;
+  }
+}
+
 /** The worker is gone (failed or closed). Not an endpoint problem: do not retry another operator. */
 export class TransportUnavailableError extends Error {
   readonly state: "failed" | "closed";
@@ -48,11 +62,8 @@ export class TransportUnavailableError extends Error {
   }
 }
 
-// Errors the harness uses when the whole worker dies (signalFailed, crash, bundle load, close).
-function isWorkerFailure(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  if (error.name === "WorkerFailedError") return true;
-  return /^worker (error:|bundle failed to load:|closed$)/.test(error.message);
+function logToConsole(line: WorkerLogLine): void {
+  console[line.level]("[worker]", line.text);
 }
 
 /** Start one long-lived anonymity worker. Calls made before it is ready are buffered by the harness. */
@@ -87,8 +98,8 @@ export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonT
   );
   onState?.("booting");
 
-  // The log queue closes only when the worker dies, so it also reports failures after startup.
-  if (onLog) void pumpLogs(worker, onLog).then((error) => markFailed(error));
+  // The log queue reports worker death even when the app has no log callback.
+  void pumpLogs(worker, onLog ?? logToConsole).then((error) => markFailed(error));
 
   return {
     pin,
@@ -111,15 +122,29 @@ export function startAnonTransport({ pin, onLog, onState }: StartOptions): AnonT
       } catch (error) {
         // close() may have run while the call was in flight.
         if (state() === "closed") throw new TransportUnavailableError("closed", { cause: error });
-        if (!isWorkerFailure(error)) throw error;
-        markFailed(error);
-        throw new TransportUnavailableError("failed", { cause: error });
+        if (error instanceof Error && error.name === "WorkerFailedError") markFailed(error);
+        if (state() === "failed") throw new TransportUnavailableError("failed", { cause: error });
+        if (signal.aborted) throw signal.reason;
+        // A request-level failure while the worker stays up: the anonymity network, not the operator.
+        if (error instanceof NetworkUnavailableError) throw error;
+        throw new NetworkUnavailableError(error instanceof Error ? error.message : String(error), { cause: error, ...detailsOf(error) });
       }
     },
     close() {
       setState("closed");
       worker.close();
     },
+  };
+}
+
+/** Harness errors carry the transport details (#14); keep the ones that tell a network failure apart. */
+function detailsOf(error: unknown): { code?: string | number; kind?: string; torKind?: string } {
+  if (!error || typeof error !== "object") return {};
+  const e = error as { code?: unknown; kind?: unknown; torKind?: unknown };
+  return {
+    ...(typeof e.code === "string" || typeof e.code === "number" ? { code: e.code } : {}),
+    ...(typeof e.kind === "string" ? { kind: e.kind } : {}),
+    ...(typeof e.torKind === "string" ? { torKind: e.torKind } : {}),
   };
 }
 

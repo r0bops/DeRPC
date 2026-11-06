@@ -10,6 +10,8 @@ const harness = vi.hoisted(() => {
     rejectReady!: (e: unknown) => void;
     failure: unknown;
     nextError: unknown;
+    hang = false;
+    pending: ((e: unknown) => void)[] = [];
     logWaiters: ((e: unknown) => void)[] = [];
 
     constructor() {
@@ -26,6 +28,7 @@ const harness = vi.hoisted(() => {
       if (this.failure !== undefined) return;
       this.failure = error;
       this.rejectReady(error);
+      for (const reject of this.pending.splice(0)) reject(error);
       for (const reject of this.logWaiters.splice(0)) reject(error);
     }
 
@@ -36,6 +39,7 @@ const harness = vi.hoisted(() => {
         this.nextError = undefined;
         throw error;
       }
+      if (this.hang) return new Promise((_, reject) => this.pending.push(reject));
       return new Response("{}", { status: 200 });
     }
 
@@ -124,6 +128,31 @@ describe("startAnonTransport", () => {
 
     worker.fail(new Error("worker error: out of memory"));
     await vi.waitFor(() => expect(transport.state()).toBe("failed"));
+  });
+
+  it("learns about a failure after readiness without onLog", async () => {
+    const { transport, states, worker } = start();
+    worker.resolveReady();
+    await transport.ready;
+
+    worker.fail(workerFailed("tor client crashed"));
+
+    await vi.waitFor(() => expect(transport.state()).toBe("failed"));
+    expect(states).toEqual(["booting", "ready", "failed"]);
+  });
+
+  it("fails an in-flight read as terminal when the worker dies, whatever the message", async () => {
+    const { transport, worker } = start();
+    worker.resolveReady();
+    await transport.ready;
+    worker.hang = true;
+
+    const read = transport.fetch("https://rpc.test/");
+    worker.fail(new Error("something new the harness never said before"));
+
+    await expect(read).rejects.toBeInstanceOf(TransportUnavailableError);
+    await expect(read).rejects.toMatchObject({ state: "failed" });
+    expect(transport.state()).toBe("failed");
   });
 
   it("keeps ordinary request errors retryable", async () => {
