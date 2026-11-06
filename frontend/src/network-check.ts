@@ -8,7 +8,8 @@ import {
   type AnonTransport,
   type WorkerPin,
 } from "@derpc/provider";
-import { renderStatus, renderWorkerFailure, tableRow, textCell } from "./render.ts";
+import { renderStatus, renderWorkerFailure, textCell } from "./render.ts";
+import { mountDirectConnections } from "./direct-connections.ts";
 
 // Gateways come from VITE_TOR_GATEWAYS (frontend/.env.local, comma-separated KPS addresses);
 // without it, the tor-js demo gateway pinned in the provider config is used.
@@ -19,7 +20,7 @@ const configuredGateways = String(import.meta.env.VITE_TOR_GATEWAYS ?? "")
 const GATEWAY_PIN = withGateways(PINNED_TOR_JS, configuredGateways);
 
 const TOR_JS_PIN: WorkerPin = GATEWAY_PIN;
-const gatewayLabel = configuredGateways.length ? `own gateway (${configuredGateways.length})` : "demo gateway";
+const gatewayLabel = configuredGateways.length ? `configured gateway (${configuredGateways.length})` : "demo gateway";
 
 // Network diagnostics (specs/ROADMAP.md, P1). Public fixtures only: no user addresses are sent anywhere.
 // This page uses the low-level transport on purpose: it measures the network path, not the provider.
@@ -33,6 +34,7 @@ const logEl = $("worker-log");
 const runBtn = $<HTMLButtonElement>("run");
 const resultsEl = $("results");
 const directEl = $("direct");
+const directStatusEl = $("direct-status");
 
 const bootStarted = performance.now();
 const elapsed = (from: number) => `${((performance.now() - from) / 1000).toFixed(1)} s`;
@@ -182,30 +184,15 @@ async function runChecks() {
     });
   }
 
-  renderDirectConnections();
+  directConnections.refresh();
   runBtn.disabled = false;
 }
 
-// Every HTTP(S) request the page itself made, as seen by the browser (P1 step 5).
-const RPC_HOSTS = new Set([...MAINNET_EXECUTION_ENDPOINTS, ...MAINNET_BEACON_ENDPOINTS, TOR_CHECK].map((u) => new URL(u).host));
-const BUNDLE_HOSTS = new Set(TOR_JS_PIN.resolvers.filter((r) => r.startsWith("https:")).map((u) => new URL(u).host));
-
-function renderDirectConnections() {
-  const counts = new Map<string, number>();
-  for (const entry of performance.getEntriesByType("resource")) {
-    const host = new URL(entry.name).host;
-    counts.set(host, (counts.get(host) ?? 0) + 1);
-  }
-  directEl.replaceChildren();
-  for (const [host, n] of counts) {
-    const kind = host === location.host ? ["page assets", "ok"]
-      : BUNDLE_HOSTS.has(host) ? ["worker bundle download (expected, see README bypass table)", "warn"]
-      : RPC_HOSTS.has(host) ? ["RPC/beacon request outside the worker — LEAK", "bad"]
-      : ["unexpected", "bad"];
-    directEl.append(tableRow([{ text: host }, { text: kind[0]!, className: kind[1] }, { text: String(n) }]));
-  }
-}
-
+// ResourceTiming is partial browser evidence, separate from anonymous proof/exit checks above.
+const directConnections = mountDirectConnections({
+  body: directEl,
+  status: directStatusEl,
+  rpcUrls: [...MAINNET_EXECUTION_ENDPOINTS, ...MAINNET_BEACON_ENDPOINTS, TOR_CHECK],
+  bundleUrls: TOR_JS_PIN.resolvers,
+});
 runBtn.addEventListener("click", () => void runChecks());
-renderDirectConnections();
-setInterval(renderDirectConnections, 3000);

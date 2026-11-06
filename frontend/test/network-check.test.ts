@@ -53,13 +53,14 @@ beforeEach(async () => {
   harness.fetch.mockReset().mockResolvedValue(new Response("{}"));
   vi.spyOn(performance, "getEntriesByType").mockReturnValue([]);
   document.body.replaceChildren();
-  for (const id of ["worker-status", "worker-log", "results", "direct", "lc-status", "lc-header"]) add(id);
+  for (const id of ["worker-status", "worker-log", "results", "direct", "direct-status", "lc-status", "lc-header"]) add(id);
   add("run", "button");
 
   await import("../src/network-check.ts");
 });
 
 afterEach(() => {
+  window.dispatchEvent(new Event("pagehide"));
   harness.onState = undefined;
   harness.pin = undefined;
   vi.useRealTimers();

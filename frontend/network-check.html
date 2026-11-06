@@ -3,48 +3,115 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0A0A0F" />
     <title>DeRPC network check</title>
+    <link rel="icon" href="../web/public/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>
-    <header>
-      <h1>DeRPC <span class="muted">network check</span></h1>
-      <p class="muted">
-        Diagnostics for the anonymous path: starts the real tor-js worker, then fetches a mainnet proof from every
-        candidate endpoint and light-client data from every beacon endpoint through it, using public fixtures only.
-        Nothing here falls back to a direct request. The demo is on the <a href="./index.html">main page</a>.
-      </p>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="nav">
+      <div class="container nav__inner">
+        <a class="nav__brand" href="../#/" aria-label="DeRPC home"><span class="brand-lockup"></span></a>
+        <nav class="nav__links" aria-label="DeRPC navigation">
+          <a class="nav__link" href="../#/directory">Directory</a>
+          <a class="nav__link" href="../#/operate">Run an operator</a>
+          <a class="nav__link" href="./index.html">Dashboard</a>
+          <a class="nav__link" href="https://github.com/r0bops/DeRPC" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+        <span class="nav__spacer"></span>
+        <span class="nav__badge"><span class="ok-dot" aria-hidden="true"></span>Hackathon build</span>
+        <a class="btn btn--ghost btn--small" href="./index.html">Open dashboard</a>
+      </div>
     </header>
 
-    <section>
-      <h2>1 · Worker</h2>
-      <div id="worker-status" class="status">starting…</div>
-      <details>
-        <summary>Worker log</summary>
-        <pre id="worker-log"></pre>
-      </details>
-    </section>
+    <main id="main" class="page" tabindex="-1">
+      <div class="container">
+        <header>
+          <p class="eyebrow">Diagnostics · Ethereum mainnet</p>
+          <h1 class="page-title">Network check</h1>
+          <p class="page-lead">
+            Diagnostics for the anonymous path: starts the real tor-js worker, then fetches a mainnet proof from every
+            candidate endpoint and light-client data from every beacon endpoint through it, using public fixtures only.
+            Nothing here falls back to a direct request. The demo is on the <a href="./index.html">main page</a>.
+          </p>
+        </header>
 
-    <section>
-      <h2>2 · Checks through the worker</h2>
-      <button id="run" disabled>Run checks</button>
-      <table>
-        <thead><tr><th>Check</th><th>Result</th><th>Time</th><th>Size</th></tr></thead>
-        <tbody id="results"></tbody>
-      </table>
-    </section>
+        <section class="step" aria-labelledby="worker-title">
+          <div class="step__head">
+            <span class="step__num" aria-hidden="true">1</span>
+            <h2 id="worker-title" class="step__title">Worker</h2>
+          </div>
+          <div class="step__body">
+            <div id="worker-status" class="status dashboard-summary">starting…</div>
+            <div class="disclosures">
+              <details>
+                <summary>Worker log</summary>
+                <div class="disclosure__body"><pre id="worker-log"></pre></div>
+              </details>
+            </div>
+          </div>
+        </section>
 
-    <section>
-      <h2>3 · Direct connections made by this page</h2>
-      <p class="muted">
-        From the browser's resource timing. Expected: page assets and the worker bundle download.
-        Not listed by the browser: the WebRTC connection to the Tor gateway.
-      </p>
-      <table>
-        <thead><tr><th>Host</th><th>Kind</th><th>Count</th></tr></thead>
-        <tbody id="direct"></tbody>
-      </table>
-    </section>
+        <section class="step" aria-labelledby="checks-title">
+          <div class="step__head">
+            <span class="step__num" aria-hidden="true">2</span>
+            <h2 id="checks-title" class="step__title">Checks through the worker</h2>
+          </div>
+          <div class="step__body">
+            <div class="controls"><button id="run" class="btn btn--lime" disabled>Run checks</button></div>
+            <div class="table-card">
+              <table class="table--checks">
+                <thead><tr><th>Check</th><th>Result</th><th>Time</th><th>Size</th></tr></thead>
+                <tbody id="results"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="step" aria-labelledby="loads-title">
+          <div class="step__head">
+            <span class="step__num" aria-hidden="true">3</span>
+            <h2 id="loads-title" class="step__title">Resource loads observed by this page</h2>
+            <p class="step__hint">
+              Browser ResourceTiming can show page assets and direct worker-bundle downloads, including cached loads
+              that did not transfer data over the network.
+            </p>
+          </div>
+          <div class="step__body">
+            <p id="direct-status" class="muted" role="status" aria-live="polite">Waiting for browser resource timings…</p>
+            <div class="table-card">
+              <table class="table--loads">
+                <thead><tr><th scope="col">Host</th><th scope="col">Kind</th><th scope="col">Observed loads</th></tr></thead>
+                <tbody id="direct"><tr><td colspan="3" class="muted">No resource timing observations yet.</td></tr></tbody>
+              </table>
+            </div>
+            <p class="note">
+              Browser privacy settings, cleared timings and buffer limits
+              can leave observations missing. This is not a complete connection log or proof that no direct RPC occurred.
+              The Tor gateway's WebRTC connection and requests inside separate worker, iframe or wallet contexts are not covered.
+              For a separate check, open your browser's Network panel before reloading; WebRTC needs its own browser diagnostics.
+            </p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <div class="footer__brand">
+          <span class="brand-lockup" role="img" aria-label="DeRPC"></span>
+          <p class="footer__desc">Private, verified RPC for Ethereum. Reads through an anonymity network, answers checked by a light client, no direct fallback.</p>
+          <p class="footer__event">ETHGlobal Mumbai 2026 · Network check</p>
+        </div>
+        <nav class="footer__links" aria-label="Footer">
+          <a href="./index.html">Live dashboard</a>
+          <a href="./example.html">Integrator example</a>
+          <a href="../#/directory">Directory</a>
+          <a href="https://github.com/r0bops/DeRPC" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </footer>
 
     <script type="module" src="./src/network-check.ts"></script>
   </body>

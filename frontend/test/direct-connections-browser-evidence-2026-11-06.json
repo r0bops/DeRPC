@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-11-06T16:14:41.074617+00:00",
+  "scope": "UI-only ResourceTiming diagnostics on index.html and network-check.html; no live anonymity, proof-verification or wallet-transaction claim.",
+  "environment": {
+    "browser": "Chrome/151.0.7922.71",
+    "server": "temporary localhost Vite development server",
+    "privateContext": "Chromium isolated browser context created with createBrowserContext",
+    "warmCacheFixture": "cacheable localhost JavaScript with Timing-Allow-Origin; server request counter and ResourceTiming transfer size observed"
+  },
+  "transportIsolation": {
+    "method": "Intercept the anon-transport.ts module in memory and replace startAnonTransport with a rejected UI stub. No repository transport source was edited.",
+    "moduleOverridesObserved": 10,
+    "workerStatus": "Every case asserted Transport disabled for UI QA in the worker status.",
+    "httpInterception": "Non-loopback HTTP(S) requests were aborted during page startup. Interception was disabled for the local cache fixture after the failed stub status appeared.",
+    "webRtc": "Not measured by ResourceTiming or this HTTP interceptor. The actual anonymous transport was replaced in these UI cases; no assertion of complete browser network visibility is made."
+  },
+  "checks": {
+    "pageJavaScriptErrors": 0,
+    "warmCacheCases": 4,
+    "unavailableTimingCases": 2,
+    "warmCacheOutcome": "Both pages retained observations in normal and private contexts, including a cached localhost load with zero transferred bytes. Clearing ResourceTiming did not erase retained observations.",
+    "unavailableTimingOutcome": "Both pages rendered warning-class status and explanatory table rows when PerformanceObserver and performance.getEntriesByType were injected as unavailable. This simulates unavailable APIs; it does not claim every private browser hides timings.",
+    "cachedExecutionLimit": "Multiple uses of the cached script exposed one resource timing entry in this browser. The UI counts observed entries, not script executions or network connections."
+  },
+  "results": [
+    {
+      "context": "normal",
+      "route": "index.html",
+      "warmInitial": {
+        "text": "78 HTTP(S) resource timing observations retained for this page.",
+        "className": "muted",
+        "worker": "failed \u2014 Transport disabled for UI QA (no direct fallback)"
+      },
+      "fixtureNetworkRequests": 1,
+      "cachedTimings": [
+        {
+          "transferSize": 0,
+          "decodedBodySize": 67
+        }
+      ],
+      "afterClear": {
+        "status": "79 HTTP(S) resource timing observations retained for this page.",
+        "row": "loopback-fixture-hostunexpected1"
+      },
+      "errors": []
+    },
+    {
+      "context": "normal",
+      "route": "network-check.html",
+      "warmInitial": {
+        "text": "45 HTTP(S) resource timing observations retained for this page.",
+        "className": "muted",
+        "worker": "failed \u2014 Transport disabled for UI QA (no direct fallback)"
+      },
+      "fixtureNetworkRequests": 1,
+      "cachedTimings": [
+        {
+          "transferSize": 0,
+          "decodedBodySize": 67
+        }
+      ],
+      "afterClear": {
+        "status": "46 HTTP(S) resource timing observations retained for this page.",
+        "row": "loopback-fixture-hostunexpected1"
+      },
+      "errors": []
+    },
+    {
+      "context": "private",
+      "route": "index.html",
+      "warmInitial": {
+        "text": "78 HTTP(S) resource timing observations retained for this page.",
+        "className": "muted",
+        "worker": "failed \u2014 Transport disabled for UI QA (no direct fallback)"
+      },
+      "fixtureNetworkRequests": 1,
+      "cachedTimings": [
+        {
+          "transferSize": 0,
+          "decodedBodySize": 67
+        }
+      ],
+      "afterClear": {
+        "status": "79 HTTP(S) resource timing observations retained for this page.",
+        "row": "loopback-fixture-hostunexpected1"
+      },
+      "errors": []
+    },
+    {
+      "context": "private",
+      "route": "network-check.html",
+      "warmInitial": {
+        "text": "45 HTTP(S) resource timing observations retained for this page.",
+        "className": "muted",
+        "worker": "failed \u2014 Transport disabled for UI QA (no direct fallback)"
+      },
+      "fixtureNetworkRequests": 1,
+      "cachedTimings": [
+        {
+          "transferSize": 0,
+          "decodedBodySize": 67
+        }
+      ],
+      "afterClear": {
+        "status": "46 HTTP(S) resource timing observations retained for this page.",
+        "row": "loopback-fixture-hostunexpected1"
+      },
+      "errors": []
+    },
+    {
+      "context": "private with unavailable APIs injected",
+      "route": "index.html",
+      "empty": {
+        "worker": "failed \u2014 Transport disabled for UI QA (no direct fallback)",
+        "status": "No HTTP(S) resource timings are exposed in this page. This does not establish that no network connections occurred. The browser's resource timing snapshot is unavailable. Live resource observation is unavailable; only exposed periodic snapshots can be shown.",
+        "className": "warn",
+        "table": "No resource observations available. Open the browser Network panel before reloading to inspect page traffic."
+      },
+      "errors": []
+    },
+    {
+      "context": "private with unavailable APIs injected",
+      "route": "network-check.html",
+      "empty": {
+        "worker": "failed \u2014 Transport disabled for UI QA (no direct fallback)",
+        "status": "No HTTP(S) resource timings are exposed in this page. This does not establish that no network connections occurred. The browser's resource timing snapshot is unavailable. Live resource observation is unavailable; only exposed periodic snapshots can be shown.",
+        "className": "warn",
+        "table": "No resource observations available. Open the browser Network panel before reloading to inspect page traffic."
+      },
+      "errors": []
+    }
+  ],
+  "reproducer": {
+    "temporaryScript": "/tmp/derpc-direct-resources-browser.mjs",
+    "sha256": "bfbd0ad9b8c6335cbcd6fab393596bee23aa4c5ae9ac097967ec8b8cf40a6419",
+    "requirements": "Installed Puppeteer Core and Chromium, frontend Vite on localhost:5207, free localhost:5208 for the cache fixture. Transport module interception is required to isolate these UI checks from gateway startup."
+  },
+  "limitations": [
+    "Development pages only, not a new production release or public gateway test.",
+    "No live Tor exit, WebRTC, ENS directory, verified read or wallet transaction was validated.",
+    "Private-context coverage is Chromium only; unsupported APIs were additionally simulated.",
+    "Observed entries do not prove the absence of direct RPC and are bounded to 512 per page."
+  ]
+}
