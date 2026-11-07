@@ -188,27 +188,84 @@ export function codeCard(): string {
 
 export function routeDiagram(): string {
   return `
-    <svg class="route-diagram" viewBox="0 0 320 128" role="img" aria-labelledby="route-title route-desc">
-      <title id="route-title">Private route to a verified answer</title>
-      <desc id="route-desc">Your app connects through a private route to an operator. A light client verifies the answer before it is returned.</desc>
-      <path class="route-line route-line--dash" d="M50 46h48" />
-      <path class="route-line" d="M134 46h48" />
-      <path class="route-line" d="M218 46h46" />
-      <circle class="route-node route-node--app" cx="32" cy="46" r="18" />
-      <path d="M26 40h7l5 6-5 6h-7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" style="color:rgba(255,255,255,.65)" />
-      <circle class="route-node" cx="116" cy="46" r="18" />
-      <path d="M109 46h14M116 39v14" stroke="rgba(140,140,255,.9)" stroke-width="1.6" stroke-linecap="round" />
-      <circle class="route-node" cx="200" cy="46" r="18" />
-      <circle cx="194" cy="42" r="2.4" fill="rgba(140,140,255,.9)" />
-      <circle cx="202" cy="42" r="2.4" fill="rgba(140,140,255,.9)" />
-      <circle cx="198" cy="50" r="2.4" fill="rgba(140,140,255,.9)" />
-      <circle class="route-node" cx="282" cy="46" r="18" />
-      <rect class="route-check" x="272" y="36" width="20" height="20" rx="5" />
-      <path class="route-check-mark" d="m277 46 3 3 6-7" />
-      <text x="32" y="88" text-anchor="middle">Your app</text>
-      <text x="116" y="88" text-anchor="middle">Private route</text>
-      <text x="200" y="88" text-anchor="middle">Operators</text>
-      <text x="282" y="88" text-anchor="middle">Verified</text>
+    <svg class="route-diagram" viewBox="0 0 600 270" role="img" aria-label="DeRPC architecture: private route to verified answer">
+      <defs>
+        <filter id="glow-p" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="6" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-l" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="3" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- YOUR APP -->
+      <rect x="15" y="85" width="100" height="100" rx="10" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <polygon points="65,108 48,131 65,139 82,131" fill="rgba(100,80,255,0.15)" stroke="rgba(140,120,255,0.7)" stroke-width="1.2" stroke-linejoin="round"/>
+      <polygon points="65,108 48,131 65,122" fill="rgba(140,120,255,0.3)"/>
+      <polygon points="65,139 48,131 65,122 82,131" fill="rgba(100,80,255,0.1)"/>
+      <text x="65" y="202" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="8.5" letter-spacing="0.08em">YOUR APP</text>
+
+      <!-- Arrow YOUR APP → PRIVATE ROUTE -->
+      <line x1="117" y1="135" x2="144" y2="135" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+      <path d="M140 131 L145 135 L140 139" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- PRIVATE ROUTE pill -->
+      <rect x="148" y="100" width="170" height="70" rx="35" fill="rgba(90,50,220,0.35)" stroke="rgba(130,80,255,0.95)" stroke-width="1.5" filter="url(#glow-p)"/>
+      <circle cx="208" cy="135" r="9" fill="rgba(100,60,220,0.6)" stroke="rgba(160,100,255,0.9)" stroke-width="1.5"/>
+      <circle cx="233" cy="135" r="9" fill="rgba(100,60,220,0.6)" stroke="rgba(160,100,255,0.9)" stroke-width="1.5"/>
+      <circle cx="258" cy="135" r="9" fill="rgba(100,60,220,0.6)" stroke="rgba(160,100,255,0.9)" stroke-width="1.5"/>
+      <text x="233" y="193" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="8.5" letter-spacing="0.08em">PRIVATE ROUTE</text>
+
+      <!-- Arrow PRIVATE ROUTE → OPERATOR active box (lime) -->
+      <line x1="320" y1="135" x2="346" y2="135" stroke="#c8f63c" stroke-width="1.5"/>
+      <path d="M342 131 L347 135 L342 139" fill="none" stroke="#c8f63c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- OPERATOR POOL label above -->
+      <text x="404" y="78" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="8.5" letter-spacing="0.08em">OPERATOR POOL</text>
+
+      <!-- Box top (inactive) -->
+      <rect x="350" y="85" width="108" height="37" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-width="1.2"/>
+      <circle cx="367" cy="103" r="4" fill="rgba(140,140,255,0.4)"/>
+      <rect x="376" y="99" width="42" height="2.5" rx="1.5" fill="rgba(255,255,255,0.14)"/>
+      <rect x="376" y="105" width="28" height="2" rx="1" fill="rgba(255,255,255,0.08)"/>
+
+      <!-- Box middle (active, lime) -->
+      <rect x="350" y="117" width="108" height="37" rx="6" fill="rgba(200,246,60,0.07)" stroke="#c8f63c" stroke-width="1.5" filter="url(#glow-l)"/>
+      <circle cx="367" cy="135" r="4" fill="#c8f63c"/>
+      <rect x="376" y="131" width="42" height="2.5" rx="1.5" fill="rgba(200,246,60,0.6)"/>
+      <rect x="376" y="137" width="28" height="2" rx="1" fill="rgba(200,246,60,0.35)"/>
+
+      <!-- Box bottom (failed) -->
+      <rect x="350" y="149" width="108" height="37" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.08)" stroke-width="1.2"/>
+      <circle cx="367" cy="167" r="4" fill="rgba(255,80,80,0.3)"/>
+      <rect x="376" y="163" width="42" height="2.5" rx="1.5" fill="rgba(255,255,255,0.1)"/>
+      <rect x="376" y="169" width="28" height="2" rx="1" fill="rgba(255,255,255,0.07)"/>
+      <!-- Red X badge -->
+      <circle cx="450" cy="167" r="11" fill="rgba(220,55,55,0.9)"/>
+      <path d="M444 161 L456 173 M456 161 L444 173" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <!-- Invalid response label -->
+      <line x1="450" y1="179" x2="450" y2="205" stroke="rgba(220,55,55,0.45)" stroke-width="1" stroke-dasharray="3 2"/>
+      <text x="450" y="216" text-anchor="middle" fill="rgba(220,70,70,0.65)" font-size="8">Invalid response</text>
+      <text x="450" y="227" text-anchor="middle" fill="rgba(220,70,70,0.65)" font-size="8">(not returned)</text>
+
+      <!-- Arrow from active box → VERIFIED LOCALLY (lime) -->
+      <line x1="460" y1="135" x2="483" y2="135" stroke="#c8f63c" stroke-width="1.5"/>
+      <path d="M479 131 L484 135 L479 139" fill="none" stroke="#c8f63c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- VERIFIED LOCALLY box -->
+      <rect x="486" y="88" width="100" height="110" rx="10" fill="rgba(200,246,60,0.05)" stroke="rgba(200,246,60,0.45)" stroke-width="1.5"/>
+      <!-- Shield -->
+      <path d="M536 102 L516 112 v14 c0 12 10 20 20 23 10-3 20-11 20-23v-14Z" fill="rgba(200,246,60,0.12)" stroke="#c8f63c" stroke-width="1.5" stroke-linejoin="round"/>
+      <!-- Checkmark -->
+      <path d="M525 126 l5 5 11-12" stroke="#c8f63c" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- light-client + proof checks label -->
+      <line x1="536" y1="62" x2="536" y2="87" stroke="rgba(255,255,255,0.22)" stroke-width="1" stroke-dasharray="3 2"/>
+      <text x="536" y="54" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="8">light-client +</text>
+      <text x="536" y="64" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="8">proof checks</text>
+      <text x="536" y="215" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="8.5" letter-spacing="0.08em">VERIFIED LOCALLY</text>
+
     </svg>
   `;
 }

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "ethereum",
+    "file": "ethereum.webp",
+    "source": "https://icons.llamao.fi/icons/chains/rsz_ethereum.jpg",
+    "mime": "image/webp",
+    "bytes": 426,
+    "sha256": "be90ea8e25cf20059f930e4d0ba8b80b7496ac79f0eeb85daa37d09c4037a0f1"
+  },
+  {
+    "name": "base",
+    "file": "base.webp",
+    "source": "https://icons.llamao.fi/icons/chains/rsz_base.jpg",
+    "mime": "image/webp",
+    "bytes": 450,
+    "sha256": "ef63b6aef176fbe05e34e44e7f54150cea01b0de9d5d2ad559b6a8d1b688e1da"
+  },
+  {
+    "name": "polygon",
+    "file": "polygon.webp",
+    "source": "https://icons.llamao.fi/icons/chains/rsz_polygon.jpg",
+    "mime": "image/webp",
+    "bytes": 36712,
+    "sha256": "4f699a3539362f1d0122fd2fc64782370e1763234ea4354639b8c4fa7d553d53"
+  },
+  {
+    "name": "bnb",
+    "file": "bnb.webp",
+    "source": "https://icons.llamao.fi/icons/chains/rsz_binance.jpg",
+    "mime": "image/webp",
+    "bytes": 1646,
+    "sha256": "0a982cf46d9b48b9681fa173d29b946f7c783e8b213faaa2c0270c3c14ac2312"
+  },
+  {
+    "name": "avalanche",
+    "file": "avalanche.webp",
+    "source": "https://icons.llamao.fi/icons/chains/rsz_avalanche.jpg",
+    "mime": "image/webp",
+    "bytes": 1372,
+    "sha256": "95b249397aaba466cf9189c42a2533fc11f9a5a5d095a139b9a893ee0f9e5ccf"
+  }
+]

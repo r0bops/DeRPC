@@ -9,11 +9,11 @@
 import type { DirectoryOperator, Network } from "./model.ts";
 
 export const NETWORKS: Network[] = [
-  { id: "ethereum-mainnet", name: "Ethereum", short: "ETH", chainId: 1, verification: "light-client" },
-  { id: "base", name: "Base", short: "BASE", chainId: 8453, verification: "unverified" },
-  { id: "polygon", name: "Polygon", short: "POL", chainId: 137, verification: "unverified" },
-  { id: "bnb-smart-chain", name: "BNB Smart Chain", short: "BNB", chainId: 56, verification: "unverified" },
-  { id: "avalanche-c-chain", name: "Avalanche C-Chain", short: "AVAX", chainId: 43114, verification: "unverified" },
+  { id: "ethereum-mainnet", name: "Ethereum", short: "ETH", chainId: 1, verification: "light-client", logoUrl: "./network-logos/ethereum.webp" },
+  { id: "base", name: "Base", short: "BASE", chainId: 8453, verification: "unverified", logoUrl: "./network-logos/base.webp" },
+  { id: "polygon", name: "Polygon", short: "POL", chainId: 137, verification: "unverified", logoUrl: "./network-logos/polygon.webp" },
+  { id: "bnb-smart-chain", name: "BNB Smart Chain", short: "BNB", chainId: 56, verification: "unverified", logoUrl: "./network-logos/bnb.webp" },
+  { id: "avalanche-c-chain", name: "Avalanche C-Chain", short: "AVAX", chainId: 43114, verification: "unverified", logoUrl: "./network-logos/avalanche.webp" },
 ];
 
 const DRPC_BLOG = "https://blog.drpc.org/what-is-mev-blocker/";

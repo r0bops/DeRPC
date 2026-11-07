@@ -16,6 +16,7 @@ export interface Network {
   short: string;
   chainId: number;
   verification: Verification;
+  logoUrl?: string;
 }
 
 /** One network an operator serves, and where that claim comes from. */

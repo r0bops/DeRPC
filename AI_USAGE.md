@@ -76,6 +76,7 @@ The team subsequently authorized branch reconciliation and merging into `main` t
 - **AI role:** Claude Code designed and applied the layout, modeled on SibylFi, the team's earlier ETHGlobal finalist project. It moved the files, fixed the links, and wrote the agent instructions and these docs.
   - OpenAI Codex updated `REPO_LAYOUT.md` for the imported `web/`, `brand/`, `docs/`, release-build helpers and response-body reader while preparing the pending branches for integration.
   - OpenAI Codex mapped the contracts, wrapper, payments, ENS discovery, local EVM and demo payment files in `REPO_LAYOUT.md` during the Nov 6 implementation work.
+  - OpenAI Codex updated `REPO_LAYOUT.md` for locally served network images while reconciling the production design with the operator-registration release.
   - At the team's request, OpenAI Codex refreshed `README.md` on Nov 6 to describe implemented modules, free-first operation, manual/automatic routing, dated validation evidence, setup commands and outstanding public ENS/payment release gates. A follow-up linked the hosted alpha and dashboard and retained the known gateway-startup limitation; the validation note now reflects the local commit series.
   - OpenAI Codex recorded separate Vercel-alpha and ENS/IPFS deployment evidence in the web guide and operations notes. Neither deployment evidence clears the anonymous hosted-startup gate.
 - **Human role:**

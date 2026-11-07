@@ -151,6 +151,7 @@ web/
 ├── index.html          — application entry point
 ├── tsconfig.json
 ├── vite.config.ts      — relative paths; serves/copies assets from /brand
+├── public/network-logos/ — locally served network images and their source/hash manifest; no visitor requests to the icon host
 ├── public/favicon.svg
 └── src/
     ├── main.ts, page.ts — hash routing and page interface

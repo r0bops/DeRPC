@@ -1,7 +1,7 @@
 import type { PageResult } from "../page.ts";
 import { NETWORKS, OPERATORS } from "../directory/operators.ts";
 import { PENDING_OPERATORS } from "../directory/pending-operators.ts";
-import { codeCard, icon } from "../ui.ts";
+import { routeDiagram, icon } from "../ui.ts";
 
 export function landingPage(): PageResult {
   return {
@@ -11,14 +11,16 @@ export function landingPage(): PageResult {
         <div class="container hero__inner">
           <div>
             <span class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>Private reads. Verified answers.</span>
-            <h1 class="display">Choose your operators.<br /><span class="lime">Verify their answers.</span></h1>
-            <p class="lead">DeRPC routes supported reads through Anon-RPC and checks answers against authenticated Ethereum state. The route hides your IP from the RPC endpoint; the endpoint still sees the query. If the route or proof is missing, the read fails closed. Ethereum mainnet only; experimental and not ready for production.</p>
+            <h1 class="display">Private routes.<br /><span class="lime">Verified reads.</span></h1>
+            <p class="lead">Reads routed through Tor. Answers verified by a light client. No direct fallback, ever.</p>
             <div class="hero__actions">
               <a class="btn btn--lime" href="#/directory">Browse operators ${icon("arrow")}</a>
               <a class="btn btn--ghost" href="#/operate">Run an operator</a>
             </div>
           </div>
-          <div class="hero__card">${codeCard()}</div>
+          <div class="hero__card">
+  <div class="diagram-card">${routeDiagram()}</div>
+</div>
         </div>
       </section>
 
