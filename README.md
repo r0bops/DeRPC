@@ -125,34 +125,34 @@ A native-asset prepaid escrow (`QueryEscrow`, deployed on Hoodi), cumulative vou
 ```mermaid
 flowchart TB
   subgraph Browser["User's browser: untrusted network, trusted host"]
-    APP[App / wallet<br/>viem or EIP-1193]
-    PROV[@derpc/provider<br/>pool · routing · cache]
-    VER[Host verifier<br/>EIP-1186 proofs · code hash · pin gate]
-    LC[Lodestar light client<br/>pinned checkpoint · finalized headers]
-    HAR[Anon-RPC browser harness<br/>hash-pinned sandbox]
-    WRK[tor-js worker<br/>Tor client in WASM]
-    UI[Dashboard · directory<br/>static pages on IPFS]
+    APP["App / wallet<br/>viem or EIP-1193"]
+    PROV["@derpc/provider<br/>pool · routing · cache"]
+    VER["Host verifier<br/>EIP-1186 proofs · code hash · pin gate"]
+    LC["Lodestar light client<br/>pinned checkpoint · finalized headers"]
+    HAR["Anon-RPC browser harness<br/>hash-pinned sandbox"]
+    WRK["tor-js worker<br/>Tor client in WASM"]
+    UI["Dashboard · directory<br/>static pages on IPFS"]
   end
 
   subgraph Network[Tor]
-    GW[tor-js gateway<br/>WebRTC → Tor relays]
-    TOR((Tor circuits<br/>exit or onion))
+    GW["tor-js gateway<br/>WebRTC → Tor relays"]
+    TOR(("Tor circuits<br/>exit or onion"))
   end
 
   subgraph Operators[Operators]
-    WRAP[Operator wrapper<br/>onion service · filtering proxy]
-    NODE[(Execution + consensus node)]
-    PUB[Public bootstrap RPCs<br/>and beacon APIs]
+    WRAP["Operator wrapper<br/>onion service · filtering proxy"]
+    NODE[("Execution + consensus node")]
+    PUB["Public bootstrap RPCs<br/>and beacon APIs"]
   end
 
   subgraph Chain["Ethereum mainnet state: proven, never trusted"]
-    SPEC[Worker specifier<br/>0x700d…659e slot 1]
-    ENS[ENSv2 · derpc.eth<br/>registrar + operator resolvers]
-    ST[Account · storage · code]
+    SPEC["Worker specifier<br/>0x700d…659e slot 1"]
+    ENS["ENSv2 · derpc.eth<br/>registrar + operator resolvers"]
+    ST["Account · storage · code"]
   end
 
   subgraph Test["Hoodi testnet: payments, off by default"]
-    ESC[QueryEscrow<br/>0x9053…B0bb]
+    ESC["QueryEscrow<br/>0x9053…B0bb"]
   end
 
   APP --> PROV
@@ -240,7 +240,7 @@ stateDiagram-v2
 sequenceDiagram
   autonumber
   actor A as App (viem)
-  participant P as @derpc/provider
+  participant P as DeRPC provider
   participant L as Light client
   participant W as tor-js worker
   participant B as Beacon endpoint
