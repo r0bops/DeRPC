@@ -1,0 +1,16 @@
+.ens-wallet { margin: 0 0 var(--sp-8); padding: var(--sp-6); overflow-wrap: anywhere; }
+.ens-wallet h2, .ens-wallet h3 { margin: 0 0 1rem; }
+.ens-wallet p { line-height: 1.6; }
+.ens-wallet details { margin: 1rem 0; }
+.ens-wallet summary { cursor: pointer; font-weight: 600; }
+.ens-wallet .field { display: grid; gap: .5rem; margin: 1rem 0; }
+.ens-wallet input:not([type=checkbox]), .ens-wallet select, .ens-wallet textarea { width: 100%; max-width: 100%; padding: .7rem; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--white); color: inherit; font: inherit; box-sizing: border-box; }
+.ens-wallet pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 22rem; overflow: auto; padding: 1rem; background: var(--soft); font: .8rem var(--font-mono); }
+.ens-wallet .kv dd { margin: 0; overflow-wrap: anywhere; }
+.ens-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin: 1rem 0; }
+.ens-review-check { display: flex; gap: .65rem; align-items: flex-start; margin: 1rem 0; line-height: 1.5; }
+.ens-review-check input { flex-shrink: 0; margin-top: .3rem; }
+.ens-transaction { padding: 1rem 0; border-top: 1px solid var(--line); }
+.ens-wallet button:disabled { opacity: .55; cursor: not-allowed; }
+.ens-wallet [role=status] { overflow-wrap: anywhere; }
+@media (max-width: 600px) { .ens-wallet { padding: 1rem; } .ens-actions > .btn { width: 100%; white-space: normal; } }

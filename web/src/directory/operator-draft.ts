@@ -74,8 +74,8 @@ function publicEndpoint(value: string): string {
 export function createOperatorDraft(input: OperatorDraftInput): DraftResult {
   const errors: Record<string, string> = {};
   const name = input.name.trim();
-  if (!/^[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/.test(name)) {
-    errors["operator-name"] = "Use 1–31 lowercase letters, numbers or hyphens; start and end with a letter or number.";
+  if (!/^(?!..--)[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/.test(name)) {
+    errors["operator-name"] = "Use 1–31 lowercase letters, numbers or hyphens; start and end with a letter or number. ENS names cannot have hyphens in both positions 3 and 4.";
   }
   for (const field of ["owner", "signer"] as const) {
     if (!publicAddress(input[field])) {

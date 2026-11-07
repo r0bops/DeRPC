@@ -24,6 +24,12 @@ afterEach(() => {
 });
 
 describe("operator onboarding draft", () => {
+  it("rejects ENS-reserved operator label hyphens while preserving node ID rules", () => {
+    for (const name of ["ab--cd", "xn--name"]) expect(createOperatorDraft({ ...fixture(), name }).errors?.["operator-name"]).toContain("positions 3 and 4");
+    const input = fixture(); input.nodes[0]!.id = "ab--cd";
+    expect(createOperatorDraft(input).draft?.nodes[0]!.id).toBe("ab--cd");
+  });
+
   it("groups endpoint pairs under one identity without claiming any verification or deployment", () => {
     const input = fixture();
     input.nodes.push({ key: "2", label: "Paris", endpoint: "https://rpc.example/rpc", beacon: "https://beacon.example" });

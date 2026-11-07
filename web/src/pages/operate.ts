@@ -4,6 +4,7 @@ import { createOperatorConfigFragment, createOperatorDraft, MAX_DRAFT_NODES, typ
 import { PENDING_OPERATORS, TEAM_REGISTRATION_CONFIG, TEAM_REGISTRATION_PLAN, teamRegistrationFragment } from "../directory/pending-operators.ts";
 import type { PageResult } from "../page.ts";
 import { demoHref, escapeHtml, snippet } from "../ui.ts";
+import { mountOperatorWallet, operatorWalletHtml } from "../ens/panel.ts";
 
 function field(id: string, label: string, placeholder: string, type = "text"): string {
   return `<div class="field">
@@ -59,11 +60,13 @@ export function operatePage(params = new URLSearchParams()): PageResult {
             <div>
               <p class="kicker">Run an operator · Free demo</p>
               <h1 class="page-title">${team ? `Review ${escapeHtml(team.label)}.derpc.eth` : "One operator. Your nodes."}</h1>
-              <p class="page-lead">${team ? "Review the existing proxy's public configuration before operator-signed registration. ENS enrollment is pending; this page sends no transaction." : "Prepare your operator identity and public endpoints. This draft stays in your browser until you download it. You sign your own registration after the namespace's one-time setup. Staking and payments come later."}</p>
+              <p class="page-lead">${team ? "Review the existing proxy's public configuration before operator-signed registration. ENS enrollment is pending; signing requires a configured registrar and your explicit wallet review." : "Prepare your operator identity and public endpoints. You sign your own registration after the namespace's one-time setup. Local drafting needs no wallet; staking and payments come later."}</p>
             </div>
           </div>
 
-          <p class="notice" id="operator-registration-flow">Open registration: the namespace owner completes the one-time registrar setup, then each operator signs its own registration transactions. No per-name owner approval or approval bot is required. Public deployment of this flow is not established by this page. Use the <a href="https://github.com/r0bops/DeRPC/blob/main/contracts/README.md" target="_blank" rel="noopener noreferrer">local wallet review instructions</a> to review a fresh plan; this website does not connect a wallet or send transactions.</p>
+          <p class="notice" id="operator-registration-flow"><span>Open registration: the namespace owner completes the one-time registrar setup, then each operator signs its own registration transactions. No per-name owner approval or approval bot is required. Check the deployment status below before connecting a wallet. The <a href="https://github.com/r0bops/DeRPC/blob/main/contracts/README.md" target="_blank" rel="noopener noreferrer">local wallet review helper</a> remains available for namespace setup and recovery.</span></p>
+
+          ${operatorWalletHtml()}
 
           ${team && prepared ? `<section id="team-registration-review" class="operator-draft-review" aria-labelledby="team-registration-title">
             <h2 id="team-registration-title">Actual proxy · unsigned registration review</h2>
@@ -235,6 +238,11 @@ export function operatePage(params = new URLSearchParams()): PageResult {
       </div>
     `,
     bind(root) {
+      const wallet = mountOperatorWallet(root, { operator: () => {
+        if (team) return team;
+        reviewInput(true);
+        return fragment?.operatorConfig;
+      } });
       const form = root.querySelector<HTMLFormElement>("#operate-form")!;
       const nodeList = root.querySelector<HTMLElement>("#operator-nodes")!;
       const add = root.querySelector<HTMLButtonElement>("#add-node")!;
@@ -265,6 +273,7 @@ export function operatePage(params = new URLSearchParams()): PageResult {
       };
       updateNodeControls();
       form.addEventListener("input", invalidate);
+      form.addEventListener("input", wallet.invalidate);
       add.addEventListener("click", () => {
         if (rows().length >= MAX_DRAFT_NODES) return;
         const key = nextKey++;
@@ -367,6 +376,7 @@ export function operatePage(params = new URLSearchParams()): PageResult {
         downloadJson(fragment, `${fragment.operatorConfig.label}.derpc.eth-operator-fragment.json`);
         status.textContent = "Deployment fragment download requested. It is unsigned and unverified; follow the remaining checks before any deployment.";
       });
+      return () => wallet.close();
     },
   };
 }

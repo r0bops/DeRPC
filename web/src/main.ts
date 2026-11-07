@@ -73,18 +73,21 @@ function resolvePage(route: Route): PageResult {
   return notFoundPage();
 }
 
+let disposePage: (() => void) | undefined;
 function render(): void {
   const route = parseRoute();
   const page = resolvePage(route);
   const firstRender = document.body.dataset.rendered !== "true";
 
+  disposePage?.();
+  disposePage = undefined;
   app.innerHTML =
     nav(activeNav(route.path)) +
     `<main id="main" tabindex="-1">${page.html}</main>` +
     footer();
 
   document.title = `${page.title} — DeRPC`;
-  page.bind?.(app);
+  disposePage = page.bind?.(app) || undefined;
   bindCopyButtons(app);
   bindTableRows(app);
 
@@ -96,4 +99,5 @@ function render(): void {
 }
 
 window.addEventListener("hashchange", render);
+window.addEventListener("pagehide", () => disposePage?.());
 render();
