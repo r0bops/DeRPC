@@ -137,6 +137,7 @@ export async function validateForkEndpoints({ config: baselineConfig, stages: ba
       // A second independent fixture proves initial plural deployments, not only migrations.
       await submit(call(baselineConfig.curator, addresses.ETHRegistry, registryAbi, 'setSubregistry', [labelId('derpc'), zeroAddress]));
       let fresh = structuredClone(baselineConfig); delete fresh.registrar; fresh.deploymentId = 'fork-plural-initial-fixture';
+      fresh.operators = fresh.operators.slice(0, 1);
       for (const operator of fresh.operators) { delete operator.endpoint; delete operator.beacon; operator.endpoints = nodes(operator.label); }
       const freshStages = [];
       for (let round = 0; round < 8; round++) {
@@ -146,18 +147,24 @@ export async function validateForkEndpoints({ config: baselineConfig, stages: ba
       }
       await mine();
       const checked = await verifyDeployment({ config: fresh, stages: freshStages, client, build });
+      expect(checked.operators).toHaveLength(1);
       for (const operator of checked.operators) {
         expect(operator.records['derpc.endpoints']).toBe(serializeOperatorEndpoints(nodes(operator.name.split('.')[0])));
         expect(operator.records['derpc.endpoint']).toBe(''); expect(operator.records['derpc.beacon']).toBe('');
         expect(operator.initialRecords).toEqual(operator.records);
       }
       report.freshDeployment = { operators: checked.operators.map(operator => ({ name: operator.name, records: operator.records })), stages: freshStages.map(({ plan }) => ({ stage: plan.stage, transactions: plan.transactions.map(item => item.id) })), verification: checked.verification };
+      const delist = await prepareLifecycle({ manifest: checked, action: { type: 'delist', label: fresh.operators[0].label }, client, build });
+      const hash = await submit(delist.walletRequest.params[0]); await mine();
+      const removed = await verifyLifecycle({ manifest: checked, plan: delist, transactionHash: hash, client, build });
+      expect(removed.after.entry.active).toBe(false); expect(removed.after.ens).toEqual(removed.before.ens);
+      report.freshDeployment.delisting = { receipt: removed.receipt, verification: removed.verification };
     });
-    report.checks.push('Fresh plural operator deployment completes every unsigned stage and canonical receipt/role verification with one dedicated resolver per operator');
+    report.checks.push('Fresh single-operator plural deployment completes every unsigned stage, canonical receipt/role verification and lifecycle delisting with one dedicated resolver for both endpoints');
     report.complete = true;
     return report;
   } finally {
     expect(await rpc('evm_revert', [whole])).toBe(true);
-    if (process.env.DERPC_ENS_ENDPOINTS_REPORT) writeFileSync(process.env.DERPC_ENS_ENDPOINTS_REPORT, json(report));
+    if (process.env.DERPC_ENS_ENDPOINTS_REPORT) writeFileSync(process.env.DERPC_ENS_ENDPOINTS_REPORT, json(report), { flag: 'wx' });
   }
 }

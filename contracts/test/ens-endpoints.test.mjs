@@ -30,18 +30,37 @@ describe('plural ENS deployment and lifecycle', () => {
     ]) { const c = config(); mutate(c.operators[0]); expect(() => validateConfig(c)).toThrow(); }
   });
 
-  it('creates fresh plural resolver initializer calldata with canonical lists and empty legacy records', async () => {
-    const c = validateConfig(config());
+  it.each([1, 2])('creates %i operator resolver(s) without treating their nodes as separate identities', async count => {
+    const input = config(); input.operators.length = count;
+    input.operators[0].endpoints.push({ id: 'north', url: 'https://north.example/rpc', beaconUrl: 'https://north.example/beacon' });
+    const c = validateConfig(input);
     const predictions = new Map([[deploymentSalt(c, 'registry'), addr(50)], ...c.operators.map((op, index) => [deploymentSalt(c, `resolver:${op.label}`), addr(51 + index)])]);
     const client = { readContract: async ({ functionName, args }) => functionName === 'hasRoles' ? true : predictions.get(args[1]), getBytecode: async () => '0x', estimateGas: async () => 100000n };
     const snapshot = { chainId: 1, blockNumber: '100', blockHash: toHex(100, { size: 32 }), timestamp: 1800000000, parent: { expiry: 1810000000, subregistry: zeroAddress } };
     const plan = await preparePlan({ config: c, client, snapshot, build });
+    expect(plan.stage).toBe('deploy-ens-proxies');
+    expect(plan.transactions.map(item => item.id)).toEqual(['deploy-registry', ...c.operators.map(op => `deploy-resolver-${op.label}`)]);
+    expect(plan.resumeConfig.operators).toHaveLength(count);
     const proxy = decodeFunctionData({ abi: factoryAbi, data: plan.transactions[1].walletRequest.params[0].data });
     const init = decodeFunctionData({ abi: resolverAbi, data: proxy.args[2] });
     const texts = init.args[1].map(data => decodeFunctionData({ abi: resolverAbi, data }));
     expect(texts.every(call => call.functionName === 'setText')).toBe(true);
     expect(Object.fromEntries(texts.map(call => [call.args[1], call.args[2]]))).toEqual(operatorRecords(c.operators[0]));
     expect(plan.roleTable.find(row => row.account === c.operators[0].hotKey).resource).toContain('derpc.endpoints only');
+  });
+
+  it('retains operator count bounds and separate hot-key authority for a single operator', () => {
+    for (const count of [0, 4]) {
+      const c = config(); c.operators = Array.from({ length: count }, () => structuredClone(c.operators[0]));
+      expect(() => validateConfig(c)).toThrow(/1–3 explicitly configured operators/);
+    }
+    const c = config(); c.operators.length = 1;
+    for (const hotKey of [c.curator, c.operators[0].operator, c.operators[0].coldOwner]) {
+      const changed = structuredClone(c); changed.operators[0].hotKey = hotKey;
+      expect(() => validateConfig(changed)).toThrow(/hot key must be distinct/);
+    }
+    const paid = structuredClone(c); paid.operators[0].payment = {};
+    expect(() => validateConfig(paid)).toThrow(/Plural endpoints are free-only/);
   });
 
   it('atomically revokes the obsolete role before granting the chosen key in either migration direction', () => {

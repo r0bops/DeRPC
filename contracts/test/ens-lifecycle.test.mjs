@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { decodeFunctionData, getAddress, toHex } from 'viem';
-import { UPSTREAM, addresses, dnsEncode, resolverAbi } from '../scripts/ens-common.mjs';
+import { UPSTREAM, addresses, dnsEncode, resolverAbi, serializeOperatorEndpoints } from '../scripts/ens-common.mjs';
 import { registrarBuild } from '../scripts/ens-plan.mjs';
 import { lifecycleManifestHash, lifecycleTransaction, prepareLifecycle, requireLifecyclePreconditions, validateLifecycleAction, validateLifecycleManifest, verifyLifecycle } from '../scripts/ens-lifecycle.mjs';
 
@@ -27,14 +27,24 @@ describe('unsigned ENS lifecycle review', () => {
     const manifest = fixture(), before = { index: 7 };
     const remove = lifecycleTransaction(manifest, { type: 'delist', label: 'alice' }, before, build);
     expect(remove.from).toBe(manifest.curator); expect(remove.to).toBe(manifest.registrar.address);
-    // Removal names the operator, so a late transaction cannot delist the slot's next occupant.
-    expect(decodeFunctionData({ abi: build.artifact.abi, data: remove.data })).toEqual({ functionName: 'remove', args: [7n, getAddress(manifest.operators[0].operator)] });
+    // Bind both identities: an operator may reuse this slot with a different label.
+    expect(decodeFunctionData({ abi: build.artifact.abi, data: remove.data })).toEqual({ functionName: 'remove', args: [7n, getAddress(manifest.operators[0].operator), toHex('alice', { size: 32 })] });
     for (const authority of ['operator', 'curator']) {
       const action = validateLifecycleAction({ type: 'renew', label: 'alice', expectedExpiry: 100, expiry: 200, authority }, manifest);
       const tx = lifecycleTransaction(manifest, action, before, build);
       expect(tx.from).toBe(authority === 'operator' ? manifest.operators[0].operator : manifest.curator);
       expect(decodeFunctionData({ abi: build.artifact.abi, data: tx.data })).toEqual({ functionName: 'renew', args: [7n, 200n] });
     }
+  });
+
+  it('binds removal to the reviewed label even when the same operator owns a replacement', () => {
+    const manifest = fixture();
+    manifest.operators[1].operator = manifest.operators[0].operator;
+    const alice = lifecycleTransaction(manifest, { type: 'delist', label: 'alice' }, { index: 7 }, build);
+    const bob = lifecycleTransaction(manifest, { type: 'delist', label: 'bob' }, { index: 7 }, build);
+    const decoded = decodeFunctionData({ abi: build.artifact.abi, data: bob.data });
+    expect(decoded.args).toEqual([7n, getAddress(manifest.operators[0].operator), toHex('bob', { size: 32 })]);
+    expect(alice.data).not.toBe(bob.data);
   });
 
   it('leaves the renewal of a lapsed lease to the curator', () => {
@@ -61,6 +71,28 @@ describe('unsigned ENS lifecycle review', () => {
     expect(validateLifecycleManifest(fixture(), build).chainId).toBe(1);
     for (const mutate of [m => { m.sourceHash = hash(99); }, m => { m.verification.hotKeyEventAudit = false; }, m => { m.registrar.registry = addr(99); }, m => { m.registrar.codeHash = hash(99); }, m => { m.operators[1].resolver = m.operators[0].resolver; }, m => { m.operators[0].hotKey = m.operators[1].coldOwner; }, m => { m.operators[0].records['derpc.price'] = '1'; }, m => { m.operators[0].records['derpc.endpoints'] = '[]'; }]) {
       const manifest = fixture(); mutate(manifest); expect(() => validateLifecycleManifest(manifest, build)).toThrow();
+    }
+  });
+
+  it('accepts one plural operator for lifecycle review without relaxing manifest or hot-key checks', () => {
+    const manifest = fixture(); manifest.operators.length = 1;
+    const op = manifest.operators[0];
+    const endpoints = ['east', 'west', 'north'].map(id => ({ id, url: `https://${id}.example/rpc` }));
+    op.records['derpc.endpoint'] = ''; op.records['derpc.beacon'] = '';
+    op.records['derpc.endpoints'] = serializeOperatorEndpoints(endpoints);
+    expect(validateLifecycleManifest(manifest, build).operators).toHaveLength(1);
+    const replacement = structuredClone(endpoints); replacement[0].url = 'https://replacement.example/rpc';
+    const action = validateLifecycleAction({ type: 'rotate-endpoints', label: 'alice', expectedEndpoints: endpoints, newEndpoints: replacement }, manifest);
+    const tx = lifecycleTransaction(manifest, action, { index: 0 }, build);
+    expect(tx.from).toBe(op.hotKey);
+    expect(decodeFunctionData({ abi: resolverAbi, data: tx.data }).args).toEqual([dnsEncode(op.name), 'derpc.endpoints', serializeOperatorEndpoints(replacement)]);
+    for (const mutate of [
+      m => { m.operators = []; }, m => { m.operators = Array(4).fill(m.operators[0]); },
+      m => { m.operators[0].hotKey = m.curator; }, m => { m.operators[0].hotKey = m.operators[0].coldOwner; },
+      m => { m.verification.receipts = false; }, m => { m.registrar.registry = addr(99); },
+    ]) {
+      const changed = structuredClone(manifest); mutate(changed);
+      expect(() => validateLifecycleManifest(changed, build)).toThrow();
     }
   });
 

@@ -19,7 +19,11 @@ export function loadConfig(path) {
   return validateConfig(config);
 }
 
-/** Returns the next independent stage only. Rerun with resumeConfig after mined receipts. */
+/** Bootstrap the configured operators, returning the next independent stage only.
+ * Unrelated public registrations are preserved and never require curator mutation.
+ * New operators use the separate onboarding tools after the registry is available.
+ * Rerun with resumeConfig after mined receipts; operators sign their own registrations.
+ */
 export async function preparePlan({ config: input, client, build = registrarBuild(), snapshot, historical = false }) {
   const config = validateConfig(input);
   const observed = snapshot ?? await preflight(client);
@@ -80,7 +84,7 @@ export async function preparePlan({ config: input, client, build = registrarBuil
   if (isEmptyCode(registrarCode)) {
     if (await client.getTransactionCount({ address: config.deployer, ...(historical ? { blockNumber } : { blockTag: 'pending' }) }) !== config.registrar.nonce) fail('Registrar deployment nonce changed; check whether its reviewed transaction was mined before preparing a new address');
     const data = encodeDeployData({ abi: build.artifact.abi, bytecode: `0x${build.artifact.evm.bytecode.object}`, args: [subregistry, config.curator] });
-    plan.transactions.push({ id: 'deploy-registrar', purpose: 'Deploy the fixed-layout, free curated registrar with no upgrade path', walletRequest: { method: 'eth_sendTransaction', params: [{ from: config.deployer, data, value: '0x0', chainId: '0x1', nonce: toHex(config.registrar.nonce) }] } });
+    plan.transactions.push({ id: 'deploy-registrar', purpose: 'Deploy the fixed-layout, free open registrar with operator-signed registration, curator moderation and no upgrade path', walletRequest: { method: 'eth_sendTransaction', params: [{ from: config.deployer, data, value: '0x0', chainId: '0x1', nonce: toHex(config.registrar.nonce) }] } });
     return finish('deploy-registrar');
   }
   const compiled = build.artifact.evm.deployedBytecode;
@@ -129,15 +133,20 @@ export async function preparePlan({ config: input, client, build = registrarBuil
   const count = Number(await read(config.registrar.address, build.artifact.abi, 'operatorCount'));
   if (!Number.isSafeInteger(count) || count > 128) fail('Registrar count is outside the proof layout bound');
   const entries = await Promise.all(Array.from({ length: count }, (_, index) => read(config.registrar.address, build.artifact.abi, 'operators', [BigInt(index)])));
-  const expectedLabels = new Set(config.operators.map(op => toHex(op.label, { size: 32 })));
-  if (entries.some(entry => entry[3] && BigInt(entry[2]) > now && !expectedLabels.has(entry[0]))) fail('Registrar has an active operator absent from config; explicitly delist it before changing the intended pool');
+  // Registration is open as soon as the registrar is authorized. A concurrent
+  // unrelated join must not block configured operators or their receipt review.
   for (const op of config.operators) {
     const id = labelId(op.label), packedLabel = toHex(op.label, { size: 32 });
     const index = entries.findIndex(entry => entry[0] === packedLabel), entry = entries[index];
     const state = await read(subregistry, registryAbi, 'getState', [id]);
     if (!entry || BigInt(entry[2]) <= now) {
+      const [operatorBlocked, labelBlocked] = await Promise.all([
+        read(config.registrar.address, build.artifact.abi, 'operatorBlocked', [op.operator]),
+        read(config.registrar.address, build.artifact.abi, 'labelBlocked', [toHex(id, { size: 32 })]),
+      ]);
+      if (operatorBlocked || labelBlocked) fail(`${op.label} registration is blocked by curator moderation (${operatorBlocked ? 'operator' : 'label'}); this planner never clears bans`);
       if (state.status !== 0) fail(`${op.label} ENS name is not available for registration`);
-      add(`register-${op.label}`, `Register ${op.label}.derpc.eth free, expiring, and non-transferable`, config.curator, config.registrar.address, build.artifact.abi, 'register', [op.label, op.operator, resolvers[op.label], op.payee, BigInt(op.expiry)]);
+      add(`register-${op.label}`, `Operator signs its own free, expiring, non-transferable ${op.label}.derpc.eth registration`, op.operator, config.registrar.address, build.artifact.abi, 'register', [op.label, op.operator, resolvers[op.label], op.payee, BigInt(op.expiry)]);
       continue;
     }
     if (!entry[3] || !sameAddress(entry[1], op.operator) || !sameAddress(entry[4], op.payee)) fail(`${op.label} existing listing is removed or has a conflicting operator/payee; do not relist or change payment identity implicitly`);

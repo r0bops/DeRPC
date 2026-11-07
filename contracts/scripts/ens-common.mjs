@@ -128,7 +128,7 @@ export function validateConfig(input) {
   c.curator = address(c.curator, 'curator');
   c.deployer = address(c.deployer ?? c.curator, 'deployer');
   if (!/^[a-zA-Z0-9_-]{1,40}$/.test(c.deploymentId)) fail('deploymentId must be a stable 1–40 character identifier');
-  if (!Array.isArray(c.operators) || c.operators.length < 2 || c.operators.length > 3) fail('Supply 2–3 explicitly configured operators');
+  if (!Array.isArray(c.operators) || c.operators.length < 1 || c.operators.length > 3) fail('Supply 1–3 explicitly configured operators');
   const labels = new Set(); const hotKeys = new Set();
   for (const op of c.operators) {
     only(op, ['label', 'operator', 'coldOwner', 'hotKey', 'signer', 'payee', 'endpoint', 'beacon', 'endpoints', 'caps', 'expiry', 'gateways', 'payment']);

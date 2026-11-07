@@ -12,6 +12,7 @@ import { preparePlan, registrarBuild } from '../scripts/ens-plan.mjs';
 import { verifyDeployment } from '../scripts/ens-verify.mjs';
 import { validateForkLifecycle } from './ens-lifecycle-fork.mjs';
 import { validateForkEndpoints } from './ens-endpoints-fork.mjs';
+import { validateTeamDemoFork } from './ens-team-demo-fork.mjs';
 
 const forkRpc = process.env.DERPC_ENS_FORK_RPC;
 // Deployment records from ensdomains/contracts-v2 at 4f47cbcc11462fb413196e6b5c0f8090247a6c08.
@@ -278,7 +279,7 @@ async function validateForkDiscovery(config, plan, build) {
   const renewed = await discoverOperators(options);
   expect(renewed.operators.find(op => op.ens === 'alice.derpc.eth').expiry).toBe(renewedExpiry);
   const owner = createWalletClient({ account: config.curator, transport: http(forkRpc, { retryCount: 0 }) });
-  await write(owner, registrarPin.address, build.artifact.abi, 'remove', [0n, config.operators[0].operator]);
+  await write(owner, registrarPin.address, build.artifact.abi, 'remove', [0n, config.operators[0].operator, stringToHex(config.operators[0].label, { size: 32 })]);
   await materializeExactPrestate();
   const removed = await discoverOperators(options);
   expect(retainChosenOperators(removed, initial.operators.map(op => op.ens)).map(op => op.ens)).toEqual(['bob.derpc.eth']);
@@ -339,7 +340,7 @@ describe.sequential.skipIf(!forkRpc)('actual ENSv2 contracts on a local mainnet 
 
   afterAll(async () => {
     try { if (snapshot) await rpc('evm_revert', [snapshot]); }
-    finally { if (process.env.DERPC_ENS_FORK_REPORT) writeFileSync(process.env.DERPC_ENS_FORK_REPORT, JSON.stringify(evidence, (_k, value) => typeof value === 'bigint' ? value.toString() : value, 2)); }
+    finally { if (process.env.DERPC_ENS_FORK_REPORT) writeFileSync(process.env.DERPC_ENS_FORK_REPORT, JSON.stringify(evidence, (_k, value) => typeof value === 'bigint' ? value.toString() : value, 2), { flag: 'wx' }); }
   }, 40000);
 
   it('attaches a genuine UserRegistry below derpc.eth using only the local impersonated owner', async () => {
@@ -358,8 +359,9 @@ describe.sequential.skipIf(!forkRpc)('actual ENSv2 contracts on a local mainnet 
 
   it('accepts zero registration roles and forbids owner transfer or resolver replacement', async () => {
     const expiry = Number((await client.getBlock()).timestamp) + 3600;
-    await write(curator, registrar, registrarAbi, 'register', ['alice', alice.account.address, resolverAlice, alice.account.address, expiry]);
-    await write(curator, registrar, registrarAbi, 'register', ['bob', bob.account.address, resolverBob, bob.account.address, expiry]);
+    await expect(write(curator, registrar, registrarAbi, 'register', ['alice', alice.account.address, resolverAlice, alice.account.address, expiry])).rejects.toThrow(/revert/i);
+    await write(alice, registrar, registrarAbi, 'register', ['alice', alice.account.address, resolverAlice, alice.account.address, expiry]);
+    await write(bob, registrar, registrarAbi, 'register', ['bob', bob.account.address, resolverBob, bob.account.address, expiry]);
     expect(await read(registry, registryAbi, 'hasRootRoles', [registerAndRenew, registrar])).toBe(true);
     expect(await read(registry, registryAbi, 'roles', [0n, registrar])).toBe(registerAndRenew);
     expect(await read(registry, registryAbi, 'roleCount', [0n])).toBe(setParent + (registerAndRenew << 128n) + registerAndRenew);
@@ -370,7 +372,7 @@ describe.sequential.skipIf(!forkRpc)('actual ENSv2 contracts on a local mainnet 
     expect(await read(registry, registryAbi, 'roleCount', [state.resource])).toBe(0n);
     await expect(write(alice, registry, registryAbi, 'unsafeTransfer', [outsider.account.address, state.tokenId, '0x'])).rejects.toThrow(/revert/i);
     await expect(write(alice, registry, registryAbi, 'setResolver', [labelHash('alice'), resolverBob])).rejects.toThrow(/revert/i);
-    evidence.checks.push('Registrar register+renew root roles only; zero owner role bitmap accepted; transfer/resolver replacement refused');
+    evidence.checks.push('Operators register themselves; curator cannot mint for a different operator. Registrar register+renew root roles only; zero owner role bitmap accepted; transfer/resolver replacement refused');
   }, 60000);
 
   it('limits a hot key to the endpoint key on one dedicated resolver', async () => {
@@ -389,15 +391,17 @@ describe.sequential.skipIf(!forkRpc)('actual ENSv2 contracts on a local mainnet 
     await write(alice, registrar, registrarAbi, 'renew', [0n, expiry]);
     expect((await read(registry, registryAbi, 'getState', [labelHash('alice')])).expiry).toBe(BigInt(expiry));
     // Removal names the operator, so it cannot hit another occupant of the slot.
-    await expect(write(curator, registrar, registrarAbi, 'remove', [0n, bob.account.address])).rejects.toThrow(/revert/i);
-    await write(curator, registrar, registrarAbi, 'remove', [0n, alice.account.address]);
+    await expect(write(curator, registrar, registrarAbi, 'remove', [0n, bob.account.address, stringToHex('alice', { size: 32 })])).rejects.toThrow(/revert/i);
+    await expect(write(curator, registrar, registrarAbi, 'remove', [0n, alice.account.address, stringToHex('bob', { size: 32 })])).rejects.toThrow(/revert/i);
+    await write(curator, registrar, registrarAbi, 'remove', [0n, alice.account.address, stringToHex('alice', { size: 32 })]);
     expect((await read(registrar, registrarAbi, 'operators', [0n]))[3]).toBe(false);
     await expect(write(alice, registrar, registrarAbi, 'renew', [0n, expiry + 3600])).rejects.toThrow(/revert/i);
     // Delisting removes the provable pool entry immediately; the ENS name itself keeps its lease.
     expect((await read(registry, registryAbi, 'getResolver', ['alice'])).toLowerCase()).toBe(resolverAlice.toLowerCase());
     // Only the curator undoes a removal; the operator can then extend its running lease again.
-    await expect(write(alice, registrar, registrarAbi, 'reinstate', [0n])).rejects.toThrow(/revert/i);
-    await write(curator, registrar, registrarAbi, 'reinstate', [0n]);
+    await expect(write(alice, registrar, registrarAbi, 'reinstate', [0n, alice.account.address, stringToHex('alice', { size: 32 })])).rejects.toThrow(/revert/i);
+    await expect(write(curator, registrar, registrarAbi, 'reinstate', [0n, alice.account.address, stringToHex('bob', { size: 32 })])).rejects.toThrow(/revert/i);
+    await write(curator, registrar, registrarAbi, 'reinstate', [0n, alice.account.address, stringToHex('alice', { size: 32 })]);
     await write(alice, registrar, registrarAbi, 'renew', [0n, expiry + 3600]);
     expect((await read(registry, registryAbi, 'getState', [labelHash('alice')])).expiry).toBe(BigInt(expiry + 3600));
     await rpc('evm_increaseTime', [10801]);
@@ -405,11 +409,11 @@ describe.sequential.skipIf(!forkRpc)('actual ENSv2 contracts on a local mainnet 
     expect(await read(registry, registryAbi, 'getResolver', ['alice'])).toBe(zeroAddress);
     expect((await read(registry, registryAbi, 'getState', [labelHash('alice')])).status).toBe(0);
     evidence.checks.push('Authorized renewal, immediate registrar delisting naming the operator, curator-only reinstatement, revoked renewal refusal, and ENS expiry resolution removal');
-    // A lapsed operator cannot revive itself. The curator can give the expired label to a new owner,
-    // and the real registry accepts that registration while the old token still exists.
+    // A lapsed operator cannot renew itself. A new unblocked owner can register the expired label,
+    // and the real registry accepts that self-registration while the old token still exists.
     const later = Number((await client.getBlock()).timestamp) + 3600;
     await expect(write(alice, registrar, registrarAbi, 'renew', [0n, later])).rejects.toThrow(/revert/i);
-    await write(curator, registrar, registrarAbi, 'register', ['alice', outsider.account.address, resolverAlice, outsider.account.address, later]);
+    await write(outsider, registrar, registrarAbi, 'register', ['alice', outsider.account.address, resolverAlice, outsider.account.address, later]);
     const reused = await read(registry, registryAbi, 'getState', [labelHash('alice')]);
     expect(reused.status).toBe(2); expect(reused.expiry).toBe(BigInt(later)); expect(reused.latestOwner.toLowerCase()).toBe(outsider.account.address.toLowerCase());
     const entry = await read(registrar, registrarAbi, 'operators', [0n]);
@@ -451,6 +455,12 @@ describe.sequential.skipIf(!forkRpc)('actual ENSv2 contracts on a local mainnet 
         const transactionHashes = [];
         for (const item of plan.transactions) {
           const tx = item.walletRequest.params[0];
+          if (item.id.startsWith('register-')) {
+            const op = config.operators.find(op => item.id === `register-${op.label}`);
+            expect(tx.from.toLowerCase()).toBe(op.operator.toLowerCase());
+            expect(tx.from.toLowerCase()).not.toBe(config.curator.toLowerCase());
+            await expect(client.call({ account: config.curator, to: tx.to, data: tx.data })).rejects.toThrow(/revert/i);
+          }
           const wallet = createWalletClient({ account: tx.from, transport: http(forkRpc, { retryCount: 0, timeout: 30000 }) });
           const hash = await wallet.sendTransaction({ chain: null, to: tx.to, data: tx.data, value: 0n, gas: 8_000_000n, ...(tx.nonce ? { nonce: Number(BigInt(tx.nonce)) } : {}) });
           expect((await localReceipt(hash)).status).toBe('success');
@@ -464,6 +474,17 @@ describe.sequential.skipIf(!forkRpc)('actual ENSv2 contracts on a local mainnet 
       expect(verified.verification).toMatchObject({ receipts: true, canonicalBlocks: true, minimumConfirmations: 12, stateMatchesConfig: true, hotKeyEventAudit: true });
       evidence.planner = { stages: stages.map(({ plan }) => ({ stage: plan.stage, transactions: plan.transactions.map(item => item.id) })), verification: verified.verification };
       evidence.checks.push('Unmodified staged planner gas estimates, exact root/name role counts, canonical receipt verification with 12 local confirmations');
+
+      const registrations = stages.find(stage => stage.plan.transactions.some(item => item.id === 'register-alice'));
+      const registrationHash = registrations.transactionHashes[registrations.plan.transactions.findIndex(item => item.id === 'register-alice')];
+      await expect(verifyDeployment({ config, stages, build, confirmations: 12, client: {
+        ...client,
+        getTransactionReceipt: async request => {
+          const receipt = await client.getTransactionReceipt(request);
+          return request.hash === registrationHash ? { ...receipt, from: config.curator } : receipt;
+        },
+      } })).rejects.toThrow(/Mined transaction differs from the reviewed wallet request/);
+      evidence.checks.push('Registration requests and actual sends use distinct operator wallets; curator minting and a receipt claiming the curator as registration sender are refused');
 
       // Unknown text permissions evade a fixed known-key list; event auditing must reject them.
       const authoritySnapshot = await rpc('evm_snapshot');
@@ -481,6 +502,19 @@ describe.sequential.skipIf(!forkRpc)('actual ENSv2 contracts on a local mainnet 
       await rpc('anvil_setChainId', [31337]);
       for (const wallet of [curator, alice, bob, hot, outsider]) await rpc('anvil_stopImpersonatingAccount', [wallet.account.address]);
       await rpc('anvil_stopImpersonatingAccount', [ownerState.latestOwner]);
+    }
+  }, 240000);
+
+  it.skipIf(process.env.DERPC_ENS_TEAM_DEMO !== '1')('simulates the reviewed three-demo deployment and scoped hot keys without signing', async () => {
+    evidence.complete = false;
+    expect(await rpc('evm_revert', [snapshot])).toBe(true);
+    snapshot = await rpc('evm_snapshot');
+    await rpc('anvil_setChainId', [1]);
+    try {
+      evidence.teamDemo = await validateTeamDemoFork({ client, rpc, forkRpc, receipt: localReceipt, build: registrarBuild(), fork: evidence.fork });
+      evidence.complete = true;
+    } finally {
+      await rpc('anvil_setChainId', [31337]);
     }
   }, 240000);
 });

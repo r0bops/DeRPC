@@ -127,7 +127,7 @@ describe('QueryEscrow', () => {
 describe('OperatorRegistrar', () => {
   it('uses a fixed three-slot layout and registers without transfer or resolver roles', async () => {
     const now = Number((await client.getBlock()).timestamp);
-    await write(payer, registrar, 'OperatorRegistrar', 'register', ['alice', operator.account.address, registry, operator.account.address, now + 3600]);
+    await write(operator, registrar, 'OperatorRegistrar', 'register', ['alice', operator.account.address, registry, operator.account.address, now + 3600]);
     expect(await read(registry, 'TestRegistry', 'lastRoles')).toBe(0n);
     expect(await read(registrar, 'OperatorRegistrar', 'operatorCount')).toBe(1n);
     expect(BigInt(await client.getStorageAt({ address: registrar, slot: toHex(0n, { size: 32 }) }))).toBe(1n);
@@ -140,14 +140,16 @@ describe('OperatorRegistrar', () => {
     expect(BigInt(await client.getStorageAt({ address: registrar, slot: toHex(base + 2n, { size: 32 }) }))).toBe(BigInt(operator.account.address));
   });
 
-  it('rejects unauthorized joins, malformed labels and excessive leases', async () => {
+  it('allows self-registration but rejects third-party joins, malformed labels and excessive leases', async () => {
     const now = Number((await client.getBlock()).timestamp);
-    await expect(write(outsider, registrar, 'OperatorRegistrar', 'register', ['bob', outsider.account.address, registry, outsider.account.address, now + 3600])).rejects.toThrow();
+    await expect(write(outsider, registrar, 'OperatorRegistrar', 'register', ['bob', operator.account.address, registry, operator.account.address, now + 3600])).rejects.toThrow();
+    await expect(write(payer, registrar, 'OperatorRegistrar', 'register', ['bob', outsider.account.address, registry, outsider.account.address, now + 3600])).rejects.toThrow();
+    await write(outsider, registrar, 'OperatorRegistrar', 'register', ['bob', outsider.account.address, registry, outsider.account.address, now + 3600]);
     for (const label of ['Alice', '-bob', 'bob-', 'a.b', '', 'a'.repeat(32)]) {
-      await expect(write(payer, registrar, 'OperatorRegistrar', 'register', [label, operator.account.address, registry, operator.account.address, now + 3600])).rejects.toThrow();
+      await expect(write(operator, registrar, 'OperatorRegistrar', 'register', [label, operator.account.address, registry, operator.account.address, now + 3600])).rejects.toThrow();
     }
-    await expect(write(payer, registrar, 'OperatorRegistrar', 'register', ['bob', operator.account.address, registry, zeroAddress, now + 3600])).rejects.toThrow();
-    await expect(write(payer, registrar, 'OperatorRegistrar', 'register', ['bob', operator.account.address, registry, operator.account.address, now + 31 * 86400])).rejects.toThrow();
+    await expect(write(operator, registrar, 'OperatorRegistrar', 'register', ['carol', operator.account.address, registry, zeroAddress, now + 3600])).rejects.toThrow();
+    await expect(write(operator, registrar, 'OperatorRegistrar', 'register', ['carol', operator.account.address, registry, operator.account.address, now + 31 * 86400])).rejects.toThrow();
   });
 
   it('limits renewal and payee updates, and a removed operator cannot renew itself', async () => {
@@ -157,7 +159,7 @@ describe('OperatorRegistrar', () => {
     await expect(write(outsider, registrar, 'OperatorRegistrar', 'setPayee', [0n, outsider.account.address])).rejects.toThrow();
     await write(operator, registrar, 'OperatorRegistrar', 'setPayee', [0n, outsider.account.address]);
     expect((await read(registrar, 'OperatorRegistrar', 'operators', [0n]))[4].toLowerCase()).toBe(outsider.account.address.toLowerCase());
-    await write(payer, registrar, 'OperatorRegistrar', 'remove', [0n, operator.account.address]);
+    await write(payer, registrar, 'OperatorRegistrar', 'remove', [0n, operator.account.address, toHex('alice', { size: 32 })]);
     expect((await read(registrar, 'OperatorRegistrar', 'operators', [0n]))[3]).toBe(false);
     await expect(write(operator, registrar, 'OperatorRegistrar', 'renew', [0n, now + 10800])).rejects.toThrow();
   });

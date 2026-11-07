@@ -19,7 +19,9 @@ export function expectedTransaction(item, config, plan, build) {
     const selected = endpointRecordKey(op);
     if (item.id === `grant-${selected === 'derpc.endpoints' ? 'endpoints' : 'endpoint'}-${op.label}`) return call(op.coldOwner, resolver, resolverAbi, 'grantSetterRoles', [setter(name, selected, ''), op.hotKey]);
     if (item.id === `migrate-endpoint-mode-${op.label}`) return call(op.coldOwner, resolver, resolverAbi, 'multicall', [endpointMigrationCalls(op, name)]);
-    if (item.id === `register-${op.label}`) return call(config.curator, config.registrar.address, build.artifact.abi, 'register', [op.label, op.operator, resolver, op.payee, BigInt(op.expiry)]);
+    // Reconstruct the sender independently of the supplied plan: even the curator
+    // cannot submit a registration on behalf of a different operator.
+    if (item.id === `register-${op.label}`) return call(op.operator, config.registrar.address, build.artifact.abi, 'register', [op.label, op.operator, resolver, op.payee, BigInt(op.expiry)]);
     const records = operatorRecords(op);
     for (const key of RECORD_KEYS) {
       if (item.id === `record-${op.label}-${key}`) return call(op.coldOwner, resolver, resolverAbi, 'setText', [dnsEncode(name), key, records[key] ?? '']);

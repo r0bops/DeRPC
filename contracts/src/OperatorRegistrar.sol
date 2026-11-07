@@ -6,7 +6,8 @@ interface IOperatorRegistry {
     function renew(uint256 anyId, uint64 expiry) external;
 }
 
-/// @notice Curated, free registration. No stake or deposit. Fixed-size entries are storage-provable.
+/// @notice Open, free registration signed by each operator, with curator moderation. No stake or deposit.
+/// Fixed-size entries are storage-provable; registration is not a service-quality or independence endorsement.
 /// Grant this contract ROLE_REGISTRAR and ROLE_RENEW only; no person needs ROLE_UNREGISTER.
 contract OperatorRegistrar {
     struct Operator {
@@ -20,6 +21,10 @@ contract OperatorRegistrar {
     // Layout is a public protocol: length at slot 0, entries at keccak256(uint256(0)), stride 3.
     Operator[] public operators;
     mapping(bytes32 => uint256) private indexPlusOne;
+    // Registration bans survive entry expiry and slot reuse. They do not hide or change other active entries.
+    mapping(address => bool) public operatorBlocked;
+    mapping(bytes32 => bool) public labelBlocked; // keccak256(bytes(label)), not the packed proof-list label
+    bool private registering; // appended after the proof layout; blocks ERC1155 receiver mutations during registration
     IOperatorRegistry public immutable registry;
     address public immutable curator;
     uint256 public constant MAX_OPERATORS = 128;
@@ -31,8 +36,17 @@ contract OperatorRegistrar {
     event Reinstated(uint256 indexed index);
     event Renewed(uint256 indexed index, uint64 expiry);
     event PayeeChanged(uint256 indexed index, address payee);
+    event OperatorBlockChanged(address indexed operator, bool blocked);
+    event LabelBlockChanged(bytes32 indexed labelHash, bool blocked);
     error Unauthorized();
     error InvalidOperator();
+    error RegistrationBlocked();
+    error RegistrationInProgress();
+
+    modifier whenNotRegistering() {
+        if (registering) revert RegistrationInProgress();
+        _;
+    }
 
     constructor(IOperatorRegistry registry_, address curator_) {
         if (address(registry_).code.length == 0 || curator_ == address(0)) revert InvalidOperator();
@@ -40,28 +54,33 @@ contract OperatorRegistrar {
         curator = curator_;
     }
 
-    /// @notice List a label. A new label takes the next slot; a label listed before reuses its own slot once its lease has expired.
-    function register(string calldata label, address operator, address resolver, address payee, uint64 expiry) external returns (uint256) {
+    /// @notice List your own label. A new label takes the next slot; a label listed before reuses its own slot once its lease has expired.
+    function register(string calldata label, address operator, address resolver, address payee, uint64 expiry) external whenNotRegistering returns (uint256) {
         return _register(NEW_SLOT, label, operator, resolver, payee, expiry);
     }
 
-    /// @notice List a label in the slot of an entry whose lease has expired, replacing that entry.
+    /// @notice List a label in an expired slot, or replace an inactive entry with a different available label.
     /// MAX_OPERATORS then bounds the list, not every label that was ever used.
-    function registerInSlot(uint256 slot, string calldata label, address operator, address resolver, address payee, uint64 expiry) external returns (uint256) {
+    function registerInSlot(uint256 slot, string calldata label, address operator, address resolver, address payee, uint64 expiry) external whenNotRegistering returns (uint256) {
         if (slot >= operators.length) revert InvalidOperator();
         return _register(slot, label, operator, resolver, payee, expiry);
     }
 
     function _register(uint256 slot, string calldata label, address operator, address resolver, address payee, uint64 expiry) private returns (uint256 index) {
-        if (msg.sender != curator) revert Unauthorized();
+        if (msg.sender != operator) revert Unauthorized();
         if (operator == address(0) || resolver.code.length == 0 || payee == address(0)) revert InvalidOperator();
         _validExpiry(expiry);
         bytes32 packed = _pack(label);
+        if (operatorBlocked[operator] || labelBlocked[keccak256(bytes(label))]) revert RegistrationBlocked();
         index = _claim(slot, packed);
         operators[index] = Operator(packed, operator, expiry, true, payee);
         // No transfer, resolver-change or subregistry role is granted to the name owner.
         // Each operator controls only its own resolver's limited text-key role separately.
+        // ENS mints to contract operators through an ERC1155 receiver callback. Keep this registration atomic,
+        // including its final Listed event, while still allowing smart wallets to accept their own token.
+        registering = true;
         registry.register(label, operator, address(0), resolver, 0, expiry);
+        registering = false;
         emit Listed(index, packed, operator, payee, expiry);
     }
 
@@ -78,7 +97,7 @@ contract OperatorRegistrar {
         return bytes32(raw);
     }
 
-    /// Pick the slot for a label. Any slot that already holds an entry must have an expired lease.
+    /// Active slots and the same label need an expired lease. A different label may reclaim an inactive slot.
     function _claim(uint256 slot, bytes32 packed) private returns (uint256 index) {
         uint256 existing = indexPlusOne[packed];
         if (existing == 0 && slot == NEW_SLOT) {
@@ -91,14 +110,14 @@ contract OperatorRegistrar {
         // A label never occupies two slots: one listed before keeps its own.
         index = existing == 0 ? slot : existing - 1;
         if (slot != NEW_SLOT && slot != index) revert InvalidOperator();
-        if (operators[index].expiry > block.timestamp) revert InvalidOperator();
+        if (operators[index].expiry > block.timestamp && (operators[index].active || existing != 0)) revert InvalidOperator();
         if (existing == 0) {
             delete indexPlusOne[operators[index].label];
             indexPlusOne[packed] = index + 1;
         }
     }
 
-    function renew(uint256 index, uint64 expiry) external {
+    function renew(uint256 index, uint64 expiry) external whenNotRegistering {
         Operator storage op = operators[index];
         bool byCurator = msg.sender == curator;
         if (!byCurator && msg.sender != op.operator) revert Unauthorized();
@@ -111,25 +130,57 @@ contract OperatorRegistrar {
     }
 
     /// @notice Delist immediately. The ENS token expires on schedule; no global unregister role.
-    /// Naming the operator keeps a late transaction from delisting a slot's next occupant.
-    function remove(uint256 index, address operator) external {
+    /// Bind the operator and packed label so a late transaction cannot delist a slot's next occupant.
+    /// Also block new registration by this operator and of this label, even after expiry or slot reuse.
+    /// Other existing entries belonging to the same operator keep their active state and lease rights.
+    function remove(uint256 index, address operator, bytes32 label) external whenNotRegistering {
         if (msg.sender != curator) revert Unauthorized();
         Operator storage op = operators[index];
-        if (!op.active || op.operator != operator) revert InvalidOperator();
+        if (!op.active || op.operator != operator || op.label != label) revert InvalidOperator();
         op.active = false;
+        _setOperatorBlocked(operator, true);
+        _setLabelBlocked(keccak256(bytes(_label(op.label))), true);
         emit Removed(index);
     }
 
     /// @notice Undo a removal. The lease is unchanged; a lapsed one still needs the curator to renew it.
-    function reinstate(uint256 index) external {
+    /// Explicitly clears this operator's registration ban and this label's ban, including manually set bans.
+    /// Other removed entries stay inactive and their label bans remain; active siblings are unchanged.
+    function reinstate(uint256 index, address operator, bytes32 label) external whenNotRegistering {
         if (msg.sender != curator) revert Unauthorized();
         Operator storage op = operators[index];
-        if (op.active) revert InvalidOperator();
+        if (op.active || op.operator != operator || op.label != label) revert InvalidOperator();
+        _setOperatorBlocked(op.operator, false);
+        _setLabelBlocked(keccak256(bytes(_label(op.label))), false);
         op.active = true;
         emit Reinstated(index);
     }
 
-    function setPayee(uint256 index, address payee) external {
+    /// @notice Block or allow future registration by an address; existing entries and lease rights are unchanged.
+    function setOperatorBlocked(address operator, bool blocked) external whenNotRegistering {
+        if (msg.sender != curator) revert Unauthorized();
+        if (operator == address(0)) revert InvalidOperator();
+        _setOperatorBlocked(operator, blocked);
+    }
+
+    /// @notice Block or allow future registration of keccak256(bytes(label)); existing entries are unchanged.
+    function setLabelBlocked(bytes32 labelHash, bool blocked) external whenNotRegistering {
+        if (msg.sender != curator) revert Unauthorized();
+        if (labelHash == bytes32(0)) revert InvalidOperator();
+        _setLabelBlocked(labelHash, blocked);
+    }
+
+    function _setOperatorBlocked(address operator, bool blocked) private {
+        operatorBlocked[operator] = blocked;
+        emit OperatorBlockChanged(operator, blocked);
+    }
+
+    function _setLabelBlocked(bytes32 labelHash, bool blocked) private {
+        labelBlocked[labelHash] = blocked;
+        emit LabelBlockChanged(labelHash, blocked);
+    }
+
+    function setPayee(uint256 index, address payee) external whenNotRegistering {
         Operator storage op = operators[index];
         if (msg.sender != op.operator) revert Unauthorized();
         if (payee == address(0) || !op.active || op.expiry <= block.timestamp) revert InvalidOperator();

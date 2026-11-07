@@ -18,7 +18,7 @@ export async function validateForkLifecycle({ manifest, client, rpc, forkRpc, bu
   const check = plan => checkLifecyclePlan({ manifest, plan, client, build });
   const verify = (plan, hash, override = client) => verifyLifecycle({ manifest, plan, transactionHash: hash, client: override, build });
   const isolated = async fn => { const snapshot = await rpc('evm_snapshot'); try { return await fn(); } finally { await rpc('evm_setAutomine', [true]); expect(await rpc('evm_revert', [snapshot])).toBe(true); } };
-  const keep = (plan, result) => report.examples.push({ plan, evidence: { action: result.action, receipt: result.receipt, verification: result.verification, finality: result.finality, before: { entry: result.before.entry, ens: result.before.ens, endpoint: result.before.records['derpc.endpoint'] }, after: { entry: result.after.entry, ens: result.after.ens, endpoint: result.after.records['derpc.endpoint'] } } });
+  const keep = (plan, result) => report.examples.push({ plan, evidence: { action: result.action, receipt: result.receipt, verification: result.verification, finality: result.finality, before: { entry: result.before.entry, moderation: result.before.moderation, ens: result.before.ens, endpoint: result.before.records['derpc.endpoint'] }, after: { entry: result.after.entry, moderation: result.after.moderation, ens: result.after.ens, endpoint: result.after.records['derpc.endpoint'] } } });
   try {
     const rotate = await prepare({ type: 'rotate-endpoint', label, expectedEndpoint: op.records['derpc.endpoint'], newEndpoint: 'https://rotated-lifecycle.example/rpc' });
     expect(rotate.walletRequest.params[0].from).toBe(op.hotKey);
@@ -97,16 +97,17 @@ export async function validateForkLifecycle({ manifest, client, rpc, forkRpc, bu
     const removeHash = await submit(remove.walletRequest.params[0]); await mine();
     const removed = await verify(remove, removeHash);
     expect(removed.after.entry.active).toBe(false); expect(removed.after.ens).toEqual(removed.before.ens);
+    expect(removed.after.moderation).toEqual({ operatorBlocked: true, labelBlocked: true });
     expect(removed.after.resolved.toLowerCase()).toBe(op.resolver.toLowerCase()); keep(remove, removed);
     await expect(prepare({ type: 'delist', label })).rejects.toThrow(/already delisted/);
     await expect(prepare({ type: 'renew', label, expectedExpiry: renewed.after.entry.expiry, expiry: renewed.after.entry.expiry + 3600 })).rejects.toThrow(/already delisted/);
     await expect(prepare({ type: 'rotate-endpoint', label, expectedEndpoint: rotate.action.newEndpoint, newEndpoint: 'https://removed.example/rpc' })).rejects.toThrow(/already delisted/);
     await expect(client.call({ account: op.operator, to: manifest.registrar.address, data: encodeFunctionData({ abi: build.artifact.abi, functionName: 'renew', args: [BigInt(remove.before.index), BigInt(renewed.after.entry.expiry + 3600)] }) })).rejects.toThrow();
-    report.checks.push('Curator renewal and registrar delisting verified; delisting preserves token/owner/resolver/expiry, clears admission, and prevents renewal or implicit relisting');
+    report.checks.push('Curator renewal and registrar delisting verified; delisting preserves token/owner/resolver/expiry, clears admission, bans the operator and label from future registration, and prevents renewal or implicit relisting');
     report.complete = true;
     return report;
   } finally {
     await rpc('evm_setAutomine', [true]); expect(await rpc('evm_revert', [fixture])).toBe(true);
-    if (process.env.DERPC_ENS_LIFECYCLE_REPORT) writeFileSync(process.env.DERPC_ENS_LIFECYCLE_REPORT, json(report));
+    if (process.env.DERPC_ENS_LIFECYCLE_REPORT) writeFileSync(process.env.DERPC_ENS_LIFECYCLE_REPORT, json(report), { flag: 'wx' });
   }
 }

@@ -22,7 +22,7 @@ export function validateLifecycleManifest(manifest, build) {
   if (manifest.sourceHash !== build.sourceHash || !equal(manifest.compiler, build.compiler)) fail('Manifest registrar source/compiler differs from the reviewed local build');
   if (manifest.verification?.receipts !== true || manifest.verification.canonicalBlocks !== true || manifest.verification.stateMatchesConfig !== true || manifest.verification.hotKeyEventAudit !== true || !integer(manifest.verification.minimumConfirmations) || manifest.verification.minimumConfirmations < 12) fail('Manifest lacks the required deployment verification');
   if (![manifest.curator, manifest.deployer, manifest.subregistry, manifest.registrar?.address].every(publicAddress) || !HASH.test(manifest.registrar?.codeHash) || manifest.registrar.codeHash !== manifest.registrar.runtimeCodeHash || !sameAddress(manifest.registrar.registry, manifest.subregistry) || !sameAddress(manifest.registrar.subregistry, manifest.subregistry)) fail('Manifest deployment pins are incomplete or inconsistent');
-  if (!Array.isArray(manifest.operators) || manifest.operators.length < 2 || manifest.operators.length > 3 || !Array.isArray(manifest.transactions)) fail('Manifest must contain the verified 2–3 operator deployment and receipts');
+  if (!Array.isArray(manifest.operators) || manifest.operators.length < 1 || manifest.operators.length > 3 || !Array.isArray(manifest.transactions)) fail('Manifest must contain the verified 1–3 operator deployment and receipts');
   const names = new Set(), resolvers = new Set(), hotKeys = new Set();
   for (const op of manifest.operators) {
     if (!/^(?!..--)[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?\.derpc\.eth$/.test(op.name) || names.has(op.name) || ![op.operator, op.resolver, op.coldOwner, op.hotKey, op.payee].every(publicAddress) || resolvers.has(op.resolver.toLowerCase()) || hotKeys.has(op.hotKey.toLowerCase())) fail('Manifest has conflicting operator identities or resolvers');
@@ -118,7 +118,10 @@ async function snapshotState({ manifest, client, build, block, action }) {
   if (indices.length !== 1) fail('Missing or ambiguous registrar entry');
   const index = indices[0], entry = entries[index];
   if (!sameAddress(entry[1], op.operator) || !sameAddress(entry[4], op.payee)) fail('Registrar ownership or payee changed');
-  const [ens, resolved, nameRoles] = await Promise.all([read(manifest.subregistry, registryAbi, 'getState', [labelId(action.label)]), read(manifest.subregistry, registryAbi, 'getResolver', [action.label]), read(manifest.subregistry, registryAbi, 'roleCount', [labelId(action.label)])]);
+  const [ens, resolved, nameRoles, operatorBlocked, labelBlocked] = await Promise.all([
+    read(manifest.subregistry, registryAbi, 'getState', [labelId(action.label)]), read(manifest.subregistry, registryAbi, 'getResolver', [action.label]), read(manifest.subregistry, registryAbi, 'roleCount', [labelId(action.label)]),
+    read(manifest.registrar.address, build.artifact.abi, 'operatorBlocked', [op.operator]), read(manifest.registrar.address, build.artifact.abi, 'labelBlocked', [toHex(labelId(action.label), { size: 32 })]),
+  ]);
   const originalRead = readAt(client, BigInt(manifest.observedBlock.number));
   const [originalEns, originalParent, originalParentResolver] = await Promise.all([originalRead(manifest.subregistry, registryAbi, 'getState', [labelId(action.label)]), originalRead(addresses.ETHRegistry, registryAbi, 'getState', [labelId('derpc')]), originalRead(addresses.ETHRegistry, registryAbi, 'getResolver', ['derpc'])]);
   const originalRecords = Object.fromEntries(await Promise.all(RECORDS.map(async key => [key, await readText(originalRead, op.resolver, op.name, key)])));
@@ -157,7 +160,7 @@ async function snapshotState({ manifest, client, build, block, action }) {
   if (PAID.some(key => records[key])) fail('Lifecycle operation requires a free operator');
   if (endpointRecordKey(op) === 'derpc.endpoints' && serializeOperatorEndpoints(parseOperatorEndpoints(records['derpc.endpoints'])) !== records['derpc.endpoints']) fail('Current plural record is not canonical');
   for (const key of RECORDS.filter(key => key !== endpointRecordKey(op))) if (records[key] !== (op.records[key] ?? '')) fail('A protected operator record differs from the original manifest');
-  return { block: { number: block.number.toString(), hash: block.hash, timestamp: Number(block.timestamp) }, index, entry: { label: action.label, operator: entry[1], expiry: Number(entry[2]), active: entry[3], payee: entry[4] }, ens, activeResource: originalEns.resource, dedicatedResolver: op.resolver, resolved, records, registryCount: count, parentState, parentResolver, permissions: permissionSnapshots, upstream: Object.fromEntries(upstream) };
+  return { block: { number: block.number.toString(), hash: block.hash, timestamp: Number(block.timestamp) }, index, entry: { label: action.label, operator: entry[1], expiry: Number(entry[2]), active: entry[3], payee: entry[4] }, moderation: { operatorBlocked, labelBlocked }, ens, activeResource: originalEns.resource, dedicatedResolver: op.resolver, resolved, records, registryCount: count, parentState, parentResolver, permissions: permissionSnapshots, upstream: Object.fromEntries(upstream) };
 }
 
 export function requireLifecyclePreconditions(action, before) {
@@ -177,7 +180,7 @@ export function lifecycleTransaction(manifest, action, before, build) {
   if (action.type === 'rotate-endpoint') return { from: op.hotKey, to: op.resolver, data: encodeFunctionData({ abi: resolverAbi, functionName: 'setText', args: [dnsEncode(op.name), 'derpc.endpoint', action.newEndpoint] }), value: '0x0', chainId: '0x1' };
   if (action.type === 'rotate-endpoints') return { from: op.hotKey, to: op.resolver, data: encodeFunctionData({ abi: resolverAbi, functionName: 'setText', args: [dnsEncode(op.name), 'derpc.endpoints', serializeOperatorEndpoints(action.newEndpoints)] }), value: '0x0', chainId: '0x1' };
   const from = action.type === 'delist' || action.authority === 'curator' ? manifest.curator : op.operator;
-  return { from, to: manifest.registrar.address, data: encodeFunctionData({ abi: build.artifact.abi, functionName: action.type === 'delist' ? 'remove' : 'renew', args: action.type === 'delist' ? [BigInt(before.index), op.operator] : [BigInt(before.index), BigInt(action.expiry)] }), value: '0x0', chainId: '0x1' };
+  return { from, to: manifest.registrar.address, data: encodeFunctionData({ abi: build.artifact.abi, functionName: action.type === 'delist' ? 'remove' : 'renew', args: action.type === 'delist' ? [BigInt(before.index), op.operator, toHex(action.label, { size: 32 })] : [BigInt(before.index), BigInt(action.expiry)] }), value: '0x0', chainId: '0x1' };
 }
 
 async function context(manifest, client, build) {
@@ -196,7 +199,7 @@ export async function prepareLifecycle({ manifest, action: input, client, build 
   const transaction = lifecycleTransaction(manifest, action, before, build);
   const gas = await client.estimateGas({ account: transaction.from, to: transaction.to, data: transaction.data, value: 0n, blockNumber: block.number });
   await canonicalBlock(client, block.number, block.hash);
-  return { schemaVersion: 1, kind: 'derpc-ens-lifecycle-plan', chainId: 1, localOnly: manifest.localOnly || localConnection(client), createdAt: new Date().toISOString(), manifestHash: lifecycleManifestHash(manifest), sourceHash: build.sourceHash, action, before, reviewExpiresAt: Number(block.timestamp) + MAX_REVIEW_SECONDS, estimatedGas: gas.toString(), walletRequest: { method: 'eth_sendTransaction', params: [transaction] }, review: ['Exactly one zero-value call; no grants, transfer, resolver replacement or payment activation.', 'Recheck this plan immediately before wallet submission. Existing contracts have no compare-and-swap or deadline guard; a raced or late transaction can still execute.', 'Delisting clears registrar admission and preserves the ENS token. Expired-but-active listings may renew; removed listings cannot.', 'Receipt confirmation is separate from finality. Effective client routing changes require a successful authenticated finalized directory refresh.'] };
+  return { schemaVersion: 1, kind: 'derpc-ens-lifecycle-plan', chainId: 1, localOnly: manifest.localOnly || localConnection(client), createdAt: new Date().toISOString(), manifestHash: lifecycleManifestHash(manifest), sourceHash: build.sourceHash, action, before, reviewExpiresAt: Number(block.timestamp) + MAX_REVIEW_SECONDS, estimatedGas: gas.toString(), walletRequest: { method: 'eth_sendTransaction', params: [transaction] }, review: ['Exactly one zero-value call; no grants, transfer, resolver replacement or payment activation.', 'Recheck this plan immediately before wallet submission. Delisting binds the expected operator and label; endpoint writes and renewals lack an on-chain expected-state guard. No action has an on-chain review deadline.', 'Delisting clears registrar admission, bans the operator and label from future registration, and preserves the ENS token. Expired-but-active listings may renew; removed listings cannot.', 'Receipt confirmation is separate from finality. Effective client routing changes require a successful authenticated finalized directory refresh.'] };
 }
 
 async function reviewedPlan({ manifest, plan, client, build }) {
@@ -230,7 +233,10 @@ function expectedAfter(before, action, after) {
   expected.block = after.block;
   if (action.type === 'rotate-endpoint') expected.records['derpc.endpoint'] = action.newEndpoint;
   if (action.type === 'rotate-endpoints') expected.records['derpc.endpoints'] = serializeOperatorEndpoints(action.newEndpoints);
-  if (action.type === 'delist') expected.entry.active = false;
+  if (action.type === 'delist') {
+    expected.entry.active = false;
+    expected.moderation = { operatorBlocked: true, labelBlocked: true };
+  }
   if (action.type === 'renew') {
     expected.entry.expiry = action.expiry;
     expected.ens.expiry = BigInt(action.expiry);
