@@ -6,6 +6,7 @@ import { ProviderRpcError } from "../../src/api/eip1193.ts";
 import { TOR_JS_PIN, type WorkerPin } from "../../src/config/mainnet.ts";
 import { StaleCheckpointError, type VerifiedHeader, type VerifiedHeaderSource } from "../../src/light-client/header-source.ts";
 import { NetworkUnavailableError, TransportUnavailableError, type AnonTransport, type StartOptions, type TransportState } from "../../src/transport/anon-transport.ts";
+import type { PoolEvent } from "../../src/pool/pool.ts";
 import fixture from "../fixtures/mainnet-worker-pin.json" with { type: "json" };
 
 type Hex = `0x${string}`;
@@ -73,6 +74,7 @@ function setup(opts: {
   headersAfter?: Promise<void>;
   fetchError?: () => Error | undefined;
   onStatus?: (s: DeRPCStatus) => void;
+  onPoolEvent?: (event: PoolEvent) => void;
 } = {}) {
   let fake!: ReturnType<typeof fakeTransport>;
   const headers: VerifiedHeaderSource = { finalized: () => HEADER, assertFresh: () => {}, pollHealth: () => ({ consecutiveFailures: 0 }), close: () => {} };
@@ -85,7 +87,7 @@ function setup(opts: {
         return headers;
       },
     },
-    { operators: opts.operators, worker: opts.pin ?? TOR_JS_PIN, onStatus: opts.onStatus },
+    { operators: opts.operators, worker: opts.pin ?? TOR_JS_PIN, onStatus: opts.onStatus, onPoolEvent: opts.onPoolEvent },
   );
   derpc.ready.catch(() => {});
   return { derpc, sent: fake.sent };
@@ -260,6 +262,34 @@ describe("createDeRPC", () => {
 
     derpc.setOperators([simulatedLyingOperator(A), A, B]);
     expect(liar()?.state).toBe("excluded");
+  });
+
+  it.each([0, -1])("explicit demo reset rejects injected proof after warmed reads at priority %i while normal replacement preserves affinity", async priority => {
+    const events: PoolEvent[] = [];
+    const base = { ...A, priority };
+    const { derpc } = setup({ operators: [base], onPoolEvent: event => events.push(event) });
+    try {
+      expect(await derpc.provider.request(balanceOfSpecifier)).toBe("0x0");
+      const liar = { ...simulatedLyingOperator(base), priority: base.priority - 1 };
+      events.length = 0;
+      derpc.setOperators([liar, base]);
+      expect(await derpc.provider.request(balanceOfSpecifier)).toBe("0x0");
+      expect(events.map(event => [event.type, event.endpoint])).toEqual([["attempt", A.url], ["success", A.url]]);
+
+      events.length = 0;
+      // The UI's explicit injection action clears the previous pool's account assignments.
+      derpc.setOperators([]);
+      derpc.setOperators([liar, base]);
+      expect(await derpc.provider.request(balanceOfSpecifier)).toBe("0x0");
+      expect(events.map(event => [event.type, event.endpoint, event.attempt])).toEqual([
+        ["attempt", liar.id, 1], ["invalid-proof", liar.id, 1], ["attempt", A.url, 2], ["success", A.url, 2],
+      ]);
+      expect(events[1]?.detail).toMatch(/claimed balance .* differs from the proven /);
+      expect(derpc.status().operators.find(operator => operator.id === liar.id)?.state).toBe("excluded");
+      derpc.setOperators([]);
+      derpc.setOperators([liar, base]);
+      expect(derpc.status().operators.find(operator => operator.id === liar.id)?.state).toBe("excluded");
+    } finally { derpc.close(); }
   });
 
   it("reports status only after it has returned, then on every change", async () => {

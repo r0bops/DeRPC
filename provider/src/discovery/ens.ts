@@ -7,6 +7,7 @@ import { ProofVerificationError, verifyAccountProof, verifyStorageProof, type Ac
 import type { HeaderView, JsonRpcSend, VerifiedValue } from "../verify/reader.ts";
 import type { DeRPCOperator } from "../api/derpc.ts";
 import { readProvenOperators, type RegistrarPin, type ProvenOperator } from "./registrar.ts";
+import { consumeAuthenticatedExecutionRefusal } from "../execution/verified-call.ts";
 
 export { readProvenOperators, type RegistrarPin, type ProvenOperator } from "./registrar.ts";
 export const registryAbi = parseAbi([
@@ -46,7 +47,7 @@ export interface DiscoveredOperator extends DeRPCOperator {
 }
 export interface Directory {
   operators: DiscoveredOperator[];
-  rejected: { name: string; reason: string }[];
+  rejected: { name: string; reason: string; kind?: "resolver-policy" }[];
   listVerification: "proven" | "unverified";
   recordVerification: "proven" | "unverified";
   blockNumber: number;
@@ -115,7 +116,8 @@ async function scan(options: DiscoveryOptions & { signal: AbortSignal }): Promis
   const check = () => { signal.throwIfAborted(); headers.assertFresh?.(block); };
   check();
   const send = options.send ?? createJsonRpcSend(transport, operatorUrl(options.executionUrl).href, { timeoutMs: 15_000, maxBodyBytes: 256 * 1024 });
-  async function call(to: Hex, data: Hex): Promise<Hex> {
+  const resolverRefusals = new WeakSet<object>();
+  async function call(to: Hex, data: Hex, candidateResolver = false): Promise<Hex> {
     check();
     if (!validAddress(to)) throw new Error("missing ENS contract");
     let result: unknown;
@@ -129,10 +131,15 @@ async function scan(options: DiscoveryOptions & { signal: AbortSignal }): Promis
         result = await send("eth_call", [{ to, data }, blockTag], { isolationKey: ISOLATION_KEY, signal });
       }
     } catch (error) {
-      // Only a completed local execution can establish a resolver revert. Local execution
-      // limits, unavailable context and sender failures leave the snapshot incomplete.
-      // Preserve them as fatal read errors instead of silently dropping this operator.
-      if (error instanceof ProofVerificationError || isFatal(error) || options.verifiedCall && error instanceof Error && error.name === "CallRevertedError") throw error;
+      // Open registration permits arbitrary resolver code. Only a one-use host
+      // execution refusal bound to this exact call and snapshot may reject that
+      // candidate. Error names, missing proofs, deadlines and network failures
+      // cannot establish a policy rejection or silently filter the directory.
+      if (options.verifiedCall && candidateResolver && consumeAuthenticatedExecutionRefusal(error, { to, data }, block)) {
+        resolverRefusals.add(error as object);
+        throw error;
+      }
+      if (error instanceof ProofVerificationError || isFatal(error)) throw error;
       throw new DiscoveryReadError(error instanceof Error ? error.message : "ENS metadata read failed", { cause: error });
     }
     check();
@@ -147,12 +154,12 @@ async function scan(options: DiscoveryOptions & { signal: AbortSignal }): Promis
     if (value.expiry > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error("invalid name expiry");
     return value;
   }
-  async function texts(resolver: Hex, name: string, keys: readonly string[]): Promise<string[]> {
+  async function texts(resolver: Hex, name: string, keys: readonly string[], candidateResolver = false): Promise<string[]> {
     const profiles = keys.map(key => encodeFunctionData({ abi: resolverAbi, functionName: "text", args: [namehash(name), key] }));
     // ENSv2 AbstractRecordResolver explicitly supports resolve(name, multicall(profiles)).
     // Keep all records in one local EVM execution and one logical read.
     const profile = profiles.length === 1 ? profiles[0]! : encodeFunctionData({ abi: resolverAbi, functionName: "multicall", args: [profiles] });
-    const data = await call(resolver, encodeFunctionData({ abi: resolverAbi, functionName: "resolve", args: [dnsName(name), profile] }));
+    const data = await call(resolver, encodeFunctionData({ abi: resolverAbi, functionName: "resolve", args: [dnsName(name), profile] }), candidateResolver);
     const inner = decodeFunctionResult({ abi: resolverAbi, functionName: "resolve", data });
     const results = profiles.length === 1 ? [inner] : decodeFunctionResult({ abi: resolverAbi, functionName: "multicall", data: inner });
     if (results.length !== keys.length) throw new Error("incomplete ENS record batch");
@@ -194,7 +201,7 @@ async function scan(options: DiscoveryOptions & { signal: AbortSignal }): Promis
       const member = proven?.value.find(o => o.label === label);
       if (member && member.operator.toLowerCase() !== entry.latestOwner.toLowerCase()) throw new Error("ENS owner differs from the proven operator");
       const resolver = await registryAddress(subregistry, "getResolver", label);
-      const recordValues = await texts(resolver, name, RECORD_KEYS);
+      const recordValues = await texts(resolver, name, RECORD_KEYS, true);
       const records = Object.fromEntries(RECORD_KEYS.map((key, i) => [key, recordValues[i]!])) as Record<string, string>;
       const plural = records["derpc.endpoints"] !== "";
       // An invalid present plural record is an operator-level policy rejection. Never
@@ -258,7 +265,8 @@ async function scan(options: DiscoveryOptions & { signal: AbortSignal }): Promis
       // and freshness check still make cancellation or a stale header fatal in either phase.
       check();
       if ((phase === "records" && error instanceof ProofVerificationError) || isFatal(error)) throw error;
-      result.rejected.push({ name, reason: error instanceof Error ? error.message : String(error) });
+      const policy = typeof error === "object" && error !== null && resolverRefusals.has(error);
+      result.rejected.push({ name, reason: error instanceof Error ? error.message : String(error), ...(policy ? { kind: "resolver-policy" as const } : {}) });
     }
   }
   check();

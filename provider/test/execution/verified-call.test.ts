@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
-  CallRevertedError, createVerifiedExecutor, ExecutionLimitError,
+  CallRevertedError, consumeAuthenticatedExecutionRefusal, createVerifiedExecutor, ExecutionLimitError,
   UnsupportedExecutionError, type ExecutionLimits, type VerifiedCallInput,
 } from "../../src/execution/verified-call.ts";
 import { InputError } from "../../src/verify/reader.ts";
@@ -349,5 +349,86 @@ describe("local execution resource bounds", () => {
     const fixture = await provenFixture([{ address: TARGET, code: RETURN_42 }]);
     const send = fixture.endpoint(async () => new Promise(() => {}));
     await expect(createVerifiedExecutor({ headers: fixture.headers, send, limits: { timeoutMs: 30 } }).call({ to: TARGET })).rejects.toThrow(/timeout|deadline/i);
+  });
+});
+
+describe("authenticated local refusal provenance", () => {
+  const input = { to: TARGET, data: "0x" as Hex };
+
+  it("classifies a verified refusal once for its exact call and block", async () => {
+    const fixture = await provenFixture([{ address: TARGET, code: "0x60004000" }]);
+    const failure = await createVerifiedExecutor({ headers: fixture.headers, send: fixture.endpoint() }).call(input).catch(e => e);
+    expect(failure).toBeInstanceOf(UnsupportedExecutionError);
+    expect(consumeAuthenticatedExecutionRefusal(failure, input, fixture.block)).toBe(true);
+    expect(consumeAuthenticatedExecutionRefusal(failure, input, fixture.block)).toBe(false);
+  });
+
+  it.each([
+    new UnsupportedExecutionError("BLOCKHASH needs unavailable authenticated block context"),
+    new ExecutionLimitError("execution step limit"),
+    new CallRevertedError("0x", "verified execution reverted"),
+    Object.assign(new Error("CCIP-Read OffchainLookup is refused"), { name: "UnsupportedExecutionError" }),
+  ])("never authenticates a sender's %s", async failure => {
+    const fixture = await provenFixture([{ address: TARGET, code: RETURN_42 }]);
+    const send = fixture.endpoint(() => { throw failure; });
+    await expect(createVerifiedExecutor({ headers: fixture.headers, send }).call(input)).rejects.toBe(failure);
+    expect(consumeAuthenticatedExecutionRefusal(failure, input, fixture.block)).toBe(false);
+  });
+
+  it("strips a genuine earlier refusal if replayed through the sender", async () => {
+    const fixture = await provenFixture([{ address: TARGET, code: "0x60006000fd" }]);
+    const failure = await createVerifiedExecutor({ headers: fixture.headers, send: fixture.endpoint() }).call(input).catch(e => e);
+    expect(failure).toBeInstanceOf(CallRevertedError);
+    const send = fixture.endpoint(() => { throw failure; });
+    await expect(createVerifiedExecutor({ headers: fixture.headers, send }).call(input)).rejects.toBe(failure);
+    expect(consumeAuthenticatedExecutionRefusal(failure, input, fixture.block)).toBe(false);
+  });
+
+  it("verifies returned code before attributing an aggregate code-budget refusal", async () => {
+    const fixture = await provenFixture([{ address: TARGET, code: RETURN_42 }]);
+    const send = fixture.endpoint((request, response) => request.method === "eth_getCode" ? LOAD_SLOT_ZERO : response);
+    const failure = await createVerifiedExecutor({ headers: fixture.headers, send, limits: { codeBytes: 1 } }).call(input).catch(e => e);
+    expect(failure).toBeInstanceOf(ProofVerificationError);
+    expect(consumeAuthenticatedExecutionRefusal(failure, input, fixture.block)).toBe(false);
+  });
+
+  it("keeps an unverified oversized code body fatal", async () => {
+    const fixture = await provenFixture([{ address: TARGET, code: RETURN_42 }]);
+    const send = fixture.endpoint((request, response) => request.method === "eth_getCode" ? `0x${"00".repeat(256 * 1024 + 1)}` : response);
+    const failure = await createVerifiedExecutor({ headers: fixture.headers, send, limits: { codeBytes: 1 } }).call(input).catch(e => e);
+    expect(failure).toMatchObject({ name: "ExecutionLimitError", message: "execution code body size limit" });
+    expect(consumeAuthenticatedExecutionRefusal(failure, input, fixture.block)).toBe(false);
+  });
+
+  it("keeps missing global execution context fatal", async () => {
+    const fixture = await provenFixture([{ address: TARGET, code: RETURN_42 }]);
+    const block = { ...fixture.block, execution: undefined };
+    const failure = await createVerifiedExecutor({ headers: { finalized: () => block }, send: fixture.endpoint() }).call(input).catch(e => e);
+    expect(failure).toBeInstanceOf(UnsupportedExecutionError);
+    expect(consumeAuthenticatedExecutionRefusal(failure, input, block)).toBe(false);
+    expect(fixture.calls).toHaveLength(0);
+  });
+
+  it("cannot classify a budget too small to authenticate the target", async () => {
+    const fixture = await provenFixture([{ address: TARGET, code: RETURN_42 }]);
+    const failure = await createVerifiedExecutor({ headers: fixture.headers, send: fixture.endpoint(), limits: { accounts: 1 } }).call(input).catch(e => e);
+    expect(failure).toBeInstanceOf(ExecutionLimitError);
+    expect(consumeAuthenticatedExecutionRefusal(failure, input, fixture.block)).toBe(false);
+  });
+
+  it("keeps slow or missing proof responses fatal", async () => {
+    const fixture = await provenFixture([{ address: TARGET, code: LOAD_SLOT_ZERO }]);
+    const send = fixture.endpoint((request, response) => request.method === "eth_getCode" ? new Promise(() => {}) : response);
+    const failure = await createVerifiedExecutor({ headers: fixture.headers, send, limits: { timeoutMs: 30 } }).call(input).catch(e => e);
+    expect(failure).toBeInstanceOf(Error);
+    expect(consumeAuthenticatedExecutionRefusal(failure, input, fixture.block)).toBe(false);
+  });
+
+  it("preserves stale-header failure before issuing a deterministic refusal", async () => {
+    const fixture = await provenFixture([{ address: TARGET, code: "0x60004000" }]);
+    const stale = Object.assign(new Error("snapshot expired"), { name: "StaleHeaderError" });
+    const headers = { ...fixture.headers, assertFresh() { throw stale; } };
+    await expect(createVerifiedExecutor({ headers, send: fixture.endpoint() }).call(input)).rejects.toBe(stale);
+    expect(consumeAuthenticatedExecutionRefusal(stale, input, fixture.block)).toBe(false);
   });
 });

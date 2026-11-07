@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { decodeFunctionData, encodeFunctionResult, hexToBytes, keccak256, stringToHex, type Hex } from "viem";
 import { discoverOperators, DiscoveryReadError, dnsName, registryAbi, resolverAbi, retainChosenOperators, RECORD_KEYS, type DiscoveryOptions } from "../../src/discovery/ens.ts";
-import { CallRevertedError, ExecutionLimitError, UnsupportedExecutionError } from "../../src/execution/verified-call.ts";
+import { CallRevertedError, createVerifiedExecutor, ExecutionLimitError, UnsupportedExecutionError, type ExecutionLimits } from "../../src/execution/verified-call.ts";
 import { PoolExhaustedError } from "../../src/pool/pool.ts";
 import { TOR_JS_PIN } from "../../src/config/mainnet.ts";
 import type { VerifiedHeader } from "../../src/light-client/header-source.ts";
@@ -11,6 +11,7 @@ import { ProofVerificationError, type AccountProof } from "../../src/verify/inde
 import fixture from "../fixtures/mainnet-worker-pin.json" with { type: "json" };
 import { registrarProofs } from "./proofs.ts";
 import { serializeOperatorEndpoints, type OperatorEndpointRecord } from "../../src/operators/endpoints.ts";
+import { provenFixture, RETURN_42 } from "../execution/proven-fixture.ts";
 
 const addr = (byte: string) => `0x${byte.repeat(20)}` as Hex;
 const ROOT = addr("a1"), SUB = addr("a2"), PARENT_RESOLVER = addr("b1"), SIGNER = addr("11"), OWNER = addr("22"), ESCROW = addr("33");
@@ -27,7 +28,7 @@ const isBobsRecords = (to: Hex, data: Hex) => {
   return decoded.functionName === "resolve" && decodeDns(decoded.args[0]) === "bob.derpc.eth";
 };
 
-function setup(labels: unknown = ["alice", "bob"]) {
+function setup(labels: unknown = ["alice", "bob"], header = HEADER) {
   const states = new Map<string, { status: number; expiry: bigint; latestOwner: Hex; tokenId: bigint; resource: bigint }>();
   const records = new Map<string, Record<string, string>>();
   const offchain = new Set<string>(), corrupted = new Set<string>(), wrongIdentity = new Set<string>();
@@ -76,19 +77,19 @@ function setup(labels: unknown = ["alice", "bob"]) {
       if (!options.body) return Response.json({ ...identities.get(label), ens: wrongIdentity.has(label) ? "not-this.derpc.eth" : identities.get(label)?.ens ?? `${label}.derpc.eth`, signer: SIGNER, chains: [1], version: "1", service: "demo-proxy" });
       const request = JSON.parse(String(options.body));
       if (request.method === "eth_getProof") {
-        expect(request.params).toEqual([TOR_JS_PIN.specifier, ["0x1"], `0x${HEADER.blockNumber.toString(16)}`]);
+        expect(request.params).toEqual([TOR_JS_PIN.specifier, ["0x1"], `0x${header.blockNumber.toString(16)}`]);
         const proof = structuredClone(capabilityProof);
         if (corrupted.has(label)) proof.balance = "0x1";
         return Response.json({ jsonrpc: "2.0", id: request.id, result: proof });
       }
       expect(url).toBe("https://bootstrap.example/");
       expect(request.method).toBe("eth_call");
-      expect(request.params[1]).toBe(`0x${HEADER.blockNumber.toString(16)}`);
+      expect(request.params[1]).toBe(`0x${header.blockNumber.toString(16)}`);
       try { return Response.json({ jsonrpc: "2.0", id: request.id, result: answer(request.params[0].to, request.params[0].data) }); }
       catch (error) { return Response.json({ jsonrpc: "2.0", id: request.id, error: { code: 3, message: (error as Error).message, data: "0x556f1830" } }); }
     },
   };
-  const options: DiscoveryOptions = { transport, executionUrl: "https://bootstrap.example/", ethRegistry: ROOT, headers: { finalized: () => HEADER, assertFresh: () => {} }, now: () => now * 1000 };
+  const options: DiscoveryOptions = { transport, executionUrl: "https://bootstrap.example/", ethRegistry: ROOT, headers: { finalized: () => header, assertFresh: () => {} }, now: () => now * 1000 };
   return { options, answer, fetches, records, states, offchain, corrupted, wrongIdentity, identities, setIndex: (value: unknown) => { index = value; }, setCapabilityProof: (proof: AccountProof) => { capabilityProof = proof; } };
 }
 
@@ -99,6 +100,88 @@ function publishNodes(test: ReturnType<typeof setup>, label: string, nodes: Oper
   for (const key of ["derpc.price", "derpc.payee", "derpc.paymentChain", "derpc.escrow"]) records[key] = "";
   for (const node of nodes) test.identities.set(new URL(node.url).hostname.split(".")[0]!, { ens: `${label}.derpc.eth`, endpointId: node.id });
 }
+
+// Metadata and Alice's identity remain controlled fixtures. Bob's refusal and
+// the public capability proof use genuine generated tries and the real executor.
+async function poisonedResolver(code: Hex, limits?: Partial<ExecutionLimits>) {
+  const proven = await provenFixture([
+    { address: addr("b2"), code, storage: { 0: 1n, 1: 2n } },
+    { address: addr("b3"), code },
+    { address: TOR_JS_PIN.specifier, storage: { 1: 1n } },
+  ]);
+  const test = setup(["alice", "bob"], proven.block);
+  test.setCapabilityProof(await proven.proof(TOR_JS_PIN.specifier, ["0x1"]));
+  const executor = createVerifiedExecutor({ headers: proven.headers, send: proven.endpoint(), limits });
+  test.options.verifiedCall = async (to, data) => isBobsRecords(to, data)
+    ? executor.call({ to, data }) : { value: test.answer(to, data), block: proven.block };
+  return { ...test, proven, executor };
+}
+
+describe("open-registration resolver policy", () => {
+  it.each([
+    ["revert", "0x60006000fd", {}, /reverted/],
+    ["offchain lookup", "0x63556f183060e01b60005260046000fd", {}, /CCIP-Read/],
+    ["BLOCKHASH", "0x60004060005260206000f3", {}, /BLOCKHASH/],
+    ["invalid opcode", "0xfe", {}, /halted/],
+    ["steps", "0x5b600056", { steps: 12 }, /step limit/],
+    ["gas", "0x5b600056", { gas: 100_000n }, /exhausted gas/],
+    ["slots", "0x6000545060015400", { slots: 1 }, /storage-slot limit/],
+    ["accounts", `0x73${addr("b3").slice(2)}3100`, { accounts: 2 }, /account limit/],
+    ["round trips", "0x6000545060015400", { roundTrips: 4 }, /round-trip limit/],
+    ["code bytes", RETURN_42, { codeBytes: 1 }, /code size limit/],
+    ["output bytes", RETURN_42, { outputBytes: 16 }, /return data limit/],
+    ["memory", "0x602a6120005260206000f3", { memoryBytes: 4096 }, /memory limit/],
+  ] satisfies [string, Hex, Partial<ExecutionLimits>, RegExp][])('keeps the healthy candidate after a proven resolver %s refusal', async (_label, code, limits, reason) => {
+    const test = await poisonedResolver(code, limits);
+    const directory = await discoverOperators(test.options);
+    expect(directory.operators.map(op => op.ens)).toEqual(["alice.derpc.eth"]);
+    expect(directory.rejected).toEqual([{ name: "bob.derpc.eth", reason: expect.stringMatching(reason), kind: "resolver-policy" }]);
+    expect(directory.recordVerification).toBe("proven");
+    expect(test.fetches.filter(c => new URL(c.url).hostname === "alice.example")).toHaveLength(2);
+    expect(test.fetches.some(c => new URL(c.url).hostname === "bob.example")).toBe(false);
+    expect(test.proven.calls.every(c => ["eth_getProof", "eth_getCode"].includes(c.method))).toBe(true);
+  });
+
+  it.each(["target", "calldata", "caller", "gas", "block hash", "state root", "block number"])("refuses a genuine local refusal for another %s", async difference => {
+    const test = await poisonedResolver("0x60006000fd");
+    const wrongBlock = { ...test.proven.block,
+      ...(difference === "block hash" ? { blockHash: `0x${"cd".repeat(32)}` as Hex } : {}),
+      ...(difference === "state root" ? { stateRoot: `0x${"cd".repeat(32)}` as Hex } : {}),
+      ...(difference === "block number" ? { blockNumber: test.proven.block.blockNumber + 1 } : {}),
+    };
+    // The error is authentic to the actual executor context. Discovery is given
+    // a different snapshot only after execution, so proof verification remains real.
+    test.options.headers = { finalized: () => wrongBlock };
+    test.options.verifiedCall = async (to, data) => isBobsRecords(to, data)
+      ? test.executor.call({ to: difference === "target" ? addr("b3") : to, data: difference === "calldata" ? "0x00" : data,
+        ...(difference === "caller" ? { from: addr("b3") } : {}), ...(difference === "gas" ? { gas: 900_000n } : {}) })
+      : { value: test.answer(to, data), block: wrongBlock };
+    if (difference === "block number") {
+      // Earlier public probing must use the test snapshot's tag, not fail first.
+      const fetch = test.options.transport.fetch;
+      test.options.transport.fetch = (url, opts = {}) => {
+        if (!opts.body) return fetch(url, opts);
+        const request = JSON.parse(String(opts.body));
+        request.params[2] = `0x${test.proven.block.blockNumber.toString(16)}`;
+        return fetch(url, { ...opts, body: JSON.stringify(request) });
+      };
+    }
+    await expect(discoverOperators(test.options)).rejects.toBeInstanceOf(DiscoveryReadError);
+  });
+
+  it("refuses a consumed refusal replayed during a later refresh", async () => {
+    const test = await poisonedResolver("0x60006000fd");
+    const call = test.options.verifiedCall!;
+    let failure: unknown;
+    test.options.verifiedCall = async (to, data, options) => {
+      if (isBobsRecords(to, data) && failure) throw failure;
+      try { return await call(to, data, options); }
+      catch (error) { failure = error; throw error; }
+    };
+    expect((await discoverOperators(test.options)).rejected[0]!.kind).toBe("resolver-policy");
+    await expect(discoverOperators(test.options)).rejects.toBeInstanceOf(DiscoveryReadError);
+  });
+});
 
 describe("ENSv2 anonymous directory discovery", () => {
   it("reads every indexed name before selection, probes proofs, and labels unverified records honestly", async () => {
@@ -260,6 +343,7 @@ describe("ENSv2 anonymous directory discovery", () => {
     ["execution limit", () => new ExecutionLimitError("execution storage-slot limit")],
     ["unsupported execution", () => new UnsupportedExecutionError("BLOCKHASH needs unavailable authenticated block context")],
     ["off-chain execution", () => new UnsupportedExecutionError("CCIP-Read OffchainLookup is refused")],
+    ["unbranded revert", () => new CallRevertedError("0x", "resolver reverted")],
   ])("aborts the snapshot on a second operator's %s after accepting the first", async (_label, makeError) => {
     const test = setup();
     const failure = makeError();
@@ -284,18 +368,6 @@ describe("ENSv2 anonymous directory discovery", () => {
     else test.options.send = async (_method, params) => { const { to, data } = params[0] as { to: Hex; data: Hex }; return read(to, data); };
     await expect(discoverOperators(test.options)).rejects.toBeInstanceOf(DiscoveryReadError);
     expect(test.fetches.filter(c => new URL(c.url).hostname === "alice.example")).toHaveLength(2);
-  });
-
-  it("can reject an authenticated second resolver revert without treating it as incomplete execution", async () => {
-    const test = setup();
-    test.options.verifiedCall = async (to, data) => {
-      if (isBobsRecords(to, data)) throw new CallRevertedError("0x", "verified resolver rejected the profile");
-      return { value: test.answer(to, data), block: HEADER };
-    };
-    const directory = await discoverOperators(test.options);
-    expect(directory).toMatchObject({ listVerification: "proven", recordVerification: "proven" });
-    expect(directory.operators.map(o => o.ens)).toEqual(["alice.derpc.eth"]);
-    expect(directory.rejected).toEqual([{ name: "bob.derpc.eth", reason: "verified resolver rejected the profile" }]);
   });
 
   it.each([

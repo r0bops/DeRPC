@@ -35,6 +35,20 @@ export class CallRevertedError extends Error {
   constructor(data: Hex, reason: string) { super(reason); this.data = data; }
 }
 
+// This capability is created only by this host executor, never by an RPC error or
+// an exported error constructor. It records a local policy refusal, not a result.
+const authenticatedRefusals = new WeakMap<object, { to: string; data: string; from?: string; gas?: bigint; blockHash: string; stateRoot: string; blockNumber: number }>();
+
+/** Consume one deterministic refusal for this exact call and authenticated snapshot. */
+export function consumeAuthenticatedExecutionRefusal(error: unknown, input: { to: Hex; data: Hex; from?: Hex; gas?: bigint }, block: ReturnType<HeaderView["finalized"]>): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const context = authenticatedRefusals.get(error);
+  authenticatedRefusals.delete(error);
+  return !!context && context.to === input.to.toLowerCase() && context.data === input.data.toLowerCase()
+    && context.from === input.from?.toLowerCase() && context.gas === input.gas
+    && context.blockHash === block.blockHash && context.stateRoot === block.stateRoot && context.blockNumber === block.blockNumber;
+}
+
 export interface VerifiedCallInput {
   to: Hex;
   data?: Hex;
@@ -125,9 +139,21 @@ export function createVerifiedExecutor(options: { headers: HeaderView; send: Jso
     const tag = `0x${block.blockNumber.toString(16)}`;
     const isolationKey = `derpc:call:${input.from?.toLowerCase() ?? input.to.toLowerCase()}`;
 
+    const refuse = (error: Error): never => {
+      check();
+      try { options.headers.assertFresh?.(block); } catch (stale) { return fail(stale); }
+      // A configuration too small even to authenticate the target is a global
+      // failure, not grounds for removing a directory candidate.
+      if (accounts.has(input.to.toLowerCase())) authenticatedRefusals.set(error, {
+        to: input.to.toLowerCase(), data: data.toLowerCase(), from: input.from?.toLowerCase(), gas: input.gas,
+        blockHash: block.blockHash, stateRoot: block.stateRoot, blockNumber: block.blockNumber,
+      });
+      return fail(error);
+    };
+
     async function remote(method: string, params: unknown[]): Promise<unknown> {
       check();
-      if (++roundTrips > limits.roundTrips) fail(new ExecutionLimitError("execution round-trip limit"));
+      if (++roundTrips > limits.roundTrips) refuse(new ExecutionLimitError("execution round-trip limit"));
       let onAbort: (() => void) | undefined;
       try {
         const aborted = new Promise<never>((_, reject) => {
@@ -138,13 +164,18 @@ export function createVerifiedExecutor(options: { headers: HeaderView; send: Jso
         const result = await Promise.race([options.send(method, params, { isolationKey, signal }), aborted]);
         check();
         return result;
-      } catch (error) { return fail(error); }
+      } catch (error) {
+        // A backend cannot replay an earlier genuine refusal as evidence about
+        // this execution. Missing data is still an incomplete snapshot.
+        if (typeof error === "object" && error !== null) authenticatedRefusals.delete(error);
+        return fail(error);
+      }
       finally { if (onAbort) signal.removeEventListener("abort", onAbort); }
     }
 
     async function proofFor(address: Address, key?: Uint8Array): Promise<{ account: VerifiedAccount; value?: bigint }> {
       const hex = address.toString();
-      if (!accounts.has(hex) && accounts.size >= limits.accounts) fail(new ExecutionLimitError("execution account limit"));
+      if (!accounts.has(hex) && accounts.size >= limits.accounts) refuse(new ExecutionLimitError("execution account limit"));
       const slot = key ? bytesToHex(key) : undefined;
       const result = await remote("eth_getProof", [hex, slot ? [slot] : [], tag]);
       try {
@@ -189,8 +220,13 @@ export function createVerifiedExecutor(options: { headers: HeaderView; send: Jso
           else {
             const raw = await remote("eth_getCode", [address.toString(), tag]);
             if (typeof raw !== "string" || !/^0x(?:[\da-fA-F]{2})*$/.test(raw)) fail(new ProofVerificationError("invalid execution code"));
-            if ((raw as string).length / 2 - 1 + totalCodeBytes > limits.codeBytes) fail(new ExecutionLimitError("execution code size limit"));
+            const bytes = (raw as string).length / 2 - 1;
+            // Keep hashing bounded even if the backend sends nonsense. An
+            // aggregate code-budget refusal becomes attributable only AFTER
+            // these bytes match their proven hash.
+            if (bytes > Math.max(DEFAULT_EXECUTION_LIMITS.codeBytes, limits.codeBytes)) fail(new ExecutionLimitError("execution code body size limit"));
             try { verifyCode({ codeHash: account.codeHash, code: raw as Hex }); } catch (error) { fail(error); }
+            if (bytes + totalCodeBytes > limits.codeBytes) refuse(new ExecutionLimitError("execution code size limit"));
             code = hexToBytes(raw as Hex);
           }
           totalCodeBytes += code.length;
@@ -208,7 +244,7 @@ export function createVerifiedExecutor(options: { headers: HeaderView; send: Jso
         if (this.currentCleared().has(address.toString())) return new Uint8Array();
         let value = storage.get(id);
         if (!value) {
-          if (storage.size >= limits.slots) fail(new ExecutionLimitError("execution storage-slot limit"));
+          if (storage.size >= limits.slots) refuse(new ExecutionLimitError("execution storage-slot limit"));
           const proven = (await proofFor(address, key)).value!;
           let digits = proven.toString(16);
           if (digits.length % 2) digits = `0${digits}`;
@@ -233,7 +269,7 @@ export function createVerifiedExecutor(options: { headers: HeaderView; send: Jso
     }
 
     const stateManager = new ProvenState({ common });
-    const forbidden = (name: string): never => fail(new UnsupportedExecutionError(`${name} needs unavailable authenticated block context`));
+    const forbidden = (name: string): never => refuse(new UnsupportedExecutionError(`${name} needs unavailable authenticated block context`));
     common.updateParams(paramsEVM);
     const original = getOpcodesForHF(common);
     let steps = 0;
@@ -250,10 +286,10 @@ export function createVerifiedExecutor(options: { headers: HeaderView; send: Jso
         opcode, opcodeName: info.name, baseFee: info.fee,
         async gasFunction(state, cost, chain) {
           check();
-          if (++steps > limits.steps) fail(new ExecutionLimitError("execution step limit"));
-          if (state.env.depth >= limits.depth) fail(new ExecutionLimitError("execution call-depth limit"));
+          if (++steps > limits.steps) refuse(new ExecutionLimitError("execution step limit"));
+          if (state.env.depth >= limits.depth) refuse(new ExecutionLimitError("execution call-depth limit"));
           const gasCost = gasHandler ? await gasHandler(state, cost, chain) : cost;
-          if (state.memoryWordCount * 32n > BigInt(limits.memoryBytes)) fail(new ExecutionLimitError("execution memory limit"));
+          if (state.memoryWordCount * 32n > BigInt(limits.memoryBytes)) refuse(new ExecutionLimitError("execution memory limit"));
           check();
           return gasCost;
         },
@@ -273,12 +309,12 @@ export function createVerifiedExecutor(options: { headers: HeaderView; send: Jso
     Object.defineProperty(evm, "DEBUG", { value: false, writable: false });
     evm.events.on("beforeMessage", message => {
       check();
-      if (message.depth >= limits.depth) fail(new ExecutionLimitError("execution call-depth limit"));
-      if (message.data.length > limits.memoryBytes) fail(new ExecutionLimitError("execution message size limit"));
+      if (message.depth >= limits.depth) refuse(new ExecutionLimitError("execution call-depth limit"));
+      if (message.data.length > limits.memoryBytes) refuse(new ExecutionLimitError("execution message size limit"));
     });
     evm.events.on("afterMessage", result => {
       check();
-      if (result.execResult.returnValue.length > limits.outputBytes) fail(new ExecutionLimitError("execution return data limit"));
+      if (result.execResult.returnValue.length > limits.outputBytes) refuse(new ExecutionLimitError("execution return data limit"));
     });
     const from = input.from ? createAddressFromString(input.from) : createZeroAddress();
     const to = createAddressFromString(input.to);
@@ -299,21 +335,21 @@ export function createVerifiedExecutor(options: { headers: HeaderView; send: Jso
       gasPrice: 0n, value: 0n, blobVersionedHashes: [],
     });
     check();
-    if (result.execResult.returnValue.length > limits.outputBytes) throw new ExecutionLimitError("execution return data limit");
+    if (result.execResult.returnValue.length > limits.outputBytes) refuse(new ExecutionLimitError("execution return data limit"));
     const value = bytesToHex(result.execResult.returnValue);
     const exception = result.execResult.exceptionError;
     if (exception) {
-      // Only an actual top-level REVERT proves a contract rejection. Gas exhaustion and other
-      // exceptional halts must not let directory discovery omit a record it failed to resolve.
-      // Child failures handled by the EVM retain their normal contract-visible semantics.
+      // These deterministic outcomes can reject a resolver under host execution
+      // policy, but never produce a verified value. Child failures handled by
+      // the EVM retain their normal contract-visible semantics.
       if (exception.error === EVMError.errorMessages.OUT_OF_GAS || exception.error === EVMError.errorMessages.CODESTORE_OUT_OF_GAS) {
-        throw new ExecutionLimitError(`verified execution exhausted gas: ${exception.error}`);
+        refuse(new ExecutionLimitError(`verified execution exhausted gas: ${exception.error}`));
       }
       if (exception.error !== EVMError.errorMessages.REVERT) {
-        throw new UnsupportedExecutionError(`verified execution halted without a contract revert: ${exception.error}`);
+        refuse(new UnsupportedExecutionError(`verified execution halted without a contract revert: ${exception.error}`));
       }
-      if (value.startsWith("0x556f1830")) throw new UnsupportedExecutionError("CCIP-Read OffchainLookup is refused");
-      throw new CallRevertedError(value, `verified execution reverted: ${exception.error}`);
+      if (value.startsWith("0x556f1830")) refuse(new UnsupportedExecutionError("CCIP-Read OffchainLookup is refused"));
+      refuse(new CallRevertedError(value, `verified execution reverted: ${exception.error}`));
     }
     options.headers.assertFresh?.(block);
     return { value, block };
