@@ -62,6 +62,7 @@ A client-side read provider for apps, wallets and agents. It routes every RPC an
 | Name | Telegram | X |
 |---|---|---|
 | Robert Lopez | [@n0there](https://t.me/n0there) | [@RobGT0](https://x.com/RobGT0) |
+| Jenny Tejedor | [@JENNYT_ETH](https://t.me/JENNYT_ETH) | [@JENNYT_ETH](https://x.com/JENNYT_ETH) |
 <!-- Add one row per teammate before submission. -->
 
 ---
