@@ -83,9 +83,9 @@ export function landingPage(): PageResult {
               <h2 class="panel__title">Add verified reads to your app.</h2>
               <p class="panel__text">Use the <code>@derpc/provider</code> workspace package with viem for finalized mainnet reads. It is not published to npm; integrate from the repository. Anonymous routing and verification run on the user's device.</p>
               <ul class="panel__list">
-                <li>${icon("check")}No direct fallback. Ever.</li>
-                <li>${icon("check")}Free reads with no wallet connection.</li>
-                <li>${icon("check")}Supported: <code>eth_getBalance</code>, <code>eth_getCode</code>, <code>eth_getStorageAt</code>, <code>eth_getTransactionCount</code>, <code>eth_blockNumber</code>. Pass <code>blockTag: "finalized"</code>; <code>latest</code> is refused.</li>
+                <li>${icon("check")}<span>No direct fallback. Ever.</span></li>
+                <li>${icon("check")}<span>Free reads with no wallet connection.</span></li>
+                <li>${icon("check")}<span>Supported: <code>eth_getBalance</code>, <code>eth_getCode</code>, <code>eth_getStorageAt</code>, <code>eth_getTransactionCount</code>, <code>eth_blockNumber</code>. Pass <code>blockTag: "finalized"</code>; <code>latest</code> is refused.</span></li>
               </ul>
               <div class="panel__actions">
                 <a class="btn btn--ghost" href="#/directory">Open directory ${icon("arrow")}</a>
@@ -96,9 +96,9 @@ export function landingPage(): PageResult {
               <h2 class="panel__title">One operator. A home for your nodes.</h2>
               <p class="panel__text">Prepare an operator identity and node endpoints, then run the wrapper beside your node. Multi-endpoint routing is implemented; independent public enrollment and its live lifecycle demonstration remain pending.</p>
               <ul class="panel__list">
-                <li>${icon("check")}Plan yourname.derpc.eth and its endpoints.</li>
-                <li>${icon("check")}Staking per identity and node is planned.</li>
-                <li>${icon("check")}Set a price per verified read in the later paid rollout.</li>
+                <li>${icon("check")}<span>Plan yourname.derpc.eth and its endpoints.</span></li>
+                <li>${icon("check")}<span>Staking per identity and node is planned.</span></li>
+                <li>${icon("check")}<span>Set a price per verified read in the later paid rollout.</span></li>
               </ul>
               <div class="panel__actions">
                 <a class="btn btn--ink" href="#/operate">Run an operator ${icon("arrow")}</a>

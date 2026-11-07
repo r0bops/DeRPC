@@ -691,6 +691,7 @@ p {
 
 .panel__list {
   display: grid;
+  max-width: 100%;
   gap: 10px;
   margin: 22px 0 0;
   padding: 0;
@@ -702,6 +703,10 @@ p {
   display: flex;
   align-items: flex-start;
   gap: 9px;
+}
+
+.panel__list li > span {
+  min-width: 0;
 }
 
 .panel__list .check {
