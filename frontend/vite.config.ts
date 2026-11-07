@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin } from "vite";
 import { findNonPublicAddresses, releaseGateways } from "./build/gateways.ts";
+import { parseEnsDirectory, type EnsDirectoryConfig } from "./build/ens-directory.ts";
 
 // Dev server only: the demo page POSTs its call events here, and they're appended as JSON lines to
 // .dev-logs/calls.log for scripts/show-logs.sh. Not part of production builds.
@@ -32,11 +33,15 @@ function devCallLog(): Plugin {
 export default defineConfig(({ command, mode }) => {
   const release = command === "build" && mode !== "lan";
   const gateways = release ? releaseGateways(process.env.VITE_TOR_GATEWAYS) : undefined;
+  const ensDirectory = release ? parseEnsDirectory(process.env.VITE_ENS_DIRECTORY) : null;
   return {
     // Relative asset paths so the build also loads from IPFS gateways and derpc.eth.limo.
     base: "./",
-    ...(release ? { envDir: false as const, define: { "import.meta.env.VITE_TOR_GATEWAYS": JSON.stringify(gateways!.join(",")) } } : {}),
-    plugins: release ? [refuseNonPublicAddresses()] : [devCallLog()],
+    ...(release ? { envDir: false as const, define: {
+      "import.meta.env.VITE_TOR_GATEWAYS": JSON.stringify(gateways!.join(",")),
+      "import.meta.env.VITE_ENS_DIRECTORY": JSON.stringify(ensDirectory ? JSON.stringify(ensDirectory) : ""),
+    } } : {}),
+    plugins: release ? [refuseNonPublicAddresses(), ensDirectoryAsset(ensDirectory)] : [devCallLog()],
     server: { port: 5173, strictPort: true },
     build: {
       target: "es2022",
@@ -53,6 +58,16 @@ export default defineConfig(({ command, mode }) => {
     },
   };
 });
+
+function ensDirectoryAsset(config: EnsDirectoryConfig | null): Plugin {
+  return {
+    name: "derpc:ens-directory-pin",
+    apply: "build",
+    generateBundle() {
+      this.emitFile({ type: "asset", fileName: "ens-directory.json", source: JSON.stringify(config, null, 2) + "\n" });
+    },
+  };
+}
 
 /** Scan every emitted text asset, including sourcemaps, before accepting a release build. */
 function refuseNonPublicAddresses(): Plugin {

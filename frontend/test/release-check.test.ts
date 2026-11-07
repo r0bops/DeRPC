@@ -26,6 +26,7 @@ function fixture(gateways = [GATEWAY]) {
   const entry = '<script type="module" src="./assets/demo.js"></script>';
   write("web/dist/demo/index.html", `${entry}<input id="enable-payments" type="checkbox"><fieldset id="payment-controls" disabled></fieldset>`);
   for (const page of ["example", "network-check"]) write(`web/dist/demo/${page}.html`, entry);
+  write("web/dist/demo/ens-directory.json", "null\n");
   write("web/dist/demo/assets/demo.js", `const checkpoint=${JSON.stringify(MAINNET_CHECKPOINT)};const gateways=${JSON.stringify(gateways)};const rpc="https://eth.drpc.org";`);
   const run = (extra = {}) => checkRelease({ root, artifact, configuredGateways: GATEWAY, now: CHECKPOINT_TIME + 86_400_000, ...extra });
   return { root, artifact, write, run };
@@ -67,6 +68,42 @@ describe("offline assembled release check", () => {
     const report = fixture([GATEWAY, TOR_JS_DEMO_GATEWAY]).run({ configuredGateways });
     expect(report.ok).toBe(true);
     expect(report.gatewayCount).toBe(2);
+  });
+
+  const ensPins = {
+    chainId: 1,
+    ethRegistry: `0x${"ab".repeat(20)}`,
+    registrar: { address: `0x${"cd".repeat(20)}`, codeHash: `0x${"ef".repeat(32)}`, registry: `0x${"12".repeat(20)}` },
+  };
+  it("binds configured ENS pins to both release metadata and compiled runtime", () => {
+    const { run, write } = fixture();
+    const configuredEnsDirectory = JSON.stringify(ensPins);
+    write("web/dist/demo/ens-directory.json", configuredEnsDirectory);
+    expect(run({ configuredEnsDirectory }).errors).toContainEqual(expect.objectContaining({ check: "ens-directory-artifact" }));
+    write("web/dist/demo/assets/directory.js", `const pins=${configuredEnsDirectory};`);
+    const report = run({ configuredEnsDirectory });
+    expect(report.ok).toBe(true);
+    expect(report.ensDirectory).toEqual(ensPins);
+    expect(report.limits.join(" ")).toContain("finalized proven browser refresh");
+  });
+
+  it("rejects undeclared, stale or incomplete ENS build metadata", () => {
+    const { run, write } = fixture();
+    const configuredEnsDirectory = JSON.stringify(ensPins);
+    write("web/dist/demo/assets/directory.js", `const pins=${configuredEnsDirectory};`);
+    write("web/dist/demo/ens-directory.json", configuredEnsDirectory);
+    expect(run().errors).toContainEqual(expect.objectContaining({ check: "ens-directory-artifact" }));
+    for (const metadata of ["null", "{}", "not JSON", JSON.stringify({ ...ensPins, registrar: { ...ensPins.registrar, registry: `0x${"34".repeat(20)}` } })]) {
+      write("web/dist/demo/ens-directory.json", metadata);
+      expect(run({ configuredEnsDirectory }).errors).toContainEqual(expect.objectContaining({ check: "ens-directory-artifact" }));
+    }
+  });
+
+  it("rejects missing metadata and invalid configured pins instead of silently dropping ENS", () => {
+    const { run, root } = fixture();
+    expect(run({ configuredEnsDirectory: "{}" }).errors).toContainEqual(expect.objectContaining({ check: "ens-directory" }));
+    rmSync(join(root, "web/dist/demo/ens-directory.json"));
+    expect(run().errors).toContainEqual(expect.objectContaining({ check: "ens-directory-artifact" }));
   });
 
   it("reports missing assembled pages before scanning a non-site target", () => {

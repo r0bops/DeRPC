@@ -7,6 +7,10 @@ inputs:
   tor-gateways:
     description: Public tor-js gateway addresses compiled into the dashboard (ip:port:certhash, comma-separated).
     required: true
+  ens-directory:
+    description: Optional reviewed mainnet ENS directory pins as JSON; blank keeps manual configuration.
+    required: false
+    default: ''
 
 outputs:
   cid:
@@ -37,11 +41,13 @@ runs:
       shell: bash
       env:
         VITE_TOR_GATEWAYS: ${{ inputs.tor-gateways }}
+        VITE_ENS_DIRECTORY: ${{ inputs.ens-directory }}
       run: pnpm build:site
     - name: Offline release check
       shell: bash
       env:
         VITE_TOR_GATEWAYS: ${{ inputs.tor-gateways }}
+        VITE_ENS_DIRECTORY: ${{ inputs.ens-directory }}
       run: node scripts/check-release.mjs
     - uses: ./.github/actions/install-kubo
     - name: Test the restricted VPS release command and real offline CAR validation

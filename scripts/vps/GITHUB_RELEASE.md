@@ -61,10 +61,21 @@ or reviewer was added. Repository administrators retain their normal authority.
 | Setting | Location | Purpose |
 | --- | --- | --- |
 | `DERPC_TOR_GATEWAYS` | Repository variable | Public visitor gateway compiled into the release |
+| `DERPC_ENS_DIRECTORY` | Optional repository variable | Reviewed mainnet ENS registry, registrar runtime hash and expected subregistry pins as JSON |
 | `DERPC_PIN_HOST` | `ens-production` variable | `derpc-deploy@45.76.81.48` |
 | `DERPC_PIN_KNOWN_HOSTS` | `ens-production` variable | Independently checked SSH host key |
 | `DERPC_PIN_PEER_ID` | `ens-production` variable | Advisory public provider lookup |
 | `DERPC_PIN_SSH_KEY` | `ens-production` secret | Restricted SSH credential, never an Ethereum or IPNS key |
+
+Leave `DERPC_ENS_DIRECTORY` unset until the operator deployment has a checked manifest. To prepare its public JSON from the receipt-verified manifest:
+
+```sh
+node --input-type=module -e 'import fs from "node:fs"; const m=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); if(m.kind!=="derpc-ens-deployment" || m.chainId!==1 || m.localOnly!==false || !m.verification?.receipts || !m.verification?.stateMatchesConfig) throw new Error("Require a checked public mainnet deployment manifest"); console.log(JSON.stringify({chainId:1,ethRegistry:m.upstream.ETHRegistry.address,registrar:{address:m.registrar.address,codeHash:m.registrar.codeHash,registry:m.subregistry}}));' /tmp/derpc-ens-manifest.json
+```
+
+For a local build and offline check, pass that same JSON as `VITE_ENS_DIRECTORY` alongside `VITE_TOR_GATEWAYS`. Invalid or incomplete pins fail the build. The dashboard prefills and locks the deployment pins, requires proven records, and waits for an explicit refresh and operator choice. Builds without pins retain manual configuration. Every release emits `demo/ens-directory.json` containing the canonical pins or `null`; the offline check binds it to the configured pins and compiled runtime, and IPFS packaging hashes it with the other assets. These checks do not prove current admission or records: the browser must prove both at a finalized block after deployment.
+
+Declare gateways owned by the operators in their ENS records. A team-owned gateway cannot serve the team's registered demo proxies under the current ownership guard; choose a separately operated gateway for that integration. Multiple gateway entries are shuffled, so mixing the conflicting gateway into the list does not establish a safe primary/backup order.
 
 ## Retries and recovery
 
@@ -85,8 +96,10 @@ returned identical bytes with the new root. The updated verifier checks the norm
 URL's bytes first, then verifies that fresh binding when necessary. Wrong bytes at
 the normal URL cannot be hidden by the query response. All 55 live files passed
 with the fix locally; neither failed Actions run contains it. The user subsequently
-authorized committing and pushing the fixes. Require a complete successful Actions
-run for the new commit before recording CI deployment success.
+authorized committing and pushing the fixes. [Run 42310022450](https://github.com/r0bops/DeRPC/actions/runs/42310022450)
+completed successfully with those fixes, and the later [d90cc742 release](https://github.com/r0bops/DeRPC/actions/runs/42314676419)
+also passed. This resolves the earlier Actions acceptance gate; each new release
+still needs verification against its own source commit and CID.
 
 Workflow concurrency avoids overlapping releases, but does not establish commit
 order. The VPS also locks operations and fsyncs the accepted run number, run ID,
