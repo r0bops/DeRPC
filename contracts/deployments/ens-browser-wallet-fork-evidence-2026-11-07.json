@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-ens-browser-wallet-fork",
+  "checkedAt": "2026-11-07T02:39:33.861Z",
+  "complete": true,
+  "localOnly": true,
+  "publicTransactionsSent": false,
+  "sourceHash": "0x9f7503ee65c72b815895ab33bf6fd847fbf544060aecf2f0bd52fb3f76032ee4",
+  "compiler": {
+    "version": "0.8.30+commit.73712a01.Emscripten.clang",
+    "optimizerRuns": 200,
+    "evmVersion": "shanghai"
+  },
+  "scope": "Actual website wallet panel/runtime/session in Firefox, genuine ENS contracts on a disposable local fork, injected local wallet only. Test-only virtual config relabels the local manifest public and proxies two administrative origins to one guarded fork. This tests UI/journal/contract integration, not public deployment, source independence, extension integration, anonymity or consensus.",
+  "fork": {
+    "blockNumber": "26360014",
+    "blockHash": "0x4e175e128c891cf68dbbdb8489a3171f0ea838ce6fe27a38927496f80ec611a6"
+  },
+  "stages": [
+    {
+      "id": "deploy-resolver-wallet-independent",
+      "from": "0x0000000000000000000000000000000000dec204",
+      "hash": "0x16fac545a6df53ceca6773d65aa922dd8e261bf36796c7115748402e57f1444e",
+      "confirmations": "15"
+    },
+    {
+      "id": "grant-endpoint-wallet-independent",
+      "from": "0x0000000000000000000000000000000000dec204",
+      "hash": "0xda6e2c1f39e2def486c1949061d60569673850b25fb1efe835ce83eb47c04d2e",
+      "confirmations": "14"
+    },
+    {
+      "id": "register-wallet-independent",
+      "from": "0x0000000000000000000000000000000000dec204",
+      "hash": "0x3ab870657a415f07a6efed0c8be685cbd8295ec164630b24c33d7bd11ded0926",
+      "confirmations": "13"
+    }
+  ],
+  "lifecycle": [
+    {
+      "action": {
+        "type": "renew",
+        "label": "wallet-independent",
+        "expectedExpiry": 1794025967,
+        "expiry": 1794029567,
+        "authority": "operator"
+      },
+      "receipt": {
+        "blockNumber": "26360050",
+        "blockHash": "0xb510b6241c173d7982b45378b1ae07791b7f5e46c87ccf591b925603daf76cb9",
+        "transactionIndex": 0,
+        "from": "0x0000000000000000000000000000000000dec204",
+        "to": "0xfe1dba3ed88732ce4528c9524ffb8745a9bad203",
+        "gasUsed": "73964",
+        "confirmations": "13"
+      },
+      "verification": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      }
+    },
+    {
+      "action": {
+        "type": "rotate-endpoint",
+        "label": "wallet-independent",
+        "expectedEndpoint": "https://wallet-independent.example/rpc",
+        "newEndpoint": "https://wallet-independent.example/rpc-updated"
+      },
+      "receipt": {
+        "blockNumber": "26360063",
+        "blockHash": "0x89b1621ddbed45fa85f0d5501524fa74d8853722467b4e36c18611470291a3db",
+        "transactionIndex": 0,
+        "from": "0x0000000000000000000000000000000000dec205",
+        "to": "0x1cfb587a9b3d1bf6f24af25ee969d3ebe7d9f803",
+        "gasUsed": "60584",
+        "confirmations": "13"
+      },
+      "verification": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      }
+    }
+  ],
+  "checks": [
+    "Real wallet panel requires account connection and explicit gas/request review for all three operator-signed stages",
+    "A lost wallet response remains pending after reload; resume prevents a duplicate send and accepts only reconciliation of the mined original hash",
+    "Enrollment verification refuses fewer than twelve confirmations and succeeds after twelve local blocks on both proxied administrative clients",
+    "Imported enrollment is reverified by the real runtime before operator renewal and scoped-key endpoint change; the curator remains idle and the renewal survives rotation"
+  ],
+  "pageErrors": [],
+  "blockedBrowserRequests": [],
+  "sourcesBefore": {
+    "contracts/deployments/ens-upstream-mainnet.json": "9a7732f6c99eb5525f64b56940979c91e4c5532c72094ce0e0845ae2cdc42be6",
+    "contracts/lib/ens-common.mjs": "05e3fc07df9381af6dc466dd549b84ac88800eb73426524912ddea7420f342c8",
+    "contracts/lib/ens-join.mjs": "6bc6e04be82b0d2b33aa4ab2a6af4586d634b4cd78dff4baefa73c674eb8b11b",
+    "contracts/lib/ens-lifecycle.mjs": "9cb8eefd17050fc6367a511c6d13022c4d82406b91be5d56b2313c3f13b4209a",
+    "contracts/lib/ens-wallet.mjs": "190e14e2407f17d6c4bc2aa98e2939b9c0fb71442ba994c20bd5b87a8e3c3518",
+    "contracts/scripts/ens-common.mjs": "75471321064e733b332c4d3c7f6871ffc96905bee718cb38bc48a80e4b8ce09b",
+    "contracts/scripts/ens-join.mjs": "b431844816b3d528b04efe645895dbc690c1f21ffdf37210d7bc0292a00a1a69",
+    "contracts/scripts/ens-lifecycle.mjs": "3148b2008415e3d7245979c6809e02f9ec6044ef4adc8dcad0b73ddbdc20e9cd",
+    "contracts/scripts/ens-plan.mjs": "b22762f9204dca442111cb5634d338af24d2182c5a88c8798ce5abfd06cf3512",
+    "contracts/scripts/ens-preflight.mjs": "1caa48314883513bfe1289ef8369d90e3e641c8f5870b9c0e3e0c4808cd78893",
+    "contracts/scripts/ens-verify.mjs": "e78c7919e4f56e416c4292a100bf74d58d0881ba1cf24a3b60d373e479e63321",
+    "contracts/scripts/ens-wallet-client.mjs": "42cb8f1e80b64bcea01ac23314967995f53514cb23c1e87226fcaf5f2b8a0470",
+    "contracts/scripts/ens-wallet.mjs": "254a25a28a6be8852c5feeff0c66d0a21f3ec6c579a3131b8009cb3040096977",
+    "contracts/src/OperatorRegistrar.sol": "b83d603d2cbe92f52548609c0b6500f69b73c51a9381f863a776ca0dbe4ea0f0",
+    "contracts/test/ens-browser-wallet-fork.test.mjs": "2d086ec3a7cec6feffb691fdf449e85f5a86cc5df109a97a8f72dfe4056e37a7",
+    "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+    "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+    "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6",
+    "web/src/ens/configured.ts": "2d4623b1613713b6c17b6d85f60170867416717bcb5cdcd217a0589e147df9c1",
+    "web/src/ens/panel.ts": "fb263deed92bfc6bb1530d4bc0654dbbb4ad1eeb4039cf605c6a3eab3ef70298",
+    "web/src/ens/runtime.ts": "b454cd5a63f58c251f8c3cd84c4cc68fa9607adb74227ec62de5dee368198810",
+    "web/src/ens/session.ts": "6419f7fdb9ab04d9b54e44fbf5c3632dd5afb16ada200fceb1d1a42be5494707",
+    "web/src/ens/wallet.css": "e8b2396280b2a81672c7008311c6fb35f496be84d26f02f86aa46e488902978d"
+  },
+  "browser": "firefox/156.0.1",
+  "adminFixture": {
+    "origins": [
+      "https://admin-a.example",
+      "https://admin-b.example"
+    ],
+    "upstreams": 1,
+    "sourceIndependenceTested": false
+  },
+  "walletSends": [
+    {
+      "from": "0x0000000000000000000000000000000000DeC204",
+      "to": "0x77510ba162dfea3d8989e3f0928a691b345730d2",
+      "hash": "0x16fac545a6df53ceca6773d65aa922dd8e261bf36796c7115748402e57f1444e"
+    },
+    {
+      "from": "0x0000000000000000000000000000000000DeC204",
+      "to": "0x1cFb587A9B3D1BF6F24aF25Ee969D3ebE7d9F803",
+      "hash": "0xda6e2c1f39e2def486c1949061d60569673850b25fb1efe835ce83eb47c04d2e"
+    },
+    {
+      "from": "0x0000000000000000000000000000000000DeC204",
+      "to": "0xfe1dBA3ed88732ce4528C9524FFB8745A9baD203",
+      "hash": "0x3ab870657a415f07a6efed0c8be685cbd8295ec164630b24c33d7bd11ded0926"
+    },
+    {
+      "from": "0x0000000000000000000000000000000000DeC204",
+      "to": "0xfe1dBA3ed88732ce4528C9524FFB8745A9baD203",
+      "hash": "0xa2dbbf6bf649ef0ea46c6598d0bd4223094d63941d60e394f9964b49b3fca784"
+    },
+    {
+      "from": "0x0000000000000000000000000000000000DEc205",
+      "to": "0x1cFb587A9B3D1BF6F24aF25Ee969D3ebE7d9F803",
+      "hash": "0x2647b210506ddc99b525e06955eb2fd85d7b7ecb1dedef06f4bb867f6a4ca5d4"
+    }
+  ],
+  "timings": [
+    {
+      "phase": "review-recheck-send",
+      "transaction": 1,
+      "elapsedMs": 4338
+    },
+    {
+      "phase": "review-recheck-send",
+      "transaction": 2,
+      "elapsedMs": 9067
+    },
+    {
+      "phase": "review-recheck-send",
+      "transaction": 3,
+      "elapsedMs": 9495
+    },
+    {
+      "phase": "review-recheck-send",
+      "transaction": 4,
+      "elapsedMs": 73901
+    },
+    {
+      "phase": "review-recheck-send",
+      "transaction": 5,
+      "elapsedMs": 71834
+    }
+  ],
+  "restoredChainId": 31337,
+  "restoredForkBlock": true,
+  "sourcesAfter": {
+    "contracts/deployments/ens-upstream-mainnet.json": "9a7732f6c99eb5525f64b56940979c91e4c5532c72094ce0e0845ae2cdc42be6",
+    "contracts/lib/ens-common.mjs": "05e3fc07df9381af6dc466dd549b84ac88800eb73426524912ddea7420f342c8",
+    "contracts/lib/ens-join.mjs": "6bc6e04be82b0d2b33aa4ab2a6af4586d634b4cd78dff4baefa73c674eb8b11b",
+    "contracts/lib/ens-lifecycle.mjs": "9cb8eefd17050fc6367a511c6d13022c4d82406b91be5d56b2313c3f13b4209a",
+    "contracts/lib/ens-wallet.mjs": "190e14e2407f17d6c4bc2aa98e2939b9c0fb71442ba994c20bd5b87a8e3c3518",
+    "contracts/scripts/ens-common.mjs": "75471321064e733b332c4d3c7f6871ffc96905bee718cb38bc48a80e4b8ce09b",
+    "contracts/scripts/ens-join.mjs": "b431844816b3d528b04efe645895dbc690c1f21ffdf37210d7bc0292a00a1a69",
+    "contracts/scripts/ens-lifecycle.mjs": "3148b2008415e3d7245979c6809e02f9ec6044ef4adc8dcad0b73ddbdc20e9cd",
+    "contracts/scripts/ens-plan.mjs": "b22762f9204dca442111cb5634d338af24d2182c5a88c8798ce5abfd06cf3512",
+    "contracts/scripts/ens-preflight.mjs": "1caa48314883513bfe1289ef8369d90e3e641c8f5870b9c0e3e0c4808cd78893",
+    "contracts/scripts/ens-verify.mjs": "e78c7919e4f56e416c4292a100bf74d58d0881ba1cf24a3b60d373e479e63321",
+    "contracts/scripts/ens-wallet-client.mjs": "42cb8f1e80b64bcea01ac23314967995f53514cb23c1e87226fcaf5f2b8a0470",
+    "contracts/scripts/ens-wallet.mjs": "254a25a28a6be8852c5feeff0c66d0a21f3ec6c579a3131b8009cb3040096977",
+    "contracts/src/OperatorRegistrar.sol": "b83d603d2cbe92f52548609c0b6500f69b73c51a9381f863a776ca0dbe4ea0f0",
+    "contracts/test/ens-browser-wallet-fork.test.mjs": "2d086ec3a7cec6feffb691fdf449e85f5a86cc5df109a97a8f72dfe4056e37a7",
+    "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+    "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+    "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6",
+    "web/src/ens/configured.ts": "2d4623b1613713b6c17b6d85f60170867416717bcb5cdcd217a0589e147df9c1",
+    "web/src/ens/panel.ts": "fb263deed92bfc6bb1530d4bc0654dbbb4ad1eeb4039cf605c6a3eab3ef70298",
+    "web/src/ens/runtime.ts": "b454cd5a63f58c251f8c3cd84c4cc68fa9607adb74227ec62de5dee368198810",
+    "web/src/ens/session.ts": "6419f7fdb9ab04d9b54e44fbf5c3632dd5afb16ada200fceb1d1a42be5494707",
+    "web/src/ens/wallet.css": "e8b2396280b2a81672c7008311c6fb35f496be84d26f02f86aa46e488902978d"
+  },
+  "changedSources": []
+}

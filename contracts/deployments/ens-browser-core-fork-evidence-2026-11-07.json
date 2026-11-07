@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-ens-browser-core-fork",
+  "checkedAt": "2026-11-07T02:22:39.122Z",
+  "complete": true,
+  "localOnly": true,
+  "publicTransactionsSent": false,
+  "sourceHash": "0x9f7503ee65c72b815895ab33bf6fd847fbf544060aecf2f0bd52fb3f76032ee4",
+  "compiler": {
+    "version": "0.8.30+commit.73712a01.Emscripten.clang",
+    "optimizerRuns": 200,
+    "evmVersion": "shanghai"
+  },
+  "scope": "Actual Firefox executes the extracted browser core against genuine ENS contracts on a disposable local fork. Node submits only reviewed requests by local impersonation. Fictitious operators and .example endpoints; no public registration, wallet UI, anonymous transport or consensus-proof claim.",
+  "fork": {
+    "blockNumber": "26359961",
+    "blockHash": "0x59324b9666ff9ae0e518602e7f32ff7e533da1f5475d575b877e3d88062065ff"
+  },
+  "stages": [
+    {
+      "stage": "deploy-operator-resolver",
+      "id": "deploy-resolver-browser-independent",
+      "from": "0x0000000000000000000000000000000000deC104",
+      "transactionHash": "0xf5783c70987ba2a663e939c312cc1de6eaeafb9fb576a69aa099f2ebbc7d698e"
+    },
+    {
+      "stage": "configure-operator-endpoint-key",
+      "id": "grant-endpoint-browser-independent",
+      "from": "0x0000000000000000000000000000000000deC104",
+      "transactionHash": "0xf376dde4cae7b7e342d05127bd3ebc46609a14e6187c47eb9d71602a12b2a14f"
+    },
+    {
+      "stage": "register-operator",
+      "id": "register-browser-independent",
+      "from": "0x0000000000000000000000000000000000deC104",
+      "transactionHash": "0x0076c317bb555a28ca77aa865ac8906f08e871f77f9bcd54bb710984e91325e4"
+    }
+  ],
+  "lifecycle": [
+    {
+      "action": {
+        "type": "renew",
+        "label": "browser-independent",
+        "expectedExpiry": 1794025331,
+        "expiry": 1794028931,
+        "authority": "operator"
+      },
+      "from": "0x0000000000000000000000000000000000deC104",
+      "transactionHash": "0xd1b6351a2b075ac941d6718b9380b415a573d8d4e324ed642ea9b1e1434df011",
+      "receipt": {
+        "blockNumber": "26359997",
+        "blockHash": "0x8f8d5be1d04e8e9a8afc1e418e7504b5d7b4a7a645857e162f8c13fc12439ea3",
+        "transactionIndex": 0,
+        "from": "0x0000000000000000000000000000000000dec104",
+        "to": "0xe5d533d341c804d3f45a7afc422e9a33f07fd83b",
+        "gasUsed": "74321",
+        "confirmations": "13"
+      },
+      "verification": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      }
+    },
+    {
+      "action": {
+        "type": "rotate-endpoint",
+        "label": "browser-independent",
+        "expectedEndpoint": "https://browser-independent.example/rpc",
+        "newEndpoint": "https://browser-independent.example/rpc-updated"
+      },
+      "from": "0x0000000000000000000000000000000000dEc105",
+      "transactionHash": "0x7e24a64c3fcfffb26cfbbcda60980d35db89af926f7927214f33f3ed61dc0583",
+      "receipt": {
+        "blockNumber": "26360010",
+        "blockHash": "0xd6b1f63f54fd1ee2fe48aa214b0d2dfb984fb32809e63fb7155a43b364260e81",
+        "transactionIndex": 0,
+        "from": "0x0000000000000000000000000000000000dec105",
+        "to": "0x0030703863af4b6948cf4ed841745b962fc0776d",
+        "gasUsed": "60608",
+        "confirmations": "13"
+      },
+      "verification": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      }
+    }
+  ],
+  "checks": [
+    "Firefox imported browser cores without Node globals; all three operator-signed join plans and verified receipts exactly matched the Node adapters",
+    "Independent operator renewed its live lease; its scoped updater changed only the endpoint after renewal; browser and Node lifecycle requests, rechecks and canonical evidence matched",
+    "Curator stayed idle after bootstrap; browser requested only its temporary local assets and the guarded loopback administrative fork"
+  ],
+  "pageErrors": [],
+  "blockedBrowserRequests": [],
+  "sourcesBefore": {
+    "contracts/deployments/ens-upstream-mainnet.json": "9a7732f6c99eb5525f64b56940979c91e4c5532c72094ce0e0845ae2cdc42be6",
+    "contracts/lib/ens-common.mjs": "6f8848f023151a529964ec8f0c65d0961e2470804697d26248c715b1d84ae346",
+    "contracts/lib/ens-join.mjs": "6bc6e04be82b0d2b33aa4ab2a6af4586d634b4cd78dff4baefa73c674eb8b11b",
+    "contracts/lib/ens-lifecycle.mjs": "cb1b1b1c72c19122ab1d001f4ad05cbd228c85675946d3469a84adb874d68aff",
+    "contracts/lib/ens-wallet.mjs": "190e14e2407f17d6c4bc2aa98e2939b9c0fb71442ba994c20bd5b87a8e3c3518",
+    "contracts/scripts/ens-common.mjs": "75471321064e733b332c4d3c7f6871ffc96905bee718cb38bc48a80e4b8ce09b",
+    "contracts/scripts/ens-join.mjs": "b431844816b3d528b04efe645895dbc690c1f21ffdf37210d7bc0292a00a1a69",
+    "contracts/scripts/ens-lifecycle.mjs": "3148b2008415e3d7245979c6809e02f9ec6044ef4adc8dcad0b73ddbdc20e9cd",
+    "contracts/scripts/ens-plan.mjs": "b22762f9204dca442111cb5634d338af24d2182c5a88c8798ce5abfd06cf3512",
+    "contracts/scripts/ens-preflight.mjs": "1caa48314883513bfe1289ef8369d90e3e641c8f5870b9c0e3e0c4808cd78893",
+    "contracts/scripts/ens-verify.mjs": "e78c7919e4f56e416c4292a100bf74d58d0881ba1cf24a3b60d373e479e63321",
+    "contracts/scripts/ens-wallet-client.mjs": "1160237091db4f4420530442b359439bc2989c12d5645493abf9040b729e9831",
+    "contracts/scripts/ens-wallet.mjs": "ab587f5204b357b1082ebb5c4044fed77ff13bed40b46b79f8013b473a153015",
+    "contracts/src/OperatorRegistrar.sol": "b83d603d2cbe92f52548609c0b6500f69b73c51a9381f863a776ca0dbe4ea0f0",
+    "contracts/test/ens-browser-core-fork.test.mjs": "e2262a1cf1afc3ef3506bef37334541bd52ef85585ce32726cfdfbb7dbebdb17",
+    "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+    "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+    "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6"
+  },
+  "browser": "firefox/156.0.1",
+  "restoredChainId": 31337,
+  "restoredForkBlock": true,
+  "sourcesAfter": {
+    "contracts/deployments/ens-upstream-mainnet.json": "9a7732f6c99eb5525f64b56940979c91e4c5532c72094ce0e0845ae2cdc42be6",
+    "contracts/lib/ens-common.mjs": "6f8848f023151a529964ec8f0c65d0961e2470804697d26248c715b1d84ae346",
+    "contracts/lib/ens-join.mjs": "6bc6e04be82b0d2b33aa4ab2a6af4586d634b4cd78dff4baefa73c674eb8b11b",
+    "contracts/lib/ens-lifecycle.mjs": "cb1b1b1c72c19122ab1d001f4ad05cbd228c85675946d3469a84adb874d68aff",
+    "contracts/lib/ens-wallet.mjs": "190e14e2407f17d6c4bc2aa98e2939b9c0fb71442ba994c20bd5b87a8e3c3518",
+    "contracts/scripts/ens-common.mjs": "75471321064e733b332c4d3c7f6871ffc96905bee718cb38bc48a80e4b8ce09b",
+    "contracts/scripts/ens-join.mjs": "b431844816b3d528b04efe645895dbc690c1f21ffdf37210d7bc0292a00a1a69",
+    "contracts/scripts/ens-lifecycle.mjs": "3148b2008415e3d7245979c6809e02f9ec6044ef4adc8dcad0b73ddbdc20e9cd",
+    "contracts/scripts/ens-plan.mjs": "b22762f9204dca442111cb5634d338af24d2182c5a88c8798ce5abfd06cf3512",
+    "contracts/scripts/ens-preflight.mjs": "1caa48314883513bfe1289ef8369d90e3e641c8f5870b9c0e3e0c4808cd78893",
+    "contracts/scripts/ens-verify.mjs": "e78c7919e4f56e416c4292a100bf74d58d0881ba1cf24a3b60d373e479e63321",
+    "contracts/scripts/ens-wallet-client.mjs": "1160237091db4f4420530442b359439bc2989c12d5645493abf9040b729e9831",
+    "contracts/scripts/ens-wallet.mjs": "ab587f5204b357b1082ebb5c4044fed77ff13bed40b46b79f8013b473a153015",
+    "contracts/src/OperatorRegistrar.sol": "b83d603d2cbe92f52548609c0b6500f69b73c51a9381f863a776ca0dbe4ea0f0",
+    "contracts/test/ens-browser-core-fork.test.mjs": "e2262a1cf1afc3ef3506bef37334541bd52ef85585ce32726cfdfbb7dbebdb17",
+    "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+    "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+    "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6"
+  },
+  "changedSources": []
+}
