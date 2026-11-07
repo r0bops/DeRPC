@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-11-07T00:19:08.276Z",
+  "url": "http://127.0.0.1:4180/#/directory",
+  "checks": [
+    {
+      "width": 375,
+      "pending": 3,
+      "bootstrap": 5,
+      "hasFaults": true,
+      "noOverflow": true,
+      "noFakeBootstrapNames": true
+    },
+    {
+      "width": 768,
+      "pending": 3,
+      "bootstrap": 5,
+      "hasFaults": true,
+      "noOverflow": true,
+      "noFakeBootstrapNames": true
+    },
+    {
+      "width": 1280,
+      "pending": 3,
+      "bootstrap": 5,
+      "hasFaults": true,
+      "noOverflow": true,
+      "noFakeBootstrapNames": true
+    }
+  ],
+  "registrationDraft": true,
+  "errors": [],
+  "ok": true,
+  "kind": "local-directory-and-demo-scenarios-browser-check",
+  "sourceSha256": {
+    "web/src/pages/directory.ts": "4005a8c47da46e14e1af522b1eb76be560c5e16894243b4d3f144dfce0029c06",
+    "web/src/directory/pending-operators.ts": "6259edb2dc4d761f378c7966a91fafd096ebb596aee2a3b51a206c701c5da850",
+    "web/src/pages/operate.ts": "3969961179bea0397f4b7802aa62fe59ddc0b8fc2c2f8e4c53384884cba19c5f"
+  },
+  "limits": [
+    "Local development page, not a production website publication.",
+    "Pending labels and draft flow do not enroll operators or establish anonymous reachability."
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "scope": "Local unpublished static registration UI only. No live anonymity, reachability, ENS verification, wallet signature or transaction claim.",
+  "startedAt": "2026-11-07T00:36:01.129Z",
+  "cases": [
+    {
+      "name": "directory",
+      "width": 1280,
+      "rows": 2,
+      "unknownHealth": true,
+      "overflow": false
+    },
+    {
+      "name": "demo-1",
+      "width": 1280,
+      "singularConfigExact": true,
+      "unsignedPlanExact": true,
+      "genericDraftBlank": true,
+      "overflow": false
+    },
+    {
+      "name": "demo-2",
+      "width": 1280,
+      "singularConfigExact": true,
+      "unsignedPlanExact": true,
+      "genericDraftBlank": true,
+      "overflow": false
+    },
+    {
+      "name": "directory",
+      "width": 390,
+      "rows": 2,
+      "unknownHealth": true,
+      "overflow": false
+    },
+    {
+      "name": "demo-1",
+      "width": 390,
+      "singularConfigExact": true,
+      "unsignedPlanExact": true,
+      "genericDraftBlank": true,
+      "overflow": false
+    },
+    {
+      "name": "demo-2",
+      "width": 390,
+      "singularConfigExact": true,
+      "unsignedPlanExact": true,
+      "genericDraftBlank": true,
+      "overflow": false
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:38979/#/directory"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:38979/assets/index-DALYTvmd.js"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:38979/assets/index-Dp5B9GpU.css"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:38979/derpc-lockup.svg"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:38979/assets/inter-latin-wght-normal-Dx4kXJAl.woff2"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:38979/derpc-logo-512.png"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:38979/favicon.svg"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:38979/derpc-lockup.svg"
+    }
+  ],
+  "errors": [],
+  "pageErrors": [],
+  "sourceHashesBefore": {
+    "web/src/directory/pending-operators.ts": "75e4acb35d37e655308e71389ccbbfa8bc625be9bf38d9aa2def6bc5b8f27412",
+    "web/src/pages/directory.ts": "c403ae8c9acb54f2f4b989eb24beb1f9b95cec893c28e2c0e14182e87a39328b",
+    "web/src/pages/operate.ts": "38dfc514288ee1685399311449794ed120705e18d8e695d33ecf8adeb4e23ea1",
+    "web/src/main.ts": "6534c0471f151d63ee9d1d66728b673e58a03f4989bbde967f45e03f90daa5f3",
+    "contracts/deployments/ens-two-demo-operators-config-2026-11-07.json": "0277faf36ff8d3309889d87cb353df6432519e5ea55c752c635607b18caa0d93",
+    "contracts/deployments/ens-two-demo-operators-plan-1-2026-11-07.json": "c42ef69baa6c07a6356c3d222cab11b78024223c94e20f67a078765ac85f30fd"
+  },
+  "browser": "firefox/156.0.1",
+  "ok": true,
+  "browserClosed": true,
+  "serverClosed": true,
+  "sourceHashesAfter": {
+    "web/src/directory/pending-operators.ts": "75e4acb35d37e655308e71389ccbbfa8bc625be9bf38d9aa2def6bc5b8f27412",
+    "web/src/pages/directory.ts": "c403ae8c9acb54f2f4b989eb24beb1f9b95cec893c28e2c0e14182e87a39328b",
+    "web/src/pages/operate.ts": "38dfc514288ee1685399311449794ed120705e18d8e695d33ecf8adeb4e23ea1",
+    "web/src/main.ts": "6534c0471f151d63ee9d1d66728b673e58a03f4989bbde967f45e03f90daa5f3",
+    "contracts/deployments/ens-two-demo-operators-config-2026-11-07.json": "0277faf36ff8d3309889d87cb353df6432519e5ea55c752c635607b18caa0d93",
+    "contracts/deployments/ens-two-demo-operators-plan-1-2026-11-07.json": "c42ef69baa6c07a6356c3d222cab11b78024223c94e20f67a078765ac85f30fd"
+  },
+  "sourceStable": true,
+  "finishedAt": "2026-11-07T00:36:08.385Z"
+}

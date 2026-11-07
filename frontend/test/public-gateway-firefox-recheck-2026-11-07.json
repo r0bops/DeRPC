@@ -1,0 +1,2229 @@
+{
+  "schemaVersion": 2,
+  "startedAt": "2026-11-07T00:12:35.767Z",
+  "base": "https://derpc.eth.limo",
+  "checker": {
+    "path": "frontend/test/public-gateway-firefox.mjs",
+    "sha256": "9d95e9ba1ea21b68f92272447ee1d4d4fc4f0f295b57545550a33722c9aea1fc",
+    "sha256After": "9d95e9ba1ea21b68f92272447ee1d4d4fc4f0f295b57545550a33722c9aea1fc",
+    "unchangedDuringRun": true
+  },
+  "scope": "Fresh Firefox visiting the assembled production site; public WETH/Uniswap fixtures only; no wallet or transaction.",
+  "siteDelivery": "Remote site delivery; record the exact base URL and do not infer ENS publication from a generic IPFS gateway.",
+  "productionTimeoutOverrides": false,
+  "observationLimitMs": 180000,
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "sameDocumentNavigation": false,
+      "title": "Private, verified RPC for Ethereum — DeRPC",
+      "headings": [
+        "Choose your operators.Verify their answers.",
+        "Route. Prove. Choose.",
+        "Add verified reads to your app.",
+        "One identity. Up to 8 nodes."
+      ],
+      "overflow": false
+    },
+    {
+      "route": "/#/directory",
+      "status": 200,
+      "sameDocumentNavigation": true,
+      "title": "Directory — DeRPC",
+      "headings": [
+        "Choose who serves your reads."
+      ],
+      "overflow": false
+    },
+    {
+      "route": "/#/operate",
+      "status": 200,
+      "sameDocumentNavigation": true,
+      "title": "Run an operator — DeRPC",
+      "headings": [
+        "One operator. Your nodes.",
+        "Choose your operator identity",
+        "Add your node endpoints",
+        "Review the free configuration",
+        "Prepare deployment inputs",
+        "Review your draft",
+        "Review the deployment fragment",
+        "Private routing. Verified answers.",
+        "Run a wrapper on each node host"
+      ],
+      "overflow": false
+    }
+  ],
+  "observations": [
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:44.529Z",
+      "worker": "booting tor-js 0.4.4 via configured gateway (1)… 0.6 s",
+      "lightClient": "waiting for the worker…",
+      "header": "—",
+      "pin": "waiting for the light client…",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+      "poolEvents": "",
+      "poolEventRows": [],
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "verifying…",
+            "class": "muted"
+          },
+          {
+            "text": "",
+            "class": ""
+          },
+          {
+            "text": "",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": true,
+      "cutDisabled": true,
+      "liarDisabled": true,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:59.943Z",
+      "worker": "booting tor-js 0.4.4 via configured gateway (1)… 15.1 s",
+      "lightClient": "waiting for the worker…",
+      "header": "—",
+      "pin": "waiting for the light client…",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+      "poolEvents": "",
+      "poolEventRows": [],
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "verifying…",
+            "class": "muted"
+          },
+          {
+            "text": "",
+            "class": ""
+          },
+          {
+            "text": "",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": true,
+      "cutDisabled": true,
+      "liarDisabled": true,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:13:15.489Z",
+      "worker": "booting tor-js 0.4.4 via configured gateway (1)… 31.3 s · taking longer than usual — anonymous transport is still starting. Check the worker log or network check for diagnostics. Reads cannot complete until it is ready; no direct RPC fallback.",
+      "lightClient": "waiting for the worker…",
+      "header": "—",
+      "pin": "waiting for the light client…",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+      "poolEvents": "",
+      "poolEventRows": [],
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "verifying…",
+            "class": "muted"
+          },
+          {
+            "text": "",
+            "class": ""
+          },
+          {
+            "text": "",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": true,
+      "cutDisabled": true,
+      "liarDisabled": true,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:13:30.715Z",
+      "worker": "ready — tor-js 0.4.4 via configured gateway (1), after 34.9 s",
+      "lightClient": "syncing from the pinned checkpoint epoch 487173 (1.3 days old)…",
+      "header": "—",
+      "pin": "waiting for the light client…",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+      "poolEvents": "",
+      "poolEventRows": [],
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "verifying…",
+            "class": "muted"
+          },
+          {
+            "text": "",
+            "class": ""
+          },
+          {
+            "text": "",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": true,
+      "cutDisabled": false,
+      "liarDisabled": true,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:13:46.047Z",
+      "worker": "ready — tor-js 0.4.4 via configured gateway (1), after 34.9 s",
+      "lightClient": "syncing from the pinned checkpoint epoch 487173 (1.3 days old)…",
+      "header": "—",
+      "pin": "waiting for the light client…",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+      "poolEvents": "",
+      "poolEventRows": [],
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "verifying…",
+            "class": "muted"
+          },
+          {
+            "text": "",
+            "class": ""
+          },
+          {
+            "text": "",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": true,
+      "cutDisabled": false,
+      "liarDisabled": true,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    }
+  ],
+  "rtcObservations": [
+    {
+      "label": "before-selection",
+      "at": "2026-11-07T00:12:43.984Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": []
+        }
+      ]
+    },
+    {
+      "label": "boot-and-read",
+      "at": "2026-11-07T00:12:44.571Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "connecting",
+              "iceConnectionState": "checking",
+              "selectedRemotePairs": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "boot-and-read",
+      "at": "2026-11-07T00:12:59.985Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "connected",
+              "iceConnectionState": "connected",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "77fe083b",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 2191767,
+                  "bytesSent": 106130
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "boot-and-read",
+      "at": "2026-11-07T00:13:15.531Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "77fe083b",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259516,
+                  "bytesSent": 242291
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "connected",
+              "iceConnectionState": "connected",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "65c63330",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 896,
+                  "bytesSent": 12011
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "frameUrl": "about:srcdoc",
+          "instrumented": true,
+          "peers": []
+        }
+      ]
+    },
+    {
+      "label": "boot-and-read",
+      "at": "2026-11-07T00:13:30.757Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "77fe083b",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259516,
+                  "bytesSent": 242291
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "connected",
+              "iceConnectionState": "connected",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "65c63330",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 1769312,
+                  "bytesSent": 93532
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "frameUrl": "about:srcdoc",
+          "instrumented": true,
+          "peers": []
+        }
+      ]
+    },
+    {
+      "label": "boot-and-read",
+      "at": "2026-11-07T00:13:46.089Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "77fe083b",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259516,
+                  "bytesSent": 242291
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "connected",
+              "iceConnectionState": "connected",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "65c63330",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 1779608,
+                  "bytesSent": 98656
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "frameUrl": "about:srcdoc",
+          "instrumented": true,
+          "peers": []
+        }
+      ]
+    },
+    {
+      "label": "after-proven-reads",
+      "at": "2026-11-07T00:14:00.339Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "77fe083b",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259516,
+                  "bytesSent": 242291
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "connected",
+              "iceConnectionState": "connected",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "65c63330",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 1885441,
+                  "bytesSent": 131043
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "frameUrl": "about:srcdoc",
+          "instrumented": true,
+          "peers": []
+        }
+      ]
+    },
+    {
+      "label": "after-injected-proof-test",
+      "at": "2026-11-07T00:14:09.374Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "77fe083b",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259516,
+                  "bytesSent": 242291
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "connected",
+              "iceConnectionState": "connected",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "65c63330",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 1968960,
+                  "bytesSent": 156857
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "frameUrl": "about:srcdoc",
+          "instrumented": true,
+          "peers": []
+        }
+      ]
+    },
+    {
+      "label": "after-shutdown",
+      "at": "2026-11-07T00:14:10.834Z",
+      "frames": [
+        {
+          "frameUrl": "https://derpc.eth.limo/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "77fe083b",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259516,
+                  "bytesSent": 242291
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "65c63330",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 1968960,
+                  "bytesSent": 157137
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "httpRequests": [
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:12:37.768Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:12:39.221Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/assets/index-D9NJMreI.js"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:12:39.221Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/assets/index-Bwl_yZyT.css"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:12:39.640Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/assets/inter-latin-wght-normal-Dx4kXJAl.woff2"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:12:39.895Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/derpc-lockup.svg"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:12:40.057Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/derpc-logo-512.png"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:12:40.058Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/favicon.svg"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.716Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/derpc-lockup.svg"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.758Z",
+      "method": "GET",
+      "url": "https://blockrazor.io/favicon.ico"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.758Z",
+      "method": "GET",
+      "url": "https://drpc.org/favicon.ico"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.758Z",
+      "method": "GET",
+      "url": "https://mevblocker.io/favicon.ico"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.758Z",
+      "method": "GET",
+      "url": "https://blastapi.io/favicon.ico"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.759Z",
+      "method": "GET",
+      "url": "https://publicnode.com/favicon.ico"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.486Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.863Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/demo-D4E0jvfR.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.863Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/rolldown-runtime-XKyaHtl9.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.863Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/utils-Bpv4vmSW.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.863Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/sha3-CixuFzsY.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.863Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/endpoints-CRJPe_u7.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.863Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/verify-BrqvWFSp.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.863Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/reader-DA5FvdMd.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.864Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/dist-CM5luU_N.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.864Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/preload-helper-CRzLMJPS.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.864Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/sha2-CsZgHejA.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.864Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/__vite-browser-external-TtGlo6oh.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.864Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/src-DlO1qo0x.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.864Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/decodeFunctionResult-DcsPYciO.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.865Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/encodeFunctionResult-32HQ9o_H.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.865Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/localBatchGatewayRequest-BJhp8X5H.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.865Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/secp256k1-DTgEC2Fy.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.865Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/address-CYA4zBVK.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.865Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/mainnet-Fg_6B5mA.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.865Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/direct-connections-CHHR_MOD.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:42.865Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/src-B3Gfg644.css"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:43.434Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/derpc-lockup-CiJcctT3.svg"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:43.435Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/inter-latin-wght-normal-Dx4kXJAl.woff2"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:43.837Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/dist-DOxWJp2w.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:12:43.980Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/favicon-Try9hxE_.svg"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:13:58.901Z",
+      "method": "GET",
+      "url": "https://derpc.eth.limo/demo/assets/ccip-B6i2UnlS.js"
+    }
+  ],
+  "httpErrors": [
+    {
+      "phase": "site:/#/directory",
+      "url": "https://mevblocker.io/favicon.ico",
+      "status": 404
+    },
+    {
+      "phase": "site:/#/directory",
+      "url": "https://blockrazor.io/favicon.ico",
+      "status": 403
+    }
+  ],
+  "requestFailures": [
+    {
+      "phase": "site:/#/directory",
+      "url": "https://mevblocker.io/favicon.ico",
+      "error": "NS_ERROR_DOM_NETWORK_ERR"
+    },
+    {
+      "phase": "site:/#/directory",
+      "url": "https://blastapi.io/favicon.ico",
+      "error": "NS_ERROR_DOM_NETWORK_ERR"
+    },
+    {
+      "phase": "site:/#/directory",
+      "url": "https://blockrazor.io/favicon.ico",
+      "error": "NS_ERROR_DOM_NETWORK_ERR"
+    }
+  ],
+  "pageErrors": [],
+  "console": [],
+  "gates": {
+    "workerReady": true,
+    "lightClientVerified": true,
+    "workerPinVerified": true,
+    "provenRows": true,
+    "rawEthCallRefused": true,
+    "paymentsOff": true,
+    "productionBuild": true,
+    "secureBrowserContext": true,
+    "shutdownRefusal": true,
+    "noHttpAfterClose": true,
+    "noDirectRpcOrBeaconHttp": true,
+    "onlyAllowedExternalHttp": false,
+    "noPageErrors": true,
+    "pagesLoaded": true,
+    "noFailedSiteAssets": true,
+    "vpsGatewayConnected": true,
+    "noCompetingGatewayObserved": true
+  },
+  "releaseBinding": {
+    "cid": "bafybeierz5dpj35sy53e6ukykliwnbishpngl422sv74sfnksmphr3ir5e",
+    "source": {
+      "gitHead": "d90cc742259b7ff47b78c1e78910b5975ca25abc",
+      "uncommittedChanges": false
+    },
+    "manifestSha256": "6db8b1385da709db339f9aae4023e36846543c99fe497e01368dcf4f2f07ffaf",
+    "manifestFileCount": 55,
+    "provenance": {
+      "repository": "r0bops/DeRPC",
+      "runId": 42314676419,
+      "runUrl": "https://github.com/r0bops/DeRPC/actions/runs/42314676419",
+      "status": "completed",
+      "conclusion": "success",
+      "observedVia": "GitHub connector artifact metadata and all workflow jobs, 2026-11-07",
+      "jobs": [
+        {
+          "id": 128224279627,
+          "name": "package",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 128224685641,
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 128225911232,
+          "name": "summary",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "sourceSha": "d90cc742259b7ff47b78c1e78910b5975ca25abc",
+      "cid": "bafybeierz5dpj35sy53e6ukykliwnbishpngl422sv74sfnksmphr3ir5e",
+      "manifestSha256": "6db8b1385da709db339f9aae4023e36846543c99fe497e01368dcf4f2f07ffaf",
+      "artifacts": [
+        {
+          "id": 13550490718,
+          "name": "site-ipfs-release",
+          "archiveSha256": "5d8647f2e5652ac7090a74d7e85c1ec699f6b7ba515930f0f4546a046813b1fa"
+        },
+        {
+          "id": 13549968959,
+          "name": "site-deployment-evidence",
+          "archiveSha256": "4c2acf4f7ed16aba5ad67e47469dea54a90f934aac2fb37da9c6cb383b6efaa0"
+        }
+      ],
+      "publishedVerification": {
+        "ok": true,
+        "finishedAt": "2026-11-06T23:57:04.891Z",
+        "filesChecked": 55,
+        "signatureVerified": true,
+        "ipnsTarget": "/ipfs/bafybeierz5dpj35sy53e6ukykliwnbishpngl422sv74sfnksmphr3ir5e",
+        "qualification": "Fields summarized from downloaded published-check.json. The publication-state.json receipt was captured before final verification and still reports publish-uncertain; completed deployment verification and success job metadata supersede that intermediate receipt."
+      }
+    },
+    "browserResponses": [
+      {
+        "phase": "site:/",
+        "url": "https://derpc.eth.limo/",
+        "path": "index.html",
+        "status": 200,
+        "expectedSha256": "a4b15e10053a2e9aac144b893578eae71f4861fbba952cca3a1c0897cd516c51",
+        "headers": {
+          "content-type": "text/html",
+          "etag": "\"bafybeierz5dpj35sy53e6ukykliwnbishpngl422sv74sfnksmphr3ir5e-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/",
+          "x-ipfs-roots": "bafybeierz5dpj35sy53e6ukykliwnbishpngl422sv74sfnksmphr3ir5e"
+        },
+        "bytes": 1284,
+        "sha256": "a4b15e10053a2e9aac144b893578eae71f4861fbba952cca3a1c0897cd516c51",
+        "matchesManifest": true
+      },
+      {
+        "phase": "site:/",
+        "url": "https://derpc.eth.limo/assets/index-Bwl_yZyT.css",
+        "path": "assets/index-Bwl_yZyT.css",
+        "status": 200,
+        "expectedSha256": "5129f16137d4edf5b640ae1a85c1d3e1c92b61bf1f318442a64fa12fcf341f28",
+        "headers": {
+          "content-type": "text/css; charset=utf-8",
+          "etag": "\"bafkreicrfhywcn6u5x23mqfodkc4du7bzevwdpy7ggcefjspuex46na7fa-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/assets/index-Bwl_yZyT.css",
+          "x-ipfs-roots": "bafybeierz5dpj35sy53e6ukykliwnbishpngl422sv74sfnksmphr3ir5e,bafybeibgggtxsnh3i2phqzz774jra236ipvi6jomvn3ky6jf3br6zdhjyu,bafkreicrfhywcn6u5x23mqfodkc4du7bzevwdpy7ggcefjspuex46na7fa"
+        },
+        "bytes": 35281,
+        "sha256": "5129f16137d4edf5b640ae1a85c1d3e1c92b61bf1f318442a64fa12fcf341f28",
+        "matchesManifest": true
+      },
+      {
+        "phase": "site:/",
+        "url": "https://derpc.eth.limo/assets/index-D9NJMreI.js",
+        "path": "assets/index-D9NJMreI.js",
+        "status": 200,
+        "expectedSha256": "20ac686893681d9b76e8115749132bb9837aaaca0dbfa77623d48cdb5bcd6c22",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreibavrugre3idwnxn2ark5ergk5zqn5kvsqnx6txmi6urtnvxtlmei-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/assets/index-D9NJMreI.js",
+          "x-ipfs-roots": "bafybeierz5dpj35sy53e6ukykliwnbishpngl422sv74sfnksmphr3ir5e,bafybeibgggtxsnh3i2phqzz774jra236ipvi6jomvn3ky6jf3br6zdhjyu,bafkreibavrugre3idwnxn2ark5ergk5zqn5kvsqnx6txmi6urtnvxtlmei"
+        },
+        "bytes": 76148,
+        "sha256": "20ac686893681d9b76e8115749132bb9837aaaca0dbfa77623d48cdb5bcd6c22",
+        "matchesManifest": true
+      },
+      {
+        "phase": "site:/",
+        "url": "https://derpc.eth.limo/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "path": "assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "status": 200,
+        "expectedSha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+        "headers": {
+          "content-type": "font/woff2",
+          "etag": "\"bafkreibradtxl2dbntjgcg7oz6rduqtd24bxlbtytnb7anjdnixg7pkmmi\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeia4pieiqv6phjtsmq5mmwvs26x5oqzio4xpy5myz5whkrxr5g6gdu,bafkreibradtxl2dbntjgcg7oz6rduqtd24bxlbtytnb7anjdnixg7pkmmi"
+        },
+        "bytes": 48256,
+        "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+        "matchesManifest": true
+      },
+      {
+        "phase": "site:/",
+        "url": "https://derpc.eth.limo/derpc-lockup.svg",
+        "path": "derpc-lockup.svg",
+        "status": 200,
+        "expectedSha256": "41d1a1d0d07fa4cfded5584974ddaf7cc3023778771355a6c384e4a6df16fac2",
+        "headers": {
+          "content-type": "image/svg+xml",
+          "etag": "\"bafkreicb2gq5bud7uth55vkyjf2n3l34ymbdo6dxcnk2nq4e4stn6fx2yi-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/derpc-lockup.svg",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafkreicb2gq5bud7uth55vkyjf2n3l34ymbdo6dxcnk2nq4e4stn6fx2yi"
+        },
+        "bytes": 5926,
+        "sha256": "41d1a1d0d07fa4cfded5584974ddaf7cc3023778771355a6c384e4a6df16fac2",
+        "matchesManifest": true
+      },
+      {
+        "phase": "site:/",
+        "url": "https://derpc.eth.limo/derpc-logo-512.png",
+        "path": "derpc-logo-512.png",
+        "status": 200,
+        "expectedSha256": "e5c8bcbe8b67cdbdcc9500dbc214564a74cbac5ed7950229e8446544e94a5c8a",
+        "headers": {
+          "content-type": "image/png",
+          "etag": "\"bafkreihfzc6l5c3hzw64zfia3pbbivskotf2yxwxsubct2cemvcosss4ri\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/derpc-logo-512.png",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafkreihfzc6l5c3hzw64zfia3pbbivskotf2yxwxsubct2cemvcosss4ri"
+        },
+        "bytes": 12570,
+        "sha256": "e5c8bcbe8b67cdbdcc9500dbc214564a74cbac5ed7950229e8446544e94a5c8a",
+        "matchesManifest": true
+      },
+      {
+        "phase": "site:/",
+        "url": "https://derpc.eth.limo/favicon.svg",
+        "path": "favicon.svg",
+        "status": 200,
+        "expectedSha256": "840c5ef0525701709f7875c667d95ae39f264eae5b0377aac28de3bed8d9f722",
+        "headers": {
+          "content-type": "image/svg+xml",
+          "etag": "\"bafkreieebrppausxafyj66dvyzt5swxdt4te5ls3an32vqun4o7nrwpxei-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/favicon.svg",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafkreieebrppausxafyj66dvyzt5swxdt4te5ls3an32vqun4o7nrwpxei"
+        },
+        "bytes": 2523,
+        "sha256": "840c5ef0525701709f7875c667d95ae39f264eae5b0377aac28de3bed8d9f722",
+        "matchesManifest": true
+      },
+      {
+        "phase": "site:/#/directory",
+        "url": "https://derpc.eth.limo/derpc-lockup.svg",
+        "path": "derpc-lockup.svg",
+        "status": 200,
+        "expectedSha256": "41d1a1d0d07fa4cfded5584974ddaf7cc3023778771355a6c384e4a6df16fac2",
+        "headers": {},
+        "bodyReadError": "ProtocolError: Protocol error (network.getData): no such network data Network data for request id 2-483be70d-e748-469a-8f39-9cdd46f86c51 and DataType response not found RemoteError@chrome://remote/content/shared/RemoteError.sys.mjs:8:8\nWebDriverError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:169:5\nNoSuchNetworkDataError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:699:5\ngetData@chrome://remote/content/webdriver-bidi/modules/root/network.sys.mjs:1299:13\nhandleCommand@chro"
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/",
+        "path": "demo/index.html",
+        "status": 200,
+        "expectedSha256": "7306143387e2042aa9c317826be2b80e879421feb45bb8fae241069cd4bcc9bc",
+        "headers": {
+          "content-type": "text/html",
+          "etag": "\"bafybeidb2qzhlt4pkdca4nyfdbxjcjqvycj7gqekkpdctethrjbg3ilerq-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/",
+          "x-ipfs-roots": "bafybeierz5dpj35sy53e6ukykliwnbishpngl422sv74sfnksmphr3ir5e,bafybeidb2qzhlt4pkdca4nyfdbxjcjqvycj7gqekkpdctethrjbg3ilerq"
+        },
+        "bytes": 25329,
+        "sha256": "7306143387e2042aa9c317826be2b80e879421feb45bb8fae241069cd4bcc9bc",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/rolldown-runtime-XKyaHtl9.js",
+        "path": "demo/assets/rolldown-runtime-XKyaHtl9.js",
+        "status": 200,
+        "expectedSha256": "548d1dbf321e7d2ae804fcc158b588706a7c52f8ca175de1490c6ccb4dbe55b7",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreicuruo36mq6puvoqbh4yfmllcdqnj6ff6gkc5o6csimntfu3psvw4-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/rolldown-runtime-XKyaHtl9.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreicuruo36mq6puvoqbh4yfmllcdqnj6ff6gkc5o6csimntfu3psvw4"
+        },
+        "bytes": 726,
+        "sha256": "548d1dbf321e7d2ae804fcc158b588706a7c52f8ca175de1490c6ccb4dbe55b7",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/sha2-CsZgHejA.js",
+        "path": "demo/assets/sha2-CsZgHejA.js",
+        "status": 200,
+        "expectedSha256": "21bf6ca4a29d1a03c1799f3c110180c7b2c0413a798c8246784c68b31351cd28",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreibbx5wkjiu5dib4c6m7hqiqdaghwlaecotzrsbem6cmnczrguonfa-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/sha2-CsZgHejA.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreibbx5wkjiu5dib4c6m7hqiqdaghwlaecotzrsbem6cmnczrguonfa"
+        },
+        "bytes": 3574,
+        "sha256": "21bf6ca4a29d1a03c1799f3c110180c7b2c0413a798c8246784c68b31351cd28",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/reader-DA5FvdMd.js",
+        "path": "demo/assets/reader-DA5FvdMd.js",
+        "status": 200,
+        "expectedSha256": "28a9d203e15827a714a17bc24fb695b22e39b16c0af1e1f46e41a04252b280c6",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreibivhjahykye6trjil3yjh3nfnsfy43c3ak6hq7i3sbubbffmuayy-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/reader-DA5FvdMd.js",
+          "x-ipfs-roots": "bafybeihchfdebcwesdidytlsgdlsrb2erhlyrlirk53xdrcvatbs5ysr2e,bafybeidb2qzhlt4pkdca4nyfdbxjcjqvycj7gqekkpdctethrjbg3ilerq,bafybeic7ioezustbtnpb3f6i33mjmw5ur5rhhrf37bygmydufw5vbjlhbe,bafkreibivhjahykye6trjil3yjh3nfnsfy43c3ak6hq7i3sbubbffmuayy"
+        },
+        "bytes": 2786,
+        "sha256": "28a9d203e15827a714a17bc24fb695b22e39b16c0af1e1f46e41a04252b280c6",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/verify-BrqvWFSp.js",
+        "path": "demo/assets/verify-BrqvWFSp.js",
+        "status": 200,
+        "expectedSha256": "21d531bb2f3f321606e6022e8129ea2933cf9586bf565cf7d1b5efc81d872566",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreibb2uy3wlz7gilanzqcf2ast2rjgphzlbv7kzoppunv57eb3bzfmy-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/verify-BrqvWFSp.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreibb2uy3wlz7gilanzqcf2ast2rjgphzlbv7kzoppunv57eb3bzfmy"
+        },
+        "bytes": 5210,
+        "sha256": "21d531bb2f3f321606e6022e8129ea2933cf9586bf565cf7d1b5efc81d872566",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/sha3-CixuFzsY.js",
+        "path": "demo/assets/sha3-CixuFzsY.js",
+        "status": 200,
+        "expectedSha256": "9b0af5805db52a230efc35c7a5dbf6fda63fafb7334a7fed275b3b9bf1a75b90",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreie3bl2yaxnvfirq57bvy6s5x5x5uy727nztjj762j23hon7dj23sa-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/sha3-CixuFzsY.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreie3bl2yaxnvfirq57bvy6s5x5x5uy727nztjj762j23hon7dj23sa"
+        },
+        "bytes": 3229,
+        "sha256": "9b0af5805db52a230efc35c7a5dbf6fda63fafb7334a7fed275b3b9bf1a75b90",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/utils-Bpv4vmSW.js",
+        "path": "demo/assets/utils-Bpv4vmSW.js",
+        "status": 200,
+        "expectedSha256": "5114638bb111b647e478a947be5beed5558487685dc8284144566df3fc03d851",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreicrcrryxmirwzd6i6fji67fx3wvkwcio2c5zauecrcwnxz7ya6yke-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/utils-Bpv4vmSW.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreicrcrryxmirwzd6i6fji67fx3wvkwcio2c5zauecrcwnxz7ya6yke"
+        },
+        "bytes": 2194,
+        "sha256": "5114638bb111b647e478a947be5beed5558487685dc8284144566df3fc03d851",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/endpoints-CRJPe_u7.js",
+        "path": "demo/assets/endpoints-CRJPe_u7.js",
+        "status": 200,
+        "expectedSha256": "947536fe80808ebadf8433a7e9d10eb997c21d8cecbd56ef8acd497b79740dc1",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreieuou3p5aear25n7bbtu7u5cdvzs7bb3dhmxvlo7cwnjf5xs5anye-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/endpoints-CRJPe_u7.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreieuou3p5aear25n7bbtu7u5cdvzs7bb3dhmxvlo7cwnjf5xs5anye"
+        },
+        "bytes": 5051,
+        "sha256": "947536fe80808ebadf8433a7e9d10eb997c21d8cecbd56ef8acd497b79740dc1",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/demo-D4E0jvfR.js",
+        "path": "demo/assets/demo-D4E0jvfR.js",
+        "status": 200,
+        "expectedSha256": "5deffcb7b6f2dbbea17fb9cc3dda15a9ba2169360d78a980ca60a5e1f8776a93",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreic5576lpnxs3o7kc75zzq65ufnjxiqwsnqnpcuybstauxq7q53ksm-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/demo-D4E0jvfR.js",
+          "x-ipfs-roots": "bafybeihchfdebcwesdidytlsgdlsrb2erhlyrlirk53xdrcvatbs5ysr2e,bafybeidb2qzhlt4pkdca4nyfdbxjcjqvycj7gqekkpdctethrjbg3ilerq,bafybeic7ioezustbtnpb3f6i33mjmw5ur5rhhrf37bygmydufw5vbjlhbe,bafkreic5576lpnxs3o7kc75zzq65ufnjxiqwsnqnpcuybstauxq7q53ksm"
+        },
+        "bytes": 66912,
+        "sha256": "5deffcb7b6f2dbbea17fb9cc3dda15a9ba2169360d78a980ca60a5e1f8776a93",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/preload-helper-CRzLMJPS.js",
+        "path": "demo/assets/preload-helper-CRzLMJPS.js",
+        "status": 200,
+        "expectedSha256": "bcc465e3e61dc3878a69ffa95ccb53cb82d95b1639ada223420b281ebd150048",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreif4yrs6hzq5yodyu2p7vfomwu6lqlmvwfrzvwrcgqqlfapl2fiaja-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/preload-helper-CRzLMJPS.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreif4yrs6hzq5yodyu2p7vfomwu6lqlmvwfrzvwrcgqqlfapl2fiaja"
+        },
+        "bytes": 1534,
+        "sha256": "bcc465e3e61dc3878a69ffa95ccb53cb82d95b1639ada223420b281ebd150048",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/dist-CM5luU_N.js",
+        "path": "demo/assets/dist-CM5luU_N.js",
+        "status": 200,
+        "expectedSha256": "a5350ba64490fc6f21762251b8509a52e509b4274e243d0d5c8479d991b3027f",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreiffguf2mreq7rxsc5rckg4fbgss4ue3ij2oeq6q2xeephmzdmycp4-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/dist-CM5luU_N.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreiffguf2mreq7rxsc5rckg4fbgss4ue3ij2oeq6q2xeephmzdmycp4"
+        },
+        "bytes": 21582,
+        "sha256": "a5350ba64490fc6f21762251b8509a52e509b4274e243d0d5c8479d991b3027f",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/__vite-browser-external-TtGlo6oh.js",
+        "path": "demo/assets/__vite-browser-external-TtGlo6oh.js",
+        "status": 200,
+        "expectedSha256": "099e4922cd21d73ac303cc0a95f5fac5b316fe370e881f20a9bb741419ad71db",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreiajtzesftjb245mga6mbkk7l6wfwmlp4nyorapsbkn3oqkbtllr3m\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/__vite-browser-external-TtGlo6oh.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreiajtzesftjb245mga6mbkk7l6wfwmlp4nyorapsbkn3oqkbtllr3m"
+        },
+        "bytes": 94,
+        "sha256": "099e4922cd21d73ac303cc0a95f5fac5b316fe370e881f20a9bb741419ad71db",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/encodeFunctionResult-32HQ9o_H.js",
+        "path": "demo/assets/encodeFunctionResult-32HQ9o_H.js",
+        "status": 200,
+        "expectedSha256": "548ddfd7e51be91cc783846ed571cca80a076714c211bdbe0ed6f57f695da2a9",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreicurxp5pzi35eompa4en3kxdtfibidwofgccg634dww6v7wsxncve-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/encodeFunctionResult-32HQ9o_H.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreicurxp5pzi35eompa4en3kxdtfibidwofgccg634dww6v7wsxncve"
+        },
+        "bytes": 520,
+        "sha256": "548ddfd7e51be91cc783846ed571cca80a076714c211bdbe0ed6f57f695da2a9",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/decodeFunctionResult-DcsPYciO.js",
+        "path": "demo/assets/decodeFunctionResult-DcsPYciO.js",
+        "status": 200,
+        "expectedSha256": "39a1e729decad2aa8ad038e86824e3baaf68f98f91fda2624427bd2e04ae75c4",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreibzuhtstxwk2kvivuby5bucjy52v5uptd4r7wrgerbhxuxajltvyq-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/decodeFunctionResult-DcsPYciO.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreibzuhtstxwk2kvivuby5bucjy52v5uptd4r7wrgerbhxuxajltvyq"
+        },
+        "bytes": 43150,
+        "sha256": "39a1e729decad2aa8ad038e86824e3baaf68f98f91fda2624427bd2e04ae75c4",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/src-B3Gfg644.css",
+        "path": "demo/assets/src-B3Gfg644.css",
+        "status": 200,
+        "expectedSha256": "03efb6f9fc8e7192f1d2cfb403f6a09455b2f038195ac6f79e0e887f5f05dd60",
+        "headers": {
+          "content-type": "text/css; charset=utf-8",
+          "etag": "\"bafkreiad563pt7eoogjpduwpwqb7nieukwzpaoazlldpphqorb7v6bo5ma-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/src-B3Gfg644.css",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreiad563pt7eoogjpduwpwqb7nieukwzpaoazlldpphqorb7v6bo5ma"
+        },
+        "bytes": 22011,
+        "sha256": "03efb6f9fc8e7192f1d2cfb403f6a09455b2f038195ac6f79e0e887f5f05dd60",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/direct-connections-CHHR_MOD.js",
+        "path": "demo/assets/direct-connections-CHHR_MOD.js",
+        "status": 200,
+        "expectedSha256": "144a4e3ddf0cbfb64b77138e3ef963eeda5876d73077178d6519889c8eaf7d8a",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreiaujjhd3xymx63ew5ytry7psy7o3jmhnvzqo4ly2zizrcoi5l35ri-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/direct-connections-CHHR_MOD.js",
+          "x-ipfs-roots": "bafybeihchfdebcwesdidytlsgdlsrb2erhlyrlirk53xdrcvatbs5ysr2e,bafybeidb2qzhlt4pkdca4nyfdbxjcjqvycj7gqekkpdctethrjbg3ilerq,bafybeic7ioezustbtnpb3f6i33mjmw5ur5rhhrf37bygmydufw5vbjlhbe,bafkreiaujjhd3xymx63ew5ytry7psy7o3jmhnvzqo4ly2zizrcoi5l35ri"
+        },
+        "bytes": 2911,
+        "sha256": "144a4e3ddf0cbfb64b77138e3ef963eeda5876d73077178d6519889c8eaf7d8a",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/mainnet-Fg_6B5mA.js",
+        "path": "demo/assets/mainnet-Fg_6B5mA.js",
+        "status": 200,
+        "expectedSha256": "ea6b46bdd5fe72a4bfb6e6d630f002b50426dbd7aaecec52cfa7cf081754198a",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreihknndl3vp6oksl7nxg2yypaavvaqtnxv5k5twfft5hz4ebovazri-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/mainnet-Fg_6B5mA.js",
+          "x-ipfs-roots": "bafybeihchfdebcwesdidytlsgdlsrb2erhlyrlirk53xdrcvatbs5ysr2e,bafybeidb2qzhlt4pkdca4nyfdbxjcjqvycj7gqekkpdctethrjbg3ilerq,bafybeic7ioezustbtnpb3f6i33mjmw5ur5rhhrf37bygmydufw5vbjlhbe,bafkreihknndl3vp6oksl7nxg2yypaavvaqtnxv5k5twfft5hz4ebovazri"
+        },
+        "bytes": 122573,
+        "sha256": "ea6b46bdd5fe72a4bfb6e6d630f002b50426dbd7aaecec52cfa7cf081754198a",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/secp256k1-DTgEC2Fy.js",
+        "path": "demo/assets/secp256k1-DTgEC2Fy.js",
+        "status": 200,
+        "expectedSha256": "49404a8b0a98f9a7f2d81e667a8b1f777e0176ef13f82014f0e260099894aa21",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreicjibfiwcuy7gt7fwa6mz5iwh3xpyaxn3yt7aqbj4hcmaezrffkee-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/secp256k1-DTgEC2Fy.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreicjibfiwcuy7gt7fwa6mz5iwh3xpyaxn3yt7aqbj4hcmaezrffkee"
+        },
+        "bytes": 26342,
+        "sha256": "49404a8b0a98f9a7f2d81e667a8b1f777e0176ef13f82014f0e260099894aa21",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/address-CYA4zBVK.js",
+        "path": "demo/assets/address-CYA4zBVK.js",
+        "status": 200,
+        "expectedSha256": "01be126d4c343d659d31ae642044335a6542cf346449bfd2670c84710da0c7a3",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreiabxyjg2tbuhvsz2mnomqqeim22mvbm6ndejg75ezymqryq3ighum-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/address-CYA4zBVK.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreiabxyjg2tbuhvsz2mnomqqeim22mvbm6ndejg75ezymqryq3ighum"
+        },
+        "bytes": 545,
+        "sha256": "01be126d4c343d659d31ae642044335a6542cf346449bfd2670c84710da0c7a3",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/src-DlO1qo0x.js",
+        "path": "demo/assets/src-DlO1qo0x.js",
+        "status": 200,
+        "expectedSha256": "84bfe38ec1651c288bfdded6bcc16ff2e421b6d18e5b573ccb7fe989c25aae44",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafybeid7jituvlhu2x3u5y3laavi7mkpsayvxr2vi2mszg2ate7m6ig44a-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/src-DlO1qo0x.js",
+          "x-ipfs-roots": "bafybeihchfdebcwesdidytlsgdlsrb2erhlyrlirk53xdrcvatbs5ysr2e,bafybeidb2qzhlt4pkdca4nyfdbxjcjqvycj7gqekkpdctethrjbg3ilerq,bafybeic7ioezustbtnpb3f6i33mjmw5ur5rhhrf37bygmydufw5vbjlhbe,bafybeid7jituvlhu2x3u5y3laavi7mkpsayvxr2vi2mszg2ate7m6ig44a"
+        },
+        "bytes": 1214230,
+        "sha256": "84bfe38ec1651c288bfdded6bcc16ff2e421b6d18e5b573ccb7fe989c25aae44",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/localBatchGatewayRequest-BJhp8X5H.js",
+        "path": "demo/assets/localBatchGatewayRequest-BJhp8X5H.js",
+        "status": 200,
+        "expectedSha256": "3c2c414c560db5a89fc291d475c822829258b4f6ef41ba6eaa0b2e7d8a1b573b",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreib4frauyvqnwwuj7qur2r24qiucsjmlj5xpig5g5kqlfz6yug2xhm-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/localBatchGatewayRequest-BJhp8X5H.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreib4frauyvqnwwuj7qur2r24qiucsjmlj5xpig5g5kqlfz6yug2xhm"
+        },
+        "bytes": 60095,
+        "sha256": "3c2c414c560db5a89fc291d475c822829258b4f6ef41ba6eaa0b2e7d8a1b573b",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/derpc-lockup-CiJcctT3.svg",
+        "path": "demo/assets/derpc-lockup-CiJcctT3.svg",
+        "status": 200,
+        "expectedSha256": "41d1a1d0d07fa4cfded5584974ddaf7cc3023778771355a6c384e4a6df16fac2",
+        "headers": {
+          "content-type": "image/svg+xml",
+          "etag": "\"bafkreicb2gq5bud7uth55vkyjf2n3l34ymbdo6dxcnk2nq4e4stn6fx2yi-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/derpc-lockup-CiJcctT3.svg",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreicb2gq5bud7uth55vkyjf2n3l34ymbdo6dxcnk2nq4e4stn6fx2yi"
+        },
+        "bytes": 5926,
+        "sha256": "41d1a1d0d07fa4cfded5584974ddaf7cc3023778771355a6c384e4a6df16fac2",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "path": "demo/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "status": 200,
+        "expectedSha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+        "headers": {
+          "content-type": "font/woff2",
+          "etag": "\"bafkreibradtxl2dbntjgcg7oz6rduqtd24bxlbtytnb7anjdnixg7pkmmi\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreibradtxl2dbntjgcg7oz6rduqtd24bxlbtytnb7anjdnixg7pkmmi"
+        },
+        "bytes": 48256,
+        "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/dist-DOxWJp2w.js",
+        "path": "demo/assets/dist-DOxWJp2w.js",
+        "status": 200,
+        "expectedSha256": "342b622a7749626a2efe912f30cb477663a59441c9c8926a84e76dd508eeea92",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreibufnrcu52jmjvc57urf4ymwr3wmosziqojzcjgvbhhnxkqr3xksi\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/dist-DOxWJp2w.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreibufnrcu52jmjvc57urf4ymwr3wmosziqojzcjgvbhhnxkqr3xksi"
+        },
+        "bytes": 48,
+        "sha256": "342b622a7749626a2efe912f30cb477663a59441c9c8926a84e76dd508eeea92",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/favicon-Try9hxE_.svg",
+        "path": "demo/assets/favicon-Try9hxE_.svg",
+        "status": 200,
+        "expectedSha256": "840c5ef0525701709f7875c667d95ae39f264eae5b0377aac28de3bed8d9f722",
+        "headers": {
+          "content-type": "image/svg+xml",
+          "etag": "\"bafkreieebrppausxafyj66dvyzt5swxdt4te5ls3an32vqun4o7nrwpxei-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/favicon-Try9hxE_.svg",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreieebrppausxafyj66dvyzt5swxdt4te5ls3an32vqun4o7nrwpxei"
+        },
+        "bytes": 2523,
+        "sha256": "840c5ef0525701709f7875c667d95ae39f264eae5b0377aac28de3bed8d9f722",
+        "matchesManifest": true
+      },
+      {
+        "phase": "boot-and-read",
+        "url": "https://derpc.eth.limo/demo/assets/ccip-B6i2UnlS.js",
+        "path": "demo/assets/ccip-B6i2UnlS.js",
+        "status": 200,
+        "expectedSha256": "a9a1a3280e8ef7cf64d7649fd879226c1116c4444f392d5edd295648da09c971",
+        "headers": {
+          "content-type": "text/javascript; charset=utf-8",
+          "etag": "\"bafkreifjugrsqduo67hwjv3et7mhsitmcelmircphewv5xjjkzenucojoe-gzip\"",
+          "x-ipfs-path": "/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc/demo/assets/ccip-B6i2UnlS.js",
+          "x-ipfs-roots": "bafybeidksnvtvc7n4ciiflw7o2gc563lqaxtulmqix2cxvddvhc4sv24me,bafybeibrvyzr23jlig56jotfgwwitn74m6gfu7kvowtw3hocqgvt56r4aa,bafybeie7352f5pzjtgfttwvglc6s6zr2uffmbwo4spgivu4gzojd24a7ji,bafkreifjugrsqduo67hwjv3et7mhsitmcelmircphewv5xjjkzenucojoe"
+        },
+        "bytes": 2907,
+        "sha256": "a9a1a3280e8ef7cf64d7649fd879226c1116c4444f392d5edd295648da09c971",
+        "matchesManifest": true
+      }
+    ],
+    "qualification": "Hashes are of response bodies collected by Firefox BiDi for this browser, compared with the supplied release manifest. Whitelisted gateway headers corroborate delivery; unchanged assets can retain older cache-root headers. This does not independently recompute the IPFS DAG or replace the release workflow CID verification.",
+    "gates": {
+      "documentsMatchManifest": true,
+      "observedAssetsMatchManifest": false,
+      "websiteDocumentBoundToCid": true
+    },
+    "ok": false,
+    "distinctFilesObserved": 33
+  },
+  "negativeProof": {
+    "requested": true,
+    "status": "failed",
+    "gates": {
+      "injectedAttemptObserved": false,
+      "hostVerifierRejected": false,
+      "selectedOperatorRecoveredAfterRejection": false,
+      "recoveredReadsVerified": true,
+      "selectionPreserved": true
+    },
+    "scope": "Opt-in production UI simulation: inflate proof fields locally after a real anonymous request, require host-verifier rejection, then selected-operator recovery. No malicious server is introduced; this does not prove independent-operator or onion-endpoint failover.",
+    "before": {
+      "worker": "ready — tor-js 0.4.4 via configured gateway (1), after 34.9 s",
+      "lightClient": "verified — sync-committee signatures checked, 29.3 s after the worker · pinned checkpoint epoch 487173 (1.3 days old)",
+      "header": "26359239 (16.8 min ago) · hash 0x847061fc… · state root 0xb5024bc7…",
+      "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26359239",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+      "poolEvents": "00:13:58 · success · mevblocker.derpc.eth · attempt 100:13:53 · attempt · mevblocker.derpc.eth · attempt 100:13:53 · success · blockrazor.derpc.eth · attempt 100:13:52 · attempt · blockrazor.derpc.eth · attempt 100:13:52 · success · mevblocker.derpc.eth · attempt 100:13:50 · attempt · mevblocker.derpc.eth · attempt 100:13:50 · success · mevblocker.derpc.eth · attempt 100:13:47 · attempt · mevblocker.derpc.eth · attempt 1",
+      "poolEventRows": [
+        "00:13:58 · success · mevblocker.derpc.eth · attempt 1",
+        "00:13:53 · attempt · mevblocker.derpc.eth · attempt 1",
+        "00:13:53 · success · blockrazor.derpc.eth · attempt 1",
+        "00:13:52 · attempt · blockrazor.derpc.eth · attempt 1",
+        "00:13:52 · success · mevblocker.derpc.eth · attempt 1",
+        "00:13:50 · attempt · mevblocker.derpc.eth · attempt 1",
+        "00:13:50 · success · mevblocker.derpc.eth · attempt 1",
+        "00:13:47 · attempt · mevblocker.derpc.eth · attempt 1"
+      ],
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "2,113,687.7825 ETH · verified at block 26359239",
+            "class": "ok"
+          },
+          {
+            "text": "mevblocker.derpc.eth",
+            "class": ""
+          },
+          {
+            "text": "67.8 s",
+            "class": ""
+          }
+        ],
+        [
+          {
+            "text": "WETH balance of the Uniswap V2 USDC/WETH pair · proven storage slot",
+            "class": ""
+          },
+          {
+            "text": "4,292.1919 WETH · verified at block 26359239",
+            "class": "ok"
+          },
+          {
+            "text": "blockrazor.derpc.eth",
+            "class": ""
+          },
+          {
+            "text": "1.7 s",
+            "class": ""
+          }
+        ],
+        [
+          {
+            "text": "WETH contract code · viem getCode",
+            "class": ""
+          },
+          {
+            "text": "3124 bytes, matching the proven code hash · verified at block 26359239",
+            "class": "ok"
+          },
+          {
+            "text": "mevblocker.derpc.eth",
+            "class": ""
+          },
+          {
+            "text": "4.9 s",
+            "class": ""
+          }
+        ],
+        [
+          {
+            "text": "WETH balanceOf through eth_call · viem readContract",
+            "class": ""
+          },
+          {
+            "text": "refused as expected — 4200 · ProviderRpcError: eth_call results carry no proof: enable local verified execution explicitly before using this method",
+            "class": "warn"
+          },
+          {
+            "text": "nothing sent",
+            "class": ""
+          },
+          {
+            "text": "1.0 s",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": false,
+      "cutDisabled": false,
+      "liarDisabled": false,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    },
+    "events": [
+      "00:14:00 · attempt · mevblocker.derpc.eth · attempt 1",
+      "00:14:02 · success · mevblocker.derpc.eth · attempt 1",
+      "00:14:02 · attempt · blockrazor.derpc.eth · attempt 1",
+      "00:14:04 · success · blockrazor.derpc.eth · attempt 1",
+      "00:14:04 · attempt · mevblocker.derpc.eth · attempt 1",
+      "00:14:09 · success · mevblocker.derpc.eth · attempt 1"
+    ],
+    "after": {
+      "worker": "ready — tor-js 0.4.4 via configured gateway (1), after 34.9 s",
+      "lightClient": "verified — sync-committee signatures checked, 29.3 s after the worker · pinned checkpoint epoch 487173 (1.3 days old)",
+      "header": "26359239 (17.0 min ago) · hash 0x847061fc… · state root 0xb5024bc7…",
+      "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26359239",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+      "poolEvents": "00:14:09 · success · mevblocker.derpc.eth · attempt 100:14:04 · attempt · mevblocker.derpc.eth · attempt 100:14:04 · success · blockrazor.derpc.eth · attempt 100:14:02 · attempt · blockrazor.derpc.eth · attempt 100:14:02 · success · mevblocker.derpc.eth · attempt 100:14:00 · attempt · mevblocker.derpc.eth · attempt 100:13:58 · success · mevblocker.derpc.eth · attempt 100:13:53 · attempt · mevblocker.derpc.eth · attempt 100:13:53 · success · blockrazor.derpc.eth · attempt 100:13:52 · attempt · blockrazor.derpc.eth · attempt 100:13:52 · success · mevblocker.derpc.eth · attempt 100:13:50 · attempt · mevblocker.derpc.eth · attempt 100:13:50 · success · mevblocker.derpc.eth · attempt 100:13:47 · attempt · mevblocker.derpc.eth · attempt 1",
+      "poolEventRows": [
+        "00:14:09 · success · mevblocker.derpc.eth · attempt 1",
+        "00:14:04 · attempt · mevblocker.derpc.eth · attempt 1",
+        "00:14:04 · success · blockrazor.derpc.eth · attempt 1",
+        "00:14:02 · attempt · blockrazor.derpc.eth · attempt 1",
+        "00:14:02 · success · mevblocker.derpc.eth · attempt 1",
+        "00:14:00 · attempt · mevblocker.derpc.eth · attempt 1",
+        "00:13:58 · success · mevblocker.derpc.eth · attempt 1",
+        "00:13:53 · attempt · mevblocker.derpc.eth · attempt 1",
+        "00:13:53 · success · blockrazor.derpc.eth · attempt 1",
+        "00:13:52 · attempt · blockrazor.derpc.eth · attempt 1",
+        "00:13:52 · success · mevblocker.derpc.eth · attempt 1",
+        "00:13:50 · attempt · mevblocker.derpc.eth · attempt 1",
+        "00:13:50 · success · mevblocker.derpc.eth · attempt 1",
+        "00:13:47 · attempt · mevblocker.derpc.eth · attempt 1"
+      ],
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "2,113,687.7825 ETH · verified at block 26359239",
+            "class": "ok"
+          },
+          {
+            "text": "mevblocker.derpc.eth",
+            "class": ""
+          },
+          {
+            "text": "2.3 s",
+            "class": ""
+          }
+        ],
+        [
+          {
+            "text": "WETH balance of the Uniswap V2 USDC/WETH pair · proven storage slot",
+            "class": ""
+          },
+          {
+            "text": "4,292.1919 WETH · verified at block 26359239",
+            "class": "ok"
+          },
+          {
+            "text": "blockrazor.derpc.eth",
+            "class": ""
+          },
+          {
+            "text": "1.7 s",
+            "class": ""
+          }
+        ],
+        [
+          {
+            "text": "WETH contract code · viem getCode",
+            "class": ""
+          },
+          {
+            "text": "3124 bytes, matching the proven code hash · verified at block 26359239",
+            "class": "ok"
+          },
+          {
+            "text": "mevblocker.derpc.eth",
+            "class": ""
+          },
+          {
+            "text": "4.5 s",
+            "class": ""
+          }
+        ],
+        [
+          {
+            "text": "WETH balanceOf through eth_call · viem readContract",
+            "class": ""
+          },
+          {
+            "text": "refused as expected — 4200 · ProviderRpcError: eth_call results carry no proof: enable local verified execution explicitly before using this method",
+            "class": "warn"
+          },
+          {
+            "text": "nothing sent",
+            "class": ""
+          },
+          {
+            "text": "0.0 s",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": false,
+      "cutDisabled": false,
+      "liarDisabled": true,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    },
+    "ok": false,
+    "screenshot": "/tmp/derpc-live-qa-2026-11-07/public-firefox-recheck-negative.png"
+  },
+  "qualifications": [
+    "Production timeout settings and worker configuration are unchanged; 180 seconds bounds this observation, not the application.",
+    "External HTTP requests are observed through Firefox/Puppeteer events. This is not a packet capture or proof of all browser background traffic.",
+    "The intended release configures only the VPS gateway. This checker requires its succeeded WebRTC candidate and refuses to pass if another working gateway is observed.",
+    "Test-only RTCPeerConnection observation retains native peer references and inspects selected/nominated candidate-pair statistics in every accessible frame. It does not change ICE options, certificates, gateway configuration, or application deadlines.",
+    "A successful candidate with received traffic proves the gateway connection. Sampled stats are not a complete packet capture; competing observed gateways prevent exclusive gateway attribution.",
+    "Shutdown is checked through real UI refusal and an HTTP observation window; encrypted KPS packet counts are not exposed by this UI."
+  ],
+  "browser": "firefox/156.0.1",
+  "demoHttpStatus": 200,
+  "initialState": {
+    "worker": "booting tor-js 0.4.4 via configured gateway (1)… 0.0 s",
+    "lightClient": "waiting for the worker…",
+    "header": "—",
+    "pin": "proven through your operators once you choose them (the check is a read too)",
+    "choice": "Active: manual · no operators; reads are stopped",
+    "poolEvents": "",
+    "poolEventRows": [],
+    "reads": [
+      [
+        {
+          "text": "No reads: apply a nonempty manual choice or automatic routing above.",
+          "class": "muted"
+        }
+      ]
+    ],
+    "paymentsEnabled": false,
+    "paymentControlsDisabled": true,
+    "readDisabled": true,
+    "cutDisabled": true,
+    "liarDisabled": true,
+    "developmentHandlePresent": false,
+    "secureContext": true,
+    "selectedOperators": []
+  },
+  "lastState": {
+    "worker": "closed — anonymous network cut; DeRPC never falls back to a direct request",
+    "lightClient": "stale — DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+    "header": "26359239 (17.0 min ago) · hash 0x847061fc… · state root 0xb5024bc7…",
+    "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26359239",
+    "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+    "poolEvents": "00:14:09 · success · mevblocker.derpc.eth · attempt 100:14:04 · attempt · mevblocker.derpc.eth · attempt 100:14:04 · success · blockrazor.derpc.eth · attempt 100:14:02 · attempt · blockrazor.derpc.eth · attempt 100:14:02 · success · mevblocker.derpc.eth · attempt 100:14:00 · attempt · mevblocker.derpc.eth · attempt 100:13:58 · success · mevblocker.derpc.eth · attempt 100:13:53 · attempt · mevblocker.derpc.eth · attempt 100:13:53 · success · blockrazor.derpc.eth · attempt 100:13:52 · attempt · blockrazor.derpc.eth · attempt 100:13:52 · success · mevblocker.derpc.eth · attempt 100:13:50 · attempt · mevblocker.derpc.eth · attempt 100:13:50 · success · mevblocker.derpc.eth · attempt 100:13:47 · attempt · mevblocker.derpc.eth · attempt 1",
+    "poolEventRows": [
+      "00:14:09 · success · mevblocker.derpc.eth · attempt 1",
+      "00:14:04 · attempt · mevblocker.derpc.eth · attempt 1",
+      "00:14:04 · success · blockrazor.derpc.eth · attempt 1",
+      "00:14:02 · attempt · blockrazor.derpc.eth · attempt 1",
+      "00:14:02 · success · mevblocker.derpc.eth · attempt 1",
+      "00:14:00 · attempt · mevblocker.derpc.eth · attempt 1",
+      "00:13:58 · success · mevblocker.derpc.eth · attempt 1",
+      "00:13:53 · attempt · mevblocker.derpc.eth · attempt 1",
+      "00:13:53 · success · blockrazor.derpc.eth · attempt 1",
+      "00:13:52 · attempt · blockrazor.derpc.eth · attempt 1",
+      "00:13:52 · success · mevblocker.derpc.eth · attempt 1",
+      "00:13:50 · attempt · mevblocker.derpc.eth · attempt 1",
+      "00:13:50 · success · mevblocker.derpc.eth · attempt 1",
+      "00:13:47 · attempt · mevblocker.derpc.eth · attempt 1"
+    ],
+    "reads": [
+      [
+        {
+          "text": "ETH balance of the WETH contract · viem getBalance",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balance of the Uniswap V2 USDC/WETH pair · proven storage slot",
+          "class": ""
+        },
+        {
+          "text": "TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH contract code · viem getCode",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balanceOf through eth_call · viem readContract",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ]
+    ],
+    "paymentsEnabled": false,
+    "paymentControlsDisabled": true,
+    "readDisabled": true,
+    "cutDisabled": true,
+    "liarDisabled": true,
+    "developmentHandlePresent": false,
+    "secureContext": true,
+    "selectedOperators": [
+      "mevblocker.derpc.eth",
+      "blockrazor.derpc.eth"
+    ]
+  },
+  "workerLog": "[warn] [00.094] [tor_memquota::config] Unable to get the total available memory. Using a constant max instead: total available memory is unavailable\n[warn] [00.095] [tor_memquota::config] Unable to get the total available memory. Using a constant max instead: total available memory is unavailable\n[warn] [02.047] Gateway 45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg reports itself as a demo instance: limited capacity, and it may disappear at any time. Run your own gateway for anything real: https://github.com/ethereum/tor-js/tree/main/crates/tor-js-gateway\n",
+  "readState": {
+    "worker": "ready — tor-js 0.4.4 via configured gateway (1), after 34.9 s",
+    "lightClient": "verified — sync-committee signatures checked, 29.3 s after the worker · pinned checkpoint epoch 487173 (1.3 days old)",
+    "header": "26359239 (16.8 min ago) · hash 0x847061fc… · state root 0xb5024bc7…",
+    "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26359239",
+    "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+    "poolEvents": "00:13:58 · success · mevblocker.derpc.eth · attempt 100:13:53 · attempt · mevblocker.derpc.eth · attempt 100:13:53 · success · blockrazor.derpc.eth · attempt 100:13:52 · attempt · blockrazor.derpc.eth · attempt 100:13:52 · success · mevblocker.derpc.eth · attempt 100:13:50 · attempt · mevblocker.derpc.eth · attempt 100:13:50 · success · mevblocker.derpc.eth · attempt 100:13:47 · attempt · mevblocker.derpc.eth · attempt 1",
+    "poolEventRows": [
+      "00:13:58 · success · mevblocker.derpc.eth · attempt 1",
+      "00:13:53 · attempt · mevblocker.derpc.eth · attempt 1",
+      "00:13:53 · success · blockrazor.derpc.eth · attempt 1",
+      "00:13:52 · attempt · blockrazor.derpc.eth · attempt 1",
+      "00:13:52 · success · mevblocker.derpc.eth · attempt 1",
+      "00:13:50 · attempt · mevblocker.derpc.eth · attempt 1",
+      "00:13:50 · success · mevblocker.derpc.eth · attempt 1",
+      "00:13:47 · attempt · mevblocker.derpc.eth · attempt 1"
+    ],
+    "reads": [
+      [
+        {
+          "text": "ETH balance of the WETH contract · viem getBalance",
+          "class": ""
+        },
+        {
+          "text": "2,113,687.7825 ETH · verified at block 26359239",
+          "class": "ok"
+        },
+        {
+          "text": "mevblocker.derpc.eth",
+          "class": ""
+        },
+        {
+          "text": "67.8 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balance of the Uniswap V2 USDC/WETH pair · proven storage slot",
+          "class": ""
+        },
+        {
+          "text": "4,292.1919 WETH · verified at block 26359239",
+          "class": "ok"
+        },
+        {
+          "text": "blockrazor.derpc.eth",
+          "class": ""
+        },
+        {
+          "text": "1.7 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH contract code · viem getCode",
+          "class": ""
+        },
+        {
+          "text": "3124 bytes, matching the proven code hash · verified at block 26359239",
+          "class": "ok"
+        },
+        {
+          "text": "mevblocker.derpc.eth",
+          "class": ""
+        },
+        {
+          "text": "4.9 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balanceOf through eth_call · viem readContract",
+          "class": ""
+        },
+        {
+          "text": "refused as expected — 4200 · ProviderRpcError: eth_call results carry no proof: enable local verified execution explicitly before using this method",
+          "class": "warn"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "1.0 s",
+          "class": ""
+        }
+      ]
+    ],
+    "paymentsEnabled": false,
+    "paymentControlsDisabled": true,
+    "readDisabled": false,
+    "cutDisabled": false,
+    "liarDisabled": false,
+    "developmentHandlePresent": false,
+    "secureContext": true,
+    "selectedOperators": [
+      "mevblocker.derpc.eth",
+      "blockrazor.derpc.eth"
+    ]
+  },
+  "screenshot": "/tmp/derpc-live-qa-2026-11-07/public-firefox-recheck.png",
+  "afterClose": {
+    "worker": "closed — anonymous network cut; DeRPC never falls back to a direct request",
+    "lightClient": "stale — DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+    "header": "26359239 (17.0 min ago) · hash 0x847061fc… · state root 0xb5024bc7…",
+    "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26359239",
+    "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using mevblocker.derpc.eth, blockrazor.derpc.eth",
+    "poolEvents": "00:14:09 · success · mevblocker.derpc.eth · attempt 100:14:04 · attempt · mevblocker.derpc.eth · attempt 100:14:04 · success · blockrazor.derpc.eth · attempt 100:14:02 · attempt · blockrazor.derpc.eth · attempt 100:14:02 · success · mevblocker.derpc.eth · attempt 100:14:00 · attempt · mevblocker.derpc.eth · attempt 100:13:58 · success · mevblocker.derpc.eth · attempt 100:13:53 · attempt · mevblocker.derpc.eth · attempt 100:13:53 · success · blockrazor.derpc.eth · attempt 100:13:52 · attempt · blockrazor.derpc.eth · attempt 100:13:52 · success · mevblocker.derpc.eth · attempt 100:13:50 · attempt · mevblocker.derpc.eth · attempt 100:13:50 · success · mevblocker.derpc.eth · attempt 100:13:47 · attempt · mevblocker.derpc.eth · attempt 1",
+    "poolEventRows": [
+      "00:14:09 · success · mevblocker.derpc.eth · attempt 1",
+      "00:14:04 · attempt · mevblocker.derpc.eth · attempt 1",
+      "00:14:04 · success · blockrazor.derpc.eth · attempt 1",
+      "00:14:02 · attempt · blockrazor.derpc.eth · attempt 1",
+      "00:14:02 · success · mevblocker.derpc.eth · attempt 1",
+      "00:14:00 · attempt · mevblocker.derpc.eth · attempt 1",
+      "00:13:58 · success · mevblocker.derpc.eth · attempt 1",
+      "00:13:53 · attempt · mevblocker.derpc.eth · attempt 1",
+      "00:13:53 · success · blockrazor.derpc.eth · attempt 1",
+      "00:13:52 · attempt · blockrazor.derpc.eth · attempt 1",
+      "00:13:52 · success · mevblocker.derpc.eth · attempt 1",
+      "00:13:50 · attempt · mevblocker.derpc.eth · attempt 1",
+      "00:13:50 · success · mevblocker.derpc.eth · attempt 1",
+      "00:13:47 · attempt · mevblocker.derpc.eth · attempt 1"
+    ],
+    "reads": [
+      [
+        {
+          "text": "ETH balance of the WETH contract · viem getBalance",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balance of the Uniswap V2 USDC/WETH pair · proven storage slot",
+          "class": ""
+        },
+        {
+          "text": "TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH contract code · viem getCode",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balanceOf through eth_call · viem readContract",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ]
+    ],
+    "paymentsEnabled": false,
+    "paymentControlsDisabled": true,
+    "readDisabled": true,
+    "cutDisabled": true,
+    "liarDisabled": true,
+    "developmentHandlePresent": false,
+    "secureContext": true,
+    "selectedOperators": [
+      "mevblocker.derpc.eth",
+      "blockrazor.derpc.eth"
+    ]
+  },
+  "httpRequestsAfterClose": [],
+  "shutdownObservationMs": 1000,
+  "ownedBrowserClosed": true,
+  "timedOut": false,
+  "externalHttpRequests": [
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.758Z",
+      "method": "GET",
+      "url": "https://blockrazor.io/favicon.ico"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.758Z",
+      "method": "GET",
+      "url": "https://drpc.org/favicon.ico"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.758Z",
+      "method": "GET",
+      "url": "https://mevblocker.io/favicon.ico"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.758Z",
+      "method": "GET",
+      "url": "https://blastapi.io/favicon.ico"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.759Z",
+      "method": "GET",
+      "url": "https://publicnode.com/favicon.ico"
+    }
+  ],
+  "observedDirectRpcOrBeaconRequests": [],
+  "unexpectedExternalHttpRequests": [
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.758Z",
+      "method": "GET",
+      "url": "https://blockrazor.io/favicon.ico"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.758Z",
+      "method": "GET",
+      "url": "https://drpc.org/favicon.ico"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.758Z",
+      "method": "GET",
+      "url": "https://mevblocker.io/favicon.ico"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.758Z",
+      "method": "GET",
+      "url": "https://blastapi.io/favicon.ico"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:12:40.759Z",
+      "method": "GET",
+      "url": "https://publicnode.com/favicon.ico"
+    }
+  ],
+  "gatewayDiagnosticLines": [
+    "[warn] [02.047] Gateway 45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg reports itself as a demo instance: limited capacity, and it may disappear at any time. Run your own gateway for anything real: https://github.com/ethereum/tor-js/tree/main/crates/tor-js-gateway"
+  ],
+  "gatewayAttribution": {
+    "vpsAddressMentioned": true,
+    "demoAddressMentioned": false,
+    "connectedGatewayAddresses": [
+      "45.76.81.48"
+    ],
+    "vpsConnectionProvenByRtcStats": true,
+    "noCompetingGatewayObserved": true,
+    "qualification": "Only succeeded selected/nominated pairs with received bytes count. Native getStats observations establish live gateway connections; warning/configuration log mentions alone do not. Sampling is not exhaustive packet accounting."
+  },
+  "baselineOk": false,
+  "ok": false,
+  "outcome": "Production browser release check did not pass every gate; inspect failed gates and diagnostics.",
+  "finishedAt": "2026-11-07T00:14:11.159Z",
+  "elapsedMs": 95391
+}

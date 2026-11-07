@@ -1,0 +1,1811 @@
+{
+  "schemaVersion": 2,
+  "startedAt": "2026-11-07T00:16:38.546Z",
+  "base": "http://127.0.0.1:35343",
+  "checker": {
+    "path": "frontend/test/public-gateway-firefox.mjs",
+    "sha256": "9d95e9ba1ea21b68f92272447ee1d4d4fc4f0f295b57545550a33722c9aea1fc",
+    "sha256After": "9d95e9ba1ea21b68f92272447ee1d4d4fc4f0f295b57545550a33722c9aea1fc",
+    "unchangedDuringRun": true
+  },
+  "scope": "Fresh Firefox visiting the assembled production site; public WETH/Uniswap fixtures only; no wallet or transaction.",
+  "siteDelivery": "Local HTTP preview of the production static release. This checks public VPS RPC transport; external HTTPS gateway/derpc.eth.limo validation remains pending.",
+  "productionTimeoutOverrides": false,
+  "observationLimitMs": 180000,
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "sameDocumentNavigation": false,
+      "title": "Private, verified RPC for Ethereum — DeRPC",
+      "headings": [
+        "Choose your operators.Verify their answers.",
+        "Choice, privacy and proof.",
+        "Add verified reads to your app.",
+        "One operator. A home for your nodes."
+      ],
+      "overflow": true
+    },
+    {
+      "route": "/#/directory",
+      "status": 200,
+      "sameDocumentNavigation": true,
+      "title": "Directory — DeRPC",
+      "headings": [
+        "Choose who serves your reads.",
+        "Team demo operators",
+        "Public bootstrap providers"
+      ],
+      "overflow": false
+    },
+    {
+      "route": "/#/operate",
+      "status": 200,
+      "sameDocumentNavigation": true,
+      "title": "Run an operator — DeRPC",
+      "headings": [
+        "One operator. Your nodes.",
+        "Choose your operator identity",
+        "Add your node endpoints",
+        "Review the free configuration",
+        "Prepare deployment inputs",
+        "Review your draft",
+        "Review the deployment fragment",
+        "Private routing. Verified answers.",
+        "Run a wrapper on each node host"
+      ],
+      "overflow": false
+    }
+  ],
+  "observations": [
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.744Z",
+      "worker": "booting tor-js 0.4.4 via configured gateway (1)… 0.4 s",
+      "lightClient": "waiting for the worker…",
+      "header": "—",
+      "pin": "waiting for the light client…",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using MEV Blocker, BlockRazor",
+      "poolEvents": "",
+      "poolEventRows": [],
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "verifying…",
+            "class": "muted"
+          },
+          {
+            "text": "",
+            "class": ""
+          },
+          {
+            "text": "",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": true,
+      "cutDisabled": true,
+      "liarDisabled": true,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:59.092Z",
+      "worker": "ready — tor-js 0.4.4 via configured gateway (1), after 12.5 s",
+      "lightClient": "syncing from the pinned checkpoint epoch 487173 (1.3 days old)…",
+      "header": "—",
+      "pin": "waiting for the light client…",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using MEV Blocker, BlockRazor",
+      "poolEvents": "",
+      "poolEventRows": [],
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "verifying…",
+            "class": "muted"
+          },
+          {
+            "text": "",
+            "class": ""
+          },
+          {
+            "text": "",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": true,
+      "cutDisabled": false,
+      "liarDisabled": true,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    }
+  ],
+  "rtcObservations": [
+    {
+      "label": "before-selection",
+      "at": "2026-11-07T00:16:43.332Z",
+      "frames": [
+        {
+          "frameUrl": "http://127.0.0.1:35343/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "connecting",
+              "iceConnectionState": "checking",
+              "selectedRemotePairs": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "boot-and-read",
+      "at": "2026-11-07T00:16:43.785Z",
+      "frames": [
+        {
+          "frameUrl": "http://127.0.0.1:35343/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "connecting",
+              "iceConnectionState": "checking",
+              "selectedRemotePairs": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "boot-and-read",
+      "at": "2026-11-07T00:16:59.134Z",
+      "frames": [
+        {
+          "frameUrl": "http://127.0.0.1:35343/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "e750dc94",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259613,
+                  "bytesSent": 207593
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "connected",
+              "iceConnectionState": "connected",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "fdaf5c49",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 1633633,
+                  "bytesSent": 77809
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "frameUrl": "about:srcdoc",
+          "instrumented": true,
+          "peers": []
+        }
+      ]
+    },
+    {
+      "label": "after-proven-reads",
+      "at": "2026-11-07T00:17:12.069Z",
+      "frames": [
+        {
+          "frameUrl": "http://127.0.0.1:35343/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "e750dc94",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259613,
+                  "bytesSent": 207593
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "connected",
+              "iceConnectionState": "connected",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "fdaf5c49",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 1869156,
+                  "bytesSent": 124022
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "frameUrl": "about:srcdoc",
+          "instrumented": true,
+          "peers": []
+        }
+      ]
+    },
+    {
+      "label": "after-injected-proof-test",
+      "at": "2026-11-07T00:17:19.396Z",
+      "frames": [
+        {
+          "frameUrl": "http://127.0.0.1:35343/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "e750dc94",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259613,
+                  "bytesSent": 207593
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "connected",
+              "iceConnectionState": "connected",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "fdaf5c49",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 1964408,
+                  "bytesSent": 151375
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "frameUrl": "about:srcdoc",
+          "instrumented": true,
+          "peers": []
+        }
+      ]
+    },
+    {
+      "label": "after-shutdown",
+      "at": "2026-11-07T00:17:20.869Z",
+      "frames": [
+        {
+          "frameUrl": "http://127.0.0.1:35343/demo/",
+          "instrumented": true,
+          "peers": [
+            {
+              "index": 0,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "e750dc94",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 7259613,
+                  "bytesSent": 207593
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "connectionState": "closed",
+              "iceConnectionState": "closed",
+              "selectedRemotePairs": [
+                {
+                  "pairId": "fdaf5c49",
+                  "address": "45.76.81.48",
+                  "port": 12298,
+                  "protocol": "udp",
+                  "candidateType": "host",
+                  "state": "succeeded",
+                  "nominated": true,
+                  "selectedByTransport": true,
+                  "bytesReceived": 1964538,
+                  "bytesSent": 152191
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "httpRequests": [
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:16:41.403Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:16:41.406Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/assets/index-EDIYZFYJ.js"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:16:41.407Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/assets/index-Dp5B9GpU.css"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:16:41.441Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/derpc-lockup.svg"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:16:41.451Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/derpc-logo-512.png"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:16:41.452Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/favicon.svg"
+    },
+    {
+      "phase": "site:/",
+      "at": "2026-11-07T00:16:41.497Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/assets/inter-latin-wght-normal-Dx4kXJAl.woff2"
+    },
+    {
+      "phase": "site:/#/directory",
+      "at": "2026-11-07T00:16:42.049Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/derpc-lockup.svg"
+    },
+    {
+      "phase": "site:/#/operate",
+      "at": "2026-11-07T00:16:42.569Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/derpc-lockup.svg"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.032Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.032Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/demo-BN7DWNFg.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.032Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/rolldown-runtime-XKyaHtl9.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.032Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/utils-Bpv4vmSW.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.033Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/sha3-CixuFzsY.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.033Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/endpoints-CRJPe_u7.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.033Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/verify-BrqvWFSp.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.033Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/reader-DA5FvdMd.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.033Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/dist-CM5luU_N.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.033Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/preload-helper-CRzLMJPS.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.033Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/sha2-CsZgHejA.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.033Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/__vite-browser-external-TtGlo6oh.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.034Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/src-DlO1qo0x.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.034Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/decodeFunctionResult-DcsPYciO.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.034Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/encodeFunctionResult-32HQ9o_H.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.034Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/localBatchGatewayRequest-BJhp8X5H.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.035Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/secp256k1-DTgEC2Fy.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.036Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/address-CYA4zBVK.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.036Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/mainnet-Fg_6B5mA.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.037Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/direct-connections-CHHR_MOD.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.037Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/src-B3Gfg644.css"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.136Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/derpc-lockup-CiJcctT3.svg"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.136Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/inter-latin-wght-normal-Dx4kXJAl.woff2"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.215Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/favicon-Try9hxE_.svg"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:16:43.232Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/dist-DOxWJp2w.js"
+    },
+    {
+      "phase": "boot-and-read",
+      "at": "2026-11-07T00:17:11.751Z",
+      "method": "GET",
+      "url": "http://127.0.0.1:35343/demo/assets/ccip-B6i2UnlS.js"
+    }
+  ],
+  "httpErrors": [
+    {
+      "phase": "site:/",
+      "url": "http://127.0.0.1:35343/derpc-lockup.svg",
+      "status": 404
+    },
+    {
+      "phase": "site:/",
+      "url": "http://127.0.0.1:35343/derpc-logo-512.png",
+      "status": 404
+    },
+    {
+      "phase": "site:/#/directory",
+      "url": "http://127.0.0.1:35343/derpc-lockup.svg",
+      "status": 404
+    },
+    {
+      "phase": "site:/#/operate",
+      "url": "http://127.0.0.1:35343/derpc-lockup.svg",
+      "status": 404
+    }
+  ],
+  "requestFailures": [],
+  "pageErrors": [],
+  "console": [],
+  "gates": {
+    "workerReady": true,
+    "lightClientVerified": true,
+    "workerPinVerified": true,
+    "provenRows": true,
+    "rawEthCallRefused": true,
+    "paymentsOff": true,
+    "productionBuild": true,
+    "secureBrowserContext": true,
+    "shutdownRefusal": true,
+    "noHttpAfterClose": true,
+    "noDirectRpcOrBeaconHttp": true,
+    "onlyAllowedExternalHttp": true,
+    "noPageErrors": true,
+    "pagesLoaded": true,
+    "noFailedSiteAssets": false,
+    "vpsGatewayConnected": true,
+    "noCompetingGatewayObserved": true
+  },
+  "releaseBinding": null,
+  "negativeProof": {
+    "requested": true,
+    "status": "failed",
+    "gates": {
+      "injectedAttemptObserved": true,
+      "hostVerifierRejected": true,
+      "selectedOperatorRecoveredAfterRejection": false,
+      "recoveredReadsVerified": false,
+      "selectionPreserved": true
+    },
+    "scope": "Opt-in production UI simulation: inflate proof fields locally after a real anonymous request, require host-verifier rejection, then selected-operator recovery. No malicious server is introduced; this does not prove independent-operator or onion-endpoint failover.",
+    "before": {
+      "worker": "ready — tor-js 0.4.4 via configured gateway (1), after 12.5 s",
+      "lightClient": "verified — sync-committee signatures checked, 6.7 s after the worker · pinned checkpoint epoch 487173 (1.3 days old)",
+      "header": "26359271 (13.6 min ago) · hash 0x2ce6508c… · state root 0x008fd246…",
+      "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26359271",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using MEV Blocker, BlockRazor",
+      "poolEvents": "00:17:11 · success · BlockRazor · attempt 100:17:07 · attempt · BlockRazor · attempt 100:17:07 · success · BlockRazor · attempt 100:17:06 · attempt · BlockRazor · attempt 100:17:06 · success · BlockRazor · attempt 100:17:03 · attempt · BlockRazor · attempt 100:17:03 · success · BlockRazor · attempt 100:17:02 · attempt · BlockRazor · attempt 1",
+      "poolEventRows": [
+        "00:17:11 · success · BlockRazor · attempt 1",
+        "00:17:07 · attempt · BlockRazor · attempt 1",
+        "00:17:07 · success · BlockRazor · attempt 1",
+        "00:17:06 · attempt · BlockRazor · attempt 1",
+        "00:17:06 · success · BlockRazor · attempt 1",
+        "00:17:03 · attempt · BlockRazor · attempt 1",
+        "00:17:03 · success · BlockRazor · attempt 1",
+        "00:17:02 · attempt · BlockRazor · attempt 1"
+      ],
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "2,113,679.2418 ETH · verified at block 26359271",
+            "class": "ok"
+          },
+          {
+            "text": "BlockRazor",
+            "class": ""
+          },
+          {
+            "text": "22.6 s",
+            "class": ""
+          }
+        ],
+        [
+          {
+            "text": "WETH balance of the Uniswap V2 USDC/WETH pair · proven storage slot",
+            "class": ""
+          },
+          {
+            "text": "4,292.3933 WETH · verified at block 26359271",
+            "class": "ok"
+          },
+          {
+            "text": "BlockRazor",
+            "class": ""
+          },
+          {
+            "text": "1.6 s",
+            "class": ""
+          }
+        ],
+        [
+          {
+            "text": "WETH contract code · viem getCode",
+            "class": ""
+          },
+          {
+            "text": "3124 bytes, matching the proven code hash · verified at block 26359271",
+            "class": "ok"
+          },
+          {
+            "text": "BlockRazor",
+            "class": ""
+          },
+          {
+            "text": "3.9 s",
+            "class": ""
+          }
+        ],
+        [
+          {
+            "text": "WETH balanceOf through eth_call · viem readContract",
+            "class": ""
+          },
+          {
+            "text": "refused as expected — 4200 · ProviderRpcError: eth_call results carry no proof: enable local verified execution explicitly before using this method",
+            "class": "warn"
+          },
+          {
+            "text": "nothing sent",
+            "class": ""
+          },
+          {
+            "text": "0.0 s",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": false,
+      "cutDisabled": false,
+      "liarDisabled": false,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    },
+    "events": [
+      "00:17:12 · attempt · simulated lying operator · attempt 1",
+      "00:17:14 · invalid-proof · simulated lying operator · attempt 1 · excluded locally · claimed balance 2114679241823765176366149 differs from the proven 2113679241823765176366149",
+      "00:17:14 · attempt · BlockRazor · attempt 2",
+      "00:17:15 · success · BlockRazor · attempt 2",
+      "00:17:15 · attempt · BlockRazor · attempt 1",
+      "00:17:16 · success · BlockRazor · attempt 1",
+      "00:17:16 · attempt · BlockRazor · attempt 1",
+      "00:17:19 · success · BlockRazor · attempt 1"
+    ],
+    "after": {
+      "worker": "ready — tor-js 0.4.4 via configured gateway (1), after 12.5 s",
+      "lightClient": "verified — sync-committee signatures checked, 6.7 s after the worker · pinned checkpoint epoch 487173 (1.3 days old)",
+      "header": "26359271 (13.7 min ago) · hash 0x2ce6508c… · state root 0x008fd246…",
+      "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26359271",
+      "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using MEV Blocker, BlockRazor",
+      "poolEvents": "00:17:19 · success · BlockRazor · attempt 100:17:16 · attempt · BlockRazor · attempt 100:17:16 · success · BlockRazor · attempt 100:17:15 · attempt · BlockRazor · attempt 100:17:15 · success · BlockRazor · attempt 200:17:14 · attempt · BlockRazor · attempt 200:17:14 · invalid-proof · simulated lying operator · attempt 1 · excluded locally · claimed balance 2114679241823765176366149 differs from the proven 211367924182376517636614900:17:12 · attempt · simulated lying operator · attempt 100:17:11 · success · BlockRazor · attempt 100:17:07 · attempt · BlockRazor · attempt 100:17:07 · success · BlockRazor · attempt 100:17:06 · attempt · BlockRazor · attempt 100:17:06 · success · BlockRazor · attempt 100:17:03 · attempt · BlockRazor · attempt 100:17:03 · success · BlockRazor · attempt 100:17:02 · attempt · BlockRazor · attempt 1",
+      "poolEventRows": [
+        "00:17:19 · success · BlockRazor · attempt 1",
+        "00:17:16 · attempt · BlockRazor · attempt 1",
+        "00:17:16 · success · BlockRazor · attempt 1",
+        "00:17:15 · attempt · BlockRazor · attempt 1",
+        "00:17:15 · success · BlockRazor · attempt 2",
+        "00:17:14 · attempt · BlockRazor · attempt 2",
+        "00:17:14 · invalid-proof · simulated lying operator · attempt 1 · excluded locally · claimed balance 2114679241823765176366149 differs from the proven 2113679241823765176366149",
+        "00:17:12 · attempt · simulated lying operator · attempt 1",
+        "00:17:11 · success · BlockRazor · attempt 1",
+        "00:17:07 · attempt · BlockRazor · attempt 1",
+        "00:17:07 · success · BlockRazor · attempt 1",
+        "00:17:06 · attempt · BlockRazor · attempt 1",
+        "00:17:06 · success · BlockRazor · attempt 1",
+        "00:17:03 · attempt · BlockRazor · attempt 1",
+        "00:17:03 · success · BlockRazor · attempt 1",
+        "00:17:02 · attempt · BlockRazor · attempt 1"
+      ],
+      "reads": [
+        [
+          {
+            "text": "ETH balance of the WETH contract · viem getBalance",
+            "class": ""
+          },
+          {
+            "text": "2,113,679.2418 ETH · verified at block 26359271",
+            "class": "ok"
+          },
+          {
+            "text": "BlockRazor",
+            "class": ""
+          },
+          {
+            "text": "2.7 s",
+            "class": ""
+          }
+        ],
+        [
+          {
+            "text": "WETH balance of the Uniswap V2 USDC/WETH pair · proven storage slot",
+            "class": ""
+          },
+          {
+            "text": "4,292.3933 WETH · verified at block 26359271",
+            "class": "ok"
+          },
+          {
+            "text": "BlockRazor",
+            "class": ""
+          },
+          {
+            "text": "1.7 s",
+            "class": ""
+          }
+        ],
+        [
+          {
+            "text": "WETH contract code · viem getCode",
+            "class": ""
+          },
+          {
+            "text": "3124 bytes, matching the proven code hash · verified at block 26359271",
+            "class": "ok"
+          },
+          {
+            "text": "BlockRazor",
+            "class": ""
+          },
+          {
+            "text": "2.4 s",
+            "class": ""
+          }
+        ],
+        [
+          {
+            "text": "WETH balanceOf through eth_call · viem readContract",
+            "class": ""
+          },
+          {
+            "text": "refused as expected — 4200 · ProviderRpcError: eth_call results carry no proof: enable local verified execution explicitly before using this method",
+            "class": "warn"
+          },
+          {
+            "text": "nothing sent",
+            "class": ""
+          },
+          {
+            "text": "0.0 s",
+            "class": ""
+          }
+        ]
+      ],
+      "paymentsEnabled": false,
+      "paymentControlsDisabled": true,
+      "readDisabled": false,
+      "cutDisabled": false,
+      "liarDisabled": true,
+      "developmentHandlePresent": false,
+      "secureContext": true,
+      "selectedOperators": [
+        "mevblocker.derpc.eth",
+        "blockrazor.derpc.eth"
+      ]
+    },
+    "ok": false,
+    "screenshot": "/tmp/derpc-live-qa-2026-11-07/local/firefox-negative.png"
+  },
+  "qualifications": [
+    "Production timeout settings and worker configuration are unchanged; 180 seconds bounds this observation, not the application.",
+    "External HTTP requests are observed through Firefox/Puppeteer events. This is not a packet capture or proof of all browser background traffic.",
+    "The intended release configures only the VPS gateway. This checker requires its succeeded WebRTC candidate and refuses to pass if another working gateway is observed.",
+    "Test-only RTCPeerConnection observation retains native peer references and inspects selected/nominated candidate-pair statistics in every accessible frame. It does not change ICE options, certificates, gateway configuration, or application deadlines.",
+    "A successful candidate with received traffic proves the gateway connection. Sampled stats are not a complete packet capture; competing observed gateways prevent exclusive gateway attribution.",
+    "Shutdown is checked through real UI refusal and an HTTP observation window; encrypted KPS packet counts are not exposed by this UI."
+  ],
+  "browser": "firefox/156.0.1",
+  "demoHttpStatus": 200,
+  "initialState": {
+    "worker": "booting tor-js 0.4.4 via configured gateway (1)… 0.0 s",
+    "lightClient": "waiting for the worker…",
+    "header": "—",
+    "pin": "proven through your operators once you choose them (the check is a read too)",
+    "choice": "Active: manual · no operators; reads are stopped",
+    "poolEvents": "",
+    "poolEventRows": [],
+    "reads": [
+      [
+        {
+          "text": "No reads: apply a nonempty manual choice or automatic routing above.",
+          "class": "muted"
+        }
+      ]
+    ],
+    "paymentsEnabled": false,
+    "paymentControlsDisabled": true,
+    "readDisabled": true,
+    "cutDisabled": true,
+    "liarDisabled": true,
+    "developmentHandlePresent": false,
+    "secureContext": true,
+    "selectedOperators": []
+  },
+  "lastState": {
+    "worker": "closed — anonymous network cut; DeRPC never falls back to a direct request",
+    "lightClient": "stale — DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+    "header": "26359271 (13.7 min ago) · hash 0x2ce6508c… · state root 0x008fd246…",
+    "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26359271",
+    "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using MEV Blocker, BlockRazor",
+    "poolEvents": "00:17:19 · success · BlockRazor · attempt 100:17:16 · attempt · BlockRazor · attempt 100:17:16 · success · BlockRazor · attempt 100:17:15 · attempt · BlockRazor · attempt 100:17:15 · success · BlockRazor · attempt 200:17:14 · attempt · BlockRazor · attempt 200:17:14 · invalid-proof · simulated lying operator · attempt 1 · excluded locally · claimed balance 2114679241823765176366149 differs from the proven 211367924182376517636614900:17:12 · attempt · simulated lying operator · attempt 100:17:11 · success · BlockRazor · attempt 100:17:07 · attempt · BlockRazor · attempt 100:17:07 · success · BlockRazor · attempt 100:17:06 · attempt · BlockRazor · attempt 100:17:06 · success · BlockRazor · attempt 100:17:03 · attempt · BlockRazor · attempt 100:17:03 · success · BlockRazor · attempt 100:17:02 · attempt · BlockRazor · attempt 1",
+    "poolEventRows": [
+      "00:17:19 · success · BlockRazor · attempt 1",
+      "00:17:16 · attempt · BlockRazor · attempt 1",
+      "00:17:16 · success · BlockRazor · attempt 1",
+      "00:17:15 · attempt · BlockRazor · attempt 1",
+      "00:17:15 · success · BlockRazor · attempt 2",
+      "00:17:14 · attempt · BlockRazor · attempt 2",
+      "00:17:14 · invalid-proof · simulated lying operator · attempt 1 · excluded locally · claimed balance 2114679241823765176366149 differs from the proven 2113679241823765176366149",
+      "00:17:12 · attempt · simulated lying operator · attempt 1",
+      "00:17:11 · success · BlockRazor · attempt 1",
+      "00:17:07 · attempt · BlockRazor · attempt 1",
+      "00:17:07 · success · BlockRazor · attempt 1",
+      "00:17:06 · attempt · BlockRazor · attempt 1",
+      "00:17:06 · success · BlockRazor · attempt 1",
+      "00:17:03 · attempt · BlockRazor · attempt 1",
+      "00:17:03 · success · BlockRazor · attempt 1",
+      "00:17:02 · attempt · BlockRazor · attempt 1"
+    ],
+    "reads": [
+      [
+        {
+          "text": "ETH balance of the WETH contract · viem getBalance",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balance of the Uniswap V2 USDC/WETH pair · proven storage slot",
+          "class": ""
+        },
+        {
+          "text": "TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH contract code · viem getCode",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balanceOf through eth_call · viem readContract",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ]
+    ],
+    "paymentsEnabled": false,
+    "paymentControlsDisabled": true,
+    "readDisabled": true,
+    "cutDisabled": true,
+    "liarDisabled": true,
+    "developmentHandlePresent": false,
+    "secureContext": true,
+    "selectedOperators": [
+      "mevblocker.derpc.eth",
+      "blockrazor.derpc.eth"
+    ]
+  },
+  "workerLog": "[warn] [00.094] [tor_memquota::config] Unable to get the total available memory. Using a constant max instead: total available memory is unavailable\n[warn] [00.094] [tor_memquota::config] Unable to get the total available memory. Using a constant max instead: total available memory is unavailable\n[warn] [02.077] Gateway 45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg reports itself as a demo instance: limited capacity, and it may disappear at any time. Run your own gateway for anything real: https://github.com/ethereum/tor-js/tree/main/crates/tor-js-gateway\n",
+  "readState": {
+    "worker": "ready — tor-js 0.4.4 via configured gateway (1), after 12.5 s",
+    "lightClient": "verified — sync-committee signatures checked, 6.7 s after the worker · pinned checkpoint epoch 487173 (1.3 days old)",
+    "header": "26359271 (13.6 min ago) · hash 0x2ce6508c… · state root 0x008fd246…",
+    "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26359271",
+    "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using MEV Blocker, BlockRazor",
+    "poolEvents": "00:17:11 · success · BlockRazor · attempt 100:17:07 · attempt · BlockRazor · attempt 100:17:07 · success · BlockRazor · attempt 100:17:06 · attempt · BlockRazor · attempt 100:17:06 · success · BlockRazor · attempt 100:17:03 · attempt · BlockRazor · attempt 100:17:03 · success · BlockRazor · attempt 100:17:02 · attempt · BlockRazor · attempt 1",
+    "poolEventRows": [
+      "00:17:11 · success · BlockRazor · attempt 1",
+      "00:17:07 · attempt · BlockRazor · attempt 1",
+      "00:17:07 · success · BlockRazor · attempt 1",
+      "00:17:06 · attempt · BlockRazor · attempt 1",
+      "00:17:06 · success · BlockRazor · attempt 1",
+      "00:17:03 · attempt · BlockRazor · attempt 1",
+      "00:17:03 · success · BlockRazor · attempt 1",
+      "00:17:02 · attempt · BlockRazor · attempt 1"
+    ],
+    "reads": [
+      [
+        {
+          "text": "ETH balance of the WETH contract · viem getBalance",
+          "class": ""
+        },
+        {
+          "text": "2,113,679.2418 ETH · verified at block 26359271",
+          "class": "ok"
+        },
+        {
+          "text": "BlockRazor",
+          "class": ""
+        },
+        {
+          "text": "22.6 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balance of the Uniswap V2 USDC/WETH pair · proven storage slot",
+          "class": ""
+        },
+        {
+          "text": "4,292.3933 WETH · verified at block 26359271",
+          "class": "ok"
+        },
+        {
+          "text": "BlockRazor",
+          "class": ""
+        },
+        {
+          "text": "1.6 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH contract code · viem getCode",
+          "class": ""
+        },
+        {
+          "text": "3124 bytes, matching the proven code hash · verified at block 26359271",
+          "class": "ok"
+        },
+        {
+          "text": "BlockRazor",
+          "class": ""
+        },
+        {
+          "text": "3.9 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balanceOf through eth_call · viem readContract",
+          "class": ""
+        },
+        {
+          "text": "refused as expected — 4200 · ProviderRpcError: eth_call results carry no proof: enable local verified execution explicitly before using this method",
+          "class": "warn"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ]
+    ],
+    "paymentsEnabled": false,
+    "paymentControlsDisabled": true,
+    "readDisabled": false,
+    "cutDisabled": false,
+    "liarDisabled": false,
+    "developmentHandlePresent": false,
+    "secureContext": true,
+    "selectedOperators": [
+      "mevblocker.derpc.eth",
+      "blockrazor.derpc.eth"
+    ]
+  },
+  "screenshot": "/tmp/derpc-live-qa-2026-11-07/local/firefox.png",
+  "afterClose": {
+    "worker": "closed — anonymous network cut; DeRPC never falls back to a direct request",
+    "lightClient": "stale — DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+    "header": "26359271 (13.7 min ago) · hash 0x2ce6508c… · state root 0x008fd246…",
+    "pin": "verified — on-chain workerHash 0x5b62f358… matches the pin at block 26359271",
+    "choice": "Active: manual · 2 operator(s) / 2 endpoint(s), using MEV Blocker, BlockRazor",
+    "poolEvents": "00:17:19 · success · BlockRazor · attempt 100:17:16 · attempt · BlockRazor · attempt 100:17:16 · success · BlockRazor · attempt 100:17:15 · attempt · BlockRazor · attempt 100:17:15 · success · BlockRazor · attempt 200:17:14 · attempt · BlockRazor · attempt 200:17:14 · invalid-proof · simulated lying operator · attempt 1 · excluded locally · claimed balance 2114679241823765176366149 differs from the proven 211367924182376517636614900:17:12 · attempt · simulated lying operator · attempt 100:17:11 · success · BlockRazor · attempt 100:17:07 · attempt · BlockRazor · attempt 100:17:07 · success · BlockRazor · attempt 100:17:06 · attempt · BlockRazor · attempt 100:17:06 · success · BlockRazor · attempt 100:17:03 · attempt · BlockRazor · attempt 100:17:03 · success · BlockRazor · attempt 100:17:02 · attempt · BlockRazor · attempt 1",
+    "poolEventRows": [
+      "00:17:19 · success · BlockRazor · attempt 1",
+      "00:17:16 · attempt · BlockRazor · attempt 1",
+      "00:17:16 · success · BlockRazor · attempt 1",
+      "00:17:15 · attempt · BlockRazor · attempt 1",
+      "00:17:15 · success · BlockRazor · attempt 2",
+      "00:17:14 · attempt · BlockRazor · attempt 2",
+      "00:17:14 · invalid-proof · simulated lying operator · attempt 1 · excluded locally · claimed balance 2114679241823765176366149 differs from the proven 2113679241823765176366149",
+      "00:17:12 · attempt · simulated lying operator · attempt 1",
+      "00:17:11 · success · BlockRazor · attempt 1",
+      "00:17:07 · attempt · BlockRazor · attempt 1",
+      "00:17:07 · success · BlockRazor · attempt 1",
+      "00:17:06 · attempt · BlockRazor · attempt 1",
+      "00:17:06 · success · BlockRazor · attempt 1",
+      "00:17:03 · attempt · BlockRazor · attempt 1",
+      "00:17:03 · success · BlockRazor · attempt 1",
+      "00:17:02 · attempt · BlockRazor · attempt 1"
+    ],
+    "reads": [
+      [
+        {
+          "text": "ETH balance of the WETH contract · viem getBalance",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balance of the Uniswap V2 USDC/WETH pair · proven storage slot",
+          "class": ""
+        },
+        {
+          "text": "TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH contract code · viem getCode",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ],
+      [
+        {
+          "text": "WETH balanceOf through eth_call · viem readContract",
+          "class": ""
+        },
+        {
+          "text": "4900 · TransportUnavailableError: DeRPC: anonymous transport is closed; refusing to send (no direct fallback)",
+          "class": "bad"
+        },
+        {
+          "text": "nothing sent",
+          "class": ""
+        },
+        {
+          "text": "0.0 s",
+          "class": ""
+        }
+      ]
+    ],
+    "paymentsEnabled": false,
+    "paymentControlsDisabled": true,
+    "readDisabled": true,
+    "cutDisabled": true,
+    "liarDisabled": true,
+    "developmentHandlePresent": false,
+    "secureContext": true,
+    "selectedOperators": [
+      "mevblocker.derpc.eth",
+      "blockrazor.derpc.eth"
+    ]
+  },
+  "httpRequestsAfterClose": [],
+  "shutdownObservationMs": 1000,
+  "ownedBrowserClosed": true,
+  "timedOut": false,
+  "externalHttpRequests": [],
+  "observedDirectRpcOrBeaconRequests": [],
+  "unexpectedExternalHttpRequests": [],
+  "gatewayDiagnosticLines": [
+    "[warn] [02.077] Gateway 45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg reports itself as a demo instance: limited capacity, and it may disappear at any time. Run your own gateway for anything real: https://github.com/ethereum/tor-js/tree/main/crates/tor-js-gateway"
+  ],
+  "gatewayAttribution": {
+    "vpsAddressMentioned": true,
+    "demoAddressMentioned": false,
+    "connectedGatewayAddresses": [
+      "45.76.81.48"
+    ],
+    "vpsConnectionProvenByRtcStats": true,
+    "noCompetingGatewayObserved": true,
+    "qualification": "Only succeeded selected/nominated pairs with received bytes count. Native getStats observations establish live gateway connections; warning/configuration log mentions alone do not. Sampling is not exhaustive packet accounting."
+  },
+  "baselineOk": false,
+  "ok": false,
+  "outcome": "Production browser release check did not pass every gate; inspect failed gates and diagnostics.",
+  "finishedAt": "2026-11-07T00:17:21.206Z",
+  "elapsedMs": 42660,
+  "localBuild": {
+    "scope": "Locally assembled, unpublished current working-tree web and demo builds. No production deployment; public gateway transport unchanged; ENS deployment pins unset.",
+    "sourceHashesBefore": {
+      "frontend/build/ens-directory.ts": "ff125dd996d9ed176624431152ed69bd85acf9edfac910349ab76d5d6acbe8aa",
+      "frontend/build/gateways.ts": "56f5ba46d703af36029d4d793ca0e2e857c79667410ef741b4b8e1a25fcc0f88",
+      "frontend/example.html": "0cb36b73565da87638c1167d016acdfef82fc1dcb952cd8906b3532f4595573b",
+      "frontend/index.html": "770bd419c18860bba0b9b2efc43932aa52933c34bfdd70594d252625f91e569c",
+      "frontend/network-check.html": "c6b6f3a701ab5728a0a677790ff32a4cc58b9f302689d41d8b29f09dcc2afa10",
+      "frontend/package.json": "143572edf9f5747b9b3f92cef11629e6fc6e95fc84d32357c7a0df0967205ac3",
+      "frontend/src/direct-connections.ts": "e66d4b6b0c0707d44575f23028884f4e2503eed4124e28bf36b249e6d0032f85",
+      "frontend/src/directory-freshness.ts": "9f3c46752ad8650c7937ecc5c220c5ed31b52ce468b405421b685a244ea5e0c3",
+      "frontend/src/ens-lifecycle-status.ts": "e961218cb6d4d5085042e52407c2dfee3d22ffc4758c929f9748d2c67579e9e5",
+      "frontend/src/example.ts": "c9238f090f2bbe9a48df9932b774a1720cdc40a394d423d07bf4e045c371fe80",
+      "frontend/src/main.ts": "52be4ca56859ad4be4101465b246de0c9420c43a846549f4cd67b49d4e577e6f",
+      "frontend/src/network-check.ts": "b79bd912220093b5e76996c19fe2bcc1df761a97912a86402b54fadd514c9812",
+      "frontend/src/operator-dashboard.ts": "128f16531fdb2c87eb83cf6af8014f309d33fdb800a0170f33db5c86b615b3c1",
+      "frontend/src/operator-groups.ts": "c69ba2dcc49da3523b0339046f67190014bd355a773276c2ba66f8c701a819e5",
+      "frontend/src/payment-panel.ts": "664b306fb5f29c9ab3bab565f1a727c3f646fe8f2294289420797e21229130fc",
+      "frontend/src/render.ts": "be32fe8091a77c112f363841019a4973033572cc9356054e5213eb638aa7ac8a",
+      "frontend/src/routing-preferences.ts": "8844416709bc946615efdcb5567405273466a83bb39e9ce41367d3b7f270366d",
+      "frontend/src/style.css": "e13b1b8010ae3c2d8bfe5475e00130813503d00fbe5d9a2ce2f2a2dfd0d5eebf",
+      "frontend/src/wallet-payments.ts": "0b17c6491b1b60bda25bce8b6a0efddfe750488ad8e0613d8fde3a07dcb52e09",
+      "frontend/vite.config.ts": "5152222d08114506634fcc7ba6da5e3f02eec28e0d41b7d7642ad68e275f71bd",
+      "payments/package.json": "749ced81581e13603e8305d1d41e83fb50c5b97a97334fb3e44955210b7b090a",
+      "payments/src/client.ts": "808eb5dc5229ae3ddca7bc8a9aafbcb95c3f1090df75e217cf7705bb42ce2f17",
+      "payments/src/coordinator.ts": "57f412a86968712b85a4bd81105c6c18f9d400df90a5e9ad9d5859bf93dfb017",
+      "payments/src/delegation.ts": "3a3b77965136b29e9cfe05f9f5eb55605cd09beb13857842d4b9a02c5eae3fa0",
+      "payments/src/index.ts": "b7258bdd885688757eadc8efdd983ef8802cd88b10f56fa52ff7a39356f0e533",
+      "payments/src/node-codec.ts": "504e1bb565212558d56a5dd4c79a34d715841d3749956d2a7ab9ba9c8d0a6a4d",
+      "payments/src/node-store.ts": "d127fb2c23e73736a09999f71308ff6c81fff3881c7a13b71b3832e87c57c59b",
+      "payments/src/node-worker.ts": "e421cf8602d70e9b38c5b0d152b1fd01bfdc315d0306cb9a16f22248d031eda6",
+      "payments/src/protocol.ts": "70dabf8425fc74aaaa0ac88060a42738739978cd5787c81309f15864ef147e6a",
+      "payments/src/sponsored-client.ts": "fab1fbb7a32bcc8492d5ae9696360d2e401a4f122b3b82ad608060876f154056",
+      "payments/src/sponsored.ts": "e6036cbfdc3fd4ed3630b5b97e30eaacd44d2f6d0c0092f660e5b172427de38d",
+      "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+      "provider/package.json": "3f3c05a9505f407372af44450d0a22ebff1a641d035d89dd379bf976890b9629",
+      "provider/src/api/derpc.ts": "db26fb1d45448bb32e6a5f5a1b4bf24dadc3f89b2b1abeaaff2cc30d5439fc7a",
+      "provider/src/api/directory-snapshot.ts": "57dd2f7ee9a4a1fb12efae1661e89c07b09f580043ffc53656524512bc4f069d",
+      "provider/src/api/eip1193.ts": "e3635ae3abe6284e063c2933f56b8d26b3be8fb5ca40adcf86f4924672e86df1",
+      "provider/src/api/viem.ts": "d3de0977312a6c0c426e8641f268e22fdc61098aa6a4b20b66765e3a61c3cd00",
+      "provider/src/config/mainnet.ts": "b64e2640a015fa83c3fe12550016f47c4e7f5023b3526fa8be1e9b00feef7ede",
+      "provider/src/discovery/ens.ts": "2ab1cd9734833acfc3a7d3d8f11b59aaa3d797ddd093b9e18a87df76f793f8f1",
+      "provider/src/discovery/registrar.ts": "15e2de08125ba5382980e1687d16224ace8073ce4155e2541558e0897921dc92",
+      "provider/src/execution/index.ts": "61ddd27262533b38b2bc43ebf384ea3206ecb94602d7eaa9287faa71d9eced1d",
+      "provider/src/execution/verified-call.ts": "0c73889387a5fcf7e5f48ebbda236b555465c9048bca09c877b4630568a4fbf8",
+      "provider/src/execution/verified-ens.ts": "d40bf013901bbe0d0c964f30a9ac8ee6332f5af945b40aa6ed296e00c816e0b0",
+      "provider/src/index.ts": "4fd0ed545e9148f9b526db9cdc2432e9254485bcd75c2c1cf925a1587871a647",
+      "provider/src/light-client/header-source.ts": "796ea4dca2e9f4d28ac1c78e539ccca7c8756543a28b2a14c8802469ad62840a",
+      "provider/src/light-client/polling-transport.ts": "9b89022bb50eebc6828c368d3aa337a12e0b61e8aadc73b7865eecfb8d309bbe",
+      "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+      "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6",
+      "provider/src/pool/pool.ts": "e6aaa1e2bee9717f9f1703944ea6aa129e431f8b3274c2aa94acfb16c9393840",
+      "provider/src/pool/pooled-reader.ts": "bb1a1f95fe1da1a81ad233ef5c85c2a2c927cc87be06ce42764b3375745de5ad",
+      "provider/src/runtime/node-globals.ts": "1116c2620fae0ff23c93712c35adfc8df3580c9fb3e0284d930708d255d1544f",
+      "provider/src/transport/anon-transport.ts": "6f868d5021207c5d46ac529451a0d2f74a59c888e32d5de3711f955591595940",
+      "provider/src/transport/fetch-adapter.ts": "b15dd8b0bff219141cdca960248aeb73a96a644662a6b2bd4a785138cd74a944",
+      "provider/src/transport/json-rpc.ts": "427616e720bf80d963f76aab7d14b2883fad03487993551c522b4140b73757d6",
+      "provider/src/transport/pinned-bootstrap.ts": "0a2f13fe7a9dac7b9ea6d21b6dee62463164962c9171b129525a195e61736b86",
+      "provider/src/transport/response-body.ts": "a0b3d4692e81cee31137bc67c8a9c85dad2732422080053e7917d6c0c810711a",
+      "provider/src/verify/hex.ts": "232116283b53158689e5c54639fc1117c50e15aa6269d8df20b95b432ad1aebd",
+      "provider/src/verify/index.ts": "01ab8cf6e96b699a901eeae381c2f709a5a2a7e0a11a8d64755de9d40a8d3e8c",
+      "provider/src/verify/mpt.ts": "9286c91b2e7789e5b48c976b0580d629f15640be0a6c93b0e900245e2fa1ca71",
+      "provider/src/verify/reader.ts": "cdfa17e9f24b0b721697ee6f7efec288744d25ffd210c70dfb14a5f99557614d",
+      "provider/src/verify/rlp.ts": "e300c90787737f64e2587573b6771919caf69719f6ac9121383d75d57fd4e3fa",
+      "provider/src/verify/worker-pin.ts": "e3e0b02c5ee6ec36117e86a806e8232591253679246551d26ccb7b135505b94e",
+      "web/index.html": "337aacde9e78dcdfcb8eaaafcca364fbed23ad4aa3c84a90cc626a1c272c8a51",
+      "web/package.json": "80ede9937b73b8ca16823deb290a7e762843c0a9345d2f50f442d4716f3ea3de",
+      "web/src/directory/directory.css": "bb6336f6904cc2ded1220d2032ce3a8930a4620f79d002b1cb892b2479fa2f85",
+      "web/src/directory/model.ts": "2c3f1f8b8681ddd08120acdddb23ad0ad3b16710d1a2fd077f3236d4f6f85058",
+      "web/src/directory/operator-draft.ts": "141a22c9a7276bee915af19945674e6aed7512a02cbe64a24a2506500f8fa0eb",
+      "web/src/directory/operators.ts": "78546f920801f445a60036baec7f4cc9618b374045ae7925158a4c85949685c9",
+      "web/src/directory/pending-operators.ts": "6259edb2dc4d761f378c7966a91fafd096ebb596aee2a3b51a206c701c5da850",
+      "web/src/main.ts": "ea228e670e593af5fcc53fa4962e7fc7c6f1a3f80967b86acc433793c0c97d06",
+      "web/src/page.ts": "7df987dc06f006657179630f15e8e45949be5c7a9f4786309200ec64f10421b4",
+      "web/src/pages/directory.ts": "4005a8c47da46e14e1af522b1eb76be560c5e16894243b4d3f144dfce0029c06",
+      "web/src/pages/landing.ts": "e87d5ed7dc35add881ef9598712ff29eec48d1f18ab647ce229c73f5fd1a93a9",
+      "web/src/pages/network.ts": "3f260d754ac1b6c2979081fb6fc0cfafc725d3f081feeef8e436c13659905fca",
+      "web/src/pages/not-found.ts": "e658e25f833e15014f69abfef60720e4ad86d6bd5d2cd9dede01403559877451",
+      "web/src/pages/operate.ts": "3969961179bea0397f4b7802aa62fe59ddc0b8fc2c2f8e4c53384884cba19c5f",
+      "web/src/pages/operator.ts": "51d05f0824a1fd890a682c10a1d46be59eb05ca686879ae7abe401eb7ea1dc9c",
+      "web/src/styles.css": "864d777d71c97c7dddfff0477dfe8b3e78064ba6453a5fbb07113687f1664e8b",
+      "web/src/tokens.css": "8782ab559fc36ec8d595452f96b62d749ffa4a3d012a5fa42b0bd902ad195840",
+      "web/src/ui.ts": "248d5f3425d08640846d5cd36c3b95741b9adf705d114a7d915b68e0fe9bcfa2",
+      "web/vite.config.ts": "9b7b2caa400e330ed48029c831e44ef7a74eda00eafdd1d8b1f619b474aa5afc"
+    },
+    "sourceHashesAfter": {
+      "frontend/build/ens-directory.ts": "ff125dd996d9ed176624431152ed69bd85acf9edfac910349ab76d5d6acbe8aa",
+      "frontend/build/gateways.ts": "56f5ba46d703af36029d4d793ca0e2e857c79667410ef741b4b8e1a25fcc0f88",
+      "frontend/example.html": "0cb36b73565da87638c1167d016acdfef82fc1dcb952cd8906b3532f4595573b",
+      "frontend/index.html": "770bd419c18860bba0b9b2efc43932aa52933c34bfdd70594d252625f91e569c",
+      "frontend/network-check.html": "c6b6f3a701ab5728a0a677790ff32a4cc58b9f302689d41d8b29f09dcc2afa10",
+      "frontend/package.json": "143572edf9f5747b9b3f92cef11629e6fc6e95fc84d32357c7a0df0967205ac3",
+      "frontend/src/direct-connections.ts": "e66d4b6b0c0707d44575f23028884f4e2503eed4124e28bf36b249e6d0032f85",
+      "frontend/src/directory-freshness.ts": "9f3c46752ad8650c7937ecc5c220c5ed31b52ce468b405421b685a244ea5e0c3",
+      "frontend/src/ens-lifecycle-status.ts": "e961218cb6d4d5085042e52407c2dfee3d22ffc4758c929f9748d2c67579e9e5",
+      "frontend/src/example.ts": "c9238f090f2bbe9a48df9932b774a1720cdc40a394d423d07bf4e045c371fe80",
+      "frontend/src/main.ts": "52be4ca56859ad4be4101465b246de0c9420c43a846549f4cd67b49d4e577e6f",
+      "frontend/src/network-check.ts": "b79bd912220093b5e76996c19fe2bcc1df761a97912a86402b54fadd514c9812",
+      "frontend/src/operator-dashboard.ts": "128f16531fdb2c87eb83cf6af8014f309d33fdb800a0170f33db5c86b615b3c1",
+      "frontend/src/operator-groups.ts": "c69ba2dcc49da3523b0339046f67190014bd355a773276c2ba66f8c701a819e5",
+      "frontend/src/payment-panel.ts": "664b306fb5f29c9ab3bab565f1a727c3f646fe8f2294289420797e21229130fc",
+      "frontend/src/render.ts": "be32fe8091a77c112f363841019a4973033572cc9356054e5213eb638aa7ac8a",
+      "frontend/src/routing-preferences.ts": "8844416709bc946615efdcb5567405273466a83bb39e9ce41367d3b7f270366d",
+      "frontend/src/style.css": "e13b1b8010ae3c2d8bfe5475e00130813503d00fbe5d9a2ce2f2a2dfd0d5eebf",
+      "frontend/src/wallet-payments.ts": "0b17c6491b1b60bda25bce8b6a0efddfe750488ad8e0613d8fde3a07dcb52e09",
+      "frontend/vite.config.ts": "5152222d08114506634fcc7ba6da5e3f02eec28e0d41b7d7642ad68e275f71bd",
+      "payments/package.json": "749ced81581e13603e8305d1d41e83fb50c5b97a97334fb3e44955210b7b090a",
+      "payments/src/client.ts": "808eb5dc5229ae3ddca7bc8a9aafbcb95c3f1090df75e217cf7705bb42ce2f17",
+      "payments/src/coordinator.ts": "57f412a86968712b85a4bd81105c6c18f9d400df90a5e9ad9d5859bf93dfb017",
+      "payments/src/delegation.ts": "3a3b77965136b29e9cfe05f9f5eb55605cd09beb13857842d4b9a02c5eae3fa0",
+      "payments/src/index.ts": "b7258bdd885688757eadc8efdd983ef8802cd88b10f56fa52ff7a39356f0e533",
+      "payments/src/node-codec.ts": "504e1bb565212558d56a5dd4c79a34d715841d3749956d2a7ab9ba9c8d0a6a4d",
+      "payments/src/node-store.ts": "d127fb2c23e73736a09999f71308ff6c81fff3881c7a13b71b3832e87c57c59b",
+      "payments/src/node-worker.ts": "e421cf8602d70e9b38c5b0d152b1fd01bfdc315d0306cb9a16f22248d031eda6",
+      "payments/src/protocol.ts": "70dabf8425fc74aaaa0ac88060a42738739978cd5787c81309f15864ef147e6a",
+      "payments/src/sponsored-client.ts": "fab1fbb7a32bcc8492d5ae9696360d2e401a4f122b3b82ad608060876f154056",
+      "payments/src/sponsored.ts": "e6036cbfdc3fd4ed3630b5b97e30eaacd44d2f6d0c0092f660e5b172427de38d",
+      "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+      "provider/package.json": "3f3c05a9505f407372af44450d0a22ebff1a641d035d89dd379bf976890b9629",
+      "provider/src/api/derpc.ts": "db26fb1d45448bb32e6a5f5a1b4bf24dadc3f89b2b1abeaaff2cc30d5439fc7a",
+      "provider/src/api/directory-snapshot.ts": "57dd2f7ee9a4a1fb12efae1661e89c07b09f580043ffc53656524512bc4f069d",
+      "provider/src/api/eip1193.ts": "e3635ae3abe6284e063c2933f56b8d26b3be8fb5ca40adcf86f4924672e86df1",
+      "provider/src/api/viem.ts": "d3de0977312a6c0c426e8641f268e22fdc61098aa6a4b20b66765e3a61c3cd00",
+      "provider/src/config/mainnet.ts": "b64e2640a015fa83c3fe12550016f47c4e7f5023b3526fa8be1e9b00feef7ede",
+      "provider/src/discovery/ens.ts": "2ab1cd9734833acfc3a7d3d8f11b59aaa3d797ddd093b9e18a87df76f793f8f1",
+      "provider/src/discovery/registrar.ts": "15e2de08125ba5382980e1687d16224ace8073ce4155e2541558e0897921dc92",
+      "provider/src/execution/index.ts": "61ddd27262533b38b2bc43ebf384ea3206ecb94602d7eaa9287faa71d9eced1d",
+      "provider/src/execution/verified-call.ts": "0c73889387a5fcf7e5f48ebbda236b555465c9048bca09c877b4630568a4fbf8",
+      "provider/src/execution/verified-ens.ts": "d40bf013901bbe0d0c964f30a9ac8ee6332f5af945b40aa6ed296e00c816e0b0",
+      "provider/src/index.ts": "4fd0ed545e9148f9b526db9cdc2432e9254485bcd75c2c1cf925a1587871a647",
+      "provider/src/light-client/header-source.ts": "796ea4dca2e9f4d28ac1c78e539ccca7c8756543a28b2a14c8802469ad62840a",
+      "provider/src/light-client/polling-transport.ts": "9b89022bb50eebc6828c368d3aa337a12e0b61e8aadc73b7865eecfb8d309bbe",
+      "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+      "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6",
+      "provider/src/pool/pool.ts": "e6aaa1e2bee9717f9f1703944ea6aa129e431f8b3274c2aa94acfb16c9393840",
+      "provider/src/pool/pooled-reader.ts": "bb1a1f95fe1da1a81ad233ef5c85c2a2c927cc87be06ce42764b3375745de5ad",
+      "provider/src/runtime/node-globals.ts": "1116c2620fae0ff23c93712c35adfc8df3580c9fb3e0284d930708d255d1544f",
+      "provider/src/transport/anon-transport.ts": "6f868d5021207c5d46ac529451a0d2f74a59c888e32d5de3711f955591595940",
+      "provider/src/transport/fetch-adapter.ts": "b15dd8b0bff219141cdca960248aeb73a96a644662a6b2bd4a785138cd74a944",
+      "provider/src/transport/json-rpc.ts": "427616e720bf80d963f76aab7d14b2883fad03487993551c522b4140b73757d6",
+      "provider/src/transport/pinned-bootstrap.ts": "0a2f13fe7a9dac7b9ea6d21b6dee62463164962c9171b129525a195e61736b86",
+      "provider/src/transport/response-body.ts": "a0b3d4692e81cee31137bc67c8a9c85dad2732422080053e7917d6c0c810711a",
+      "provider/src/verify/hex.ts": "232116283b53158689e5c54639fc1117c50e15aa6269d8df20b95b432ad1aebd",
+      "provider/src/verify/index.ts": "01ab8cf6e96b699a901eeae381c2f709a5a2a7e0a11a8d64755de9d40a8d3e8c",
+      "provider/src/verify/mpt.ts": "9286c91b2e7789e5b48c976b0580d629f15640be0a6c93b0e900245e2fa1ca71",
+      "provider/src/verify/reader.ts": "cdfa17e9f24b0b721697ee6f7efec288744d25ffd210c70dfb14a5f99557614d",
+      "provider/src/verify/rlp.ts": "e300c90787737f64e2587573b6771919caf69719f6ac9121383d75d57fd4e3fa",
+      "provider/src/verify/worker-pin.ts": "e3e0b02c5ee6ec36117e86a806e8232591253679246551d26ccb7b135505b94e",
+      "web/index.html": "337aacde9e78dcdfcb8eaaafcca364fbed23ad4aa3c84a90cc626a1c272c8a51",
+      "web/package.json": "80ede9937b73b8ca16823deb290a7e762843c0a9345d2f50f442d4716f3ea3de",
+      "web/src/directory/directory.css": "bb6336f6904cc2ded1220d2032ce3a8930a4620f79d002b1cb892b2479fa2f85",
+      "web/src/directory/model.ts": "2c3f1f8b8681ddd08120acdddb23ad0ad3b16710d1a2fd077f3236d4f6f85058",
+      "web/src/directory/operator-draft.ts": "141a22c9a7276bee915af19945674e6aed7512a02cbe64a24a2506500f8fa0eb",
+      "web/src/directory/operators.ts": "78546f920801f445a60036baec7f4cc9618b374045ae7925158a4c85949685c9",
+      "web/src/directory/pending-operators.ts": "6259edb2dc4d761f378c7966a91fafd096ebb596aee2a3b51a206c701c5da850",
+      "web/src/main.ts": "ea228e670e593af5fcc53fa4962e7fc7c6f1a3f80967b86acc433793c0c97d06",
+      "web/src/page.ts": "7df987dc06f006657179630f15e8e45949be5c7a9f4786309200ec64f10421b4",
+      "web/src/pages/directory.ts": "4005a8c47da46e14e1af522b1eb76be560c5e16894243b4d3f144dfce0029c06",
+      "web/src/pages/landing.ts": "e87d5ed7dc35add881ef9598712ff29eec48d1f18ab647ce229c73f5fd1a93a9",
+      "web/src/pages/network.ts": "3f260d754ac1b6c2979081fb6fc0cfafc725d3f081feeef8e436c13659905fca",
+      "web/src/pages/not-found.ts": "e658e25f833e15014f69abfef60720e4ad86d6bd5d2cd9dede01403559877451",
+      "web/src/pages/operate.ts": "3969961179bea0397f4b7802aa62fe59ddc0b8fc2c2f8e4c53384884cba19c5f",
+      "web/src/pages/operator.ts": "51d05f0824a1fd890a682c10a1d46be59eb05ca686879ae7abe401eb7ea1dc9c",
+      "web/src/styles.css": "864d777d71c97c7dddfff0477dfe8b3e78064ba6453a5fbb07113687f1664e8b",
+      "web/src/tokens.css": "8782ab559fc36ec8d595452f96b62d749ffa4a3d012a5fa42b0bd902ad195840",
+      "web/src/ui.ts": "248d5f3425d08640846d5cd36c3b95741b9adf705d114a7d915b68e0fe9bcfa2",
+      "web/vite.config.ts": "9b7b2caa400e330ed48029c831e44ef7a74eda00eafdd1d8b1f619b474aa5afc"
+    },
+    "changedDuringBuild": [],
+    "buildStable": true,
+    "builtAt": "2026-11-07T00:15:51.793Z",
+    "sourceHashesBeforeBrowser": {
+      "frontend/build/ens-directory.ts": "ff125dd996d9ed176624431152ed69bd85acf9edfac910349ab76d5d6acbe8aa",
+      "frontend/build/gateways.ts": "56f5ba46d703af36029d4d793ca0e2e857c79667410ef741b4b8e1a25fcc0f88",
+      "frontend/example.html": "0cb36b73565da87638c1167d016acdfef82fc1dcb952cd8906b3532f4595573b",
+      "frontend/index.html": "770bd419c18860bba0b9b2efc43932aa52933c34bfdd70594d252625f91e569c",
+      "frontend/network-check.html": "c6b6f3a701ab5728a0a677790ff32a4cc58b9f302689d41d8b29f09dcc2afa10",
+      "frontend/package.json": "143572edf9f5747b9b3f92cef11629e6fc6e95fc84d32357c7a0df0967205ac3",
+      "frontend/src/direct-connections.ts": "e66d4b6b0c0707d44575f23028884f4e2503eed4124e28bf36b249e6d0032f85",
+      "frontend/src/directory-freshness.ts": "9f3c46752ad8650c7937ecc5c220c5ed31b52ce468b405421b685a244ea5e0c3",
+      "frontend/src/ens-lifecycle-status.ts": "e961218cb6d4d5085042e52407c2dfee3d22ffc4758c929f9748d2c67579e9e5",
+      "frontend/src/example.ts": "c9238f090f2bbe9a48df9932b774a1720cdc40a394d423d07bf4e045c371fe80",
+      "frontend/src/main.ts": "52be4ca56859ad4be4101465b246de0c9420c43a846549f4cd67b49d4e577e6f",
+      "frontend/src/network-check.ts": "b79bd912220093b5e76996c19fe2bcc1df761a97912a86402b54fadd514c9812",
+      "frontend/src/operator-dashboard.ts": "128f16531fdb2c87eb83cf6af8014f309d33fdb800a0170f33db5c86b615b3c1",
+      "frontend/src/operator-groups.ts": "c69ba2dcc49da3523b0339046f67190014bd355a773276c2ba66f8c701a819e5",
+      "frontend/src/payment-panel.ts": "664b306fb5f29c9ab3bab565f1a727c3f646fe8f2294289420797e21229130fc",
+      "frontend/src/render.ts": "be32fe8091a77c112f363841019a4973033572cc9356054e5213eb638aa7ac8a",
+      "frontend/src/routing-preferences.ts": "8844416709bc946615efdcb5567405273466a83bb39e9ce41367d3b7f270366d",
+      "frontend/src/style.css": "e13b1b8010ae3c2d8bfe5475e00130813503d00fbe5d9a2ce2f2a2dfd0d5eebf",
+      "frontend/src/wallet-payments.ts": "0b17c6491b1b60bda25bce8b6a0efddfe750488ad8e0613d8fde3a07dcb52e09",
+      "frontend/vite.config.ts": "5152222d08114506634fcc7ba6da5e3f02eec28e0d41b7d7642ad68e275f71bd",
+      "payments/package.json": "749ced81581e13603e8305d1d41e83fb50c5b97a97334fb3e44955210b7b090a",
+      "payments/src/client.ts": "808eb5dc5229ae3ddca7bc8a9aafbcb95c3f1090df75e217cf7705bb42ce2f17",
+      "payments/src/coordinator.ts": "57f412a86968712b85a4bd81105c6c18f9d400df90a5e9ad9d5859bf93dfb017",
+      "payments/src/delegation.ts": "3a3b77965136b29e9cfe05f9f5eb55605cd09beb13857842d4b9a02c5eae3fa0",
+      "payments/src/index.ts": "b7258bdd885688757eadc8efdd983ef8802cd88b10f56fa52ff7a39356f0e533",
+      "payments/src/node-codec.ts": "504e1bb565212558d56a5dd4c79a34d715841d3749956d2a7ab9ba9c8d0a6a4d",
+      "payments/src/node-store.ts": "d127fb2c23e73736a09999f71308ff6c81fff3881c7a13b71b3832e87c57c59b",
+      "payments/src/node-worker.ts": "e421cf8602d70e9b38c5b0d152b1fd01bfdc315d0306cb9a16f22248d031eda6",
+      "payments/src/protocol.ts": "70dabf8425fc74aaaa0ac88060a42738739978cd5787c81309f15864ef147e6a",
+      "payments/src/sponsored-client.ts": "fab1fbb7a32bcc8492d5ae9696360d2e401a4f122b3b82ad608060876f154056",
+      "payments/src/sponsored.ts": "e6036cbfdc3fd4ed3630b5b97e30eaacd44d2f6d0c0092f660e5b172427de38d",
+      "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+      "provider/package.json": "3f3c05a9505f407372af44450d0a22ebff1a641d035d89dd379bf976890b9629",
+      "provider/src/api/derpc.ts": "db26fb1d45448bb32e6a5f5a1b4bf24dadc3f89b2b1abeaaff2cc30d5439fc7a",
+      "provider/src/api/directory-snapshot.ts": "57dd2f7ee9a4a1fb12efae1661e89c07b09f580043ffc53656524512bc4f069d",
+      "provider/src/api/eip1193.ts": "e3635ae3abe6284e063c2933f56b8d26b3be8fb5ca40adcf86f4924672e86df1",
+      "provider/src/api/viem.ts": "d3de0977312a6c0c426e8641f268e22fdc61098aa6a4b20b66765e3a61c3cd00",
+      "provider/src/config/mainnet.ts": "b64e2640a015fa83c3fe12550016f47c4e7f5023b3526fa8be1e9b00feef7ede",
+      "provider/src/discovery/ens.ts": "2ab1cd9734833acfc3a7d3d8f11b59aaa3d797ddd093b9e18a87df76f793f8f1",
+      "provider/src/discovery/registrar.ts": "15e2de08125ba5382980e1687d16224ace8073ce4155e2541558e0897921dc92",
+      "provider/src/execution/index.ts": "61ddd27262533b38b2bc43ebf384ea3206ecb94602d7eaa9287faa71d9eced1d",
+      "provider/src/execution/verified-call.ts": "0c73889387a5fcf7e5f48ebbda236b555465c9048bca09c877b4630568a4fbf8",
+      "provider/src/execution/verified-ens.ts": "d40bf013901bbe0d0c964f30a9ac8ee6332f5af945b40aa6ed296e00c816e0b0",
+      "provider/src/index.ts": "4fd0ed545e9148f9b526db9cdc2432e9254485bcd75c2c1cf925a1587871a647",
+      "provider/src/light-client/header-source.ts": "796ea4dca2e9f4d28ac1c78e539ccca7c8756543a28b2a14c8802469ad62840a",
+      "provider/src/light-client/polling-transport.ts": "9b89022bb50eebc6828c368d3aa337a12e0b61e8aadc73b7865eecfb8d309bbe",
+      "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+      "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6",
+      "provider/src/pool/pool.ts": "e6aaa1e2bee9717f9f1703944ea6aa129e431f8b3274c2aa94acfb16c9393840",
+      "provider/src/pool/pooled-reader.ts": "bb1a1f95fe1da1a81ad233ef5c85c2a2c927cc87be06ce42764b3375745de5ad",
+      "provider/src/runtime/node-globals.ts": "1116c2620fae0ff23c93712c35adfc8df3580c9fb3e0284d930708d255d1544f",
+      "provider/src/transport/anon-transport.ts": "6f868d5021207c5d46ac529451a0d2f74a59c888e32d5de3711f955591595940",
+      "provider/src/transport/fetch-adapter.ts": "b15dd8b0bff219141cdca960248aeb73a96a644662a6b2bd4a785138cd74a944",
+      "provider/src/transport/json-rpc.ts": "427616e720bf80d963f76aab7d14b2883fad03487993551c522b4140b73757d6",
+      "provider/src/transport/pinned-bootstrap.ts": "0a2f13fe7a9dac7b9ea6d21b6dee62463164962c9171b129525a195e61736b86",
+      "provider/src/transport/response-body.ts": "a0b3d4692e81cee31137bc67c8a9c85dad2732422080053e7917d6c0c810711a",
+      "provider/src/verify/hex.ts": "232116283b53158689e5c54639fc1117c50e15aa6269d8df20b95b432ad1aebd",
+      "provider/src/verify/index.ts": "01ab8cf6e96b699a901eeae381c2f709a5a2a7e0a11a8d64755de9d40a8d3e8c",
+      "provider/src/verify/mpt.ts": "9286c91b2e7789e5b48c976b0580d629f15640be0a6c93b0e900245e2fa1ca71",
+      "provider/src/verify/reader.ts": "cdfa17e9f24b0b721697ee6f7efec288744d25ffd210c70dfb14a5f99557614d",
+      "provider/src/verify/rlp.ts": "e300c90787737f64e2587573b6771919caf69719f6ac9121383d75d57fd4e3fa",
+      "provider/src/verify/worker-pin.ts": "e3e0b02c5ee6ec36117e86a806e8232591253679246551d26ccb7b135505b94e",
+      "web/index.html": "337aacde9e78dcdfcb8eaaafcca364fbed23ad4aa3c84a90cc626a1c272c8a51",
+      "web/package.json": "80ede9937b73b8ca16823deb290a7e762843c0a9345d2f50f442d4716f3ea3de",
+      "web/src/directory/directory.css": "bb6336f6904cc2ded1220d2032ce3a8930a4620f79d002b1cb892b2479fa2f85",
+      "web/src/directory/model.ts": "2c3f1f8b8681ddd08120acdddb23ad0ad3b16710d1a2fd077f3236d4f6f85058",
+      "web/src/directory/operator-draft.ts": "141a22c9a7276bee915af19945674e6aed7512a02cbe64a24a2506500f8fa0eb",
+      "web/src/directory/operators.ts": "78546f920801f445a60036baec7f4cc9618b374045ae7925158a4c85949685c9",
+      "web/src/directory/pending-operators.ts": "6259edb2dc4d761f378c7966a91fafd096ebb596aee2a3b51a206c701c5da850",
+      "web/src/main.ts": "ea228e670e593af5fcc53fa4962e7fc7c6f1a3f80967b86acc433793c0c97d06",
+      "web/src/page.ts": "7df987dc06f006657179630f15e8e45949be5c7a9f4786309200ec64f10421b4",
+      "web/src/pages/directory.ts": "4005a8c47da46e14e1af522b1eb76be560c5e16894243b4d3f144dfce0029c06",
+      "web/src/pages/landing.ts": "e87d5ed7dc35add881ef9598712ff29eec48d1f18ab647ce229c73f5fd1a93a9",
+      "web/src/pages/network.ts": "3f260d754ac1b6c2979081fb6fc0cfafc725d3f081feeef8e436c13659905fca",
+      "web/src/pages/not-found.ts": "e658e25f833e15014f69abfef60720e4ad86d6bd5d2cd9dede01403559877451",
+      "web/src/pages/operate.ts": "3969961179bea0397f4b7802aa62fe59ddc0b8fc2c2f8e4c53384884cba19c5f",
+      "web/src/pages/operator.ts": "51d05f0824a1fd890a682c10a1d46be59eb05ca686879ae7abe401eb7ea1dc9c",
+      "web/src/styles.css": "864d777d71c97c7dddfff0477dfe8b3e78064ba6453a5fbb07113687f1664e8b",
+      "web/src/tokens.css": "8782ab559fc36ec8d595452f96b62d749ffa4a3d012a5fa42b0bd902ad195840",
+      "web/src/ui.ts": "248d5f3425d08640846d5cd36c3b95741b9adf705d114a7d915b68e0fe9bcfa2",
+      "web/vite.config.ts": "9b7b2caa400e330ed48029c831e44ef7a74eda00eafdd1d8b1f619b474aa5afc"
+    },
+    "sourceHashesAfterBrowser": {
+      "frontend/build/ens-directory.ts": "ff125dd996d9ed176624431152ed69bd85acf9edfac910349ab76d5d6acbe8aa",
+      "frontend/build/gateways.ts": "56f5ba46d703af36029d4d793ca0e2e857c79667410ef741b4b8e1a25fcc0f88",
+      "frontend/example.html": "0cb36b73565da87638c1167d016acdfef82fc1dcb952cd8906b3532f4595573b",
+      "frontend/index.html": "770bd419c18860bba0b9b2efc43932aa52933c34bfdd70594d252625f91e569c",
+      "frontend/network-check.html": "c6b6f3a701ab5728a0a677790ff32a4cc58b9f302689d41d8b29f09dcc2afa10",
+      "frontend/package.json": "143572edf9f5747b9b3f92cef11629e6fc6e95fc84d32357c7a0df0967205ac3",
+      "frontend/src/direct-connections.ts": "e66d4b6b0c0707d44575f23028884f4e2503eed4124e28bf36b249e6d0032f85",
+      "frontend/src/directory-freshness.ts": "9f3c46752ad8650c7937ecc5c220c5ed31b52ce468b405421b685a244ea5e0c3",
+      "frontend/src/ens-lifecycle-status.ts": "e961218cb6d4d5085042e52407c2dfee3d22ffc4758c929f9748d2c67579e9e5",
+      "frontend/src/example.ts": "c9238f090f2bbe9a48df9932b774a1720cdc40a394d423d07bf4e045c371fe80",
+      "frontend/src/main.ts": "52be4ca56859ad4be4101465b246de0c9420c43a846549f4cd67b49d4e577e6f",
+      "frontend/src/network-check.ts": "b79bd912220093b5e76996c19fe2bcc1df761a97912a86402b54fadd514c9812",
+      "frontend/src/operator-dashboard.ts": "128f16531fdb2c87eb83cf6af8014f309d33fdb800a0170f33db5c86b615b3c1",
+      "frontend/src/operator-groups.ts": "c69ba2dcc49da3523b0339046f67190014bd355a773276c2ba66f8c701a819e5",
+      "frontend/src/payment-panel.ts": "664b306fb5f29c9ab3bab565f1a727c3f646fe8f2294289420797e21229130fc",
+      "frontend/src/render.ts": "be32fe8091a77c112f363841019a4973033572cc9356054e5213eb638aa7ac8a",
+      "frontend/src/routing-preferences.ts": "8844416709bc946615efdcb5567405273466a83bb39e9ce41367d3b7f270366d",
+      "frontend/src/style.css": "e13b1b8010ae3c2d8bfe5475e00130813503d00fbe5d9a2ce2f2a2dfd0d5eebf",
+      "frontend/src/wallet-payments.ts": "0b17c6491b1b60bda25bce8b6a0efddfe750488ad8e0613d8fde3a07dcb52e09",
+      "frontend/vite.config.ts": "5152222d08114506634fcc7ba6da5e3f02eec28e0d41b7d7642ad68e275f71bd",
+      "payments/package.json": "749ced81581e13603e8305d1d41e83fb50c5b97a97334fb3e44955210b7b090a",
+      "payments/src/client.ts": "808eb5dc5229ae3ddca7bc8a9aafbcb95c3f1090df75e217cf7705bb42ce2f17",
+      "payments/src/coordinator.ts": "57f412a86968712b85a4bd81105c6c18f9d400df90a5e9ad9d5859bf93dfb017",
+      "payments/src/delegation.ts": "3a3b77965136b29e9cfe05f9f5eb55605cd09beb13857842d4b9a02c5eae3fa0",
+      "payments/src/index.ts": "b7258bdd885688757eadc8efdd983ef8802cd88b10f56fa52ff7a39356f0e533",
+      "payments/src/node-codec.ts": "504e1bb565212558d56a5dd4c79a34d715841d3749956d2a7ab9ba9c8d0a6a4d",
+      "payments/src/node-store.ts": "d127fb2c23e73736a09999f71308ff6c81fff3881c7a13b71b3832e87c57c59b",
+      "payments/src/node-worker.ts": "e421cf8602d70e9b38c5b0d152b1fd01bfdc315d0306cb9a16f22248d031eda6",
+      "payments/src/protocol.ts": "70dabf8425fc74aaaa0ac88060a42738739978cd5787c81309f15864ef147e6a",
+      "payments/src/sponsored-client.ts": "fab1fbb7a32bcc8492d5ae9696360d2e401a4f122b3b82ad608060876f154056",
+      "payments/src/sponsored.ts": "e6036cbfdc3fd4ed3630b5b97e30eaacd44d2f6d0c0092f660e5b172427de38d",
+      "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+      "provider/package.json": "3f3c05a9505f407372af44450d0a22ebff1a641d035d89dd379bf976890b9629",
+      "provider/src/api/derpc.ts": "db26fb1d45448bb32e6a5f5a1b4bf24dadc3f89b2b1abeaaff2cc30d5439fc7a",
+      "provider/src/api/directory-snapshot.ts": "57dd2f7ee9a4a1fb12efae1661e89c07b09f580043ffc53656524512bc4f069d",
+      "provider/src/api/eip1193.ts": "e3635ae3abe6284e063c2933f56b8d26b3be8fb5ca40adcf86f4924672e86df1",
+      "provider/src/api/viem.ts": "d3de0977312a6c0c426e8641f268e22fdc61098aa6a4b20b66765e3a61c3cd00",
+      "provider/src/config/mainnet.ts": "b64e2640a015fa83c3fe12550016f47c4e7f5023b3526fa8be1e9b00feef7ede",
+      "provider/src/discovery/ens.ts": "2ab1cd9734833acfc3a7d3d8f11b59aaa3d797ddd093b9e18a87df76f793f8f1",
+      "provider/src/discovery/registrar.ts": "15e2de08125ba5382980e1687d16224ace8073ce4155e2541558e0897921dc92",
+      "provider/src/execution/index.ts": "61ddd27262533b38b2bc43ebf384ea3206ecb94602d7eaa9287faa71d9eced1d",
+      "provider/src/execution/verified-call.ts": "0c73889387a5fcf7e5f48ebbda236b555465c9048bca09c877b4630568a4fbf8",
+      "provider/src/execution/verified-ens.ts": "d40bf013901bbe0d0c964f30a9ac8ee6332f5af945b40aa6ed296e00c816e0b0",
+      "provider/src/index.ts": "4fd0ed545e9148f9b526db9cdc2432e9254485bcd75c2c1cf925a1587871a647",
+      "provider/src/light-client/header-source.ts": "796ea4dca2e9f4d28ac1c78e539ccca7c8756543a28b2a14c8802469ad62840a",
+      "provider/src/light-client/polling-transport.ts": "9b89022bb50eebc6828c368d3aa337a12e0b61e8aadc73b7865eecfb8d309bbe",
+      "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+      "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6",
+      "provider/src/pool/pool.ts": "e6aaa1e2bee9717f9f1703944ea6aa129e431f8b3274c2aa94acfb16c9393840",
+      "provider/src/pool/pooled-reader.ts": "bb1a1f95fe1da1a81ad233ef5c85c2a2c927cc87be06ce42764b3375745de5ad",
+      "provider/src/runtime/node-globals.ts": "1116c2620fae0ff23c93712c35adfc8df3580c9fb3e0284d930708d255d1544f",
+      "provider/src/transport/anon-transport.ts": "6f868d5021207c5d46ac529451a0d2f74a59c888e32d5de3711f955591595940",
+      "provider/src/transport/fetch-adapter.ts": "b15dd8b0bff219141cdca960248aeb73a96a644662a6b2bd4a785138cd74a944",
+      "provider/src/transport/json-rpc.ts": "427616e720bf80d963f76aab7d14b2883fad03487993551c522b4140b73757d6",
+      "provider/src/transport/pinned-bootstrap.ts": "0a2f13fe7a9dac7b9ea6d21b6dee62463164962c9171b129525a195e61736b86",
+      "provider/src/transport/response-body.ts": "a0b3d4692e81cee31137bc67c8a9c85dad2732422080053e7917d6c0c810711a",
+      "provider/src/verify/hex.ts": "232116283b53158689e5c54639fc1117c50e15aa6269d8df20b95b432ad1aebd",
+      "provider/src/verify/index.ts": "01ab8cf6e96b699a901eeae381c2f709a5a2a7e0a11a8d64755de9d40a8d3e8c",
+      "provider/src/verify/mpt.ts": "9286c91b2e7789e5b48c976b0580d629f15640be0a6c93b0e900245e2fa1ca71",
+      "provider/src/verify/reader.ts": "cdfa17e9f24b0b721697ee6f7efec288744d25ffd210c70dfb14a5f99557614d",
+      "provider/src/verify/rlp.ts": "e300c90787737f64e2587573b6771919caf69719f6ac9121383d75d57fd4e3fa",
+      "provider/src/verify/worker-pin.ts": "e3e0b02c5ee6ec36117e86a806e8232591253679246551d26ccb7b135505b94e",
+      "web/index.html": "337aacde9e78dcdfcb8eaaafcca364fbed23ad4aa3c84a90cc626a1c272c8a51",
+      "web/package.json": "80ede9937b73b8ca16823deb290a7e762843c0a9345d2f50f442d4716f3ea3de",
+      "web/src/directory/directory.css": "bb6336f6904cc2ded1220d2032ce3a8930a4620f79d002b1cb892b2479fa2f85",
+      "web/src/directory/model.ts": "2c3f1f8b8681ddd08120acdddb23ad0ad3b16710d1a2fd077f3236d4f6f85058",
+      "web/src/directory/operator-draft.ts": "141a22c9a7276bee915af19945674e6aed7512a02cbe64a24a2506500f8fa0eb",
+      "web/src/directory/operators.ts": "78546f920801f445a60036baec7f4cc9618b374045ae7925158a4c85949685c9",
+      "web/src/directory/pending-operators.ts": "6259edb2dc4d761f378c7966a91fafd096ebb596aee2a3b51a206c701c5da850",
+      "web/src/main.ts": "ea228e670e593af5fcc53fa4962e7fc7c6f1a3f80967b86acc433793c0c97d06",
+      "web/src/page.ts": "7df987dc06f006657179630f15e8e45949be5c7a9f4786309200ec64f10421b4",
+      "web/src/pages/directory.ts": "4005a8c47da46e14e1af522b1eb76be560c5e16894243b4d3f144dfce0029c06",
+      "web/src/pages/landing.ts": "e87d5ed7dc35add881ef9598712ff29eec48d1f18ab647ce229c73f5fd1a93a9",
+      "web/src/pages/network.ts": "3f260d754ac1b6c2979081fb6fc0cfafc725d3f081feeef8e436c13659905fca",
+      "web/src/pages/not-found.ts": "e658e25f833e15014f69abfef60720e4ad86d6bd5d2cd9dede01403559877451",
+      "web/src/pages/operate.ts": "3969961179bea0397f4b7802aa62fe59ddc0b8fc2c2f8e4c53384884cba19c5f",
+      "web/src/pages/operator.ts": "51d05f0824a1fd890a682c10a1d46be59eb05ca686879ae7abe401eb7ea1dc9c",
+      "web/src/styles.css": "864d777d71c97c7dddfff0477dfe8b3e78064ba6453a5fbb07113687f1664e8b",
+      "web/src/tokens.css": "8782ab559fc36ec8d595452f96b62d749ffa4a3d012a5fa42b0bd902ad195840",
+      "web/src/ui.ts": "248d5f3425d08640846d5cd36c3b95741b9adf705d114a7d915b68e0fe9bcfa2",
+      "web/vite.config.ts": "9b7b2caa400e330ed48029c831e44ef7a74eda00eafdd1d8b1f619b474aa5afc"
+    },
+    "changedDuringBrowser": [],
+    "sourceStable": true,
+    "serverResponses": [
+      {
+        "method": "GET",
+        "path": "index.html",
+        "bytes": 1284,
+        "sha256": "5c9ac736908890c52bb6fd18cadf82aa6b5d528fadc0fea46a868a3369d7416f"
+      },
+      {
+        "method": "GET",
+        "path": "assets/index-EDIYZFYJ.js",
+        "bytes": 75253,
+        "sha256": "e83d525ebe05398d35df092b57edba17638df7f7e3e711fb6917102b5b5159af"
+      },
+      {
+        "method": "GET",
+        "path": "assets/index-Dp5B9GpU.css",
+        "bytes": 33910,
+        "sha256": "6ff5520d09abcb49f5a927acd756bcce7c649bb6265b6d67afcef96ecf827475"
+      },
+      {
+        "method": "GET",
+        "path": "favicon.svg",
+        "bytes": 2523,
+        "sha256": "840c5ef0525701709f7875c667d95ae39f264eae5b0377aac28de3bed8d9f722"
+      },
+      {
+        "method": "GET",
+        "path": "assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "bytes": 48256,
+        "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62"
+      },
+      {
+        "method": "GET",
+        "path": "demo/index.html",
+        "bytes": 26839,
+        "sha256": "0601a36fa7599eff508398387a5374897dfa6118c560ce5042a6e18af5eb3a69"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/rolldown-runtime-XKyaHtl9.js",
+        "bytes": 726,
+        "sha256": "548d1dbf321e7d2ae804fcc158b588706a7c52f8ca175de1490c6ccb4dbe55b7"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/demo-BN7DWNFg.js",
+        "bytes": 70301,
+        "sha256": "1a61c430fb336b390fa9fa46a02e3d9f23b2448f55171c01a5ddaf6ec5713c84"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/utils-Bpv4vmSW.js",
+        "bytes": 2194,
+        "sha256": "5114638bb111b647e478a947be5beed5558487685dc8284144566df3fc03d851"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/sha3-CixuFzsY.js",
+        "bytes": 3229,
+        "sha256": "9b0af5805db52a230efc35c7a5dbf6fda63fafb7334a7fed275b3b9bf1a75b90"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/endpoints-CRJPe_u7.js",
+        "bytes": 5051,
+        "sha256": "947536fe80808ebadf8433a7e9d10eb997c21d8cecbd56ef8acd497b79740dc1"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/verify-BrqvWFSp.js",
+        "bytes": 5210,
+        "sha256": "21d531bb2f3f321606e6022e8129ea2933cf9586bf565cf7d1b5efc81d872566"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/reader-DA5FvdMd.js",
+        "bytes": 2786,
+        "sha256": "28a9d203e15827a714a17bc24fb695b22e39b16c0af1e1f46e41a04252b280c6"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/dist-CM5luU_N.js",
+        "bytes": 21582,
+        "sha256": "a5350ba64490fc6f21762251b8509a52e509b4274e243d0d5c8479d991b3027f"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/preload-helper-CRzLMJPS.js",
+        "bytes": 1534,
+        "sha256": "bcc465e3e61dc3878a69ffa95ccb53cb82d95b1639ada223420b281ebd150048"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/sha2-CsZgHejA.js",
+        "bytes": 3574,
+        "sha256": "21bf6ca4a29d1a03c1799f3c110180c7b2c0413a798c8246784c68b31351cd28"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/__vite-browser-external-TtGlo6oh.js",
+        "bytes": 94,
+        "sha256": "099e4922cd21d73ac303cc0a95f5fac5b316fe370e881f20a9bb741419ad71db"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/encodeFunctionResult-32HQ9o_H.js",
+        "bytes": 520,
+        "sha256": "548ddfd7e51be91cc783846ed571cca80a076714c211bdbe0ed6f57f695da2a9"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/decodeFunctionResult-DcsPYciO.js",
+        "bytes": 43150,
+        "sha256": "39a1e729decad2aa8ad038e86824e3baaf68f98f91fda2624427bd2e04ae75c4"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/localBatchGatewayRequest-BJhp8X5H.js",
+        "bytes": 60095,
+        "sha256": "3c2c414c560db5a89fc291d475c822829258b4f6ef41ba6eaa0b2e7d8a1b573b"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/secp256k1-DTgEC2Fy.js",
+        "bytes": 26342,
+        "sha256": "49404a8b0a98f9a7f2d81e667a8b1f777e0176ef13f82014f0e260099894aa21"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/address-CYA4zBVK.js",
+        "bytes": 545,
+        "sha256": "01be126d4c343d659d31ae642044335a6542cf346449bfd2670c84710da0c7a3"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/direct-connections-CHHR_MOD.js",
+        "bytes": 2911,
+        "sha256": "144a4e3ddf0cbfb64b77138e3ef963eeda5876d73077178d6519889c8eaf7d8a"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/mainnet-Fg_6B5mA.js",
+        "bytes": 122573,
+        "sha256": "ea6b46bdd5fe72a4bfb6e6d630f002b50426dbd7aaecec52cfa7cf081754198a"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/src-DlO1qo0x.js",
+        "bytes": 1214230,
+        "sha256": "84bfe38ec1651c288bfdded6bcc16ff2e421b6d18e5b573ccb7fe989c25aae44"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/src-B3Gfg644.css",
+        "bytes": 22011,
+        "sha256": "03efb6f9fc8e7192f1d2cfb403f6a09455b2f038195ac6f79e0e887f5f05dd60"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/derpc-lockup-CiJcctT3.svg",
+        "bytes": 5926,
+        "sha256": "41d1a1d0d07fa4cfded5584974ddaf7cc3023778771355a6c384e4a6df16fac2"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "bytes": 48256,
+        "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/favicon-Try9hxE_.svg",
+        "bytes": 2523,
+        "sha256": "840c5ef0525701709f7875c667d95ae39f264eae5b0377aac28de3bed8d9f722"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/dist-DOxWJp2w.js",
+        "bytes": 48,
+        "sha256": "342b622a7749626a2efe912f30cb477663a59441c9c8926a84e76dd508eeea92"
+      },
+      {
+        "method": "GET",
+        "path": "demo/assets/ccip-B6i2UnlS.js",
+        "bytes": 2907,
+        "sha256": "a9a1a3280e8ef7cf64d7649fd879226c1116c4444f392d5edd295648da09c971"
+      }
+    ],
+    "serverClosed": true,
+    "qualification": "Loopback serves an isolated production build of local uncommitted changes, with real public anonymous transport and no stubbing. These hashes describe bytes written by this owned server, not a packet capture. This is not the published d90cc742 artifact and does not repair its failed acceptance evidence."
+  }
+}

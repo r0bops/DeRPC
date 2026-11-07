@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-read-only-operations-observation",
+  "checkedAt": "2026-11-07T00:05:33.697750+00:00",
+  "sourceHead": "f1e3ccfd88bcd28d772c1fec25a7cadcc5dbc29c",
+  "scope": {
+    "remoteServiceMutations": false,
+    "firewallMutations": false,
+    "publicationRequested": false,
+    "privateKeyOrEnvironmentContentsRead": false,
+    "processArgumentsRead": false,
+    "newSoftwareInstalled": false,
+    "costBearingResourcesCreated": false
+  },
+  "localGateway": {
+    "issue": "https://github.com/r0bops/DeRPC/issues/17",
+    "issueStateObserved": "open",
+    "processName": "tor-js-gateway",
+    "processCount": 1,
+    "startedLocalTime": "2026-11-06 05:55:22 Europe/Lisbon",
+    "udpPort": 12298,
+    "listener": "wildcard",
+    "firewalldState": "running",
+    "activePhysicalInterfaceZone": "FedoraWorkstation",
+    "physicalInterfacesInZone": 2,
+    "runtimeAllowedPorts": [
+      "1025-65535/tcp",
+      "1025-65535/udp"
+    ],
+    "permanentAllowedPorts": [
+      "1025-65535/tcp",
+      "1025-65535/udp"
+    ],
+    "udp12298IncludedInAllowedRange": true,
+    "internetReachabilityTested": false,
+    "resolved": false,
+    "qualification": "Wildcard listener and broad active-zone rules remain. Other firewall layers and external IPv6 reachability were not tested. No process was stopped and no rule changed.",
+    "readOnlyCommands": [
+      "ps -C tor-js-gateway -o pid=,comm=,lstart=,etime=",
+      "ss -H -lunp 'sport = :12298'",
+      "firewall-cmd --state",
+      "firewall-cmd --get-active-zones",
+      "firewall-cmd --zone=FedoraWorkstation --list-ports",
+      "firewall-cmd --permanent --zone=FedoraWorkstation --list-ports"
+    ]
+  },
+  "vps": {
+    "host": "45.76.81.48",
+    "observedAt": "2026-11-07T00:03:39.371025+00:00",
+    "services": {
+      "derpc-ipfs.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "UnitFileState": "enabled",
+        "ActiveEnterTimestamp": "Fri 2026-11-06 20:53:34 UTC",
+        "NRestarts": "0",
+        "ExecMainStartTimestamp": "Fri 2026-11-06 20:53:34 UTC"
+      },
+      "derpc-gateway.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "UnitFileState": "enabled",
+        "ActiveEnterTimestamp": "Fri 2026-11-06 20:13:33 UTC",
+        "NRestarts": "0",
+        "ExecMainStartTimestamp": "Fri 2026-11-06 20:13:33 UTC"
+      }
+    },
+    "namedConfiguration": {
+      "Ipns.RepublishPeriod": "4h",
+      "Ipns.RecordLifetime": "48h",
+      "Ipns.DelegatedPublishers": "[\n  \"https://delegated-ipfs.dev/routing/v1/ipns\"\n]",
+      "Routing.Type": {
+        "explicitValueUnavailable": true,
+        "error": "Error: failed to get config value: \"Routing.Type not found\""
+      },
+      "Addresses.API": "/ip4/127.0.0.1/tcp/5001",
+      "Addresses.Gateway": "/ip4/127.0.0.1/tcp/8080"
+    },
+    "repository": {
+      "RepoSize": 744132648,
+      "StorageMax": 50000000000,
+      "NumObjects": 115,
+      "RepoPath": "/var/lib/derpc-ipfs",
+      "Version": "fs-repo@18"
+    },
+    "disk": {
+      "freeBytes": 138195140608,
+      "totalBytes": 160467447808
+    },
+    "recursivePinCount": 7,
+    "currentRecordCidRecursivelyPinned": true,
+    "initialReleaseRetained": true,
+    "releaseState": {
+      "schemaVersion": 1,
+      "ipnsName": "k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc",
+      "accepted": {
+        "carSha256": "753e71ff069f526001fbc6a812b90abc7c1f90eac533c3923ec15cd1ffa7b82c",
+        "cid": "bafybeierz5dpj35sy53e6ukykliwnbishpngl422sv74sfnksmphr3ir5e",
+        "runId": 42314676419,
+        "runNumber": 10,
+        "sourceSha": "d90cc742259b7ff47b78c1e78910b5975ca25abc"
+      },
+      "status": "publish-uncertain",
+      "acceptedAt": "2026-11-06T23:54:49.838545+00:00",
+      "finishedAt": "2026-11-06T23:56:19.870651+00:00",
+      "lastSuccessful": {
+        "carSha256": "4e1b10dd7476fe8f99846fad8a8c4c0e62872ab31b28197a83706bfb99daa86d",
+        "cid": "bafybeihchfdebcwesdidytlsgdlsrb2erhlyrlirk53xdrcvatbs5ysr2e",
+        "publishedAt": "2026-11-06T23:13:56.512284+00:00",
+        "runId": 42310022450,
+        "runNumber": 7,
+        "sourceSha": "6415b4054aa0c60c38a7f41c26e3e9e01acf3524"
+      },
+      "detail": "Publication may have succeeded; verify the public signed record. Exact release retry is allowed."
+    }
+  },
+  "publicIpnsRecord": {
+    "fetchedFrom": "https://delegated-ipfs.dev/routing/v1/ipns/k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc",
+    "requestCacheControl": "no-cache",
+    "signatureVerificationCommand": "/tmp/derpc-ipfs-tools/ipfs name inspect --verify=k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc --dump=false --enc=json /tmp/derpc-ipns-public-record-2026-11-07.pb",
+    "inspection": {
+      "Entry": {
+        "Value": "/ipfs/bafybeierz5dpj35sy53e6ukykliwnbishpngl422sv74sfnksmphr3ir5e",
+        "ValidityType": 0,
+        "Validity": "2026-11-08T23:54:49.870362123Z",
+        "Sequence": 2,
+        "TTL": 300000000000
+      },
+      "PbSize": 397,
+      "SignatureType": "V1+V2",
+      "HexDump": "",
+      "Validation": {
+        "Valid": true,
+        "Reason": "",
+        "Name": "k51qzi5uqu5dip6ttqcmj10rokc1dq8ppmppbo05grxwha1yvabumx7k1k9jhc"
+      }
+    },
+    "bytes": 397,
+    "sha256": "7b8903308503b67087f7c19b2d9fa94080a8dc1a0b8985f80badfa7187d19079",
+    "base64": "CkEvaXBmcy9iYWZ5YmVpZXJ6NWRwajM1c3k1M2U2dWt5a2xpd25iaXNocG5nbDQyMnN2NzRzZm5rc21waHIzaXI1ZRJA+1P3BmAcO7mf1ieUHi5OxuCxKc17ZbAxHmFpdbhYdntm3BZvkPxVeymlQThwaB4XiqClptNk7sgPEGBl39CbChgAIh4yMDI2LTExLTA4VDIzOjU0OjQ5Ljg3MDM2MjEyM1ooAjCA8JLL3QhCQMZXTeqlYCZ1kkEJx74dMM4xDT0LUpU6Ma0KOfG+gntHbwVrpGqf0bFHACXEY1Lx0rWMrdUgVF5YE9MY8PGLugtKmAGlY1RUTBsAAABF2WS4AGVWYWx1ZVhBL2lwZnMvYmFmeWJlaWVyejVkcGozNXN5NTNlNnVreWtsaXduYmlzaHBuZ2w0MjJzdjc0c2Zua3NtcGhyM2lyNWVoU2VxdWVuY2UCaFZhbGlkaXR5WB4yMDI2LTExLTA4VDIzOjU0OjQ5Ljg3MDM2MjEyM1psVmFsaWRpdHlUeXBlAA==",
+    "unexpiredAtObservation": true,
+    "matchesAcceptedReleaseCid": true,
+    "inferredCreationTimeAssumingConfigured48HourLifetime": "2026-11-06T23:54:49.870362+00:00",
+    "secondsAfterAcceptedRelease": 0.031817,
+    "qualification": "Valid public signature proves this name-to-CID binding and expiry. It does not prove all website assets are retrievable or that the publication completed through native DHT."
+  },
+  "automaticRenewal": {
+    "configuredPeriod": "4h",
+    "configuredLifetime": "48h",
+    "daemonStartedAt": "2026-11-06T20:53:34Z",
+    "fourHoursAfterDaemonStart": "2026-11-07T00:53:34Z",
+    "daemonHadRunFourHoursAtObservation": false,
+    "fullCycleObserved": false,
+    "currentRecordAttributedTo": "explicit GitHub release publication, not automatic daemon renewal",
+    "basis": "Current validity minus configured 48 hours is within 0.04 seconds of release run10 acceptedAt. The daemon has not yet run for a complete four-hour period. Filtered logs contain no renewal completion.",
+    "journal": {
+      "since": "2026-11-06T00:00:00Z",
+      "exitCode": 0,
+      "entriesExamined": 129,
+      "matchedEntries": [
+        {
+          "at": "2026-11-06T20:51:02.243749+00:00",
+          "priority": "6",
+          "message": "2026-11-06T20:51:02.243Z\tDEBUG\trouting/delegated\trouting/composer.go:92\tcomposer: calling getValue: /ipns/"
+        },
+        {
+          "at": "2026-11-06T20:51:02.243749+00:00",
+          "priority": "6",
+          "message": "2026-11-06T20:51:02.243Z\tDEBUG\trouting/delegated\trouting/composer.go:95\tcomposer: calling getValue error: /ipns/"
+        }
+      ],
+      "matchedCount": 2
+    },
+    "nextObservationNotBefore": "2026-11-07T01:00:00Z",
+    "nextObservationQualification": "This is a practical follow-up time, not a promise that the daemon renews at that exact moment. Record any intervening release/manual publications; do not infer automatic renewal from expiry advancement alone."
+  },
+  "backups": {
+    "encryptedIpnsKeyOnVps": {
+      "exists": true,
+      "mode": "0o600",
+      "bytes": 280,
+      "modifiedAt": "2026-11-06T20:46:03.485381+00:00"
+    },
+    "encryptedIpnsKeyOffHost": {
+      "scope": "encrypted-file metadata only; contents not read",
+      "exists": true,
+      "mode": "0o600",
+      "bytes": 280,
+      "modifiedAt": "2026-11-06T20:48:37.511328+00:00"
+    },
+    "priorRestorationEvidence": "web/deployment-ipns-2026-11-06.json",
+    "restorationRerun": false,
+    "fullIpfsRepositoryOffHostBackupEstablished": false,
+    "gatewayIdentityOffHostBackupEstablished": false,
+    "laptopFreeBytes": 1521684115456,
+    "qualification": "Only encrypted backup file metadata was read. Prior restoration evidence is reused explicitly; neither the encryption nor contents were rechecked in this observation."
+  },
+  "secondPersistentPin": {
+    "currentlyEstablished": false,
+    "existingCandidateHost": "209.250.237.225",
+    "candidateRole": "already rented team demo proxy",
+    "disk": {
+      "totalBytes": 79941234688,
+      "freeBytes": 62589259776
+    },
+    "memory": {
+      "totalBytes": 4099993600,
+      "availableBytes": 3359899648
+    },
+    "ipfsOnPath": false,
+    "derpcIpfsUnitExitCode": 4,
+    "capacityFinding": "Existing host has capacity for the current small site and a conservatively limited Kubo instance; load, network reachability and provider bandwidth terms were not tested.",
+    "candidateSharesTeamControl": true,
+    "newRentalRequiredForThisCandidate": false,
+    "deploymentPerformed": false,
+    "plan": [
+      "Retain the exact current release CAR/manifest and its previous release off the primary VPS; public site content can be backed up without exporting publishing secrets.",
+      "Install a verified Kubo binary under a separate service account on the existing candidate, with modest memory/peer limits and loopback-only management API.",
+      "Import and recursively pin the reviewed current and rollback CIDs; independently retrieve and hash all manifest assets while the primary origin is unavailable to the verifier.",
+      "Keep IPNS signing on the primary host; the second pin needs public content only. Do not copy the IPNS publisher key merely to serve blocks.",
+      "Prepare encrypted recovery of the primary repository and gateway identity using an operator-controlled recipient and a consistent backup procedure. Verify restoration offline before claiming recovery."
+    ]
+  },
+  "limitations": [
+    "The publish-uncertain VPS watermark is not equivalent to a failed GitHub Actions run. The public signed binding now matches the exact accepted tuple; later Actions verification can legitimately succeed while the retained native publish status remains uncertain.",
+    "This task did not evaluate the latest Actions conclusion, rerun the complete HTTPS asset gate, or trigger an automatic safety rollback.",
+    "One delegated HTTP record source was queried. Independent source availability and native-DHT-only resolution were not tested in this observation.",
+    "A second machine controlled by the same team improves host-failure redundancy but does not establish independent operator ownership.",
+    "Issue17 still requires the team to decide whether the local gateway is needed and authorize a firewall/service change."
+  ]
+}
