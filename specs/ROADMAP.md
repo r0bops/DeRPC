@@ -1,16 +1,20 @@
 # DeRPC roadmap
 
-Planning baseline: Nov 5, 2026; implementation evidence updated Nov 6. Checkboxes and the status table distinguish verified work from outstanding deployment gates. [CONTEXT.md](CONTEXT.md) remains the source of truth for decisions; this file defines execution order and completion gates.
+Planning baseline: Nov 5, 2026; implementation evidence updated Nov 7. Checkboxes and the status table distinguish verified work from outstanding deployment gates. [CONTEXT.md](CONTEXT.md) remains the source of truth for decisions; this file defines execution order and completion gates.
 
-Track implementation in [GitHub issue #1](https://github.com/r0bops/DeRPC/issues/1). Start with [the light-client choice](https://github.com/r0bops/DeRPC/issues/2), then [a real anonymous proof request](https://github.com/r0bops/DeRPC/issues/3). Issues hold progress and implementation discussion; keep priorities and scope here.
+**Latest ENS integration preparation:** the user selected the three deployed `demo-1/2/3.derpc.eth` entries and generated distinct endpoint-update keys. A checked public configuration and two-source unsigned deployment plan are ready; dashboard/release directory pins now include the expected subregistry and enforce proven records when configured. The entries remain team-run, not independent. Wallet transactions, a working separately operated gateway, finalized discovery and the lifecycle demonstration remain pending. [Operations](OPERATIONS.md#public-demo-ens-integration-preparation-november-6) records the concrete plan, validation and gateway failure evidence.
 
-**Product:** a decentralized RPC pool for apps, wallets and agents, starting with Ethereum. Requests travel through Anon-RPC; the client verifies supported reads and selects or switches endpoints locally. The first release uses curated discovery. There is no required central DeRPC proxy.
+Track implementation in [GitHub issue #1](https://github.com/r0bops/DeRPC/issues/1). The core provider, proof rejection/failover, gateway and wrapper implementation issues are closed. The November 7 tracker snapshot has 12 open issues: 10 actionable items and two umbrella trackers (#1 and #12). GitHub has no configured milestones; M1 below is a repository plan. Older umbrella checkboxes do not supersede the child issues or dated evidence.
+
+**Product:** a decentralized RPC pool for apps, wallets and agents, starting with Ethereum. Requests travel through Anon-RPC; the client verifies supported reads and selects or switches endpoints locally. Bootstrap services are curated; the Nov 7 ENS direction allows open operator-signed registration with owner moderation. There is no required central DeRPC proxy.
 
 **First customer:** a wallet integrator. Demonstrate the same provider in a browser app. Server-side agents and additional EVM chains follow once their runtime and verification paths are tested. The explorer-style screen explains the pool; a full RPC directory is outside the MVP.
 
 **Nov 6 execution update:** the team requested all ENS/operator/payment issues #44–62, including #48, #61 and #62. Contracts, wrapper, payment client, discovery, local EVM and demo controls are implemented and under final integration validation. Do not interpret the earlier after-hackathon labels as a scope exclusion for this work. Completion still requires the evidence in each issue, including live transactions and external review where specified.
 
 **Latest team priority: ship the free pool first; add payments at the end.** Independent-operator onboarding remains deferred while their details are collected. The later team decision permits clearly labelled team-run wrappers as an interim mainnet deployment; they do not satisfy operator independence. Keep the payment implementation and deployed Hoodi escrow available for that later work. Current priorities are:
+
+**Active enrollment scope, Nov 7:** start with two separate team-owned operator entries, `demo-1.derpc.eth` and `demo-2.derpc.eth`, each using its existing proxy and distinct endpoint-update key. Use [the two-operator configuration](../contracts/deployments/ens-two-demo-operators-config-2026-11-07.json); keep the earlier three-entry plan as historical evidence. The UI exposes real preparation data with pending status. Neither separate names nor administrative health checks establish independent ownership or finalized ENS admission.
 
 1. **Local all-onion check passed Nov 6:** current-source consensus/identity/pin/balance/storage/shutdown succeeded at block 26356531 with existing budgets. A separate diagnostic observed descriptor/rendezvous recovery before HTTP. Keep the public-hosted and sustained-availability limits explicit (#49).
 2. **VPS deployed Nov 6:** use `derpc.eth.limo` with IPFS; Vercel remains removed. Persistent gateway/IPFS services run on `45.76.81.48`. A fresh IPFS node retrieved all 55 release files with matching hashes, and Firefox passed verified reads, pin checks and shutdown through the public VPS using local IPFS site delivery. Release builds now use only the explicit gateway list. The owner-signed ENS contenthash update is confirmed; all 55 HTTPS assets match and a fresh Firefox run on `derpc.eth.limo` passed all 17 gates. See [deployment evidence and unsigned transaction](OPERATIONS.md#public-mainnet-alpha-november-6). These results cover the recorded release CID. Publish the integrated fixes separately and repeat hosted regressions on the new artifact.
@@ -27,9 +31,11 @@ production environment are configured. Local command checks and a same-CID live
 rehearsal passed, including public verification after a publish timeout. The first
 automatic run failed before publication on a 30-second IPFS listing timeout; the
 next published but failed on unchanged assets with cached old root headers. Local
-fixes passed live retrieval and all 55 HTTPS files. The user authorized their
-commit and push; verify the resulting Actions deployment against its exact commit. See
-[readiness evidence](../web/deployment-github-ipns-2026-11-06.json).
+fixes passed live retrieval and all 55 HTTPS files. The authorized fixes were
+committed and pushed, and [run 42310022450](https://github.com/r0bops/DeRPC/actions/runs/42310022450) passed.
+The later [d90cc742 release](https://github.com/r0bops/DeRPC/actions/runs/42314676419) also passed.
+Current working-tree ENS and dashboard changes still need their own publication and browser acceptance.
+The [readiness evidence](../web/deployment-github-ipns-2026-11-06.json) retains the earlier failure investigation.
 
 ## Operator dashboard workflow (latest Nov 6 direction)
 
@@ -39,7 +45,7 @@ The team reconfirmed free-first delivery and requested one operator ENS identity
 - Automatic routing (Nov 6 direction): add explicit balanced, fastest and reliable modes alongside manual selection. An omitted allowlist means all eligible free candidates; an empty list means none. Start with the five labeled bootstrap entries; expand from ENS only after proving both membership and records. Preserve account affinity, bounded sequential retries, exclusions and mainnet-only verification. Local ranking never certifies operator honesty or global performance.
   - **Implemented and checked Nov 6:** 350 provider and 149 frontend tests; all five bootstrap endpoints verified individually through Tor, followed by live automatic categories, account affinity, empty-list refusal and exact restriction. See [dated routing evidence](DEMO_WORKFLOW.md#automatic-routing-implementation-and-validation-nov-6). This does not complete independent ENS enrollment or live multi-endpoint identity lifecycle validation.
 - M1-B implementation is tested locally: separate operator and endpoint IDs, a bounded plural endpoint record, atomic resolver-permission migration, operator-first selection, grouped UI and onboarding conversion. Multiple URLs do not multiply an operator's weight. Actual independent-operator deployment remains deferred; local/fork validation is recorded in [OPERATIONS.md](OPERATIONS.md#multiple-endpoints-and-verified-ens-november-6).
-- Public release checks passed; deployment maintenance remains above. Independent ENS enrollment retains its gates. Drafts are not registrations; current curated listings expire and are non-transferable.
+- Public release checks passed; deployment maintenance remains above. Independent ENS enrollment retains its gates. Drafts are not registrations; operator listings expire and are non-transferable.
 - Economics last: specify traffic measurements/formula, asset, amounts, withdrawal and any accountability rules before staking implementation. Existing per-query escrow is not a staking contract. Multiple wrappers need explicit paid-session accounting; do not share single-writer journals or silently reuse funded sessions across endpoints.
 
 ## Nov 6 implementation and remaining gates
@@ -54,8 +60,8 @@ The Nov 6 continuation completed bounded directory-snapshot authorization and da
 | #48 verified calls | Bounded mainnet EVM with authenticated context and account/code/storage proofs; real ENSv2 proxy read through Tor; 56 execution tests and Firefox bundle measurement | Published operator records to demonstrate the complete directory path; broad RPC compatibility is not claimed |
 | #49–55 wrapper | Filtering, beacon routes, setup, identity, separate personal service; real onion reads, authentication/failover and shutdown tested in Firefox | Publish actual endpoint/gateway records with ENS; current live evidence explicitly uses a same-party demo proxy |
 | #56–60 payments | Immutable escrow deployed on Hoodi with a checked receipt/runtime and 12 confirmations; post-verification vouchers, durable wrapper close, ENS term handling and demo panel; actual local HTTP/provider and Docker restart/settlement checks | Published operator terms, wallet-funded anonymous browser session and public closing/refund receipts |
-| #61 app/agent budgets | Delegated read authorization, durable user/session exposure, independent proof completion and terminal admin settlement; actual HTTP/wrapper/local-chain integration and crash tests passed | Application deployment with a funded session, protected key, authenticated headers/funding, grants and ingress |
-| #62 real funds | Test-chain restrictions, provable payee, local gas measurements and an operations/review brief | Measured public settlement costs, a production chain/asset decision, independent security review and legal review |
+| #61 app/agent budgets | Delegated read authorization, durable exposure and verified completion; Nov 7 rejects delegation to the escrow key and passes 71 payment tests, including HTTP cap/revocation/restart checks | Application deployment with a funded session, protected key, authenticated headers/funding, grants and ingress; tested anonymous agent runtime |
+| #62 real funds | Test-chain restrictions, provable payee, operations/review brief; Nov 7 reproduces 16 local gas receipts including deferred recovery, with read-only fee projections | Measured public settlement costs, a production chain/asset decision, independent security review and legal review |
 
 The test escrow is deployed on **Hoodi (560048)** at `0x9053513aCA73bAc0aF6a9942fd93832fd313B0bb`; its reviewed creation bytecode and runtime were checked through two administrative RPC sources at 12 confirmations. Sepolia escrow is supported too, despite being unsupported by the pinned read light client. ENS and verified reads remain on Ethereum mainnet. Public ENS operator deployment, the paid session demonstration and external reviews remain pending. See [OPERATIONS.md](OPERATIONS.md) for the manifest and remaining gates.
 
@@ -152,7 +158,7 @@ Target: core feature freeze Fri evening; aim to have the submission ready by Sat
 - [x] Write README run instructions, provider example, supported network/method list, CROPS section and a table of traffic that bypasses the worker. Explain the client-side pool and the limits of the decentralization claim. **Done:** current [README](../README.md), provider guide and offline assembled-site checker; Node 24, bundle acquisition and separate payment traffic are disclosed.
 - [ ] Record a 2–3 minute demo with human narration, at least 720p. Capture a backup as soon as the core flow works. Team members own recording, submission and partner conversations.
 - [x] Prepare EF integration feedback and submission text. **Done:** [partner feedback](../FEEDBACK.md) and [submission packet](SUBMISSION_DRAFT.md), including a reviewed 2:45 human-narration script. Recording, upload and submission remain team steps. ENS is selected only if the actual integration ships.
-- [x] Make small, frequent commits, each one logical change with a `scope: description` message; the hackathon rules disqualify large single commits. **Done Nov 6:** the implementation changes are recorded in dependency-ordered local commits; nothing was pushed.
+- [x] Make small, frequent commits, each one logical change with a `scope: description` message; the hackathon rules disqualify large single commits. **Done Nov 6:** the reviewed implementation was committed, merged into main and published through the checked release workflow. Later working-tree changes still need their own coherent commits and release validation.
 - [ ] Preserve prompts/specs and keep the planning, repository and prompt sections of AI_USAGE.md accurate. Add attribution for other areas when the team directs, and finalize required disclosure before submission.
 - [x] Review the raw Grok planning transcript before making it public, as CONTEXT.md requests; do not edit or remove the verbatim archive as part of this roadmap task. **Reviewed Nov 6:** private conversation/canvas links and work/project context require the team's publication decision; no credential-like material was found. The transcript was preserved unchanged. See [the release review](QA_REPORT.md#publication-review).
 
@@ -164,7 +170,7 @@ Tracked in [issue #12](https://github.com/r0bops/DeRPC/issues/12).
 
 The core demo passed and the team explicitly included this work on Nov 6. Preserve the deployment and evidence gates below.
 
-**Plan (Nov 6): mainnet, ENSv2, under `derpc.eth`.** The name is registered in the ENSv2 registry on mainnet (checked on-chain Nov 6: it has an owner and a resolver, and no subregistry yet). ENSv2 is in use on mainnet, and mainnet is the chain the light client follows, so this needs no additional chain verifier. The earlier Sepolia idea is dropped: Lodestar 1.43.0 can't follow Sepolia, so nothing there could be proven. Not tested yet: deploying a subregistry through the factory and registering a subname end to end.
+**Plan (Nov 6): mainnet, ENSv2, under `derpc.eth`.** The name is registered in the ENSv2 registry on mainnet (checked on-chain Nov 6: it has an owner and a resolver, and no subregistry yet). ENSv2 is in use on mainnet, and mainnet is the chain the light client follows, so this needs no additional chain verifier. The earlier Sepolia idea is dropped: Lodestar 1.43.0 can't follow Sepolia, so nothing there could be proven. The complete planner and receipt workflow passed against actual ENS contract bytecode on a local fork. Public operator deployment remains unsigned; fork transactions are not mainnet transactions.
 
 | Order | Step | What can be claimed after it | Issue |
 |---|---|---|---|
@@ -179,8 +185,8 @@ Rules that stay in force:
 
 - Any unverified discovery path stays labeled and separate. Generic `eth_call` is disabled by default; explicit local execution proves every account/code/storage dependency against one authenticated mainnet block. Neither mode weakens ordinary read verification.
 - A registry's claim that an endpoint supports proofs is tested locally.
-- The list is curated while the owner of `derpc.eth` can repoint the subregistry, even though it is on-chain. Say so.
-- The current curated registrar is free. The team's later operator/node staking design is separate: distinguish refundable deposits, fees and any slashable collateral explicitly. No amount or penalty is chosen for the free release.
+- Open registration does not remove governance: the owner of `derpc.eth` can repoint the subregistry and the curator can delist operators or block addresses/names. Say so.
+- The open registrar charges no registration fee; operators pay gas. The team's later operator/node staking design is separate: distinguish refundable deposits, fees and any slashable collateral explicitly. No amount or penalty is chosen for the free release.
 - ENSv2 resolver roles have no per-name scoping, so each operator gets its own resolver. Names resolved through an off-chain gateway are rejected.
 - Resolving a name still shows the operator which name is read. Don't claim otherwise.
 
@@ -261,12 +267,14 @@ Orders 2 and 3 can change based on the first integrator's needs. Neither is a pr
 
 ## To do: user-chosen operators from an ENS list
 
+**Nov 7 admission change:** the user chose open registration with the operator signing its own transaction. Parent setup still requires the owner's authorization; subsequent operators create their own resolver and join without a parent-owner signature or service approval. Preserve the 128-entry proof bound, owner moderation and persistent address/name bans. A delisted slot can be reused immediately for a different label. Free enrollment does not prevent Sybils or name squatting. Fresh-source deployment plans, public receipts and finalized discovery remain rollout gates; the earlier curator-only plans are historical.
+
 Direction from the team (Nov 5). The user's choice is built now with mock ENS names; real subnames come in a later milestone.
 
-- [ ] Operators register a subname of the main domain (for example `alice.derpc.eth`) as their service identity. A name does not prove service quality or honesty. The later requested flow adds identity/node staking; the current registrar is curated and free.
+- [ ] Operators register a subname of the main domain (for example `alice.derpc.eth`) as their service identity. A name does not prove service quality or honesty. The later requested flow adds identity/node staking; the current direction is open, operator-signed and free apart from transaction gas.
 - [x] DeRPC shows the list, and users choose their operators manually or explicitly authorize an automatic policy. **Manual mode built Nov 5 with mock names:** `MAINNET_OPERATORS` gives each operator a placeholder `<operator>.derpc.eth` name (`ENS_NAMES_ARE_MOCK`), and the demo marks them "mock". Live in Firefox through Tor: no reads before a choice; with MEV Blocker and BlockRazor chosen, the pin check and every read used only those two; the choice survived a reload. The Nov 6 automatic-mode direction adds all-eligible or restricted selection without changing this legacy default.
 - [ ] Replace the mock names with real subnames read through the worker (#44, #45, #46), and prove the list (#47) and the records (#48).
-- [ ] Decide who can mint a subname, what a subname must carry (endpoint, chain, proof support), and how it can be revoked or expire. **Proposed Nov 6:** a registrar contract registers and renews names (#47); records are `derpc.endpoint`, `derpc.signer` and `derpc.caps` (#45); a name that isn't renewed expires and drops out.
+- [x] Decide admission, records and lifecycle rules. **Implemented Nov 6:** a curator admits free expiring identities; restricted keys update endpoint records; the registrar handles renewal and delisting. Singular and plural records include signer/capability/gateway declarations. Public deployment remains gated separately above.
 - [x] Decide what happens when a chosen operator fails or returns an invalid proof. **Current behavior:** retry only among the operators the user picked; if all of them fail, the read fails with `PoolExhaustedError` and the user can choose more. Revisit with the team if they'd rather stop and ask.
 
 This builds on the gated ENS stretch (#12): the user's explicit selection or automatic policy defines the permitted pool. Local measurements can rank candidates only within that authorization; they do not authorize new chains, paid sessions or unproven ENS records.

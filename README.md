@@ -103,7 +103,7 @@ try {
 }
 ```
 
-**Pass `blockTag: "finalized"`.** viem defaults to `"latest"`, which DeRPC refuses. The built-in `.derpc.eth` names are mock identifiers in a curated bootstrap list, not registered operator identities. Automatic adoption from ENS requires both proven registrar membership and proven records. See the [ENS and payment release gates](specs/OPERATIONS.md).
+**Pass `blockTag: "finalized"`.** viem defaults to `"latest"`, which DeRPC refuses. The UI shows public bootstrap providers by their actual brands; built-in `.derpc.eth` values remain legacy selection keys, not registered identities. The first two deployed team proxies are being prepared as separate operators, `demo-1.derpc.eth` and `demo-2.derpc.eth`, using their actual onion endpoints and distinct update keys. Their ENS enrollment is pending. Automatic adoption from ENS requires both proven registrar membership and proven records. See the [ENS and payment release gates](specs/OPERATIONS.md).
 
 To opt into automatic routing instead of supplying a manual selection:
 
@@ -186,7 +186,7 @@ Additional EVM chains need their own authenticated headers, proof/finality rules
 
 The standalone [threat model](THREAT_MODEL.md) describes the browser, ENS, wrapper and payment trust boundaries, implemented controls and remaining evidence gates.
 
-RPC and beacon endpoints still see query content and timing; Tor changes the route they observe. Account isolation depends on worker behavior and remains unproven. A curated endpoint list, several URLs or mock ENS names do not establish independent operators or decentralized discovery. An ENS list stays curated while the parent owner can repoint its registry and a curator controls admission.
+RPC and beacon endpoints still see query content and timing; Tor changes the route they observe. Account isolation depends on worker behavior and remains unproven. A curated bootstrap list, several URLs or ENS names do not establish independent operators. The Nov 7 ENS implementation allows operators to sign their own free registrations after initial owner-authorized setup; the parent owner can still repoint the registry and the curator can delist or block identities. Open admission has no Sybil protection and remains pending public deployment. The [operator wallet guide](contracts/README.md#join-from-an-operator-wallet) describes the flow.
 
 **Paid queries are linkable to the paying account.** A funded session and its signed cumulative vouchers intentionally link reads to that payer. Test payments demonstrate a mechanism, not operator income. The host holds a disposable session key when payments are enabled; signing capability and private session keys never enter the untrusted worker. SDK limits constrain normal use; the deposit is the hard on-chain limit if that key is compromised. Personal-node tokens are kept in memory and sent through the worker to the selected service in request headers; they must not be published in ENS or persisted in browser storage.
 

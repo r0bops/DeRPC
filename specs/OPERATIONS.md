@@ -6,6 +6,126 @@ This is the operational checklist for issues [#44–62](https://github.com/r0bop
 
 **Release policy:** payment demonstrations use test funds. A production settlement chain and asset have not been approved. No external contract audit or legal-review result is recorded here. Do not infer either from unit tests or an automated code review.
 
+## Open operator-signed registration, November 7
+
+The user explicitly chose open registration and clarified that **the operator signs**, replacing the proposed approval-service flow and earlier curator-only minting. Initial owner-authorized namespace setup remains required. Once attached, operators create their own resolver, grant their separate endpoint updater and register from their own wallet; the parent owner does not approve each name. The [operator wallet guide](../contracts/README.md#join-from-an-operator-wallet) documents the local review command and durable receipt journal. No signer key is generated, received or used by the service.
+
+The registrar retains owner moderation, 30-day maximum leases and its 128-entry proof layout. Delisting binds both operator and label, persists address/name bans and allows another label to use the vacated slot immediately. Reinstatement deliberately clears the exact bans. Existing active sibling entries remain unaffected. Free admission still allows Sybil identities, name squatting and capacity attacks; those are not solved by a wallet signature.
+
+Use the [fresh open-registration first stage](../contracts/deployments/ens-open-registration-plan-1-2026-11-07.json), with its [two-source crosscheck](../contracts/deployments/ens-open-registration-plan-1-crosscheck-2026-11-07.json). At block **26359514**, both sources observed the parent subregistry still empty and reconstructed the same three zero-value proxy calls. Estimated gas differed: **1,694,836** versus **1,703,144**. The contract source hash is `0x9f7503ee65c72b815895ab33bf6fd847fbf544060aecf2f0bd52fb3f76032ee4`. The source change requires fresh subsequent registrar deployment and runtime-pin verification; old curator-only plans/reports below are historical, even where the first-stage factory calldata is unchanged. Both configured demos share the owner's address as their operator address, so this bootstrap still uses that same wallet in both roles.
+
+The [final validation index](../contracts/deployments/ens-open-registration-validation-2026-11-07.json) records **seven passing fork tests**, the [exact-demo fork](../contracts/deployments/ens-open-registration-two-demo-final-tooling-evidence-2026-11-07.json) and [independent-operator enrollment](../contracts/deployments/ens-open-registration-independent-join-final-tooling-evidence-2026-11-07.json). The latter executes resolver, permission and registration calls while curator impersonation is disabled; subsequent bootstrap verification still succeeds with the newcomer active. All 22 source hashes stayed unchanged. Both disposable nodes were restored and stopped. A [final-tooling two-source check](../contracts/deployments/ens-open-registration-final-tooling-crosscheck-2026-11-07.json) at block 26359533 confirms the stored first-stage requests still match and the parent is unattached. These checks are local simulations and administrative observations, not public signatures, funding or consensus verification.
+
+Final integration checks passed **159 contract/wallet tests**, **636 provider tests**, **63 affected UI/config tests**, all workspace typechecks, and isolated production builds of `web/` and `frontend/`. Eight opt-in fork tests were skipped by the default contract run; seven current scenarios passed separately, with the historical three-demo case left skipped. Public directory pins remain unset in the demo build.
+
+Open registration also removes the assumption that every resolver was screened before admission. The provider now labels and excludes only deterministic resolver refusals established by host execution against authenticated state. Unproven errors, missing proofs, stale context and network deadlines remain fatal to discovery. All **636 provider tests** and its typecheck pass. Many slow entries can still exhaust the whole scan budget; no execution or network limits were raised.
+
+Suggested commit split after the prior wallet-helper dependency:
+
+1. `contracts: allow operator-signed registration with moderation` — registrar source and behavior tests, planner/receipt/lifecycle sender and moderation updates, matching existing tests.
+2. `contracts: add self-service operator wallet enrollment` — `ens-join.mjs`, generic wallet-session hooks and tests, independent enrollment tests.
+3. `provider: isolate authenticated resolver policy refusals` — host execution/discovery changes and their regression tests.
+4. `contracts: record open-registration validation` — fresh preflights/plans, final-tooling crosscheck and fork reports/index. Earlier reports remain historical.
+5. `web: explain open operator registration` — onboarding copy, refreshed pending-plan import and matching UI checks.
+6. `docs: describe operator onboarding and admission limits` — current context, package guide, runbook, threat model, QA, layout and AI-use documentation.
+
+No public transaction or site deployment was performed. Owner setup signatures, finalized proven discovery, a working independently operated gateway and public enrollment remain separate gates. Keep any old pending wallet request locked until reconciled; do not delete an old journal to start over with the changed source.
+
+## Two separate proxy operators, November 7
+
+The owner-signing handoff is implemented in [the local ENS wallet helper](../contracts/README.md#ensv2-deployment). The user reconfirmed these two names when requesting completion. Run it with the active configuration and retain its evidence directory; each wallet request is rechecked against two public administrative RPC sources, unknown submissions remain locked across reload/restart, and final manifest/directory-pin output requires full twelve-confirmation verification through both sources. A refresh/restart invalidates previously exported current pins until reverified. The helper does not sign, activate payments, publish website changes or bypass the independent-gateway guard. Owner signatures and the finalized anonymous directory test remain pending.
+
+[Wallet-review evidence](../contracts/deployments/ens-wallet-review-evidence-2026-11-07.json): **109 contract tests passed, seven opt-in fork tests skipped** in this run, including ten backend and 25 browser-controller tests. Fresh Firefox with a mock extension confirmed wrong-network refusal, explicit mainnet switching, correct-owner checkbox/send enablement, the two-name roster and 375/1280px layout without errors. No signing method was called. Live administrative preparation agreed through two sources; all three first-stage entries remained unsent. The helper is served on loopback port 8792, with its local journal under `~/.local/share/derpc/ens-two-operators-2026-11-07/`.
+
+Suggested commit after the two-operator preparation: `contracts: add staged ENS wallet deployment review` — `contracts/scripts/ens-wallet.mjs`, `contracts/scripts/ens-wallet-client.mjs`, their focused tests, the dated wallet-review evidence, the wallet section in `contracts/README.md` and related context/operations/layout/AI-use documentation. Keep the existing shared-file changes in their earlier logical commits; no files have been staged or committed by this change.
+
+The user selected the first two existing proxies and clarified that each is a separate operator. The directory now prepares these two actual entries from the [active configuration](../contracts/deployments/ens-two-demo-operators-config-2026-11-07.json), with a per-operator review/download flow. Public providers remain a secondary bootstrap list. Demo-3 is outside this enrollment plan; the earlier three-entry artifacts below remain historical and must not be mixed with this plan.
+
+The registration UI passed **42 focused tests**, frontend/web typechecks and [six Firefox desktop/mobile checks](../frontend/test/two-operator-registration-browser-evidence-2026-11-07.json). The displayed/downloadable singular entries and full first-stage plan match the source files. No wallet call, network probe or transaction is triggered by the review flow. Generic onboarding remains separate.
+
+| Operator | Existing server | Endpoint-update key |
+| --- | --- | --- |
+| `demo-1.derpc.eth` | `209.250.237.225` | `0x0Fea008976e62d29714ba3398e6791131A629eB6` |
+| `demo-2.derpc.eth` | `192.248.176.219` | `0x1d3beAB2c16422B214133DB122B1eC2c8dF66c8E` |
+
+Both retain their existing singular RPC/beacon URLs and public identity names. No endpoint ID, shared plural record, new key or server migration is required. They share team ownership and signer `0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78`; separate entries do not establish independence. [Fresh administrative observations](../wrapper/test/deployed-operators-observation-2026-11-07.json) confirm matching identities, chain ID 1 and available beacon headers on both servers. Payments remain off and demo-2's fault overlay was off. No service was changed.
+
+The [unsigned first stage](../contracts/deployments/ens-two-demo-operators-plan-1-2026-11-07.json) contains three zero-value mainnet factory calls from the owner: deploy the UserRegistry and one dedicated resolver for each operator. Total estimated gas is **1,694,836**; wallet fees are additional. [The independent crosscheck](../contracts/deployments/ens-two-demo-operators-plan-1-crosscheck-2026-11-07.json) reconstructed identical wallet requests. The predicted subregistry is `0x7a315598b4979b3d9F463c1AA3647D368BD1Ea91`, with resolvers `0x9c75435f88a9C8F48963f229a397306610E92656` and `0x0Ed7Cb979f8670A9e3DE432367E6523B489A5c59`. These addresses are predictions, not public deployments. Refresh the plan before signing; preserve its receipts and `resumeConfig`, then prepare the registrar, permission/attachment and registration stages in order.
+
+The [exact-config fork check](../contracts/deployments/ens-two-demo-operators-fork-evidence-2026-11-07.json) passed all four stages using 11 local transactions, both permitted endpoint rotations, two denied cross-resolver writes, ten denied protected-record writes, delisting and expired-lease renewal. It preserves the parent's website resolver. This is a disposable mainnet fork with local address impersonation and confirmations; it supplies no public signature, finality or anonymous discovery evidence.
+
+The [new browser gateway observation](../wrapper/test/two-operator-gateway-readiness-2026-11-07.json) still fails before contacting either proxy. The current official upstream demo advertises the same independently operated gateway; its connection failed under unchanged budgets. The team's gateway remains declared and is correctly refused for these team-owned RPC services, including mixed gateway lists and key aliases. A working independent gateway, owner-signed registration stages and a finalized proven directory refresh remain the live gates. Native-Tor or loopback health checks do not replace them.
+
+Suggested commit order: `contracts: prepare two separate team operator registrations` (new two-operator configuration, preflights, unsigned plan, crosscheck and exact-config fork test/evidence); `web: show real team operators and registration reviews` (pending-operator data, directory/onboarding/router, landing/demo copy and matching UI tests); `ops: record two-operator rollout readiness` (two dated wrapper observations plus README/context/roadmap/operations/layout/AI-usage changes). Leave the existing gateway guard and historical evidence intact.
+
+## Pending-issue update, November 7
+
+The [latest QA record](QA_REPORT.md#pending-issue-continuation--november-7) covers the delegated-key fix, six actual-code ENS fork checks and expanded payment measurements. The exact prepared three-demo deployment passed all four stages on a disposable local fork. Refresh the public preflight before signing; the local registrar address/runtime and simulated receipts do not configure the public directory.
+
+The published `d90cc742` demo skipped its simulated liar after warmed reads because normal account affinity was retained. The local UI now resets that explicit demonstration, prioritizes the simulated endpoint and guards active reads. [Fresh Firefox on the isolated local production build](../frontend/test/public-gateway-firefox-local-fix-recheck-2026-11-07.json) passed 17 baseline plus six rejection/recovery gates through the public VPS. It also checks the teammate's local removal of external operator favicons. Publish the reviewed changes and repeat against the resulting CID before using the hosted demonstration in the final video; concurrent later website releases are not covered by these local results.
+
+The [00:05 UTC operations observation](../web/deployment-ops-observation-2026-11-07.json) verifies the current signed IPNS record and current/rollback recursive pins. Its expiry corresponds to the explicit `d90cc742` release, so a complete automatic renewal cycle still needs observation. The retained `publish-uncertain` watermark is qualified by the exact accepted release tuple and successful public verification; it is not proof of failed publication. The existing proxy at `209.250.237.225` has about 62.59 GB free disk and 3.36 GB available memory for a second pin, but IPFS is not installed there. Existing encrypted IPNS-key backups do not establish a full IPFS-repository or gateway-key recovery plan. The local UDP listener/firewall decision in #17 remains open.
+
+Suggested commits for this continuation, after the earlier ENS/release dependencies below:
+
+| Order | Message | Files or specific hunks |
+| --- | --- | --- |
+| 1 | `payments: separate delegated keys from escrow authority` | `payments/src/client.ts`, `sponsored-client.ts`, `sponsored.ts`; `payments/test/agent-flow.test.ts`; `payments/README.md` |
+| 2 | `frontend: make proof rejection demo deterministic` | Injection/control hunks in `frontend/src/main.ts` and related `frontend/test/main.test.ts` cases; `provider/test/api/derpc.test.ts` |
+| 3 | `contracts: validate prepared ENS deployment on local fork` | `contracts/test/ens-fork.test.mjs`, `ens-endpoints-fork.mjs`, `ens-team-demo-fork.mjs`; `contracts/deployments/ens-team-demo-fork-evidence-2026-11-07.json` |
+| 4 | `contracts: measure escrow recovery costs and sampled fees` | `contracts/scripts/payment-deploy-measure.mjs`; `contracts/deployments/payment-cost-measurement-2026-11-07.json`; gas-measurement hunk in `contracts/README.md` |
+| 5 | `frontend: bind live checks to release artifacts` | `frontend/test/public-gateway-firefox.mjs` and its dated November 7 browser evidence |
+| 6 | `docs: reconcile pending issues and validation evidence` | `web/deployment-ops-observation-2026-11-07.json`; this continuation's context, roadmap, milestone, QA, submission, release-runbook, layout and AI-usage hunks |
+
+Shared files contain other agents' changes; review individual hunks rather than staging them wholesale. The existing website favicon removal and new server-side fault scenarios belong to their respective owners' commit groups.
+
+## Public demo ENS integration preparation, November 6
+
+### Operator directory and triggered server scenarios, November 7
+
+The user requested actual operator entries and deliberate bad-response, unavailable-node and registration demonstrations. The local website now separates the three deployed team proxies, explicitly **ENS pending**, from the five public bootstrap services. Bootstrap aliases are not displayed or passed as ENS identities. Old saved choices and links remain compatible; matching placeholder strings do not authorize a subsequently discovered operator. Registration opens the existing onboarding draft and still requires the owner-signed ENS stages below.
+
+The user explicitly requested triggering faults on two deployed servers. An optional loopback overlay is installed on **demo-2 (`192.248.176.219`)** and **demo-3 (`45.76.81.156`)**. Demo-1 was not changed. Both overlays default to off, retain their onion addresses and original wrapper caches, and are controlled through SSH. The [runbook](../wrapper/demo/README.md) gives activation, status, reset, installation and removal commands. Faults expire within five minutes; the WETH-only corruption and RPC-outage modes affect actual responses from that demo server during the window.
+
+[Deployment evidence](../wrapper/test/demo-server-faults-evidence-2026-11-07.json) records matching deployed source hashes, successful proof rejection and recovery through server-loopback administration, a real HTTP 503 with automatic expiry, and both scenarios observed through their public onion services using native Tor. The first demo-2 onion attempt timed out at 45 seconds; a fresh SOCKS isolation key succeeded. Both modes were explicitly reset to off afterward. The live proof-consistency check uses an administratively read state root; it is not light-client consensus verification. The native Tor probe does not clear the pending browser Anon-RPC and independent-gateway gate.
+
+Validation: **65 wrapper tests**, including the real proof verifier and pool handling recorded mainnet proofs; **392 frontend tests**; type checks and combined site build. [Local Firefox checks](../frontend/test/operator-scenarios-browser-evidence-2026-11-07.json) passed at 375, 768 and 1280 pixels and opened the registration draft. The public website has not been updated with these working-tree changes. No ENS transaction was sent and the downloadable wrapper release is unchanged.
+
+Suggested team commit order after the existing ENS preparation changes below:
+
+1. `frontend: separate bootstrap choices from ENS operator identities` — the bootstrap/provenance hunks in `frontend/src/main.ts`, `frontend/src/operator-dashboard.ts`, `frontend/index.html`, `frontend/test/main.test.ts` and `frontend/test/operator-dashboard.test.ts`. Keep concurrently prepared deployment-pin and local-liar fixes with their own changes.
+2. `web: show deployed demo operators awaiting ENS enrollment` — `web/src/directory/model.ts`, `operators.ts`, `pending-operators.ts`; `web/src/pages/directory.ts`, `operator.ts`, `network.ts`; `web/src/ui.ts`; `frontend/test/operator-directory.test.ts` and the browser evidence. The test also needs the existing public ENS configuration and deployed-proxy readiness evidence from the preceding preparation commit.
+3. `wrapper: add timed server-side demo faults` — `wrapper/demo/`, `wrapper/test/demo-faults.test.mjs`, `scripts/vps/install-demo-faults.sh`, `scripts/vps/demo-scenario.sh`, server-fault evidence, the server-scenario copy in `frontend/index.html`, and the related context/operations/layout/AI-usage notes. Review shared-file hunks separately from unrelated working-tree changes.
+
+### Prepared ENS configuration
+
+The user confirmed three separate names for the existing proxies. Their public identities and pool onion hostnames were read over SSH without changing services. All three are team-run `demo-proxy` entries and use `0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78` as signer; they do not establish independent operators.
+
+| Name | Administrative server | Endpoint-update address |
+| --- | --- | --- |
+| `demo-1.derpc.eth` | `209.250.237.225` | `0x0Fea008976e62d29714ba3398e6791131A629eB6` |
+| `demo-2.derpc.eth` | `192.248.176.219` | `0x1d3beAB2c16422B214133DB122B1eC2c8dF66c8E` |
+| `demo-3.derpc.eth` | `45.76.81.156` | `0x3F0d8e8cE6C0817fd7e23faD32998dD42c76D24D` |
+
+The requested update keys were generated locally and encrypted to the owner's existing SSH public key. Recovery was checked in memory; no plaintext key file or private key was written to the repository. The encrypted archive is under the operator's local `~/.local/share/derpc/ens-hotkeys-2026-11-06-*/` directory. [Public-key metadata](../contracts/deployments/ens-demo-hotkeys-public-2026-11-06.json) records only addresses. Before later endpoint updates, recover the chosen key into the team's signing tool; do not print decrypted keys or put them into shell arguments.
+
+The [public configuration](../contracts/deployments/ens-team-demo-config-2026-11-06.json) contains the actual onion endpoints and known gateway ownership, proposed lease expiry **2026-11-14 00:00 UTC**, and the owner wallet for the curator/deployer/cold-owner/operator/signer/free-listing-payee roles. No payments are enabled. [Fresh first-source](../contracts/deployments/ens-preflight-integration-2026-11-06.json) and [second-source](../contracts/deployments/ens-preflight-integration-second-source-2026-11-06.json) observations agree at block 26359170 that the parent has no subregistry and the upstream contract runtimes match their pins.
+
+The [first unsigned deployment stage](../contracts/deployments/ens-team-demo-plan-1-2026-11-06.json) prepares four factory calls from the owner: one UserRegistry and three dedicated PermissionedResolvers. Transferred value is zero; the total estimate is **2,442,715 gas**, with fees determined by the signing wallet. A [second source reconstructed identical wallet requests, addresses and roles](../contracts/deployments/ens-team-demo-plan-1-crosscheck-2026-11-06.json). These are predictions, not deployments. Review the full calldata and role table, refresh the plan before signing, retain all four receipts and its `resumeConfig`, then rerun the planner for the registrar and subsequent stages. The existing parent resolver and website contenthash are preserved. No transaction has been sent.
+
+The browser tests retain the team's gateway declaration and select the independently operated upstream demo gateway. Both attempts failed at the gateway connection before making any proxy request; production timeouts were unchanged. [Readiness evidence](../wrapper/test/deployed-proxy-readiness-2026-11-06.json) preserves the distinction between SSH inspection and anonymous proof verification. The failure could be remote or network-specific; it is not evidence of a proxy failure. A working separate gateway is needed under the current ownership guard. Do not erase the declaration to get around that guard.
+
+Optional `VITE_ENS_DIRECTORY`/`DERPC_ENS_DIRECTORY` pins now bind the mainnet registry, registrar runtime and expected subregistry in local and GitHub builds. Configured pages require proven records and explicit refresh; the release checker compares the emitted `demo/ens-directory.json` with the intended pins and compiled runtime. [Release configuration](../scripts/vps/GITHUB_RELEASE.md#installed-access-and-configuration) describes the handoff from the verified deployment manifest. The current build remains unconfigured until the real registrar exists and its receipts/runtime have been checked.
+
+Validation: **74 contract tests and 378 frontend tests passed**, with five opt-in ENS fork tests skipped in this run; frontend/web type checks passed. Both the unconfigured site and a separate configured build fixture passed all 56-file offline release checks. The fixture's synthetic pins stayed under `/tmp` and were never published. The deployed-proxy runner also passed 25 offline input/ownership/identity checks. Initial full-suite attempts were blocked by sandbox restrictions on subprocesses and loopback servers; reruns with those capabilities passed. These results do not replace wallet receipts, finalized proven discovery, public rotation/delisting or an independent operator.
+
+Suggested commit split, without staging or committing:
+
+1. `contracts: allow one operator with multiple endpoints` — `contracts/scripts/ens-common.mjs`, `contracts/scripts/ens-lifecycle.mjs`, their endpoint/lifecycle tests, `contracts/README.md`, and the onboarding count copy/test. This does not change the selected three-entry deployment.
+2. `frontend: bind proven ENS discovery to release pins` — the ENS config parser/tests, Vite asset emission, dashboard fields/refresh tests, release checker/tests and optional CI/release environment wiring.
+3. `wrapper: validate deployed proxy identity and gateway ownership` — `wrapper/test/onion-availability.mjs` and its run instructions.
+4. `ops: prepare three demo ENS registrations` — public configuration/keys/unsigned plan/crosscheck/preflights, proxy readiness evidence and related context/roadmap/operations/release/AI-usage notes. Exclude the pre-existing proxy installer and its layout hunk unless the team separately includes them.
+
 ## Public mainnet alpha, November 6
 
 **The public gateway, IPFS pin and ENS website are deployed and verified.** The supplied VPS is `45.76.81.48`, accessed through the local `derpc-vps`
@@ -164,15 +284,17 @@ URL's bytes first; a stale but valid root header additionally requires a
 release-specific query response with the exact new root, IPNS path and expected
 hash. Both response bodies count toward the byte limit. All 55 live HTTPS files
 passed with the final fix locally. The final verifier suite passed 61 tests and
-frontend type checking, including 20 new regressions across both failures. A
-complete successful Actions run remains pending. Existing unrelated integration changes retain their
-own validation requirements. See [GITHUB_RELEASE.md](../scripts/vps/GITHUB_RELEASE.md).
+frontend type checking, including 20 new regressions across both failures.
+The authorized fixes subsequently passed [Actions run 42310022450](https://github.com/r0bops/DeRPC/actions/runs/42310022450).
+The later [d90cc742 release](https://github.com/r0bops/DeRPC/actions/runs/42314676419) passed as well.
+Existing unrelated integration changes retain their own validation requirements.
+See [GITHUB_RELEASE.md](../scripts/vps/GITHUB_RELEASE.md).
 
 Authorized follow-up commits: `40c96ce` (`release: harden website deployment verification`)
 for `scripts/verify-site-release.mjs` and `frontend/test/site-release.test.ts`, then
 `docs: record deployment timeout and verification` for `scripts/vps/GITHUB_RELEASE.md`,
 `web/deployment-github-ipns-2026-11-06.json`, `specs/CONTEXT.md`, `specs/OPERATIONS.md`,
-`specs/ROADMAP.md` and `AI_USAGE.md`. The later deployment does not contain this local fix.
+`specs/ROADMAP.md` and `AI_USAGE.md`. These fixes are now published; the failed runs above remain historical observations.
 
 Suggested team split, reconciling with any already recorded local commits:
 
@@ -411,6 +533,8 @@ The loopback service exposes signed `POST /authorize` and `POST /complete`, with
 
 Never delete a funded ledger or restore an older backup: that could restore consumed allowance. Reopen the same durable directory and retry the exact intent after an uncertain write. If the ledger is lost, retire/refund the session and create a new one. Persisted protocol mode and frozen session parameters prevent mixing the older post-proof-only signer with the sponsored flow. The default settlement margin is 600 seconds and cannot be reduced below 60 seconds.
 
+**November 7 hardening (#61):** the delegated request key must differ from the escrow session key. Both SDK construction and coordinator grant/request paths enforce this, including old persisted grants. The [payment guide](../payments/README.md) explains that a raw escrow-key holder can bypass a local SDK cap, and that the coordinator must be outside the agent's trust boundary. Deposit top-ups do not increase delegated allowances or the fixed coordinator budget. All 71 payment tests passed, including cap exhaustion, trusted allowance increases, revocation and restart recovery.
+
 ## Real-fund decision record (#62)
 
 Keep the production choice **unset** until this record has evidence. Native test ETH demonstrates the mechanism; it is not a production asset recommendation or proof that payments create operator income.
@@ -430,6 +554,8 @@ Keep the production choice **unset** until this record has evidence. Native test
 Local EVM gas measurements can compare contract paths and catch regressions. They do not establish live fee levels, L2 data charges, finality, congestion, availability or a recommended settlement chain. A testnet receipt also cannot establish operator income or mainnet economics.
 
 The November 6 local measurement recorded **144,501 gas for opening** and **66,023 gas for closing**, or **210,524 gas** for that successful lifecycle with EOA recipients. The [contract guide](../contracts/README.md#local-gas-measurement) records the source/runtime hashes, local fee values and reproduction command. Candidate public-chain receipts and their complete fees remain missing, so the production chain/asset decision remains open.
+
+The [November 7 deterministic measurement](../contracts/deployments/payment-cost-measurement-2026-11-07.json) expands this to 16 receipts: opening 144,501 gas, closing 66,039, timeout refund 49,917, deferred close through a rejecting fixture 114,697, and each successful credit withdrawal 50,332. The changed close calldata explains why it is a separate sample, not a replacement for the historical receipt. Exact gas/fees reproduced across two runs; consolidation checked all 197 receipt, cycle and projection calculations. Three read-only public fee observations at 00:05 UTC provide explicitly labelled local-gas projections and per-read volume sensitivity. They do not measure public lifecycle fees, actual demand, representative smart wallets or a required reserve. The outstanding decision fields above remain unset.
 
 ### Brief for qualified counsel
 

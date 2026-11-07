@@ -32,15 +32,18 @@ Paid queries are linkable to the paying account. Wallet deposits, top-ups and re
 
 ## OperatorRegistrar
 
-`OperatorRegistrar` is a curated, free registrar in front of an ENSv2 UserRegistry. It accepts lowercase ASCII labels of 1–31 bytes, with internal hyphens allowed, for `<operator>.derpc.eth`. A label with hyphens in both the third and fourth places, such as `ab--cd` or `xn--name`, is refused, because ENS name normalization rejects it. Leases last at most 30 days from registration or renewal. The list holds at most 128 entries. A label listed before reuses its own slot once its lease has expired, and the curator can give any expired slot to a new label with `registerInSlot(slot, …)`, so the limit bounds the list, not every label ever used.
+`OperatorRegistrar` provides open, free registration in front of an ENSv2 UserRegistry. The caller must be the address receiving the operator name; neither an approval bot nor the parent owner signs on the operator's behalf. It accepts lowercase ASCII labels of 1–31 bytes, with internal hyphens allowed, for `<operator>.derpc.eth`. A label with hyphens in both the third and fourth places, such as `ab--cd` or `xn--name`, is refused. Leases last at most 30 days. The proof list holds at most 128 entries. `registerInSlot(slot, …)` can reuse an expired slot or a delisted slot for a different available name. A still-leased ENS name cannot be overwritten.
 
-The curator admits operators. A listed operator can extend its own lease while that lease is still running. Once the lease has lapsed, only the curator can renew it, so an operator cannot bring back a lapsed listing by itself. A removed operator cannot renew at all. Operators may update their own proven payee while active. The registrar registers names with a zero role bitmap: no transfer, resolver-change or subregistry privilege is granted to the token owner. Resolver permissions are granted separately and must be scoped to that operator's dedicated resolver.
+Unblocked operators admit themselves. A listed operator can extend its own running lease. Only the curator can use `renew` after expiry; an unblocked operator may instead re-register its expired, available name. A removed entry cannot renew or bypass its registration blocks. Operators may update their own proven payee while active. Names have a zero role bitmap: no transfer, resolver-change or subregistry privilege is granted to the token owner. Each operator controls its dedicated resolver separately; its endpoint hot key has only the selected text-key permission.
 
-`remove(index, operator)` delists the operator from the registrar immediately. The call names the operator it expects in that slot and reverts if the entry is already removed or belongs to someone else, so a late transaction cannot delist the slot's next occupant. It does not burn the ENS token; the name remains subject to its own expiry. This avoids granting a person registry-wide unregister authority. Discovery must consult the registrar's active flag rather than treating the continued existence of an ENS token as active admission. `reinstate(index)` lets the curator undo a removal; the lease is unchanged.
+`remove(index, operator, packedLabel)` is curator-only. It delists the expected entry and blocks both the operator address and label hash from new registration. The `bytes32` label is right-padded ASCII, not its hash. `reinstate(index, operator, packedLabel)` restores that exact entry and clears those two blocks; the lease is unchanged. Binding both identity fields prevents stale moderation from affecting a reused slot, including one with the same owner. Separate curator-only `setOperatorBlocked(address,bool)` and `setLabelBlocked(bytes32,bool)` control future admission; the latter takes `keccak256(bytes(label))`. They do not alter existing entries. Removing one shared-owner entry leaves its active siblings unchanged, but blocks that address from registering new names until explicitly restored.
+
+Delisting does not burn the ENS token. The old name remains leased even if its proof-list slot is reused; its persistent name block survives that reuse. Discovery consults registrar membership, not token existence alone. Registration callbacks cannot reenter registration, lease, payee or moderation mutations.
 
 Known limits of the registrar:
 
-- **No key rotation during a lease.** The ENS name is not transferable, so an operator cannot move to a new address while its lease runs. After a key compromise, the curator removes the entry and registers the label to the new address once the lease has expired, at most 30 days later.
+- **Free admission has no Sybil or squatting defence.** New wallets can occupy all 128 slots and renew them. The curator can remove entries to recover capacity, but new identities can return. A name does not prove an independent or honest service.
+- **No key rotation during a lease.** After compromise, the curator removes the entry. Once the ENS lease expires, the curator can unblock the label and the replacement operator can register it from its own wallet. The compromised address can remain blocked.
 - **The curator is fixed at deployment.** Changing it needs a new registrar, and every client then needs the new address and runtime hash.
 - **The parent lease is not checked on-chain.** The registrar does not read `derpc.eth`'s own expiry. The planner and lifecycle tool refuse a lease beyond it, and ENS discovery uses the earlier of the two.
 - **Renew only through the registrar.** Renewing an operator name directly in the ENS registry leaves the registrar's copy of the expiry behind, and the label can then not be reused until the ENS lease ends.
@@ -66,13 +69,31 @@ Mainnet ENS and the payment testnet are separate deployments. Keep the chain ID,
 
 ### ENSv2 deployment
 
+For MetaMask or another injected browser wallet, the local staged review helper prepares the selected configuration against two public RPC sources:
+
+```sh
+node contracts/scripts/ens-wallet.mjs \
+  --config contracts/deployments/ens-two-demo-operators-config-2026-11-07.json \
+  --out "$HOME/.local/share/derpc/ens-open-registration-2026-11-07"
+```
+
+Open its printed `http://127.0.0.1:8792` URL in the browser with your wallet. Connect each transaction's stated sender on Ethereum mainnet: deployment/parent administration uses its authorized wallet, while registration always uses the operator. Review names, roles and calldata before approving each transaction. These calls transfer zero ETH but consume **real mainnet ETH for gas**. Use **Refresh** to check receipts and prepare the next stage; nothing signs automatically. The two demos share a team owner/operator address, so this specific bootstrap uses the same wallet for both roles. Payments and staking remain disabled.
+
+The helper writes each complete plan, evolving `resume-config.json`, ordered `receipts.json` and a durable `session.json` journal to the chosen directory before opening the wallet. Keep that directory and reuse it when restarting. Unknown results stay locked: recover the transaction hash from wallet history and enter it on the page. Only a wallet's explicit rejection clears a request automatically. Do not delete the journal or start a second evidence directory to bypass a pending request. After an abnormal process exit, inspect the PID in `wallet.lock`; remove that lock only once the original process has stopped. Never remove `session.json` to recover a lock.
+
+After all stages are mined, **Verify deployment** checks the full deployment through both RPC sources, including at least twelve confirmations, exact requests, canonical blocks, runtime and permissions. Only then does it write `deployment-manifest.json`, `deployment-crosscheck.json` and `ens-directory.json`. The last file supplies `VITE_ENS_DIRECTORY` or the GitHub `DERPC_ENS_DIRECTORY` variable; it contains no signing key. Refresh or restart invalidates cached completion and active exported files until verification succeeds again, retaining the previous evidence in `previous-verification.json`. A receipt-checked deployment is still administrative evidence: the final browser must prove discovery after finality through a separately operated gateway before the registered demos can be described as usable.
+
+The server listens only on loopback and checks Host, Origin, a session token and bounded JSON requests. It never receives private keys or signatures and has no transaction submission RPC. Wallet administrative traffic is outside Anon-RPC. The existing CLI commands below remain available for manual review and verification.
+
 The checked-in [preflight observation](deployments/ens-preflight-mainnet.json) records mainnet block 26355465, the existing `derpc.eth` owner and resolver, and an empty subregistry pointer. A [second RPC observation](deployments/ens-preflight-mainnet-second-source.json) agrees on the parent state and upstream runtime hashes. Neither sent a transaction. Refresh those administrative RPC observations before preparing transactions:
 
 ```sh
 node contracts/scripts/ens-preflight.mjs /tmp/derpc-ens-preflight.json
 ```
 
-Copy [ens-config.example.json](deployments/ens-config.example.json) or [ens-config-plural.example.json](deployments/ens-config-plural.example.json) to a working configuration. Their null fields are intentional: supply the curator and EOA deployer's public addresses, and 2–3 operators' real public addresses, dedicated resolver cold owners, endpoint hot keys, identity signers, payees, public onion endpoints, capability declarations and fixed Unix-second expiries within 30 days. The curator must control `derpc.eth`'s subregistry permission. Never put a personal-mode hostname or secret in this file.
+Copy [ens-config.example.json](deployments/ens-config.example.json) or [ens-config-plural.example.json](deployments/ens-config-plural.example.json) to a working configuration. Their null fields are intentional: supply the curator and EOA deployer's public addresses, and 1–3 operators' real public addresses, dedicated resolver cold owners, endpoint hot keys, identity signers, payees, public onion endpoints, capability declarations and fixed Unix-second expiries within 30 days. The curator must control `derpc.eth`'s subregistry permission. Never put a personal-mode hostname or secret in this file.
+
+Several team-run proxies can share one operator entry and its plural endpoint record; remove the second example operator when preparing that configuration. Each node must have its own stable endpoint ID and match the shared name and signer. This is one operator with redundant nodes, not independent operators. Keep its gateway ownership declarations, distinct endpoint-update hot key and free-only plural mode. The full milestone still requires independent operators.
 
 ```sh
 node contracts/scripts/ens-plan.mjs /tmp/derpc-ens-config.json /tmp/derpc-ens-plan-1.json
@@ -81,11 +102,32 @@ node contracts/scripts/ens-plan.mjs /tmp/derpc-ens-config.json /tmp/derpc-ens-pl
 The plan contains only unsigned wallet requests for the next independent stage. Review the complete requests and role table, submit from the stated wallets, wait for successful receipts, then save `plan.resumeConfig` as the next working configuration and rerun the planner with a new plan filename. Preserve every plan and its transaction hashes. The stages are:
 
 1. Deploy one UserRegistry and a separate PermissionedResolver for each operator through the ENSv2 factory.
-2. Deploy the non-upgradeable curated registrar. This stage fixes the deployer's creation nonce and registrar address; use its saved `resumeConfig` thereafter.
+2. Deploy the non-upgradeable open registrar. This stage fixes the deployer's creation nonce and registrar address; use its saved `resumeConfig` thereafter.
 3. Grant only the planned roles, set the canonical parent, attach the subregistry and grant each hot key access to its selected endpoint record. The existing parent resolver is preserved.
-4. Register the operator subnames with the fixed lease, zero token-owner roles and their dedicated resolvers.
+4. Each operator signs its own registration with the fixed lease, zero token-owner roles and dedicated resolver.
 
 The curator receives parent-setting and registration/renewal administration on the subregistry. The registrar receives operational registration/renewal authority. Neither receives unregister, transfer or upgrade authority through this plan. Each resolver's cold owner administers text records; its hot key can change only the chosen `derpc.endpoint` or `derpc.endpoints` key. Existing conflicting contracts, parent pointers or role grants cause refusal, not implicit replacement.
+
+### Join from an operator wallet
+
+After the initial namespace deployment, a new operator uses [ens-join.mjs](scripts/ens-join.mjs) rather than extending the owner's bootstrap roster. Supply its verified public deployment manifest and one public operator entry (or the website's downloaded `operatorConfig` fragment):
+
+```sh
+node contracts/scripts/ens-join.mjs \
+  --deployment /path/to/deployment-manifest.json \
+  --operator /path/to/operator-entry.json \
+  --out "$HOME/.local/share/derpc/my-operator-registration"
+```
+
+The helper prints a loopback wallet-review URL, normally `http://127.0.0.1:8793`. The operator connects their own wallet. It prepares three stages: deploy a dedicated ENS resolver with the public records, authorize the separate endpoint hot key, then register the name. **All three senders are the operator; no parent-owner transaction or service approval is involved.** The operator must also be the resolver cold owner for this flow. One singular endpoint or a bounded plural list is accepted; payment records are disabled. The helper does not generate keys, request private keys or sign automatically.
+
+Review and retain the evidence directory as described above. Both administrative sources must agree before each request. The helper checks the attached subregistry, exact registrar runtime, immutable curator/registry, ENS factory implementations, scoped permissions, available label, blocked address/name, lease and list capacity. It does not require other members to appear in the new operator's configuration. A full list can reuse a delisted or expired slot without overwriting an active lease. The three exact operator-signed receipts must pass twelve-confirmation verification; an altered sender, calldata, pin, source, review block or journal causes refusal. A previously submitted request is never silently resubmitted.
+
+Choose a fixed expiry and keep the same inputs across restarts. A new `--deployment-id` deliberately selects a different resolver address; it is not a way to bypass an unresolved transaction. Enrollment evidence still does not prove onion reachability, reciprocal service identity, independent ownership or honest responses. The browser's finalized, proven discovery and normal verification remain required before using the new operator.
+
+Older curator-only plans are historical. Do not combine them with this registrar's changed source or runtime hash; prepare fresh plans and use a separate owner-setup evidence directory if no old transaction was submitted. If an old request is pending, reconcile it before proceeding.
+
+### Endpoint records
 
 A plural operator supplies a raw `endpoints` array in its configuration, omitting both `endpoint` and `beacon` entirely:
 
@@ -240,5 +282,9 @@ This runs an ephemeral Ganache chain and records actual local receipts, source/r
 | Refund | 49,917 | 69,761,123,132,211 |
 
 The open/close path used **210,524 gas**; the open/timeout-refund path used **194,418 gas**. Measured source hash: `0x59cdd63dcbc242cb72fb438ce531c63a170178d264678d87fbf22fde7eeec643`; runtime hash: `0xfd80231e110458a6dd83da9dfeffa6650e50fb8c8371fe58c49c8cfb6a81ac24`. Rerun after any source, compiler, recipient or calldata change. These local fee values are not live network quotes and exclude rollup data fees. They do not select a production chain or establish operator income.
+
+The [November 7 measurement](deployments/payment-cost-measurement-2026-11-07.json) adds deterministic disposable accounts/time, mined failed close/refund attempts, rejecting recipient fixtures, deferred withdrawals and exact accounting checks. All 16 receipts reproduced across two runs. Its close uses 66,039 gas under different calldata; deferred close uses 114,697 and each successful withdrawal 50,332, including fixture forwarding overhead. The minimal fixtures are not representative production smart wallets.
+
+Append `--sample-fees` to collect read-only Hoodi and two-source mainnet gas-price observations after the local chain stops. The report multiplies each local gas count by the observed quote and shows assumed read-volume sensitivity. Those projections are not public lifecycle receipts, atomic block/price observations, actual demand or a minimum deposit/reserve recommendation. Public fee sampling loads no signer and submits no transaction.
 
 Before real funds, obtain an independent contract review and the legal review described in that checklist. Neither this README nor an automated review establishes those outcomes.
