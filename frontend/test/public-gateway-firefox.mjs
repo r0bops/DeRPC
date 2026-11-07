@@ -190,6 +190,11 @@ try {
   report.browser = await browser.version();
   page = await browser.newPage();
   page.setDefaultTimeout(15000);
+  if (manifest) {
+    await page.setCacheEnabled(false);
+    report.releaseBinding.browserHttpCacheDisabled = true;
+    report.qualifications.push('Release hash capture disables the browser HTTP cache and loads each site route in a fresh document. Firefox BiDi cannot expose every same-document cached image body; no missing body is accepted as a matching hash.');
+  }
   await page.evaluateOnNewDocument(() => {
     const NativePeer = globalThis.RTCPeerConnection;
     if (typeof NativePeer !== 'function') return;
@@ -247,6 +252,7 @@ try {
   let documentHttpStatus = null;
   for (const route of ['/', '/#/directory', '/#/operate']) {
     phase = `site:${route}`;
+    if (manifest && report.pages.length) await page.goto('about:blank', { waitUntil: 'load', timeout: remaining() });
     const response = await page.goto(base + route, { waitUntil: 'domcontentloaded', timeout: remaining(30000) });
     if (response) documentHttpStatus = response.status();
     await page.waitForFunction(() => document.querySelectorAll('h1,h2').length > 0, { timeout: remaining() });
