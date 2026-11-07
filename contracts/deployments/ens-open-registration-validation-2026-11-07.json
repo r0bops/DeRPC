@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-ens-open-registration-validation",
+  "checkedAt": "2026-11-07T00:57:41.738704+00:00",
+  "complete": true,
+  "publicTransactionsSent": false,
+  "sourceHash": "0x9f7503ee65c72b815895ab33bf6fd847fbf544060aecf2f0bd52fb3f76032ee4",
+  "compiler": {
+    "version": "0.8.30+commit.73712a01.Emscripten.clang",
+    "optimizerRuns": 200,
+    "evmVersion": "shanghai"
+  },
+  "finalTests": {
+    "passed": 7,
+    "skipped": 1,
+    "failed": 0,
+    "skippedReason": "Historical three-demo enrollment is opt-in and is not the current two-operator configuration."
+  },
+  "finalEvidence": {
+    "publicCrosscheck": "ens-open-registration-final-tooling-crosscheck-2026-11-07.json",
+    "exactTwo": "ens-open-registration-two-demo-final-tooling-evidence-2026-11-07.json",
+    "independentJoin": "ens-open-registration-independent-join-final-tooling-evidence-2026-11-07.json",
+    "generic": "ens-open-registration-final-tooling-fork-evidence-2026-11-07.json",
+    "lifecycle": "ens-open-registration-final-tooling-lifecycle-fork-evidence-2026-11-07.json",
+    "endpoints": "ens-open-registration-final-tooling-endpoints-fork-evidence-2026-11-07.json"
+  },
+  "artifactSha256": {
+    "ens-open-registration-endpoints-fork-evidence-2026-11-07.json": "e2647bfe72cc627d09cbed57856e48f736822b7c85931566349ea4360664949f",
+    "ens-open-registration-final-tooling-crosscheck-2026-11-07.json": "a53304c6f27d6842c357c1534c7e3481f01228b2fb7b0da9b57f0a966fc6892e",
+    "ens-open-registration-final-tooling-endpoints-fork-evidence-2026-11-07.json": "7e5268a659a625bde77ce5b60085c950f0a0231b4a60e78731c197368ca005a6",
+    "ens-open-registration-final-tooling-fork-evidence-2026-11-07.json": "3ed7e37e75b66cd87c482c2018c49d5fd5646a97a82fda2121e96199677162c3",
+    "ens-open-registration-final-tooling-lifecycle-fork-evidence-2026-11-07.json": "c458b18fc9c84ca8cee728cfa98bc1fba5e3d48eb47a295c08d26c48cc1e7f00",
+    "ens-open-registration-fork-evidence-2026-11-07.json": "e66322ecd54690841aac41a715b74068c7f6041984864914dff1c0305023ff87",
+    "ens-open-registration-independent-join-final-tooling-evidence-2026-11-07.json": "4c3e14c3febbb8b35a3974a1c7e336a540c6c06dee8f4d400b0d9d196d01ef16",
+    "ens-open-registration-independent-join-fork-evidence-2026-11-07.json": "c5d47ecf0bdd1f5a786ead1816bfdae72c5ba198cdec0594ee53f32c5a2a1fa8",
+    "ens-open-registration-independent-join-fork-final-evidence-2026-11-07.json": "360fee1ac7a2dae4d3bbf22d1bc2b8e4589ade894e8b0204dc244f2e1e2f7853",
+    "ens-open-registration-lifecycle-fork-evidence-2026-11-07.json": "3d0fa9fd9d19de1ed02503ed5a4f2a26e05a067c38e7e54fc960eba73e0b7523",
+    "ens-open-registration-plan-1-2026-11-07.json": "ab6ab364003c64fd2aa96157ab0d6d06c5c1fd7e8cf8bf7bbe8a24ed37893f5b",
+    "ens-open-registration-plan-1-crosscheck-2026-11-07.json": "c7bb094c543a68603931e2e1eeec07a8a097b3f7a332b84d6c0a76975df93168",
+    "ens-open-registration-plan-1-second-source-2026-11-07.json": "1a88ee58bc00f41c58a515e325edccc3a2b64df198126f9cb38543464700fe21",
+    "ens-open-registration-preflight-2026-11-07.json": "be041f30986af1452f211a5c69bb7e9211484d373de0323bcadf185051711bc3",
+    "ens-open-registration-preflight-second-source-2026-11-07.json": "0726a0881c4a595a431b4163afff35ed0019d37abc7fd97aa2043e225251f062",
+    "ens-open-registration-two-demo-final-tooling-evidence-2026-11-07.json": "e8d639bfcf9f251fa9d0f8c10b938db260dc3e23fcabd82d1a4772e635fc4a28",
+    "ens-open-registration-two-demo-fork-evidence-2026-11-07.json": "c526d00446b1c8ffd937803ef495ac6ae74a17c02a6cfe018f7b5a43c1126e8b"
+  },
+  "sourcesBefore": {
+    "contracts/deployments/ens-two-demo-operators-config-2026-11-07.json": "0277faf36ff8d3309889d87cb353df6432519e5ea55c752c635607b18caa0d93",
+    "contracts/deployments/ens-upstream-mainnet.json": "9a7732f6c99eb5525f64b56940979c91e4c5532c72094ce0e0845ae2cdc42be6",
+    "contracts/scripts/compile.mjs": "ff3372f1e28440ebf22856291e536c2ef95fd443f2cf4a6d96bf46ece0bf4a8d",
+    "contracts/scripts/ens-common.mjs": "b1bc6d3e2c8a61194e08ea109a2f521e86d90a5b824aa312e3914ac6e79c56f6",
+    "contracts/scripts/ens-join.mjs": "8add9f5b37eb20587aa8f174120b02a945b697dc416987c7541d7d2e2198e9cf",
+    "contracts/scripts/ens-lifecycle.mjs": "6c8f239e8201f694057aecfc489f6c2983abddf9ca61c6e6df86022894f90fb3",
+    "contracts/scripts/ens-plan.mjs": "b22762f9204dca442111cb5634d338af24d2182c5a88c8798ce5abfd06cf3512",
+    "contracts/scripts/ens-preflight.mjs": "1caa48314883513bfe1289ef8369d90e3e641c8f5870b9c0e3e0c4808cd78893",
+    "contracts/scripts/ens-verify.mjs": "e78c7919e4f56e416c4292a100bf74d58d0881ba1cf24a3b60d373e479e63321",
+    "contracts/scripts/ens-wallet-client.mjs": "c54f77a57c03dda30f55e15878ec182ca263b22fe315cfb9a894eab83cb1e958",
+    "contracts/scripts/ens-wallet.mjs": "872908e4b427c6887d8cf3e9bc8ee8f85502658a1cdb6f62490bd39dd01d82f2",
+    "contracts/src/OperatorRegistrar.sol": "b83d603d2cbe92f52548609c0b6500f69b73c51a9381f863a776ca0dbe4ea0f0",
+    "contracts/src/QueryEscrow.sol": "ba83df766d100c84c54769800cc0cd88d75e8850411c6e5ab0b9f40b1fa6fb2e",
+    "contracts/test/ens-endpoints-fork.mjs": "6be0032df30237c097e12b8158eed329498325b2ce35473db9176d2a2abbf59a",
+    "contracts/test/ens-fork.test.mjs": "75f886231b7a98a0ae1155006592a0331b518b490bd557a5d3abb20dda2a6e03",
+    "contracts/test/ens-lifecycle-fork.mjs": "6d6584f0123b600e38c3d0da3c8400de6e672ad3d6108c15a021fc454ed4a839",
+    "contracts/test/ens-open-join-fork.test.mjs": "aa29f4e12e9baf58d6348aa25358339f01e2b0b8b397a9ff183b703ace2444e1",
+    "contracts/test/ens-team-demo-fork.mjs": "c90c64a20cb0a825d97e1c1b9fc01cd8ffb2e7c6de2e84e414cbee4d36887236",
+    "contracts/test/ens-two-demo-operators-fork.test.mjs": "7cde1eb196c9fe82caee62da53705d391de301965516d0008b9b703fafbe75be",
+    "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+    "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+    "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6"
+  },
+  "sourcesAfter": {
+    "contracts/deployments/ens-two-demo-operators-config-2026-11-07.json": "0277faf36ff8d3309889d87cb353df6432519e5ea55c752c635607b18caa0d93",
+    "contracts/deployments/ens-upstream-mainnet.json": "9a7732f6c99eb5525f64b56940979c91e4c5532c72094ce0e0845ae2cdc42be6",
+    "contracts/scripts/compile.mjs": "ff3372f1e28440ebf22856291e536c2ef95fd443f2cf4a6d96bf46ece0bf4a8d",
+    "contracts/scripts/ens-common.mjs": "b1bc6d3e2c8a61194e08ea109a2f521e86d90a5b824aa312e3914ac6e79c56f6",
+    "contracts/scripts/ens-join.mjs": "8add9f5b37eb20587aa8f174120b02a945b697dc416987c7541d7d2e2198e9cf",
+    "contracts/scripts/ens-lifecycle.mjs": "6c8f239e8201f694057aecfc489f6c2983abddf9ca61c6e6df86022894f90fb3",
+    "contracts/scripts/ens-plan.mjs": "b22762f9204dca442111cb5634d338af24d2182c5a88c8798ce5abfd06cf3512",
+    "contracts/scripts/ens-preflight.mjs": "1caa48314883513bfe1289ef8369d90e3e641c8f5870b9c0e3e0c4808cd78893",
+    "contracts/scripts/ens-verify.mjs": "e78c7919e4f56e416c4292a100bf74d58d0881ba1cf24a3b60d373e479e63321",
+    "contracts/scripts/ens-wallet-client.mjs": "c54f77a57c03dda30f55e15878ec182ca263b22fe315cfb9a894eab83cb1e958",
+    "contracts/scripts/ens-wallet.mjs": "872908e4b427c6887d8cf3e9bc8ee8f85502658a1cdb6f62490bd39dd01d82f2",
+    "contracts/src/OperatorRegistrar.sol": "b83d603d2cbe92f52548609c0b6500f69b73c51a9381f863a776ca0dbe4ea0f0",
+    "contracts/src/QueryEscrow.sol": "ba83df766d100c84c54769800cc0cd88d75e8850411c6e5ab0b9f40b1fa6fb2e",
+    "contracts/test/ens-endpoints-fork.mjs": "6be0032df30237c097e12b8158eed329498325b2ce35473db9176d2a2abbf59a",
+    "contracts/test/ens-fork.test.mjs": "75f886231b7a98a0ae1155006592a0331b518b490bd557a5d3abb20dda2a6e03",
+    "contracts/test/ens-lifecycle-fork.mjs": "6d6584f0123b600e38c3d0da3c8400de6e672ad3d6108c15a021fc454ed4a839",
+    "contracts/test/ens-open-join-fork.test.mjs": "aa29f4e12e9baf58d6348aa25358339f01e2b0b8b397a9ff183b703ace2444e1",
+    "contracts/test/ens-team-demo-fork.mjs": "c90c64a20cb0a825d97e1c1b9fc01cd8ffb2e7c6de2e84e414cbee4d36887236",
+    "contracts/test/ens-two-demo-operators-fork.test.mjs": "7cde1eb196c9fe82caee62da53705d391de301965516d0008b9b703fafbe75be",
+    "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+    "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+    "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6"
+  },
+  "changedSources": [],
+  "publicObservations": [
+    {
+      "rpcOrigin": "https://ethereum-rpc.publicnode.com",
+      "blockNumber": "26359533",
+      "blockHash": "0xfaef9f7ffecf0c12984d0bd168b694a0cb05b2b0d8b68c9578c8d1f5f99136e2",
+      "parentSubregistry": "0x0000000000000000000000000000000000000000",
+      "totalEstimatedGas": "1698990"
+    },
+    {
+      "rpcOrigin": "https://eth.drpc.org",
+      "blockNumber": "26359533",
+      "blockHash": "0xfaef9f7ffecf0c12984d0bd168b694a0cb05b2b0d8b68c9578c8d1f5f99136e2",
+      "parentSubregistry": "0x0000000000000000000000000000000000000000",
+      "totalEstimatedGas": "1703144"
+    }
+  ],
+  "storedPlansMatchFinalTooling": true,
+  "restoredForks": [
+    {
+      "rpc": "http://127.0.0.1:8867",
+      "chainId": 31337,
+      "blockNumber": 26359514,
+      "blockHash": "0x4c2ddb75ca43430a109923b3be77a54b6c028f0b350bbdb900c6389567d13000",
+      "restored": true
+    },
+    {
+      "rpc": "http://127.0.0.1:8868",
+      "chainId": 31337,
+      "blockNumber": 26359514,
+      "blockHash": "0x4c2ddb75ca43430a109923b3be77a54b6c028f0b350bbdb900c6389567d13000",
+      "restored": true
+    }
+  ],
+  "commands": [
+    {
+      "cwd": "repository root",
+      "command": "node /tmp/derpc-ens-open-registration-preflight.mjs",
+      "purpose": "Create original two-source preflights and exact unsigned first-stage plans; helper calls preflight then preparePlan with each same-source snapshot"
+    },
+    {
+      "cwd": "repository root",
+      "command": "node /tmp/derpc-ens-open-registration-final-crosscheck.mjs",
+      "purpose": "Rebuild final source and compare full stored intents through two fresh public administrative snapshots"
+    },
+    {
+      "cwd": "repository root",
+      "command": "/home/rob/.foundry/bin/anvil --fork-url https://ethereum-rpc.publicnode.com --fork-block-number 26359514 --chain-id 31337 --host 127.0.0.1 --port 8867 --accounts 0 --no-storage-caching --quiet"
+    },
+    {
+      "cwd": "repository root",
+      "command": "/home/rob/.foundry/bin/anvil --fork-url https://ethereum-rpc.publicnode.com --fork-block-number 26359514 --chain-id 31337 --host 127.0.0.1 --port 8868 --accounts 5 --no-storage-caching --quiet"
+    },
+    {
+      "cwd": "contracts",
+      "command": "DERPC_ENS_OPEN_JOIN_FORK_RPC=http://127.0.0.1:8867 DERPC_ENS_OPEN_JOIN_REPORT=deployments/ens-open-registration-independent-join-final-tooling-evidence-2026-11-07.json node node_modules/vitest/vitest.mjs run test/ens-open-join-fork.test.mjs",
+      "passed": 1,
+      "durationSeconds": 7.63
+    },
+    {
+      "cwd": "contracts",
+      "command": "DERPC_ENS_FORK_RPC=http://127.0.0.1:8868 DERPC_ENS_FORK_REPORT=deployments/ens-open-registration-final-tooling-fork-evidence-2026-11-07.json DERPC_ENS_LIFECYCLE_REPORT=deployments/ens-open-registration-final-tooling-lifecycle-fork-evidence-2026-11-07.json DERPC_ENS_ENDPOINTS_REPORT=deployments/ens-open-registration-final-tooling-endpoints-fork-evidence-2026-11-07.json node node_modules/vitest/vitest.mjs run test/ens-fork.test.mjs",
+      "passed": 5,
+      "skipped": 1,
+      "durationSeconds": 21.78
+    },
+    {
+      "cwd": "contracts",
+      "command": "DERPC_ENS_TWO_OPERATORS_FORK_RPC=http://127.0.0.1:8867 DERPC_ENS_TWO_OPERATORS_REPORT=deployments/ens-open-registration-two-demo-final-tooling-evidence-2026-11-07.json node node_modules/vitest/vitest.mjs run test/ens-two-demo-operators-fork.test.mjs",
+      "passed": 1,
+      "durationSeconds": 7.07
+    }
+  ],
+  "temporaryHelperSha256": {
+    "/tmp/derpc-ens-open-registration-preflight.mjs": "68030671e861989b8569e53da6d9e9690ee910304c9295335c1da4f4929367fe",
+    "/tmp/derpc-ens-open-registration-final-crosscheck.mjs": "c61abb5a290a3b591221a4321919fe512dac55bf8376cffea2181e6d9c175620"
+  },
+  "reproductionNotes": [
+    "All report writers use exclusive creation. Choose fresh report paths for reruns; preserve prior evidence.",
+    "Run exact-two and independent-join tests sequentially on port 8867. Generic tests run independently on 8868.",
+    "Public preflight and planner functions are exported by contracts/scripts/ens-common.mjs and ens-plan.mjs; each RPC plan is bound to its own preflight block. Temporary helper hashes identify this orchestration run.",
+    "Older same-date fork artifacts are preserved staging runs; finalEvidence identifies the final source-bound results."
+  ],
+  "limits": [
+    "Public agreement is administrative RPC evidence, not light-client proof.",
+    "Fork writes, funding and impersonation are disposable local state; no real-chain mutation or signing key was used.",
+    "The independent operator uses explicit fictitious local addresses and .example records; it is not a real additional service.",
+    "Generic proof tests inject a local state root and fixture transport/identity; consensus and anonymous endpoint reachability are not established.",
+    "Actual parent enrollment, wallet signatures, finalized proven discovery and separate gateway availability remain pending."
+  ]
+}

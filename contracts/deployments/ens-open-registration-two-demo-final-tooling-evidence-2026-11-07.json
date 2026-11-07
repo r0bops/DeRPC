@@ -1,0 +1,256 @@
+{
+  "checkedAt": "2026-11-07T00:56:40.455Z",
+  "localOnly": true,
+  "publicTransactionsSent": false,
+  "complete": true,
+  "scope": "Exact public two-operator config and factory requests simulated with local impersonation, actual ENS bytecode, locally mined receipts and direct local state reads. No keys, onion traffic, consensus verification or public enrollment.",
+  "fork": {
+    "blockNumber": 26359514,
+    "blockHash": "0x4c2ddb75ca43430a109923b3be77a54b6c028f0b350bbdb900c6389567d13000",
+    "clientVersion": "anvil/v1.4.3"
+  },
+  "sourceHash": "0x9f7503ee65c72b815895ab33bf6fd847fbf544060aecf2f0bd52fb3f76032ee4",
+  "compiler": {
+    "version": "0.8.30+commit.73712a01.Emscripten.clang",
+    "optimizerRuns": 200,
+    "evmVersion": "shanghai"
+  },
+  "inputs": {
+    "ens-two-demo-operators-config-2026-11-07.json": "0277faf36ff8d3309889d87cb353df6432519e5ea55c752c635607b18caa0d93",
+    "ens-open-registration-plan-1-2026-11-07.json": "ab6ab364003c64fd2aa96157ab0d6d06c5c1fd7e8cf8bf7bbe8a24ed37893f5b",
+    "ens-demo-hotkeys-public-2026-11-06.json": "5f68e73a5b71e2f2e086c784501568e459e8f2fa0ce4bac8d16ae387ec832795"
+  },
+  "checks": [
+    "Exact reviewed factory calls, current source/compiler, fixed public leases, all registration stages and canonical receipts with twelve local confirmations passed",
+    "Each public hot key can rotate only its own endpoint; both cross-resolver attempts and ten protected-record attempts reverted; gateway declarations remained unchanged",
+    "Curator delisting removed only the targeted admission, banned its operator and label from future registration, and preserved its ENS token; curator renewal revived a lapsed lease while endpoint hot keys could do neither",
+    "Existing derpc.eth parent resolver stayed unchanged"
+  ],
+  "stages": [
+    {
+      "stage": "deploy-ens-proxies",
+      "ids": [
+        "deploy-registry",
+        "deploy-resolver-demo-1",
+        "deploy-resolver-demo-2"
+      ],
+      "transactionHashes": [
+        "0x24740669d0a7295b2f7715bf84d9717f894f67900f164d94f2d65b2fdb301be0",
+        "0x7abfe52e4d3959964a3089baad553f66e824f09f33156c5851c1e987a24e568a",
+        "0xb0743e6d8ed77cdf70fd79fa9bd3ee06ed7f4c287d86990da39728deea0db500"
+      ]
+    },
+    {
+      "stage": "deploy-registrar",
+      "ids": [
+        "deploy-registrar"
+      ],
+      "transactionHashes": [
+        "0x6bd70c77b985f72f451571740e5cc692dd044d41a21c427b4a73fe3f6adee320"
+      ]
+    },
+    {
+      "stage": "configure-permissions-and-records",
+      "ids": [
+        "grant-registrar",
+        "set-registry-parent",
+        "attach-subregistry",
+        "grant-endpoint-demo-1",
+        "grant-endpoint-demo-2"
+      ],
+      "transactionHashes": [
+        "0x99f657c282e909f5bb3e1c3dba2246b7a36c1984c01d42822cbdb77ba848c5f3",
+        "0x8d7b41473cb81797941acd6f380f4a5367bb19c8314036f7f2e422b61078f379",
+        "0x21b3ae0344abac7a0e382cd28ff3b68579f2395a8aded2d4a249532c5e325378",
+        "0x530fe1c48c8ed5f0f191c8709d876032f2e40ed48bc18272eb97d92eb84147af",
+        "0xcf3eecb629e0657d127a4959aa757eee32f558b6684301af9b6df89170166637"
+      ]
+    },
+    {
+      "stage": "register-or-renew-operators",
+      "ids": [
+        "register-demo-1",
+        "register-demo-2"
+      ],
+      "transactionHashes": [
+        "0x2bdcb9074deeda0e559afe475431b5c487307e652785fc5183e9c45d0fffc1d3",
+        "0x829cd307a69757e69cf2aa78f2725ab97de4628c4dcd436ac0073ca6cac12e52"
+      ]
+    }
+  ],
+  "lifecycle": [
+    {
+      "action": {
+        "type": "rotate-endpoint",
+        "label": "demo-1",
+        "expectedEndpoint": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion/rpc",
+        "newEndpoint": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion/rpc-fork-rotation"
+      },
+      "receipt": {
+        "blockNumber": "26359538",
+        "blockHash": "0xa60724faacb85b57ac62030b932efd610a33736f48837ac8ee214f9c9b8c0882",
+        "transactionIndex": 0,
+        "from": "0x0fea008976e62d29714ba3398e6791131a629eb6",
+        "to": "0x9c75435f88a9c8f48963f229a397306610e92656",
+        "gasUsed": "63619",
+        "confirmations": "13"
+      },
+      "verification": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      }
+    },
+    {
+      "action": {
+        "type": "rotate-endpoint",
+        "label": "demo-2",
+        "expectedEndpoint": "http://4ckka4hvhybii4n7nltw6ckut2mc4gkqvp3u2b3lo4sg5omqnp4oxfad.onion/rpc",
+        "newEndpoint": "http://4ckka4hvhybii4n7nltw6ckut2mc4gkqvp3u2b3lo4sg5omqnp4oxfad.onion/rpc-fork-rotation"
+      },
+      "receipt": {
+        "blockNumber": "26359551",
+        "blockHash": "0x0d1b49ce829acc3b6d86028c5f0b51df00fc2769d2796c57f89921168a59f901",
+        "transactionIndex": 0,
+        "from": "0x1d3beab2c16422b214133db122b1ec2c8df66c8e",
+        "to": "0x0ed7cb979f8670a9e3de432367e6523b489a5c59",
+        "gasUsed": "63619",
+        "confirmations": "13"
+      },
+      "verification": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      }
+    },
+    {
+      "action": {
+        "type": "delist",
+        "label": "demo-1"
+      },
+      "receipt": {
+        "blockNumber": "26359564",
+        "blockHash": "0x83b821ac99aa1189f480bfcced876980556d50fc326dca694738c8544a095bd0",
+        "transactionIndex": 0,
+        "from": "0x9e15a220cc2cfcfa3381c5488434291eb65eaa78",
+        "to": "0x304f19cbc01b3105487aa1827999577b1b5bb57d",
+        "gasUsed": "85302",
+        "confirmations": "13"
+      },
+      "verification": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      },
+      "moderation": {
+        "operatorBlocked": true,
+        "labelBlocked": true
+      }
+    },
+    {
+      "action": {
+        "type": "renew",
+        "label": "demo-2",
+        "expectedExpiry": 1794614400,
+        "expiry": 1794618000,
+        "authority": "curator"
+      },
+      "receipt": {
+        "blockNumber": "26359578",
+        "blockHash": "0xdf2c27af44a3e7c1f61962f9cfb038b84c3fd6c82a71c3226b45a865d43e4e56",
+        "transactionIndex": 0,
+        "from": "0x9e15a220cc2cfcfa3381c5488434291eb65eaa78",
+        "to": "0x304f19cbc01b3105487aa1827999577b1b5bb57d",
+        "gasUsed": "60928",
+        "confirmations": "13"
+      },
+      "verification": {
+        "canonicalReceipt": true,
+        "exactRequest": true,
+        "receiptParentPreconditions": true,
+        "receiptBlockState": true,
+        "currentState": true,
+        "rolesAndRuntime": true
+      }
+    }
+  ],
+  "deployment": {
+    "subregistry": "0x7a315598b4979b3d9F463c1AA3647D368BD1Ea91",
+    "registrar": {
+      "address": "0x304F19cbC01b3105487aA1827999577b1b5BB57D",
+      "codeHash": "0xafb83df7708117821562365875e2785a1faf92e1a19ad3298bfd8e5004b30e8f",
+      "runtimeCodeHash": "0xafb83df7708117821562365875e2785a1faf92e1a19ad3298bfd8e5004b30e8f",
+      "registry": "0x7a315598b4979b3d9F463c1AA3647D368BD1Ea91",
+      "subregistry": "0x7a315598b4979b3d9F463c1AA3647D368BD1Ea91",
+      "arraySlot": "0",
+      "entrySlots": 3,
+      "maxOperators": 128
+    },
+    "operators": [
+      {
+        "name": "demo-1.derpc.eth",
+        "resolver": "0x9c75435f88a9C8F48963f229a397306610E92656",
+        "operator": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "coldOwner": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "hotKey": "0x0Fea008976e62d29714ba3398e6791131A629eB6",
+        "expiry": 1794614400,
+        "payee": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "records": {
+          "derpc.endpoint": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion/rpc",
+          "derpc.signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+          "derpc.caps": "{\"chainId\":1,\"methods\":[\"eth_getProof\",\"eth_getCode\"],\"beacon\":true}",
+          "derpc.beacon": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion",
+          "derpc.gateways": "[\"45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg\"]"
+        },
+        "initialRecords": {
+          "derpc.endpoint": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion/rpc",
+          "derpc.signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+          "derpc.caps": "{\"chainId\":1,\"methods\":[\"eth_getProof\",\"eth_getCode\"],\"beacon\":true}",
+          "derpc.beacon": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion",
+          "derpc.gateways": "[\"45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg\"]"
+        }
+      },
+      {
+        "name": "demo-2.derpc.eth",
+        "resolver": "0x0Ed7Cb979f8670A9e3DE432367E6523B489A5c59",
+        "operator": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "coldOwner": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "hotKey": "0x1d3beAB2c16422B214133DB122B1eC2c8dF66c8E",
+        "expiry": 1794614400,
+        "payee": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "records": {
+          "derpc.endpoint": "http://4ckka4hvhybii4n7nltw6ckut2mc4gkqvp3u2b3lo4sg5omqnp4oxfad.onion/rpc",
+          "derpc.signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+          "derpc.caps": "{\"chainId\":1,\"methods\":[\"eth_getProof\",\"eth_getCode\"],\"beacon\":true}",
+          "derpc.beacon": "http://4ckka4hvhybii4n7nltw6ckut2mc4gkqvp3u2b3lo4sg5omqnp4oxfad.onion",
+          "derpc.gateways": "[\"45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg\"]"
+        },
+        "initialRecords": {
+          "derpc.endpoint": "http://4ckka4hvhybii4n7nltw6ckut2mc4gkqvp3u2b3lo4sg5omqnp4oxfad.onion/rpc",
+          "derpc.signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+          "derpc.caps": "{\"chainId\":1,\"methods\":[\"eth_getProof\",\"eth_getCode\"],\"beacon\":true}",
+          "derpc.beacon": "http://4ckka4hvhybii4n7nltw6ckut2mc4gkqvp3u2b3lo4sg5omqnp4oxfad.onion",
+          "derpc.gateways": "[\"45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg\"]"
+        }
+      }
+    ],
+    "verification": {
+      "receipts": true,
+      "canonicalBlocks": true,
+      "minimumConfirmations": 12,
+      "stateMatchesConfig": true,
+      "hotKeyEventAudit": true
+    }
+  },
+  "restoredChainId": 31337,
+  "restoredForkBlock": true
+}

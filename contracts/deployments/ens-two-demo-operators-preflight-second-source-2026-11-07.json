@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-ens-preflight",
+  "chainId": 1,
+  "rpcOrigin": "https://eth.drpc.org",
+  "localOnly": false,
+  "checkedAt": "2026-11-07T00:30:37.702Z",
+  "blockNumber": "26359405",
+  "blockHash": "0xf03b086893f2de41deac47bcc97e76ffa71217dadb894ee19be1f6a2c9bfa7f3",
+  "timestamp": "1794011423",
+  "upstreamSource": "https://docs.ens.domains/learn/deployments/",
+  "upstreamSourceCommit": "4f47cbcc11462fb413196e6b5c0f8090247a6c08",
+  "upstream": {
+    "VerifiableFactory": {
+      "address": "0x77510ba162dfea3d8989e3f0928a691b345730d2",
+      "runtimeCodeHash": "0xc251b434fe75ce3ca024e85883aafd7c1d0b8e382d747b537c5930018b144a91",
+      "normalizedRuntimeCodeHash": "0x2a7df71e60cc096d05d6f912bb5f866443c69754ab585a55f66f3f6a3f89b68f"
+    },
+    "UserRegistryImpl": {
+      "address": "0xfaa23592aca10a6d8875b18ea86954e8eb6d8d72",
+      "runtimeCodeHash": "0xb5b939d5a80a1d00351e4e0faa3529b8ee25dfcf436d64f781d415ccc8a3b7a9",
+      "normalizedRuntimeCodeHash": "0xcccecc70b7d7a9c01003f21790b0d9a143aa5c3cb6f18d373a06624903f4edf9"
+    },
+    "PermissionedResolverImpl": {
+      "address": "0x565b0f456a04ac9b48758190e90030623cff57c5",
+      "runtimeCodeHash": "0x25df12e14187ae568dca1861b918e01b6e24a671dea6089a6dbbe60c5d3ef640",
+      "normalizedRuntimeCodeHash": "0x230d1165b00f1b366b59fb2c1a351087610846d183d4b49ef39d6dd87b327f63"
+    },
+    "ETHRegistry": {
+      "address": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+      "runtimeCodeHash": "0xe2873b2a7becb1c9f1d017027d5b528ea4e797e609acaa7a4194694e718a0273",
+      "normalizedRuntimeCodeHash": "0xa2bc002e4d17398ab8fcb9c52553dd2f736f41f5abc21b17078ae2b6714c9ef7"
+    }
+  },
+  "parent": {
+    "name": "derpc.eth",
+    "registry": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+    "status": 2,
+    "expiry": "1825433555",
+    "latestOwner": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+    "tokenId": "86421749974462203513281326918437045380435208352249783119946164121359903358976",
+    "resource": "86421749974462203513281326918437045380435208352249783119946164121359903358976",
+    "subregistry": "0x0000000000000000000000000000000000000000",
+    "resolver": "0xF645Ba7C7aE2A6915d0B904F39D4AadD7d899B59"
+  },
+  "trust": "Read-only administrative RPC observations; not light-client verified. No transactions sent."
+}

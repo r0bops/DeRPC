@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-ens-unsigned-plan-crosscheck",
+  "checkedAt": "2026-11-06T23:51:43.895Z",
+  "plan": "ens-team-demo-plan-1-2026-11-06.json",
+  "sources": [
+    {
+      "rpcOrigin": "https://ethereum-rpc.publicnode.com",
+      "blockNumber": "26359203",
+      "blockHash": "0xae0e09ac4bbef33c799a37e8bfe4f5aa9225c61af080238dead78ef8a98aa402",
+      "checkedAt": "2026-11-06T23:50:05.176Z"
+    },
+    {
+      "rpcOrigin": "https://eth.drpc.org",
+      "blockNumber": "26359207",
+      "blockHash": "0x7ea97290936b6bf84b066e46811594a534d933f20dbec26a0ad1ca907e8d9366",
+      "checkedAt": "2026-11-06T23:50:56.215Z"
+    }
+  ],
+  "sameRequests": true,
+  "sameSubregistry": true,
+  "sameResolvers": true,
+  "sameRoleTable": true,
+  "sameParent": true,
+  "sameRuntimePins": true,
+  "totalEstimatedGas": "2442715",
+  "transactionsSent": false,
+  "trust": "Independent administrative RPC agreement; not light-client proof or public deployment."
+}

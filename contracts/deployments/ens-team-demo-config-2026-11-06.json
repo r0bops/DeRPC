@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "parentName": "derpc.eth",
+  "deploymentId": "team-demo-2026-11-06",
+  "curator": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+  "deployer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+  "operators": [
+    {
+      "label": "demo-1",
+      "operator": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "coldOwner": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "hotKey": "0x0Fea008976e62d29714ba3398e6791131A629eB6",
+      "signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "payee": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "endpoint": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion/rpc",
+      "beacon": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion",
+      "caps": {
+        "chainId": 1,
+        "methods": [
+          "eth_getProof",
+          "eth_getCode"
+        ],
+        "beacon": true
+      },
+      "expiry": 1794614400,
+      "gateways": [
+        "45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg"
+      ]
+    },
+    {
+      "label": "demo-2",
+      "operator": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "coldOwner": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "hotKey": "0x1d3beAB2c16422B214133DB122B1eC2c8dF66c8E",
+      "signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "payee": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "endpoint": "http://4ckka4hvhybii4n7nltw6ckut2mc4gkqvp3u2b3lo4sg5omqnp4oxfad.onion/rpc",
+      "beacon": "http://4ckka4hvhybii4n7nltw6ckut2mc4gkqvp3u2b3lo4sg5omqnp4oxfad.onion",
+      "caps": {
+        "chainId": 1,
+        "methods": [
+          "eth_getProof",
+          "eth_getCode"
+        ],
+        "beacon": true
+      },
+      "expiry": 1794614400,
+      "gateways": [
+        "45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg"
+      ]
+    },
+    {
+      "label": "demo-3",
+      "operator": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "coldOwner": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "hotKey": "0x3F0d8e8cE6C0817fd7e23faD32998dD42c76D24D",
+      "signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "payee": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "endpoint": "http://kz4znzvgkoybyej4mwuctj4mhqpkv57kiscdxvxsguystmv3vtjfimad.onion/rpc",
+      "beacon": "http://kz4znzvgkoybyej4mwuctj4mhqpkv57kiscdxvxsguystmv3vtjfimad.onion",
+      "caps": {
+        "chainId": 1,
+        "methods": [
+          "eth_getProof",
+          "eth_getCode"
+        ],
+        "beacon": true
+      },
+      "expiry": 1794614400,
+      "gateways": [
+        "45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg"
+      ]
+    }
+  ]
+}

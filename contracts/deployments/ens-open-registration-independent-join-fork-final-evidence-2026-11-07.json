@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-ens-open-join-fork",
+  "checkedAt": "2026-11-07T00:54:10.733Z",
+  "localOnly": true,
+  "publicTransactionsSent": false,
+  "complete": true,
+  "sourceHash": "0x9f7503ee65c72b815895ab33bf6fd847fbf544060aecf2f0bd52fb3f76032ee4",
+  "compiler": {
+    "version": "0.8.30+commit.73712a01.Emscripten.clang",
+    "optimizerRuns": 200,
+    "evmVersion": "shanghai"
+  },
+  "scope": "Local mainnet fork with genuine ENS bytecode and explicitly fictitious operator addresses and .example records. No public enrollment, keys, endpoint traffic or consensus proof.",
+  "fork": {
+    "blockNumber": "26359514",
+    "blockHash": "0x4c2ddb75ca43430a109923b3be77a54b6c028f0b350bbdb900c6389567d13000",
+    "clientVersion": "anvil/v1.4.3"
+  },
+  "actors": {
+    "curator": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+    "deployer": "0x0000000000000000000000000000000000dEC001",
+    "bootstrapOwner": "0x0000000000000000000000000000000000dEc002",
+    "bootstrapHot": "0x0000000000000000000000000000000000DeC003",
+    "operator": "0x0000000000000000000000000000000000dEc004",
+    "hotKey": "0x0000000000000000000000000000000000DeC005"
+  },
+  "checks": [
+    "All three staged calls and canonical twelve-confirmation receipts belong to the independent operator; curator and bootstrap owner transaction counts stayed unchanged and their impersonation was disabled",
+    "Curator and a different operator cannot mint the new operator name; genuine local manifests cannot become public directory pins",
+    "Verifier rejects forged curator senders on resolver deployment, endpoint permission and registration receipts",
+    "Endpoint key cannot change payee or another operator resolver; event audit rejects unknown text permissions granted to either the hot key or an unrelated delegate",
+    "Injected administrative block-hash changes after log collection invalidate final, review and receipt anchors; this is a reorg-response fixture, not a real network reorg"
+  ],
+  "stages": [
+    {
+      "stage": "deploy-operator-resolver",
+      "id": "deploy-resolver-independent",
+      "sender": "0x0000000000000000000000000000000000dEc004",
+      "transactionHash": "0x85601e746511003f0244343666b35986220f4a7e5e2c8d506af7759ae0c4fd88"
+    },
+    {
+      "stage": "configure-operator-endpoint-key",
+      "id": "grant-endpoint-independent",
+      "sender": "0x0000000000000000000000000000000000dEc004",
+      "transactionHash": "0xb456dc23fea64c068ec82370e53386a47e4bf4b4f02e392e6a6456243f670209"
+    },
+    {
+      "stage": "register-operator",
+      "id": "register-independent",
+      "sender": "0x0000000000000000000000000000000000dEc004",
+      "transactionHash": "0x58315b3126223cf5f1c8da4c9e37ea5cef4252f9c70d82c60e1a2d1ecf492de6"
+    }
+  ],
+  "bootstrap": {
+    "registrar": {
+      "address": "0x78d6B83482310C8Ea0f653Fe995811A2E4E27180",
+      "codeHash": "0x1da571f19bb46f41b641237120a80271c565171dad79588d970068ded4424207",
+      "runtimeCodeHash": "0x1da571f19bb46f41b641237120a80271c565171dad79588d970068ded4424207",
+      "registry": "0x94B58b8f17C429D2d230f28062146F2128c9143d",
+      "subregistry": "0x94B58b8f17C429D2d230f28062146F2128c9143d",
+      "arraySlot": "0",
+      "entrySlots": 3,
+      "maxOperators": 128
+    },
+    "subregistry": "0x94B58b8f17C429D2d230f28062146F2128c9143d",
+    "verification": {
+      "receipts": true,
+      "canonicalBlocks": true,
+      "minimumConfirmations": 12,
+      "stateMatchesConfig": true,
+      "hotKeyEventAudit": true
+    }
+  },
+  "enrollment": {
+    "schemaVersion": 1,
+    "kind": "derpc-ens-operator-enrollment",
+    "chainId": 1,
+    "localOnly": true,
+    "checkedAt": "2026-11-07T00:54:15.508Z",
+    "sourceHash": "0x9f7503ee65c72b815895ab33bf6fd847fbf544060aecf2f0bd52fb3f76032ee4",
+    "compiler": {
+      "version": "0.8.30+commit.73712a01.Emscripten.clang",
+      "optimizerRuns": 200,
+      "evmVersion": "shanghai"
+    },
+    "directory": {
+      "chainId": 1,
+      "ethRegistry": "0xf60aba43e1f7f3dab1186ff03b561401c9df85e2",
+      "registrar": {
+        "address": "0x78d6B83482310C8Ea0f653Fe995811A2E4E27180",
+        "codeHash": "0x1da571f19bb46f41b641237120a80271c565171dad79588d970068ded4424207",
+        "registry": "0x94B58b8f17C429D2d230f28062146F2128c9143d"
+      }
+    },
+    "operators": [
+      {
+        "name": "independent.derpc.eth",
+        "resolver": "0x1Acf85F876c1AF35FC63E167767A4854dF00D585",
+        "operator": "0x0000000000000000000000000000000000dEc004",
+        "coldOwner": "0x0000000000000000000000000000000000dEc004",
+        "hotKey": "0x0000000000000000000000000000000000DeC005",
+        "expiry": 1794019931,
+        "payee": "0x0000000000000000000000000000000000dEc004",
+        "records": {
+          "derpc.endpoint": "https://independent.example/rpc",
+          "derpc.signer": "0x0000000000000000000000000000000000dEc004",
+          "derpc.caps": "{\"chainId\":1,\"methods\":[\"eth_getProof\",\"eth_getCode\"]}"
+        }
+      }
+    ],
+    "roleTable": [
+      {
+        "resource": "Registrar administration and delisting",
+        "account": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "roles": "unchanged; no owner transaction for this enrollment"
+      },
+      {
+        "resource": "independent resolver root",
+        "account": "0x0000000000000000000000000000000000dEc004",
+        "roles": "SET_TEXT; SET_TEXT_ADMIN",
+        "bitmap": "5444517870735015415413993718908291383312"
+      },
+      {
+        "resource": "independent resolver key derpc.endpoint only",
+        "account": "0x0000000000000000000000000000000000DeC005",
+        "roles": "SET_TEXT",
+        "bitmap": "16"
+      },
+      {
+        "resource": "independent ENS name",
+        "account": "0x0000000000000000000000000000000000dEc004",
+        "roles": "none (non-transferable)",
+        "bitmap": "0"
+      }
+    ],
+    "transactions": [
+      {
+        "id": "deploy-resolver-independent",
+        "transactionHash": "0x85601e746511003f0244343666b35986220f4a7e5e2c8d506af7759ae0c4fd88",
+        "from": "0x0000000000000000000000000000000000dec004",
+        "to": "0x77510ba162dfea3d8989e3f0928a691b345730d2",
+        "blockNumber": "26359535",
+        "blockHash": "0x803b2e1e760f9dc9ef9db1198a74110f2134bdb7a510e1b9df5761a52b3cb8dd",
+        "gasUsed": "417790",
+        "confirmations": "15"
+      },
+      {
+        "id": "grant-endpoint-independent",
+        "transactionHash": "0xb456dc23fea64c068ec82370e53386a47e4bf4b4f02e392e6a6456243f670209",
+        "from": "0x0000000000000000000000000000000000dec004",
+        "to": "0x1acf85f876c1af35fc63e167767a4854df00d585",
+        "blockNumber": "26359536",
+        "blockHash": "0x6f0e8ad02275bebb93055182808af78fdba21060a525e2550644a765fe1ebd26",
+        "gasUsed": "87536",
+        "confirmations": "14"
+      },
+      {
+        "id": "register-independent",
+        "transactionHash": "0x58315b3126223cf5f1c8da4c9e37ea5cef4252f9c70d82c60e1a2d1ecf492de6",
+        "from": "0x0000000000000000000000000000000000dec004",
+        "to": "0x78d6b83482310c8ea0f653fe995811a2e4e27180",
+        "blockNumber": "26359537",
+        "blockHash": "0xd9d6cab3fdc9e9f78d1f2933771b5206bd53a694fda3aa3de9a039e74c7f4539",
+        "gasUsed": "214368",
+        "confirmations": "13"
+      }
+    ],
+    "observedBlock": {
+      "number": "26359549",
+      "hash": "0x02b4c07cc9f93f37ada8286768c7a70ec627f9a8ba619f8e971b5a3d88d3ea1e"
+    },
+    "verification": {
+      "receipts": true,
+      "canonicalBlocks": true,
+      "operatorSigned": true,
+      "stateMatchesConfig": true,
+      "hotKeyEventAudit": true,
+      "minimumConfirmations": 12
+    },
+    "trust": "Administrative RPC evidence only. Anonymous endpoint reachability, reciprocal identity and finalized proven directory discovery remain separate checks."
+  },
+  "restoredChainId": 31337,
+  "restoredForkBlock": true
+}

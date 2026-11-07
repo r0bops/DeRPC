@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-ens-endpoint-update-public-keys",
+  "createdAt": "2026-11-06T23:49:39.766Z",
+  "entries": [
+    {
+      "name": "demo-1.derpc.eth",
+      "address": "0x0Fea008976e62d29714ba3398e6791131A629eB6"
+    },
+    {
+      "name": "demo-2.derpc.eth",
+      "address": "0x1d3beAB2c16422B214133DB122B1eC2c8dF66c8E"
+    },
+    {
+      "name": "demo-3.derpc.eth",
+      "address": "0x3F0d8e8cE6C0817fd7e23faD32998dD42c76D24D"
+    }
+  ],
+  "protection": "age encrypted to the existing operator SSH public key; decryption round-trip checked in memory; no plaintext private-key file",
+  "authority": "Only the endpoint-record permission assigned by the reviewed deployment plan; no permission exists before wallet-signed deployment"
+}

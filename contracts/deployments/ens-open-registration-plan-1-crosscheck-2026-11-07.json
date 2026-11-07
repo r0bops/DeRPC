@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-ens-open-registration-plan-crosscheck",
+  "checkedAt": "2026-11-07T00:52:21.330Z",
+  "plan": "ens-open-registration-plan-1-2026-11-07.json",
+  "secondSourcePlan": "ens-open-registration-plan-1-second-source-2026-11-07.json",
+  "config": "ens-two-demo-operators-config-2026-11-07.json",
+  "inputs": {
+    "ens-open-registration-plan-1-2026-11-07.json": "ab6ab364003c64fd2aa96157ab0d6d06c5c1fd7e8cf8bf7bbe8a24ed37893f5b",
+    "ens-open-registration-plan-1-second-source-2026-11-07.json": "1a88ee58bc00f41c58a515e325edccc3a2b64df198126f9cb38543464700fe21",
+    "ens-open-registration-preflight-2026-11-07.json": "be041f30986af1452f211a5c69bb7e9211484d373de0323bcadf185051711bc3",
+    "ens-open-registration-preflight-second-source-2026-11-07.json": "0726a0881c4a595a431b4163afff35ed0019d37abc7fd97aa2043e225251f062"
+  },
+  "sources": [
+    {
+      "rpcOrigin": "https://ethereum-rpc.publicnode.com",
+      "blockNumber": "26359514",
+      "blockHash": "0x4c2ddb75ca43430a109923b3be77a54b6c028f0b350bbdb900c6389567d13000",
+      "checkedAt": "2026-11-07T00:52:15.607Z"
+    },
+    {
+      "rpcOrigin": "https://eth.drpc.org",
+      "blockNumber": "26359514",
+      "blockHash": "0x4c2ddb75ca43430a109923b3be77a54b6c028f0b350bbdb900c6389567d13000",
+      "checkedAt": "2026-11-07T00:52:16.837Z"
+    }
+  ],
+  "sameRequests": true,
+  "sameSubregistry": true,
+  "sameResolvers": true,
+  "sameRoleTable": true,
+  "sameParent": true,
+  "sameRuntimePins": true,
+  "sameSourceAndCompiler": true,
+  "sameConfig": true,
+  "stage": "deploy-ens-proxies",
+  "transactionIds": [
+    "deploy-registry",
+    "deploy-resolver-demo-1",
+    "deploy-resolver-demo-2"
+  ],
+  "totalEstimatedGas": "1694836",
+  "secondSourceTotalEstimatedGas": "1703144",
+  "registrationSenders": [
+    {
+      "name": "demo-1.derpc.eth",
+      "operator": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "requiredSender": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "registrationStagePrepared": false
+    },
+    {
+      "name": "demo-2.derpc.eth",
+      "operator": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "requiredSender": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+      "registrationStagePrepared": false
+    }
+  ],
+  "sourcesBefore": {
+    "contracts/deployments/ens-two-demo-operators-config-2026-11-07.json": "0277faf36ff8d3309889d87cb353df6432519e5ea55c752c635607b18caa0d93",
+    "contracts/scripts/ens-plan.mjs": "17111c700eade9ca00a299550408dd8287f9f67269601a1c013fe17dfec81ea7",
+    "contracts/scripts/ens-common.mjs": "b1bc6d3e2c8a61194e08ea109a2f521e86d90a5b824aa312e3914ac6e79c56f6",
+    "contracts/scripts/ens-verify.mjs": "e78c7919e4f56e416c4292a100bf74d58d0881ba1cf24a3b60d373e479e63321",
+    "contracts/scripts/compile.mjs": "ff3372f1e28440ebf22856291e536c2ef95fd443f2cf4a6d96bf46ece0bf4a8d",
+    "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6",
+    "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+    "contracts/deployments/ens-upstream-mainnet.json": "9a7732f6c99eb5525f64b56940979c91e4c5532c72094ce0e0845ae2cdc42be6",
+    "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+    "contracts/src/OperatorRegistrar.sol": "b83d603d2cbe92f52548609c0b6500f69b73c51a9381f863a776ca0dbe4ea0f0",
+    "contracts/src/QueryEscrow.sol": "ba83df766d100c84c54769800cc0cd88d75e8850411c6e5ab0b9f40b1fa6fb2e"
+  },
+  "sourcesAfter": {
+    "contracts/deployments/ens-two-demo-operators-config-2026-11-07.json": "0277faf36ff8d3309889d87cb353df6432519e5ea55c752c635607b18caa0d93",
+    "contracts/scripts/ens-plan.mjs": "17111c700eade9ca00a299550408dd8287f9f67269601a1c013fe17dfec81ea7",
+    "contracts/scripts/ens-common.mjs": "b1bc6d3e2c8a61194e08ea109a2f521e86d90a5b824aa312e3914ac6e79c56f6",
+    "contracts/scripts/ens-verify.mjs": "e78c7919e4f56e416c4292a100bf74d58d0881ba1cf24a3b60d373e479e63321",
+    "contracts/scripts/compile.mjs": "ff3372f1e28440ebf22856291e536c2ef95fd443f2cf4a6d96bf46ece0bf4a8d",
+    "provider/src/operators/endpoints.ts": "c2f3d4f1ea576d89d1d14b146bdac952ed4db6682701a6b35e2e48ea41907ce6",
+    "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+    "contracts/deployments/ens-upstream-mainnet.json": "9a7732f6c99eb5525f64b56940979c91e4c5532c72094ce0e0845ae2cdc42be6",
+    "pnpm-lock.yaml": "858ad3fcb96751295fd253b9cc1dea3c39a60f73e5529117d8fb3425e31ba558",
+    "contracts/src/OperatorRegistrar.sol": "b83d603d2cbe92f52548609c0b6500f69b73c51a9381f863a776ca0dbe4ea0f0",
+    "contracts/src/QueryEscrow.sol": "ba83df766d100c84c54769800cc0cd88d75e8850411c6e5ab0b9f40b1fa6fb2e"
+  },
+  "changedSources": [],
+  "transactionsSent": false,
+  "trust": "Independent administrative RPC agreement; not light-client proof, public deployment or operator independence. First stage deploys proxies only; registrar, role and operator-signed registration stages require preceding receipts."
+}

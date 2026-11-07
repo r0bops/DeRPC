@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-ens-unsigned-plan-crosscheck",
+  "checkedAt": "2026-11-07T00:31:58.430951Z",
+  "plan": "ens-two-demo-operators-plan-1-2026-11-07.json",
+  "inputs": {
+    "ens-two-demo-operators-config-2026-11-07.json": "0277faf36ff8d3309889d87cb353df6432519e5ea55c752c635607b18caa0d93",
+    "ens-two-demo-operators-plan-1-2026-11-07.json": "c42ef69baa6c07a6356c3d222cab11b78024223c94e20f67a078765ac85f30fd"
+  },
+  "sources": [
+    {
+      "rpcOrigin": "https://ethereum-rpc.publicnode.com",
+      "blockNumber": "26359407",
+      "blockHash": "0x60530c2939fdfac49bccae7d0a2a0edcf426644dab107d22359d28e72859b14f",
+      "checkedAt": "2026-11-07T00:30:59.654Z"
+    },
+    {
+      "rpcOrigin": "https://eth.drpc.org",
+      "blockNumber": "26359408",
+      "blockHash": "0x6941ad13f79f7031c149371558901aeda1a4a22fba93fb85e7f8aa53378bcd63",
+      "checkedAt": "2026-11-07T00:31:08.406Z"
+    }
+  ],
+  "sameRequests": true,
+  "sameSubregistry": true,
+  "sameResolvers": true,
+  "sameRoleTable": true,
+  "sameParent": true,
+  "sameRuntimePins": true,
+  "sameSourceAndCompiler": true,
+  "sameConfig": true,
+  "stage": "deploy-ens-proxies",
+  "transactionIds": [
+    "deploy-registry",
+    "deploy-resolver-demo-1",
+    "deploy-resolver-demo-2"
+  ],
+  "totalEstimatedGas": "1694836",
+  "secondSourceTotalEstimatedGas": "1698990",
+  "transactionsSent": false,
+  "trust": "Independent administrative RPC agreement; not light-client proof or public deployment."
+}
