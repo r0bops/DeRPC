@@ -9,6 +9,8 @@ pnpm --filter @derpc/contracts test
 
 The compiler is pinned to Solidity 0.8.30, with optimizer runs 200 and the Shanghai EVM target. Generated artifacts, ABI and storage layout are written to `contracts/out/` and ignored by Git. The tests use an in-memory local chain; a passing test is not a public deployment or an independent audit.
 
+The website and CLI share browser-safe ENS validation, planning and receipt checks in `lib/`; only Node adapters compile contracts or read/write local evidence. The [website wallet guide](../web/README.md#operator-wallet-configuration) covers deployment-gated registration, renewal, endpoint updates and browser recovery. Initial namespace setup still uses the owner-authorized deployment workflow below.
+
 ## QueryEscrow
 
 `QueryEscrow` escrows the chain's native asset. It has no owner, upgrade path or project token. Each session names a payer, operator and disposable signing key. All payment demonstrations use test funds pending the [real-fund release gates](../specs/OPERATIONS.md#real-fund-decision-record-62).

@@ -2,7 +2,7 @@
 
 Planning baseline: Nov 5, 2026; implementation evidence updated Nov 7. Checkboxes and the status table distinguish verified work from outstanding deployment gates. [CONTEXT.md](CONTEXT.md) remains the source of truth for decisions; this file defines execution order and completion gates.
 
-**Latest ENS integration preparation:** the user selected the three deployed `demo-1/2/3.derpc.eth` entries and generated distinct endpoint-update keys. A checked public configuration and two-source unsigned deployment plan are ready; dashboard/release directory pins now include the expected subregistry and enforce proven records when configured. The entries remain team-run, not independent. Wallet transactions, a working separately operated gateway, finalized discovery and the lifecycle demonstration remain pending. [Operations](OPERATIONS.md#public-demo-ens-integration-preparation-november-6) records the concrete plan, validation and gateway failure evidence.
+**Latest ENS integration preparation:** the active scope is `demo-1.derpc.eth` and `demo-2.derpc.eth`, using their existing distinct endpoint-update keys; demo-3 remains separate. The open-registration configuration and two-source unsigned deployment plan are ready. Dashboard/release directory pins include the expected subregistry and require proven records when configured. The entries remain team-run, not independent. Wallet transactions, a working separately operated gateway, finalized discovery and the public lifecycle demonstration remain pending. [Operations](OPERATIONS.md#open-operator-signed-registration-november-7) records the active plan and its validation.
 
 Track implementation in [GitHub issue #1](https://github.com/r0bops/DeRPC/issues/1). The core provider, proof rejection/failover, gateway and wrapper implementation issues are closed. The November 7 tracker snapshot has 12 open issues: 10 actionable items and two umbrella trackers (#1 and #12). GitHub has no configured milestones; M1 below is a repository plan. Older umbrella checkboxes do not supersede the child issues or dated evidence.
 
@@ -38,6 +38,8 @@ Current working-tree ENS and dashboard changes still need their own publication 
 The [readiness evidence](../web/deployment-github-ipns-2026-11-06.json) retains the earlier failure investigation.
 
 ## Operator dashboard workflow (latest Nov 6 direction)
+
+**November 7 continuation:** the website operator wallet flow is implemented and locally validated: operator-owned registration, renewal and scoped endpoint updates, source-bound build configuration, explicit wallet review, canonical receipt checks and durable submission recovery. The actual Firefox/fork path and 657 default contract/frontend tests passed; see [acceptance evidence](OPERATIONS.md#website-registration-and-management) and [the website configuration guide](../web/README.md#operator-wallet-configuration). No public manifest is configured yet, so the signing gate remains closed until the initial owner deployment is verified. A later finalized anonymous discovery check, independent gateway and independent operators remain milestone gates.
 
 The team reconfirmed free-first delivery and requested one operator ENS identity with multiple distributed endpoints, an operator dashboard, onboarding, and later adjustable per-query prices plus operator/node staking. Traffic changes the stake **required per node**; it does not merely limit node count. The full definition and acceptance gates are in [DEMO_WORKFLOW.md](DEMO_WORKFLOW.md).
 

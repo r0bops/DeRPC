@@ -150,7 +150,8 @@ web/
 ├── package.json        — Vite, TypeScript, Viem address validation and self-hosted Inter
 ├── index.html          — application entry point
 ├── tsconfig.json
-├── vite.config.ts      — relative paths; serves/copies assets from /brand
+├── vite.config.ts      — relative paths, brand assets and compiled public ENS wallet configuration
+├── build/              — ENS operator deployment validation, public release metadata and a Node-only cached compiler adapter
 ├── public/network-logos/ — locally served network images and their source/hash manifest; no visitor requests to the icon host
 ├── public/favicon.svg
 └── src/
@@ -158,6 +159,7 @@ web/
     ├── ui.ts           — shared navigation, live-demo link and finalized-read example
     ├── styles.css, tokens.css — site styles and design tokens
     ├── directory/      — public bootstrap data, pending-operators.ts bound to the active two-operator configuration, validation, local onboarding drafts, unsigned operator-config conversion and directory styles
+    ├── ens/            — operator wallet review, durable browser transaction journal and registration/lifecycle controls
     └── pages/          — landing, directory, network, operator, operate and not-found views
 ```
 
@@ -185,9 +187,10 @@ contracts/
 ├── src/
 │   ├── QueryEscrow.sol          — immutable native-asset prepaid sessions, typed vouchers, close/refund/top-up
 │   └── OperatorRegistrar.sol    — open operator-signed ENSv2 registration, persistent moderation, expiry, provable list and payee
+├── lib/                         — browser-safe ENS validation, registration/lifecycle planning and receipt verification shared with the command-line tools; callers supply reviewed build and administrative clients
 ├── scripts/                     — compilation, unsigned deployment and ENS rotation/renewal/delisting plans, receipt verification; ens-wallet.mjs/ens-wallet-client.mjs provide local staged wallet review with a durable receipt journal; ens-join.mjs prepares and verifies operator-only enrollment after namespace setup, alongside the test-payment wallet helper
 ├── deployments/                 — active two-operator ENS config/unsigned plan, historical three-demo preparation, public preflights, local lifecycle/fork/gas evidence, verified Hoodi escrow manifest and RPC cross-check
-└── test/                        — escrow replay/refund/authorization, registrar role/layout and actual-code ENS lifecycle checks
+└── test/                        — escrow replay/refund/authorization, registrar role/layout, shared-core regressions and opt-in actual-Firefox ENS core/wallet lifecycle checks
 ```
 
 ## /wrapper — operator onion service

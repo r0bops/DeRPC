@@ -26,11 +26,31 @@ Pages: `#/` landing, `#/directory` (by operator or by network, shareable as
   enforces this.
 - `provider/test/config/directory-sync.test.ts` fails if the directory and the provider's operator
   list drift apart.
-- ENS names are mock (`ENS_NAMES_ARE_MOCK` in the provider) and are badged as such.
-- The `/operate` page prepares a local operator/node draft and unsigned ENS configuration fragment; it does not register a name, check a live node or transact. Bounded multi-endpoint records and runtime routing are implemented; independent operators still need to publish their records. See [DEMO_WORKFLOW.md](../specs/DEMO_WORKFLOW.md).
+- Bootstrap providers use their public brands. Two separately named, team-owned proxy entries are labeled pending ENS registration; neither is evidence of independent ownership or proven enrollment.
+- The `/operate` page prepares local operator/node drafts and provides operator wallet registration, lease renewal and endpoint updates when a reviewed public ENS deployment is configured. With no deployment configured, wallet execution stays disabled and drafts remain usable. Registration does not check live node availability or establish eligibility for verified reads. See [DEMO_WORKFLOW.md](../specs/DEMO_WORKFLOW.md).
 - The live `/demo/` dashboard shows local observations from selected operators' reads. The static directory does not claim current health. Staking and operator pricing remain planned for the later paid rollout.
 
 Brand assets are in `/brand`: Inter, lime, ink and white are primary; cobalt is secondary (never in the logo).
+
+## Operator wallet configuration
+
+The initial owner-authorized namespace deployment must finish using the [ENS deployment helper](../contracts/README.md#ensv2-deployment). Its public `deployment-manifest.json` and `ens-directory.json` become explicit build inputs:
+
+```sh
+export VITE_ENS_DIRECTORY="$(cat /path/to/reviewed/ens-directory.json)"
+export VITE_ENS_OPERATOR_DEPLOYMENT="$(cat /path/to/reviewed/deployment-manifest.json)"
+export VITE_TOR_GATEWAYS='PUBLIC_IP:PORT:CERTHASH'
+pnpm build:site
+node scripts/check-release.mjs --json
+```
+
+The inputs must refer to the same mainnet deployment, current registrar source/compiler and at least twelve checked confirmations. Fork evidence, predicted addresses and old registrar builds are refused. Both variables are public JSON, never keys or signed transactions. GitHub release builds use `DERPC_ENS_DIRECTORY` and `DERPC_ENS_OPERATOR_DEPLOYMENT`. Leaving the latter unset disables operator signing. Uploading an operator document or changing URL parameters cannot supply deployment authority. `ens-operator.json` records the build's enabled state and manifest digest for the offline release check.
+
+After connecting an injected wallet, the operator reviews and signs three separate zero-value mainnet transactions: create its resolver, grant the separate endpoint updater, then register its name. Gas is paid in real ETH. Each stage requires a fresh review; connecting or refreshing never sends a transaction. Renewal uses the operator wallet; endpoint changes use the scoped updater. Imported enrollment evidence is replayed against canonical historical chain state before management actions are prepared.
+
+The page checks administrative state and receipts directly through PublicNode and dRPC. These requests and wallet signing are **outside Anon-RPC** and disclose administrative activity to those services. Ordinary verified reads keep their existing anonymous transport. Receipt confirmation is not light-client verification, node reachability, independent ownership or admission to the finalized proven directory.
+
+An origin-local browser journal reserves every submission before opening the wallet. Web Locks and working browser storage are required for signing. Keep the same browser profile and site origin while completing a session. If a submission result is unknown, recover its hash from wallet history and reconcile it; the page will not automatically retry. Do not clear site data or open a different gateway origin to bypass a pending submission. Download the completed evidence and retain it for future management or the existing CLI tools.
 
 ## ENS/IPFS deployment
 
