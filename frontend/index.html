@@ -109,8 +109,8 @@
             <p class="note">
               Selection applies to an operator and its published endpoints;
               an endpoint failure can use another endpoint of the same operator before another selected operator.
-              The initial list is a bootstrap list with <strong>mock ENS names</strong>. Load the registry below to
-              replace it with real records. Discovery affects who receives a query; supported answers still need proofs.
+              The initial list contains <strong>public bootstrap providers</strong> that are not ENS-enrolled.
+              Load the registry below to discover operators through ENS. Discovery affects who receives a query; supported answers still need proofs.
             </p>
             <div class="disclosures">
               <details id="directory-panel">
@@ -120,6 +120,7 @@
                     A verified refresh observes membership and records at one finalized block; later revocations and rotations are not visible immediately.
                     When the snapshot expires, refresh it before continuing ENS-authorized reads.</p>
                   <p id="directory-snapshot-details" class="note"></p>
+                  <p id="directory-config-status" class="note">No ENS deployment is pinned in this build. Enter the deployment addresses below.</p>
                   <form id="directory-form" class="form-grid">
                     <label for="ens-registry">Mainnet ENSv2 .eth registry <span class="muted">(required)</span></label>
                     <input id="ens-registry" type="text" autocomplete="off" spellcheck="false" required placeholder="0x…" />
@@ -127,7 +128,9 @@
                     <input id="ens-registrar" type="text" autocomplete="off" spellcheck="false" placeholder="0x…" />
                     <label for="ens-code-hash">Trusted registrar runtime hash <span class="muted">(required with registrar)</span></label>
                     <input id="ens-code-hash" type="text" autocomplete="off" spellcheck="false" placeholder="0x…" />
-                    <label class="check-label"><input id="ens-verified-records" type="checkbox" /> Prove ENS execution locally (more requests)</label>
+                    <label for="ens-subregistry">Expected operator subregistry <span class="muted">(optional with registrar)</span></label>
+                    <input id="ens-subregistry" type="text" autocomplete="off" spellcheck="false" placeholder="0x…" />
+                    <label class="check-label"><input id="ens-verified-records" type="checkbox" aria-describedby="directory-config-status" /> Prove ENS execution locally (more requests)</label>
                     <div class="controls"><button id="refresh-directory" class="btn btn--ink" type="submit">Refresh ENS directory</button></div>
                   </form>
                   <p id="directory-status" class="muted" role="status" aria-live="polite">No registry loaded. Enter the addresses from the deployment record.</p>
@@ -199,6 +202,18 @@
               to one of your chosen operators, then inflates the balances it returns. Rejecting it is local evidence only.
             </p>
             <div class="disclosures">
+              <details>
+                <summary>Server demo scenarios and registration</summary>
+                <div class="disclosure__body flow">
+                  <p class="note">Two team proxies are being enrolled as separate operators: demo-1 is the healthy reference,
+                    and demo-2 can demonstrate a corrupted public WETH proof or an RPC outage.
+                    Faults are activated by the operator through SSH, last at most five minutes, and default to off.
+                    They are deliberate demonstrations, not evidence of independent malicious operators.</p>
+                  <p class="note">ENS enrollment and a working separate gateway are required before these demos join the verified directory.
+                    The local “Inject a lying operator” button above changes only this browser session.</p>
+                  <a class="btn btn--ghost" data-product-page="directory" href="../#/directory">Review team operators and registration</a>
+                </div>
+              </details>
               <details>
                 <summary>Verified contract call</summary>
                 <div class="disclosure__body flow">

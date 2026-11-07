@@ -4,6 +4,7 @@ import { getAddress } from "viem";
 import { createOperatorConfigFragment, createOperatorDraft, MAX_DRAFT_NODES, type OperatorDeploymentInput, type OperatorDraftInput } from "../../web/src/directory/operator-draft.ts";
 import { parseOperatorEndpoints } from "../../provider/src/operators/endpoints.ts";
 import { operatePage } from "../../web/src/pages/operate.ts";
+import { TEAM_REGISTRATION_CONFIG, TEAM_REGISTRATION_PLAN } from "../../web/src/directory/pending-operators.ts";
 
 const OWNER = `0x${"11".repeat(20)}`;
 const SIGNER = `0x${"22".repeat(20)}`;
@@ -98,7 +99,8 @@ describe("deployment operator-config conversion", () => {
     expect(fragment.operatorConfig.expiry).toBe(Date.parse("2026-11-07T12:00:00Z") / 1000);
     expect(parseOperatorEndpoints(fragment.record.value)).toEqual(fragment.operatorConfig.endpoints);
     expect(fragment.record.key).toBe("derpc.endpoints");
-    expect(fragment.remainingChecks.join(" ")).toContain("2–3 independent operators");
+    expect(fragment.remainingChecks.join(" ")).toContain("1–3 operator identities");
+    expect(fragment.remainingChecks.join(" ")).toContain("do not establish independent operators");
     expect(fragment.remainingChecks.join(" ")).toContain("parent lease");
   });
 
@@ -158,8 +160,8 @@ describe("deployment operator-config conversion", () => {
   });
 });
 
-function mount() {
-  const page = operatePage();
+function mount(params = new URLSearchParams()) {
+  const page = operatePage(params);
   document.body.innerHTML = page.html;
   page.bind!(document.body);
 }
@@ -186,6 +188,55 @@ function fillDeployment() {
 }
 
 describe("operator draft form", () => {
+  it.each(TEAM_REGISTRATION_CONFIG.operators)("reviews the exact singular registration entry for $label without fabricating node IDs", operator => {
+    mount(new URLSearchParams({ prepare: operator.label }));
+    const review = document.getElementById("team-registration-review")!;
+    const fragment = JSON.parse(document.getElementById("team-registration-json")!.textContent!);
+    expect(fragment).toMatchObject({ kind: "derpc-ens-operator-config-fragment", status: "unsigned-unverified-fragment", chainId: 1, parentName: "derpc.eth" });
+    expect(fragment.operatorConfig).toEqual(operator);
+    expect(fragment.operatorConfig).not.toHaveProperty("endpoints");
+    expect(fragment.operatorConfig).not.toHaveProperty("endpointId");
+    expect(review.textContent).toContain("ENS pending");
+    expect(review.textContent).toContain("not checked on this device");
+    expect(review.textContent).toContain("do not make them independent operators");
+    expect((document.getElementById("operator-name") as HTMLInputElement).value).toBe("");
+    expect((document.getElementById("generic-onboarding") as HTMLDetailsElement).open).toBe(false);
+  });
+
+  it("uses only a known preparation selector and ignores endpoint or role data in the URL", () => {
+    const operator = TEAM_REGISTRATION_CONFIG.operators[0]!;
+    mount(new URLSearchParams({ prepare: operator.label, endpoint: "https://attacker.example/rpc", hotKey: OWNER, operator: SIGNER }));
+    expect(JSON.parse(document.getElementById("team-registration-json")!.textContent!).operatorConfig).toEqual(operator);
+    expect(document.body.textContent).not.toContain("attacker.example");
+    mount(new URLSearchParams({ prepare: "demo-3", endpoint: operator.endpoint }));
+    expect(document.getElementById("team-registration-review")).toBeNull();
+    expect(document.body.textContent).toContain("No matching team operator");
+    expect((document.getElementById("operator-name") as HTMLInputElement).value).toBe("");
+    expect((document.getElementById("node-1-endpoint") as HTMLInputElement).value).toBe("");
+  });
+
+  it("downloads the reviewed singular entry, full config and unsigned plan without network or wallet calls", async () => {
+    vi.useFakeTimers();
+    const fetch = vi.fn(), request = vi.fn();
+    vi.stubGlobal("fetch", fetch); vi.stubGlobal("ethereum", { request });
+    const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:team-registration");
+    const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    const filenames: string[] = [];
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) { filenames.push(this.download); });
+    mount(new URLSearchParams({ prepare: "demo-2" }));
+    const reviewed = JSON.parse(document.getElementById("team-registration-json")!.textContent!);
+    const plan = JSON.parse(document.getElementById("team-plan-json")!.textContent!);
+    expect(plan).toEqual(TEAM_REGISTRATION_PLAN);
+    for (const id of ["download-team-registration", "download-team-config", "download-team-plan"]) document.getElementById(id)!.click();
+    expect(filenames).toEqual(["demo-2.derpc.eth-operator-fragment.json", "ens-two-demo-operators-config-2026-11-07.json", "ens-two-demo-operators-plan-1-2026-11-07.json"]);
+    const downloaded = await Promise.all(createObjectURL.mock.calls.map(async ([blob]) => JSON.parse(await (blob as Blob).text())));
+    expect(downloaded).toEqual([reviewed, TEAM_REGISTRATION_CONFIG, TEAM_REGISTRATION_PLAN]);
+    expect(fetch).not.toHaveBeenCalled(); expect(request).not.toHaveBeenCalled();
+    expect(document.getElementById("team-registration-status")!.textContent).toContain("No transaction was signed or sent");
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(revoke).toHaveBeenCalledTimes(3);
+  });
+
   it("reviews untrusted labels as text and never calls a wallet or network", () => {
     const fetch = vi.fn();
     const request = vi.fn();

@@ -4,7 +4,7 @@ import { NETWORKS, OPERATORS } from "../directory/operators.ts";
 import { TIER_TEXT, getNetwork, getOperator, host, isVerified } from "../directory/model.ts";
 import type { PageResult } from "../page.ts";
 import { avatarTone, demoHref, escapeHtml, icon, snippet } from "../ui.ts";
-import { mockBadge, tierChip } from "./directory.ts";
+import { bootstrapBadge, tierChip } from "./directory.ts";
 import { notFoundPage } from "./not-found.ts";
 
 function initials(text: string): string {
@@ -20,13 +20,16 @@ function personAvatar(label: string, seed: string, large = false): string {
   return `<span class="avatar ${avatarTone(seed)}${large ? " avatar--lg" : ""}" aria-hidden="true">${escapeHtml(initials(label))}</span>`;
 }
 
-function pinSnippet(ens: string): string {
+function pinSnippet(endpoint: string): string {
   return `import { createDeRPC, MAINNET_OPERATORS } from "@derpc/provider";
 import { derpcTransport } from "@derpc/provider/viem";
 import { createPublicClient } from "viem";
 import { mainnet } from "viem/chains";
 
-const derpc = createDeRPC({ operators: MAINNET_OPERATORS.filter((o) => o.ens === "${ens}") });
+const operators = MAINNET_OPERATORS
+  .filter((o) => o.url === ${JSON.stringify(endpoint)})
+  .map(({ ens, ...endpoint }) => endpoint); // Public bootstrap, no ENS identity.
+const derpc = createDeRPC({ operators });
 const client = createPublicClient({ chain: mainnet, transport: derpcTransport(derpc) });
 // Pass blockTag: "finalized". DeRPC proves state at the verified finalized block only.`;
 }
@@ -47,11 +50,11 @@ export function operatorPage(ens: string): PageResult {
             <div class="detail-head">
               ${personAvatar(operator.operator, operator.ens, true)}
               <div>
-                <p class="kicker">Operator</p>
+                <p class="kicker">Public provider</p>
                 <h1 class="page-title">${escapeHtml(operator.operator)}</h1>
                 <div class="detail-meta">
-                  <span class="mono">${escapeHtml(operator.ens)}</span>
-                  ${mockBadge}
+                  <span class="mono">${escapeHtml(host(operator.endpoint))}</span>
+                  ${bootstrapBadge}
                 </div>
               </div>
             </div>
@@ -144,8 +147,8 @@ export function operatorPage(ens: string): PageResult {
                   </div>
                 </div>
                 <dl class="kv">
-                  <dt>Name</dt>
-                  <dd class="mono">${escapeHtml(operator.ens)} ${mockBadge}</dd>
+                  <dt>Enrollment</dt>
+                  <dd>Public bootstrap provider; not enrolled in the DeRPC ENS registry.</dd>
                   <dt>Endpoint</dt>
                   <dd class="mono">${escapeHtml(operator.endpoint)}</dd>
                   <dt>Website</dt>
@@ -167,7 +170,7 @@ export function operatorPage(ens: string): PageResult {
                     <p>Works today on Ethereum mainnet with <span class="mono">blockTag: "finalized"</span>.</p>
                   </div>
                 </div>
-                ${snippet("client.ts", pinSnippet(operator.ens))}
+                ${snippet("client.ts", pinSnippet(operator.endpoint))}
               </div>
             </div>
           </div>

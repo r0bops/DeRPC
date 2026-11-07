@@ -133,7 +133,7 @@ export function scoreMarkup(score: number): string {
 }
 
 export function demoNote(): string {
-  return `<p class="demo-note"><span class="demo-note__square" aria-hidden="true"></span><span>Free demo. ENS names are placeholders; staking and operator pricing are planned. Current health observations appear in the live dashboard.</span></p>`;
+  return `<p class="demo-note"><span class="demo-note__square" aria-hidden="true"></span><span>Free demo. Public bootstrap providers and ENS operator enrollment are shown separately. Current health observations appear in the dashboard; staking and pricing come later.</span></p>`;
 }
 
 export function copyButton(text: string): string {
@@ -202,15 +202,9 @@ export function routeDiagram(): string {
       <circle cx="194" cy="42" r="2.4" fill="rgba(140,140,255,.9)" />
       <circle cx="202" cy="42" r="2.4" fill="rgba(140,140,255,.9)" />
       <circle cx="198" cy="50" r="2.4" fill="rgba(140,140,255,.9)" />
-      <circle class="route-node route-node--verified-glow" cx="282" cy="46" r="18" />
+      <circle class="route-node" cx="282" cy="46" r="18" />
       <rect class="route-check" x="272" y="36" width="20" height="20" rx="5" />
-      <path class="route-check-mark route-check-mark--draw" d="m277 46 3 3 6-7">
-        <animate attributeName="stroke-dashoffset" from="20" to="0" dur="0.5s" begin="1.2s" fill="freeze" />
-      </path>
-      <circle class="packet-dot" r="3.5" opacity="0">
-        <animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.04;0.5;0.88;1" dur="3.5s" repeatCount="indefinite" begin="0.4s" />
-        <animateMotion dur="3.5s" repeatCount="indefinite" begin="0.4s" calcMode="linear" path="M32 46 L282 46" />
-      </circle>
+      <path class="route-check-mark" d="m277 46 3 3 6-7" />
       <text x="32" y="88" text-anchor="middle">Your app</text>
       <text x="116" y="88" text-anchor="middle">Private route</text>
       <text x="200" y="88" text-anchor="middle">Operators</text>

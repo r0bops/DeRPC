@@ -68,7 +68,7 @@ function resolvePage(route: Route): PageResult {
     return getOperator(OPERATORS, value) ? operatorPage(value) : notFoundPage();
   }
   if (route.path === "/operate") {
-    return operatePage();
+    return operatePage(route.params);
   }
   return notFoundPage();
 }

@@ -16,18 +16,19 @@ const harness = vi.hoisted(() => ({
   routingStatus: undefined as DeRPCStatus["routing"],
   getStatus: undefined as (() => unknown) | undefined,
   verifiedCall: vi.fn(),
+  getBalance: vi.fn(),
   refreshDirectory: vi.fn(),
 }));
 
 vi.mock("@derpc/provider", () => ({
   ENS_NAMES_ARE_MOCK: true,
   MAINNET_BEACON_ENDPOINTS: ["https://beacon.example"],
-  MAINNET_OPERATORS: [{ id: "bootstrap", ens: "bootstrap.derpc.eth", url: "https://rpc.example/", priority: 0 }],
+  MAINNET_OPERATORS: [{ id: "bootstrap", ens: "bootstrap.derpc.eth", operator: "Public Provider", url: "https://rpc.example/", priority: 0 }],
   operatorUrl: (input: string) => new URL(input),
   operatorKey: (input: { operatorId?: string; ens?: string; id?: string; url: string }) => input.operatorId ?? input.ens ?? input.id ?? input.url,
   MAINNET_TOKENS: { WETH: { address: `0x${"00".repeat(20)}`, decimals: 18 } },
   TOR_JS_PIN: { name: "tor", workerHash: `0x${"00".repeat(32)}`, resolvers: [] },
-  simulatedLyingOperator: (op: unknown) => op,
+  simulatedLyingOperator: (op: { id: string }) => ({ ...op, id: `simulated-liar:${op.id}` }),
   createDeRPC: (opts: { onStatus: (status: unknown) => void }) => {
     harness.onStatus = opts.onStatus;
     harness.initialOptions = opts as unknown as Record<string, unknown>;
@@ -46,7 +47,7 @@ vi.mock("@derpc/provider", () => ({
   },
 }));
 vi.mock("@derpc/provider/viem", () => ({ derpcTransport: () => ({}) }));
-vi.mock("viem", async importOriginal => ({ ...await importOriginal<typeof import("viem")>(), createPublicClient: () => ({}) }));
+vi.mock("viem", async importOriginal => ({ ...await importOriginal<typeof import("viem")>(), createPublicClient: () => ({ getBalance: harness.getBalance }) }));
 vi.mock("viem/chains", () => ({ mainnet: {} }));
 
 const PAYLOAD = '<img src=x onerror="window.__pwned = true"><script>window.__pwned = true</script>';
@@ -54,6 +55,7 @@ const PAYLOAD = '<img src=x onerror="window.__pwned = true"><script>window.__pwn
 beforeEach(async () => {
   vi.resetModules();
   vi.useFakeTimers();
+  vi.stubEnv("VITE_ENS_DIRECTORY", undefined);
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("")));
   vi.spyOn(performance, "getEntriesByType").mockReturnValue([]);
   localStorage.clear();
@@ -71,6 +73,7 @@ beforeEach(async () => {
   harness.operatorStatus = [];
   harness.refreshDirectory.mockReset();
   harness.verifiedCall.mockReset();
+  harness.getBalance.mockReset();
   document.body.innerHTML = page.match(/<body>([\s\S]*)<\/body>/)![1].replace(/<script[\s\S]*?<\/script>/g, "");
 
   await import("../src/main.ts");
@@ -83,6 +86,7 @@ afterEach(async () => {
   vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 function expectPlainText(id: string) {
@@ -98,6 +102,19 @@ async function refreshOperators(operators: unknown[]) {
   (document.getElementById("ens-registry") as HTMLInputElement).value = `0x${"11".repeat(20)}`;
   document.getElementById("directory-form")!.dispatchEvent(new Event("submit", { cancelable: true }));
   await vi.waitFor(() => expect((document.getElementById("refresh-directory") as HTMLButtonElement).disabled).toBe(false));
+}
+
+const directoryPins = {
+  chainId: 1,
+  ethRegistry: `0x${"11".repeat(20)}`,
+  registrar: { address: `0x${"22".repeat(20)}`, codeHash: `0x${"33".repeat(32)}`, registry: `0x${"44".repeat(20)}` },
+};
+async function loadConfiguredDirectory() {
+  await vi.advanceTimersByTimeAsync(0);
+  vi.resetModules(); vi.clearAllTimers();
+  vi.stubEnv("VITE_ENS_DIRECTORY", JSON.stringify(directoryPins));
+  document.body.innerHTML = page.match(/<body>([\s\S]*)<\/body>/)![1].replace(/<script[\s\S]*?<\/script>/g, "");
+  await import("../src/main.ts");
 }
 
 function lifecycleEvidence() {
@@ -120,6 +137,121 @@ async function importLifecycle(file: Pick<File, "size" | "text">) {
 }
 
 describe("demo page status rendering", () => {
+  it("displays the real bootstrap provider while keeping its placeholder solely as an internal selection key", () => {
+    const choice = document.querySelector<HTMLInputElement>("#operators input")!;
+    expect(choice.value).toBe("bootstrap.derpc.eth");
+    expect(document.getElementById("operators")!.textContent).toContain("Public Provider");
+    expect(document.getElementById("operators")!.textContent).toContain("Public bootstrap");
+    expect(document.getElementById("pool")!.textContent).toContain("Public Provider");
+    expect(document.getElementById("pool")!.textContent).toContain("not ENS-enrolled");
+    expect(document.body.textContent).not.toContain("bootstrap.derpc.eth");
+    choice.checked = true;
+    document.getElementById("operators")!.dispatchEvent(new Event("change"));
+    document.getElementById("use-operators")!.click();
+    const candidates = harness.setRouting.mock.lastCall![1];
+    expect(candidates).toEqual([expect.objectContaining({ id: "bootstrap", operatorId: "bootstrap.derpc.eth", operator: "Public Provider" })]);
+    expect(candidates[0]).not.toHaveProperty("ens");
+    expect(localStorage.getItem("derpc:chosen-operators")).toBe('["bootstrap.derpc.eth"]');
+    expect(document.getElementById("choice-status")!.textContent).toContain("using Public Provider");
+    (harness.initialOptions!.onPoolEvent as (event: unknown) => void)({ type: "success", endpoint: "bootstrap", at: Date.now() });
+    expect(document.getElementById("pool-events")!.textContent).toContain("Public Provider");
+    expect(document.body.textContent).not.toContain("bootstrap.derpc.eth");
+  });
+
+  it("restores legacy saved bootstrap choices without restoring placeholder ENS identity metadata", async () => {
+    localStorage.setItem("derpc:chosen-operators", '["bootstrap.derpc.eth"]');
+    vi.resetModules(); vi.clearAllTimers();
+    document.body.innerHTML = page.match(/<body>([\s\S]*)<\/body>/)![1].replace(/<script[\s\S]*?<\/script>/g, "");
+    await import("../src/main.ts");
+    const candidates = harness.initialOptions!.operators as Record<string, unknown>[];
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]).toMatchObject({ id: "bootstrap", operatorId: "bootstrap.derpc.eth" });
+    expect(candidates[0]).not.toHaveProperty("ens");
+    expect(document.querySelectorAll("#operators input:checked")).toHaveLength(1);
+    expect(document.body.textContent).not.toContain("bootstrap.derpc.eth");
+  });
+
+  it("does not promote a selected bootstrap placeholder into a matching newly discovered ENS identity", async () => {
+    (document.querySelector("#operators input") as HTMLInputElement).checked = true;
+    document.getElementById("operators")!.dispatchEvent(new Event("change"));
+    document.getElementById("use-operators")!.click();
+    await refreshOperators([{ id: "bootstrap.derpc.eth", ens: "bootstrap.derpc.eth", url: "https://registered.example/rpc", priority: 0 }]);
+    expect(document.querySelectorAll("#operators input:checked")).toHaveLength(0);
+    expect(document.getElementById("choice-status")!.textContent).toContain("no operators; reads are stopped");
+    expect(document.getElementById("directory-status")!.textContent).toContain("1 previous choice(s) removed");
+    expect(document.getElementById("operators")!.textContent).toContain("bootstrap.derpc.eth");
+    expect(document.getElementById("pool")!.textContent).toContain("ENS list proven · records proven");
+    expect(harness.setRouting).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem("derpc:chosen-operators")).toBe("[]");
+  });
+
+  it("prefills configured deployment pins without refreshing or selecting operators, then explicitly refreshes with every pin", async () => {
+    await loadConfiguredDirectory();
+    const values = {
+      "ens-registry": directoryPins.ethRegistry,
+      "ens-registrar": directoryPins.registrar.address,
+      "ens-code-hash": directoryPins.registrar.codeHash,
+      "ens-subregistry": directoryPins.registrar.registry,
+    };
+    for (const [id, value] of Object.entries(values)) {
+      expect((document.getElementById(id) as HTMLInputElement).value).toBe(value);
+      expect((document.getElementById(id) as HTMLInputElement).readOnly).toBe(true);
+    }
+    expect((document.getElementById("ens-verified-records") as HTMLInputElement).checked).toBe(true);
+    expect((document.getElementById("ens-verified-records") as HTMLInputElement).disabled).toBe(true);
+    expect(document.getElementById("directory-status")!.textContent).toContain("has not been verified");
+    expect(harness.refreshDirectory).not.toHaveBeenCalled();
+    expect(harness.setRouting).not.toHaveBeenCalled();
+    expect(harness.initialOptions!.operators).toEqual([]);
+    await refreshOperators(pluralOperators());
+    expect(harness.refreshDirectory).toHaveBeenCalledWith({
+      ethRegistry: directoryPins.ethRegistry, registrar: directoryPins.registrar, verifiedRecords: true,
+    });
+    expect(document.querySelectorAll("#operators input:checked")).toHaveLength(0);
+    expect(harness.setRouting).not.toHaveBeenCalled();
+    expect(document.getElementById("refresh-directory")!.textContent).toBe("Refresh proven ENS directory");
+  });
+
+  it.each(["ens-registry", "ens-registrar", "ens-code-hash", "ens-subregistry", "ens-verified-records"])("cannot silently remove configured %s protection", async id => {
+    await loadConfiguredDirectory();
+    const field = document.getElementById(id) as HTMLInputElement;
+    if (field.type === "checkbox") field.checked = false;
+    else field.value = "";
+    document.getElementById("directory-form")!.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(harness.refreshDirectory).not.toHaveBeenCalled();
+    expect(harness.setOperators).not.toHaveBeenCalled();
+    expect(document.getElementById("directory-status")!.textContent).toContain("no unverified refresh was sent");
+  });
+
+  it("keeps the displayed roster unchanged if a configured refresh does not return both proofs", async () => {
+    await loadConfiguredDirectory();
+    const before = document.getElementById("operators")!.textContent;
+    harness.refreshDirectory.mockResolvedValue({
+      operators: pluralOperators(), rejected: [], blockNumber: 42, blockHash: `0x${"ab".repeat(32)}`,
+      listVerification: "proven", recordVerification: "unverified",
+    });
+    document.getElementById("directory-form")!.dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() => expect((document.getElementById("refresh-directory") as HTMLButtonElement).disabled).toBe(false));
+    expect(document.getElementById("operators")!.textContent).toBe(before);
+    expect(document.getElementById("directory-status")!.textContent).toContain("requires proven membership and records");
+    expect(harness.setRouting).not.toHaveBeenCalled();
+  });
+
+  it("forwards a manually supplied expected subregistry and rejects an orphaned subregistry pin", async () => {
+    (document.getElementById("ens-registry") as HTMLInputElement).value = directoryPins.ethRegistry;
+    (document.getElementById("ens-subregistry") as HTMLInputElement).value = directoryPins.registrar.registry;
+    document.getElementById("directory-form")!.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(harness.refreshDirectory).not.toHaveBeenCalled();
+    expect(document.getElementById("directory-status")!.textContent).toContain("requires a registrar");
+    (document.getElementById("ens-registrar") as HTMLInputElement).value = directoryPins.registrar.address;
+    (document.getElementById("ens-code-hash") as HTMLInputElement).value = directoryPins.registrar.codeHash;
+    (document.getElementById("ens-verified-records") as HTMLInputElement).checked = true;
+    await refreshOperators([]);
+    expect(harness.refreshDirectory).toHaveBeenCalledWith({
+      ethRegistry: directoryPins.ethRegistry, registrar: directoryPins.registrar, verifiedRecords: true,
+    });
+  });
+
   it("labels worker logs as diagnostics and leaves transport state and controls authoritative", async () => {
     (document.querySelector("#operators input") as HTMLInputElement).checked = true;
     document.getElementById("operators")!.dispatchEvent(new Event("change"));
@@ -375,6 +507,102 @@ describe("demo page status rendering", () => {
     expect((document.getElementById("run-verified-call") as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it("resets prior account affinity only when explicitly injecting the simulated liar", async () => {
+    harness.transportStatus = { state: "ready" };
+    (document.querySelector("#operators input") as HTMLInputElement).checked = true;
+    document.getElementById("operators")!.dispatchEvent(new Event("change"));
+    document.getElementById("use-operators")!.click();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(harness.setOperators.mock.calls.every(([operators]) => operators.length > 0)).toBe(true);
+    harness.setOperators.mockClear();
+    const button = document.getElementById("inject-liar") as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
+    button.click();
+    expect(harness.setOperators).toHaveBeenCalledTimes(2);
+    expect(harness.setOperators).toHaveBeenNthCalledWith(1, []);
+    expect(harness.setOperators).toHaveBeenNthCalledWith(2, [
+      expect.objectContaining({ id: "simulated-liar:bootstrap" }), expect.objectContaining({ id: "bootstrap" }),
+    ]);
+    expect([...document.querySelectorAll<HTMLInputElement>("#operators input:checked")].map(input => input.value)).toEqual(["bootstrap.derpc.eth"]);
+  });
+
+  it("puts the injected proof before a personal node's negative priority", async () => {
+    harness.transportStatus = { state: "ready" };
+    (document.getElementById("personal-endpoint") as HTMLInputElement).value = `http://${"a".repeat(56)}.onion/rpc`;
+    (document.getElementById("personal-token") as HTMLInputElement).value = "ab".repeat(32);
+    document.getElementById("personal-form")!.dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.advanceTimersByTimeAsync(100);
+    expect(document.getElementById("personal-status")!.textContent).toContain("Your node is selected");
+    harness.onStatus?.(harness.getStatus!());
+    harness.setOperators.mockClear();
+    expect((document.getElementById("inject-liar") as HTMLButtonElement).disabled).toBe(false);
+    (document.getElementById("inject-liar") as HTMLButtonElement).click();
+    expect(harness.setOperators).toHaveBeenNthCalledWith(1, []);
+    expect(harness.setOperators).toHaveBeenNthCalledWith(2, [
+      expect.objectContaining({ id: "simulated-liar:my-personal-node", priority: -2 }),
+      expect.objectContaining({ id: "my-personal-node", priority: -1 }),
+    ]);
+  });
+
+  it("cannot reset the operator selection while a verified call is in progress", async () => {
+    harness.transportStatus = { state: "ready" };
+    (document.querySelector("#operators input") as HTMLInputElement).checked = true;
+    document.getElementById("operators")!.dispatchEvent(new Event("change"));
+    document.getElementById("use-operators")!.click();
+    await vi.advanceTimersByTimeAsync(100);
+    let complete!: (result: unknown) => void;
+    harness.verifiedCall.mockReturnValue(new Promise(resolve => { complete = resolve; }));
+    (document.getElementById("call-address") as HTMLInputElement).value = `0x${"11".repeat(20)}`;
+    (document.getElementById("call-data") as HTMLInputElement).value = "0x";
+    document.getElementById("verified-call-form")!.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(harness.verifiedCall).toHaveBeenCalledOnce();
+    harness.setOperators.mockClear();
+    const button = document.getElementById("inject-liar") as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    button.dispatchEvent(new Event("click"));
+    expect(harness.setOperators).not.toHaveBeenCalled();
+    complete({ value: "0x", block: { blockNumber: 42 } });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(button.disabled).toBe(false);
+  });
+
+  it("cannot reset the operator selection while a proof read is in progress", async () => {
+    harness.transportStatus = { state: "ready" };
+    let complete!: (balance: bigint) => void;
+    harness.getBalance.mockReturnValue(new Promise(resolve => { complete = resolve; }));
+    (document.querySelector("#operators input") as HTMLInputElement).checked = true;
+    document.getElementById("operators")!.dispatchEvent(new Event("change"));
+    document.getElementById("use-operators")!.click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(harness.getBalance).toHaveBeenCalledOnce();
+    harness.setOperators.mockClear();
+    const button = document.getElementById("inject-liar") as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    button.dispatchEvent(new Event("click"));
+    expect(harness.setOperators).not.toHaveBeenCalled();
+    complete(0n);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(button.disabled).toBe(false);
+  });
+
+  it("reports a refused demo replacement and keeps the cleared selection stopped", async () => {
+    harness.transportStatus = { state: "ready" };
+    (document.querySelector("#operators input") as HTMLInputElement).checked = true;
+    document.getElementById("operators")!.dispatchEvent(new Event("change"));
+    document.getElementById("use-operators")!.click();
+    await vi.advanceTimersByTimeAsync(100);
+    harness.setOperators.mockClear();
+    harness.setOperators.mockImplementationOnce(() => {}).mockImplementationOnce(() => { throw new Error("ENS listing expired"); });
+    (document.getElementById("inject-liar") as HTMLButtonElement).click();
+    expect(harness.setOperators).toHaveBeenCalledTimes(2);
+    expect(harness.setOperators).toHaveBeenNthCalledWith(1, []);
+    expect(document.getElementById("routing-error")!.textContent).toContain("reads remain stopped");
+    expect(document.getElementById("routing-error")!.textContent).toContain("ENS listing expired");
+    expect(document.getElementById("choice-status")!.textContent).toContain("no operators; reads are stopped");
+    expect(document.querySelectorAll("#operators input:checked")).toHaveLength(0);
+    expect((document.getElementById("read-again") as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it("keeps automatic strategy edits pending until Apply and submits all eligible candidates atomically", () => {
     const mode = document.getElementById("routing-mode") as HTMLSelectElement;
     mode.value = "balanced"; mode.dispatchEvent(new Event("change"));
@@ -457,6 +685,22 @@ describe("demo page status rendering", () => {
     expect(localStorage.getItem("derpc:routing")).not.toContain("ababab");
   });
 
+  it("does not transfer a restricted bootstrap policy to a matching ENS identity", async () => {
+    (document.querySelector("#operators input") as HTMLInputElement).checked = true;
+    const mode = document.getElementById("routing-mode") as HTMLSelectElement;
+    mode.value = "balanced"; mode.dispatchEvent(new Event("change"));
+    const selected = document.getElementById("routing-scope-selected") as HTMLInputElement;
+    selected.checked = true; selected.dispatchEvent(new Event("change"));
+    document.getElementById("operators")!.dispatchEvent(new Event("change"));
+    document.getElementById("use-operators")!.click();
+    expect(harness.setRouting).toHaveBeenLastCalledWith({ selection: "balanced", allowedOperators: ["bootstrap.derpc.eth"] }, expect.any(Array));
+    (document.getElementById("ens-registry") as HTMLInputElement).value = `0x${"11".repeat(20)}`;
+    document.getElementById("directory-form")!.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(harness.refreshDirectory).not.toHaveBeenCalled();
+    expect(document.getElementById("directory-status")!.textContent).toContain("Public provider choices do not authorize matching ENS names");
+    expect(JSON.parse(localStorage.getItem("derpc:routing")!).source).toBe("bootstrap");
+  });
+
   it("uses the provider's proven directory without replacing it when automatic routing is applied", async () => {
     (document.querySelector("#operators input") as HTMLInputElement).checked = true;
     document.getElementById("operators")!.dispatchEvent(new Event("change"));
@@ -498,6 +742,8 @@ describe("demo page status rendering", () => {
     await import("../src/main.ts");
     expect((document.querySelector("#operators input") as HTMLInputElement).checked).toBe(true);
     expect(document.getElementById("operator-suggestion")!.textContent).toContain("active operators have not changed");
+    expect(document.getElementById("operator-suggestion")!.textContent).toContain("Suggested public provider: Public Provider");
+    expect(document.getElementById("operator-suggestion")!.textContent).not.toContain("bootstrap.derpc.eth");
     expect(document.getElementById("pool-summary")!.textContent).toContain("0 operators selected");
     expect(harness.setOperators).not.toHaveBeenCalled();
     expect(localStorage.getItem("derpc:chosen-operators")).toBeNull();

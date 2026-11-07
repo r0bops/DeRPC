@@ -4,7 +4,7 @@ import { NETWORKS, OPERATORS } from "../directory/operators.ts";
 import { getNetwork, host, isVerified, operatorsFor } from "../directory/model.ts";
 import type { PageResult } from "../page.ts";
 import { avatarTone, escapeHtml, icon } from "../ui.ts";
-import { mockBadge, tierChip } from "./directory.ts";
+import { bootstrapBadge, tierChip } from "./directory.ts";
 import { notFoundPage } from "./not-found.ts";
 
 function initials(text: string): string {
@@ -16,14 +16,7 @@ function initials(text: string): string {
     .join("");
 }
 
-function personAvatar(label: string, seed: string, large = false, logoUrl?: string): string {
-  if (logoUrl && !large) {
-    return `<span class="op-logo-wrap ${avatarTone(seed)}" aria-hidden="true">
-      <img class="op-logo-img" src="${escapeHtml(logoUrl)}" alt="" loading="lazy" width="40" height="40"
-        onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.removeAttribute('hidden')" />
-      <span hidden>${escapeHtml(initials(label))}</span>
-    </span>`;
-  }
+function personAvatar(label: string, seed: string, large = false): string {
   return `<span class="avatar ${avatarTone(seed)}${large ? " avatar--lg" : ""}" aria-hidden="true">${escapeHtml(initials(label))}</span>`;
 }
 
@@ -95,10 +88,10 @@ export function networkPage(id: string): PageResult {
                       <tr data-href="${href}">
                         <td>
                           <a class="row-link" href="${href}">
-                            ${personAvatar(operator.operator, operator.ens, false, operator.logoUrl)}
+                            ${personAvatar(operator.operator, operator.ens)}
                             <span>
                               <span class="row-title">${escapeHtml(operator.operator)}</span>
-                              <span class="row-hint">${escapeHtml(operator.ens)} ${mockBadge}</span>
+                              <span class="row-hint">${bootstrapBadge}</span>
                             </span>
                           </a>
                         </td>

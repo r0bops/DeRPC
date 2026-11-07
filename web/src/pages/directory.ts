@@ -1,6 +1,7 @@
 import "../directory/directory.css";
 
 import { NETWORKS, OPERATORS } from "../directory/operators.ts";
+import { PENDING_OPERATORS } from "../directory/pending-operators.ts";
 import {
   host,
   isVerified,
@@ -45,14 +46,7 @@ function initials(text: string): string {
     .join("");
 }
 
-function personAvatar(label: string, seed: string, logoUrl?: string): string {
-  if (logoUrl) {
-    return `<span class="op-logo-wrap ${avatarTone(seed)}" aria-hidden="true">
-      <img class="op-logo-img" src="${escapeHtml(logoUrl)}" alt="" loading="lazy" width="40" height="40"
-        onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.removeAttribute('hidden')" />
-      <span hidden>${escapeHtml(initials(label))}</span>
-    </span>`;
-  }
+function personAvatar(label: string, seed: string): string {
   return `<span class="avatar ${avatarTone(seed)}" aria-hidden="true">${escapeHtml(initials(label))}</span>`;
 }
 
@@ -68,8 +62,29 @@ export function tierChip(tier: 1 | 2): string {
   return `<span class="tier t${tier}">Tier ${tier}</span>`;
 }
 
-export const mockBadge =
-  '<span class="mock" title="Placeholder name: nothing is registered under derpc.eth yet">mock ENS</span>';
+export const bootstrapBadge =
+  '<span class="mock" title="Public provider; not enrolled in the DeRPC ENS registry">Public bootstrap</span>';
+
+function pendingOperatorsMarkup(): string {
+  return `<section aria-labelledby="enrollment-title">
+    <div class="card-head"><div>
+      <h2 id="enrollment-title">Team operators awaiting registration</h2>
+      <p>Two deployed proxies, each prepared as a separate operator entry. Both are run by the DeRPC team; they are not independent operators. Their ENS names await registration.</p>
+    </div></div>
+    <div class="table-card"><table class="data-table">
+      <caption class="sr-only">Two real team proxy endpoints awaiting ENS enrollment</caption>
+      <thead><tr><th scope="col">Operator</th><th scope="col">Enrollment</th><th scope="col">Device health</th><th scope="col">Registration</th></tr></thead>
+      <tbody>${PENDING_OPERATORS.map(operator => `<tr>
+        <td><span class="row-title">${escapeHtml(operator.name)}</span><span class="row-hint">Team-run proxy · one endpoint</span><span class="row-hint mono" style="overflow-wrap: anywhere">${escapeHtml(operator.endpoint)}</span></td>
+        <td data-label="Enrollment"><span class="net-chip l">ENS pending</span></td>
+        <td data-label="Device health">Not checked on this device</td>
+        <td data-label="Registration"><a class="btn btn--ghost btn--small" href="#/operate?prepare=${encodeURIComponent(operator.label)}">Review registration<span class="sr-only"> for ${escapeHtml(operator.name)}</span></a></td>
+      </tr>`).join("")}</tbody>
+    </table></div>
+    <p class="legend">Review the actual public addresses and unsigned configuration for each operator. No wallet request or registration is sent by this page. Registration and records must be proven before these entries can join your read pool.</p>
+    <p class="legend"><a href="${escapeHtml(demoHref())}#directory-form">Open ENS discovery</a> · <a href="#/operate">Prepare a different operator</a></p>
+  </section>`;
+}
 
 function matchesOperator(operator: DirectoryOperator, query: string): boolean {
   if (!query) return true;
@@ -106,10 +121,10 @@ function operatorRows(state: DirectoryState): string {
         <tr data-href="${href}">
           <td>
             <a class="row-link" href="${href}">
-              ${personAvatar(operator.operator, operator.ens, operator.logoUrl)}
+              ${personAvatar(operator.operator, operator.ens)}
               <span>
                 <span class="row-title">${escapeHtml(operator.operator)}</span>
-                <span class="row-hint">${escapeHtml(operator.ens)} ${mockBadge}</span>
+                <span class="row-hint">${bootstrapBadge}</span>
               </span>
             </a>
           </td>
@@ -209,7 +224,7 @@ export function directoryPage(params: URLSearchParams): PageResult {
   const state = parseState(params);
   const placeholder =
     state.by === "operators"
-      ? "Search operators, ENS names, endpoints or networks"
+      ? "Search public providers, endpoints or networks"
       : "Search networks, e.g. Base or 8453";
   const verifiedNetworks =
     NETWORKS.filter((network) => network.verification === "light-client")
@@ -221,7 +236,7 @@ export function directoryPage(params: URLSearchParams): PageResult {
     html: `
       <section class="facts" aria-label="Directory at a glance">
         <dl class="container facts__grid">
-          <div class="facts__item"><dt>Operators listed</dt><dd>${OPERATORS.length} · names are placeholders</dd></div>
+          <div class="facts__item"><dt>Team operators</dt><dd>${PENDING_OPERATORS.length} · one endpoint each · ENS pending</dd></div>
           <div class="facts__item"><dt>Networks listed</dt><dd>${NETWORKS.length} · from operators' own documentation</dd></div>
           <div class="facts__item"><dt>Verified by proof</dt><dd><span class="ok-dot" aria-hidden="true"></span>${escapeHtml(verifiedNetworks)}</dd></div>
           <div class="facts__item"><dt>Live health</dt><dd>Checked on your device, in the dashboard</dd></div>
@@ -233,11 +248,13 @@ export function directoryPage(params: URLSearchParams): PageResult {
             <div>
               <p class="kicker">Directory</p>
               <h1 class="page-title">Choose who serves your reads.</h1>
-              <p class="page-lead">Browse operators, then choose your providers in the live dashboard to see local health and verified reads. Supported reads are verified on Ethereum mainnet; other listed networks are not verified.</p>
+              <p class="page-lead">Follow operator enrollment and choose public providers in the dashboard. Supported reads are verified on Ethereum mainnet; other listed networks are not verified.</p>
             </div>
             <a class="btn btn--lime" href="${escapeHtml(demoHref())}">Choose and check operators ${icon("arrow")}</a>
           </div>
 
+          ${pendingOperatorsMarkup()}
+          <div class="card-head"><div><h2>Public bootstrap providers</h2><p>These ${OPERATORS.length} public services can bootstrap verified reads and ENS discovery. Listing them does not mean their owners joined DeRPC.</p></div></div>
           <div class="toolbar">
             <div class="segmented" role="group" aria-label="Directory view">
               <button class="segmented__btn" type="button" data-view="operators" aria-pressed="${state.by === "operators"}">By operator</button>
@@ -261,7 +278,7 @@ export function directoryPage(params: URLSearchParams): PageResult {
           </p>
 
           <div id="directory-results">${resultsMarkup(state)}</div>
-          <p class="demo-note"><span class="demo-note__square" aria-hidden="true"></span><span>Free reads need no wallet. ENS names are placeholders. Staking and operator-set query prices come later; a stake will not replace response verification.</span></p>
+          <p class="demo-note"><span class="demo-note__square" aria-hidden="true"></span><span>Free reads need no wallet. ENS registration, local health and response proofs are separate checks. Staking and operator-set query prices come later.</span></p>
         </div>
       </div>
     `,
@@ -275,7 +292,7 @@ export function directoryPage(params: URLSearchParams): PageResult {
         results.innerHTML = resultsMarkup(state);
         search.placeholder =
           state.by === "operators"
-            ? "Search operators, ENS names, endpoints or networks"
+            ? "Search public providers, endpoints or networks"
             : "Search networks, e.g. Base or 8453";
         root.querySelectorAll<HTMLButtonElement>("[data-view]").forEach((button) => {
           button.setAttribute("aria-pressed", String(button.dataset.view === state.by));

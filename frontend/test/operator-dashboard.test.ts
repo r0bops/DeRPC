@@ -57,11 +57,25 @@ describe("local operator dashboard", () => {
     const idle = render(tracker);
     expect(idle.body.textContent).toContain("Not selected");
     expect(idle.body.textContent).toContain("Not observed this session");
-    expect(idle.body.textContent).toContain("Mock ENS");
+    expect(idle.body.textContent).toContain("Public bootstrap · not ENS-enrolled");
+    expect(idle.body.textContent).not.toContain("alice.derpc.eth");
     expect(idle.body.querySelector(".ok")).toBeNull();
     const selected = render(tracker, { selected: true });
     expect(selected.body.textContent).toContain("Ready to try · no result yet");
     expect(selected.body.querySelector(".ok")).toBeNull();
+  });
+
+  it("uses source provenance rather than an ENS-shaped key or incidental verification fields for identity labels", () => {
+    const tracker = new OperatorObservations();
+    const bootstrap = render(tracker, { operator: { ...operator, operator: undefined, operatorId: "alice.derpc.eth", listVerification: "proven", recordVerification: "proven" } });
+    expect(bootstrap.body.textContent).toContain("alice.example");
+    expect(bootstrap.body.textContent).toContain("Public bootstrap · not ENS-enrolled");
+    expect(bootstrap.body.textContent).not.toContain("alice.derpc.eth");
+    expect(bootstrap.body.textContent).not.toContain("ENS list proven");
+    const discovered = render(tracker, { operator: { ...operator, source: "ens", listVerification: "proven", recordVerification: "proven" } });
+    expect(discovered.body.querySelector(".dashboard-name")!.textContent).toBe("alice.derpc.eth");
+    expect(discovered.body.textContent).toContain("ENS list proven · records proven");
+    expect(discovered.body.textContent).not.toContain("Public bootstrap");
   });
 
   it("attributes successes and failures separately, preserving past verification after a later failure", () => {
@@ -146,7 +160,7 @@ describe("local operator dashboard", () => {
     renderOperatorDashboard({ body, summary, available: [], chosen: [], observations: new OperatorObservations(),
       status: { transport: { state: "ready" }, operators: [{ ...operator, id: "new.derpc.eth", ens: "new.derpc.eth", priority: 0, state: "eligible" }] } as DeRPCStatus });
     expect(body.textContent).toContain("identity provenance not loaded");
-    expect(body.textContent).not.toContain("Mock ENS");
+    expect(body.textContent).not.toContain("Public bootstrap");
     expect(body.textContent).not.toContain("ENS list proven");
   });
 });

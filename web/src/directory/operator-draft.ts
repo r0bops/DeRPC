@@ -166,7 +166,7 @@ export function createOperatorConfigFragment(draft: OperatorDraft, input: Operat
       },
       record: { key: "derpc.endpoints", value },
       remainingChecks: [
-        "Insert operatorConfig into a complete ENS config: schemaVersion 1, chainId 1, parentName derpc.eth, public curator/deployer, stable deploymentId and 2–3 independent operators.",
+        "Insert operatorConfig into a complete ENS config: schemaVersion 1, chainId 1, parentName derpc.eth, public curator/deployer, stable deploymentId and 1–3 operator identities. Label team-run proxies; several identities or endpoints do not establish independent operators.",
         "Run full config validation: labels and hot keys must be unique; each hot key must differ from the curator, every operator owner and every resolver cold owner.",
         "Refresh mainnet preflight: confirm parent ownership/permissions, exact contract code, name availability, future expiry within 30 days of chain time and no later than the parent lease.",
         "Verify each wrapper identity (including endpointId), public onion reachability and authenticated proof fixture; local field validation does not establish these checks.",

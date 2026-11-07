@@ -1,6 +1,7 @@
 import "../directory/directory.css";
 
 import { createOperatorConfigFragment, createOperatorDraft, MAX_DRAFT_NODES, type OperatorConfigFragment, type OperatorDraft } from "../directory/operator-draft.ts";
+import { PENDING_OPERATORS, TEAM_REGISTRATION_CONFIG, TEAM_REGISTRATION_PLAN, teamRegistrationFragment } from "../directory/pending-operators.ts";
 import type { PageResult } from "../page.ts";
 import { demoHref, escapeHtml, snippet } from "../ui.ts";
 
@@ -37,14 +38,17 @@ export DERPC_BEACON_URL=http://127.0.0.1:5052
 unset DERPC_PAYMENT_ESCROW
 pnpm --filter @derpc/wrapper run setup`;
 
-export function operatePage(): PageResult {
+export function operatePage(params = new URLSearchParams()): PageResult {
+  // The URL selects a reviewed local entry only. Addresses, endpoints and roles never come from it.
+  const prepared = teamRegistrationFragment(params.get("prepare"));
+  const team = prepared?.operatorConfig;
   return {
     title: "Run an operator",
     html: `
       <section class="facts" aria-label="Running an operator at a glance">
         <dl class="container facts__grid">
           <div class="facts__item"><dt>Cost today</dt><dd>Free · no deposit or stake</dd></div>
-          <div class="facts__item"><dt>What you run</dt><dd>Your own mainnet nodes, plus the wrapper on each</dd></div>
+          <div class="facts__item"><dt>${team ? "What you review" : "What you run"}</dt><dd>${team ? "One team-run proxy and its ENS registration inputs" : "Your own mainnet nodes, plus the wrapper on each"}</dd></div>
           <div class="facts__item"><dt>How callers reach you</dt><dd>One Tor onion address per node</dd></div>
           <div class="facts__item"><dt>This page</dt><dd>A local draft · nothing is registered</dd></div>
         </dl>
@@ -54,11 +58,49 @@ export function operatePage(): PageResult {
           <div class="page__head">
             <div>
               <p class="kicker">Run an operator · Free demo</p>
-              <h1 class="page-title">One operator. Your nodes.</h1>
-              <p class="page-lead">Prepare an operator identity and its public endpoints. This draft stays in your browser until you download it. Registration, staking and payments come later.</p>
+              <h1 class="page-title">${team ? `Review ${escapeHtml(team.label)}.derpc.eth` : "One operator. Your nodes."}</h1>
+              <p class="page-lead">${team ? "Review the existing proxy's public configuration before operator-signed registration. ENS enrollment is pending; this page sends no transaction." : "Prepare your operator identity and public endpoints. This draft stays in your browser until you download it. You sign your own registration after the namespace's one-time setup. Staking and payments come later."}</p>
             </div>
           </div>
 
+          <p class="notice" id="operator-registration-flow">Open registration: the namespace owner completes the one-time registrar setup, then each operator signs its own registration transactions. No per-name owner approval or approval bot is required. Public deployment of this flow is not established by this page. Use the <a href="https://github.com/r0bops/DeRPC/blob/main/contracts/README.md" target="_blank" rel="noopener noreferrer">local wallet review instructions</a> to review a fresh plan; this website does not connect a wallet or send transactions.</p>
+
+          ${team && prepared ? `<section id="team-registration-review" class="operator-draft-review" aria-labelledby="team-registration-title">
+            <h2 id="team-registration-title">Actual proxy · unsigned registration review</h2>
+            <p>Both team operators share the same owner and signer. Separate names and proxies do not make them independent operators.</p>
+            <p><span class="net-chip l">ENS pending</span> · <span class="state-unknown">Health: not checked on this device</span></p>
+            <dl class="kv">
+              <div><dt>RPC endpoint</dt><dd class="mono" style="overflow-wrap: anywhere">${escapeHtml(team.endpoint)}</dd></div>
+              <div><dt>Beacon base URL</dt><dd class="mono" style="overflow-wrap: anywhere">${escapeHtml(team.beacon)}</dd></div>
+              <div><dt>Operator owner and signer</dt><dd class="mono" style="overflow-wrap: anywhere">${escapeHtml(team.operator)}<span class="row-hint">Signer: ${escapeHtml(team.signer)}</span></dd></div>
+              <div><dt>Endpoint-update key</dt><dd class="mono" style="overflow-wrap: anywhere">${escapeHtml(team.hotKey)}</dd></div>
+              <div><dt>Proposed expiry</dt><dd>${escapeHtml(new Date(team.expiry * 1000).toISOString().replace("T", " ").replace(".000Z", " UTC"))}</dd></div>
+            </dl>
+            <p class="field__hint">This existing wrapper uses one endpoint per ENS name. The configuration preserves its singular endpoint and beacon records; no node ID is added.</p>
+            <pre id="team-registration-json" tabindex="0" aria-label="Exact singular operator registration fragment">${escapeHtml(JSON.stringify(prepared, null, 2))}</pre>
+            <div class="controls">
+              <button id="download-team-registration" class="btn btn--lime" type="button">Download this operator entry</button>
+              <button id="download-team-config" class="btn btn--ghost" type="button">Download full two-operator config</button>
+            </div>
+            <p id="team-registration-status" role="status" aria-live="polite">Unsigned preparation only. Name availability, authority, lease, endpoint identity and proofs require verification. Nothing has been registered or published.</p>
+            <ol class="operator-config-next">
+              <li>Review both operator entries, the distinct update keys, shared owner/signer and fixed lease in the full configuration.</li>
+              <li>Verify the namespace's one-time setup, then prepare a fresh unsigned registration plan for each operator's own wallet.</li>
+              <li>Verify receipts and finalized ENS membership/records through DeRPC before selecting these operators for reads.</li>
+            </ol>
+            <details id="team-unsigned-plan">
+              <summary>Review the first unsigned deployment stage · ${TEAM_REGISTRATION_PLAN.transactions.length} transactions</summary>
+              <p>Review this stored setup preparation and its exact transaction list. Refresh the plan for the open-registration registrar before sending; each operator's registration requires a separate review and its own signer. Administrative preflight is not a light-client proof, and predicted addresses are not deployed contracts.</p>
+              <ul>${TEAM_REGISTRATION_PLAN.transactions.map(transaction => `<li>${escapeHtml(transaction.purpose)}</li>`).join("")}</ul>
+              <pre id="team-plan-json" tabindex="0" aria-label="Unsigned first deployment stage JSON">${escapeHtml(JSON.stringify(TEAM_REGISTRATION_PLAN, null, 2))}</pre>
+              <button id="download-team-plan" class="btn btn--ghost" type="button">Download unsigned stage 1</button>
+              <p>No wallet is connected or prompted. Refresh preflight and review each transaction with the authorized signer before sending it elsewhere.</p>
+            </details>
+            <a href="#/directory">Back to the operator directory</a>
+          </section><details id="generic-onboarding"><summary>Prepare a different operator or multiple-node draft</summary>` : `
+            ${params.has("prepare") ? '<p class="notice warn" role="status">No matching team operator. Choose a registration review from the directory; the form below is a new blank draft.</p>' : ""}
+            <p class="legend">Review the team's actual registration inputs: ${PENDING_OPERATORS.map(operator => `<a href="#/operate?prepare=${encodeURIComponent(operator.label)}">${escapeHtml(operator.name)}</a>`).join(" · ")}</p>
+          `}
           <div class="operate-grid operator-onboarding">
             <div>
               <form id="operate-form" novalidate>
@@ -113,8 +155,8 @@ export function operatePage(): PageResult {
                   <section class="step">
                     <div class="step__num" aria-hidden="true">4</div>
                     <div>
-                      <h2 class="step__title">Prepare deployment inputs</h2>
-                      <p class="step__desc">Optional. Add the public role addresses and a fixed lease to convert your draft into one operator entry for the ENS deployment configuration. No transaction is created or signed here.</p>
+                      <h2 class="step__title">Prepare registration inputs</h2>
+                      <p class="step__desc">Optional. Add public role addresses and a fixed lease to prepare one operator configuration entry. Review a fresh registration plan with your own wallet after the namespace's one-time setup. No transaction is created or signed here.</p>
                       <details id="operator-deployment-fields">
                         <summary>Role addresses and expiry</summary>
                         <p class="field__hint">These fields are required only for a deployment fragment. The operator owner and signer come from step 1.</p>
@@ -150,14 +192,14 @@ export function operatePage(): PageResult {
                 <p class="field__hint">Unsigned and unverified. This is one operator entry plus its endpoint-list record, not a complete deployment configuration or proof of enrollment.</p>
                 <pre id="operator-config-json" tabindex="0" aria-label="Operator deployment fragment JSON"></pre>
                 <button id="download-operator-config" type="button" class="btn btn--ghost btn--small">Download deployment fragment</button>
-                <h3 class="operator-config-next-title">Before deployment</h3>
+                <h3 class="operator-config-next-title">Before registering</h3>
                 <ol class="operator-config-next">
-                  <li>Copy <code>operatorConfig</code> into the <code>operators</code> array of a complete ENS config with 2–3 independent operators. Set schemaVersion 1, chainId 1, parentName derpc.eth, the public curator/deployer and a stable deploymentId.</li>
-                  <li>Run full validation and a fresh mainnet preflight. Check unique names and hot keys, cross-operator role separation, parent ownership and lease, and exact ENS contract code.</li>
+                  <li>Use <code>operatorConfig</code> as reviewed public input to the operator registration planner. This fragment alone is not a complete CLI input. Shared ownership or multiple endpoints do not establish independent operators.</li>
+                  <li>Verify the namespace's one-time setup and run a fresh mainnet preflight. Check name availability, role separation, parent lease and exact ENS contract code. Use the documented local review helper with your own wallet.</li>
                   <li>Test each endpoint's matching ENS name, signer and endpointId through Anon-RPC, then verify a public proof fixture. These checks have not run on this page.</li>
-                  <li>Prepare and review the unsigned plans with the authorized signers. Verify the deployment receipts/runtime and finalized client discovery before describing the operator as registered and usable.</li>
+                  <li>Review and sign your own registration transactions. Verify the receipts, runtime and finalized client discovery before describing the operator as registered and usable.</li>
                 </ol>
-                <p class="field__hint">The lease is expiring and non-transferable under the current curated registrar. Curator delisting and resolver administration remain separate powers.</p>
+                <p class="field__hint">Open registration removes per-name owner approval. Lease limits, registrar administration and resolver permissions still need review. No current public registrar deployment or enrollment is claimed here.</p>
               </section>
             </div>
 
@@ -188,6 +230,7 @@ export function operatePage(): PageResult {
               </section>
             </aside>
           </div>
+          ${team ? "</details>" : ""}
         </div>
       </div>
     `,
@@ -301,6 +344,19 @@ export function operatePage(): PageResult {
         link.remove();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       };
+      root.querySelector<HTMLButtonElement>("#download-team-registration")?.addEventListener("click", () => {
+        if (!prepared || !team) return;
+        downloadJson(prepared, `${team.label}.derpc.eth-operator-fragment.json`);
+        root.querySelector<HTMLElement>("#team-registration-status")!.textContent = "Operator entry download requested. It is unsigned; complete the full preflight and authorized registration stages before claiming enrollment.";
+      });
+      root.querySelector<HTMLButtonElement>("#download-team-config")?.addEventListener("click", () => {
+        downloadJson(TEAM_REGISTRATION_CONFIG, "ens-two-demo-operators-config-2026-11-07.json");
+        root.querySelector<HTMLElement>("#team-registration-status")!.textContent = "Two-operator config download requested. No transaction or registration was sent.";
+      });
+      root.querySelector<HTMLButtonElement>("#download-team-plan")?.addEventListener("click", () => {
+        downloadJson(TEAM_REGISTRATION_PLAN, "ens-two-demo-operators-plan-1-2026-11-07.json");
+        root.querySelector<HTMLElement>("#team-registration-status")!.textContent = "Unsigned stage 1 download requested. No transaction was signed or sent; later registration stages require deployment receipts.";
+      });
       download.addEventListener("click", () => {
         if (!draft) return;
         downloadJson(draft, `${draft.name}-draft.json`);

@@ -20,12 +20,13 @@ import { createPublicClient, erc20Abi, formatUnits, isAddress, type Hex } from "
 import { mainnet } from "viem/chains";
 import { renderStatus as setText, tableRow, textCell, type StatusPart } from "./render.ts";
 import { mountPaymentPanel } from "./payment-panel.ts";
-import { OperatorObservations, renderOperatorDashboard } from "./operator-dashboard.ts";
+import { OperatorObservations, renderOperatorDashboard, operatorDisplayName } from "./operator-dashboard.ts";
 import { defaultRouting, eligibleForAutomatic, parseRoutingPreferences, routingOptions, type RoutingMode, type RoutingPreferences } from "./routing-preferences.ts";
 import { directoryFreshness } from "./directory-freshness.ts";
 import { mountDirectConnections } from "./direct-connections.ts";
 import { groupOperators, operatorKeys } from "./operator-groups.ts";
 import { lifecycleStatus, parseLifecycleEvidence, MAX_LIFECYCLE_EVIDENCE_BYTES, type LifecycleDirectory, type LifecycleEvidence } from "./ens-lifecycle-status.ts";
+import { parseEnsDirectory } from "../build/ens-directory.ts";
 
 type Operator = DeRPCOperator & {
   source: "bootstrap" | "ens" | "personal"; website?: string; payment?: PaymentTerms; expiry?: number;
@@ -52,6 +53,7 @@ const gateways = String(import.meta.env.VITE_TOR_GATEWAYS ?? "")
   .map((s) => s.trim())
   .filter(Boolean);
 const gatewayLabel = gateways.length ? `configured gateway (${gateways.length})` : "demo gateway";
+const configuredDirectory = parseEnsDirectory(import.meta.env.VITE_ENS_DIRECTORY);
 const SLOW_BOOT_MS = 30_000;
 // Worker logs are untrusted diagnostics, never a transport state or a read-control input.
 const GATEWAY_DIAL_REPORTED = /dial .*timed out|all gateways failed/i;
@@ -68,7 +70,10 @@ if (fault) document.title = `DeRPC — fault: ${fault}`;
 const CHOICE_KEY = "derpc:chosen-operators";
 const ROUTING_KEY = "derpc:routing";
 const choiceId = (operator: Operator) => operatorKey(operator);
-let available: Operator[] = MAINNET_OPERATORS.map(o => ({ ...o, source: "bootstrap" }));
+// Keep legacy local selection keys, but never send placeholder names as ENS identities.
+let available: Operator[] = MAINNET_OPERATORS.map(({ ens, ...endpoint }) => ({
+  ...endpoint, operatorId: operatorKey({ ...endpoint, ens }), source: "bootstrap",
+}));
 let directorySource: "bootstrap" | "ens" = "bootstrap";
 let personalNode: Operator | undefined;
 let sensitiveSession = false;
@@ -278,7 +283,7 @@ function updateReadControls(status: DeRPCStatus) {
   const hasOperators = effectiveOperators().length > 0;
   $<HTMLButtonElement>("read-again").disabled = snapshot.blocked || routeUnavailable || !hasOperators || readsInProgress;
   $<HTMLButtonElement>("run-verified-call").disabled = snapshot.blocked || routeUnavailable || !hasOperators || verifiedCallInProgress;
-  $<HTMLButtonElement>("inject-liar").disabled = snapshot.blocked || routeUnavailable || !hasOperators || readsInProgress || activeRouting.selection !== "manual" ||
+  $<HTMLButtonElement>("inject-liar").disabled = snapshot.blocked || routeUnavailable || !hasOperators || readsInProgress || verifiedCallInProgress || activeRouting.selection !== "manual" ||
     status.transport.state !== "ready" || status.operators.some(o => o.id.startsWith("simulated-liar:"));
   $<HTMLButtonElement>("cut-network").disabled = status.transport.state !== "ready";
   const message = snapshot.blocked ? "ENS-authorized reads are paused. Refresh the proven directory in the ENS panel; you can still narrow the selection or stop reads."
@@ -298,17 +303,17 @@ const choiceStatusEl = $("choice-status");
 
 function renderOperators() {
   const selected = new Set(chosen.map(choiceId));
-  const suggestion = available.find(operator => operator.source === "bootstrap" && operator.ens === suggestedOperator);
+  const suggestion = available.find(operator => operator.source === "bootstrap" && choiceId(operator) === suggestedOperator);
   if (suggestion) selected.add(choiceId(suggestion));
-  $("operator-suggestion").textContent = suggestion ? `Suggested from the directory: ${suggestion.ens}. Review the choices and press Apply. Your active operators have not changed.` : "";
+  $("operator-suggestion").textContent = suggestion ? `Suggested public provider: ${operatorDisplayName(suggestion)}. This bootstrap entry is not ENS-enrolled. Review the choices and press Apply. Your active operators have not changed.` : "";
   operatorsEl.replaceChildren(...groupOperators(available).map((group, index) => {
     const op = group.endpoints[0]!;
     const id = `operator-${index}`;
     const checkbox = Object.assign(document.createElement("input"), { type: "checkbox", id, value: group.key, checked: selected.has(group.key) });
     const check = document.createElement("td"); check.append(checkbox);
     const name = document.createElement("td");
-    name.append(Object.assign(document.createElement("label"), { htmlFor: id, textContent: op.ens ?? "My own node" }));
-    if (op.source === "bootstrap") name.append(Object.assign(document.createElement("span"), { className: "badge", textContent: "mock", title: "Bootstrap name; not read from ENS" }));
+    name.append(Object.assign(document.createElement("label"), { htmlFor: id, textContent: operatorDisplayName(op) }));
+    if (op.source === "bootstrap") name.append(Object.assign(document.createElement("span"), { className: "badge", textContent: "Public bootstrap", title: "Public provider; not ENS-enrolled" }));
     if (op.source === "personal") name.append(Object.assign(document.createElement("span"), { className: "badge", textContent: "private" }));
     const price = op.payment ? `${op.payment.price} wei · test chain ${op.payment.chainId}` : "Free";
     const row = document.createElement("tr");
@@ -342,7 +347,7 @@ for (const card of routingCards) card.addEventListener("change", () => {
   routingMode.dispatchEvent(new Event("change"));
 });
 $<HTMLInputElement>(`routing-scope-${activeRouting.selection === "manual" ? "all" : activeRouting.scope}`).checked = true;
-if (needsVerifiedRestore) $("routing-restore").textContent = "Your saved ENS routing is paused. Select a bootstrap operator to load a proven directory, then apply your routing strategy again. No mock operator replaces a saved ENS identity.";
+if (needsVerifiedRestore) $("routing-restore").textContent = "Your saved ENS routing is paused. Select a public bootstrap provider to load a proven directory, then apply your routing strategy again. A bootstrap entry cannot replace a saved ENS identity.";
 
 const MODE_HELP: Record<RoutingMode, string> = {
   manual: "Manual uses only checked operators. Changes take effect when you press Apply.",
@@ -370,7 +375,7 @@ function updateChoiceButton() {
   const freeEndpoints = available.filter(operator => eligibleForAutomatic(operator));
   const freeCount = operatorKeys(freeEndpoints).length;
   $("routing-source").textContent = directorySource === "bootstrap"
-    ? `Source: curated bootstrap list · mock ENS names. ${freeCount} eligible free operator(s) across ${freeEndpoints.length} endpoint(s), Ethereum mainnet only.`
+    ? `Source: public bootstrap providers, not ENS-enrolled. ${freeCount} eligible free operator(s) across ${freeEndpoints.length} endpoint(s), Ethereum mainnet only.`
     : `Source: ENS directory. ${freeCount} free operator(s) across ${freeEndpoints.length} endpoint(s) have proven list and records; unverified records cannot enter automatic selection.`;
   const same = proposed.selection === activeRouting.selection && proposed.scope === activeRouting.scope &&
     (proposed.scope === "all" || proposed.allowedOperators.join("\n") === activeRouting.allowedOperators.join("\n")) &&
@@ -392,10 +397,10 @@ function showActiveChoice() {
   const active = effectiveOperators();
   const groups = groupOperators(active);
   const waiting = operatorKeys(chosen).length - groups.length;
-  choiceStatusEl.textContent = `Active: ${activeRouting.selection} · ${active.length ? `${groups.length} operator(s) / ${active.length} endpoint(s), using ${groups.map(group => group.endpoints[0]!.ens ?? group.endpoints[0]!.operator ?? "My own node").join(", ")}` : "no operators; reads are stopped"}${waiting > 0 ? ` · ${waiting} paid operator(s) wait for an enabled, funded test session.` : ""}`;
+  choiceStatusEl.textContent = `Active: ${activeRouting.selection} · ${active.length ? `${groups.length} operator(s) / ${active.length} endpoint(s), using ${groups.map(group => operatorDisplayName(group.endpoints[0]!)).join(", ")}` : "no operators; reads are stopped"}${waiting > 0 ? ` · ${waiting} paid operator(s) wait for an enabled, funded test session.` : ""}`;
   paymentPanel?.setOperators(activeRouting.selection === "manual" ? groupOperators(chosen).flatMap(group => {
     const o = group.endpoints[0]!;
-    return o.payment ? [{ id: o.id ?? o.url, name: o.ens ?? o.operator ?? "operator", payment: o.payment, endpoint: o }] : [];
+    return o.payment ? [{ id: o.id ?? o.url, name: operatorDisplayName(o), payment: o.payment, endpoint: o }] : [];
   }) : []);
 }
 function applyChoice() {
@@ -427,23 +432,64 @@ useOperatorsBtn.addEventListener("click", () => {
   }
 });
 
+const directoryFields = {
+  ethRegistry: $<HTMLInputElement>("ens-registry"),
+  registrar: $<HTMLInputElement>("ens-registrar"),
+  codeHash: $<HTMLInputElement>("ens-code-hash"),
+  registry: $<HTMLInputElement>("ens-subregistry"),
+};
+const verifiedRecords = $<HTMLInputElement>("ens-verified-records");
+const directoryRefreshLabel = configuredDirectory ? "Refresh proven ENS directory" : "Refresh ENS directory";
+if (configuredDirectory) {
+  directoryFields.ethRegistry.value = configuredDirectory.ethRegistry;
+  directoryFields.registrar.value = configuredDirectory.registrar.address;
+  directoryFields.codeHash.value = configuredDirectory.registrar.codeHash;
+  directoryFields.registry.value = configuredDirectory.registrar.registry;
+  for (const field of Object.values(directoryFields)) field.readOnly = true;
+  verifiedRecords.checked = true;
+  verifiedRecords.disabled = true;
+  $("directory-config-status").textContent = "This build pins the mainnet ENS registry, registrar runtime and operator subregistry. Proven ENS execution is required. Choose a bootstrap operator, then refresh explicitly. Loading these pins does not change routing.";
+  $("directory-status").textContent = "Configured deployment pins loaded. The directory has not been verified on this page yet.";
+  $("refresh-directory").textContent = directoryRefreshLabel;
+}
+const nonzeroAddress = (value: string) => isAddress(value) && !/^0x0{40}$/i.test(value);
+
 // A full refresh removes revoked/expired choices. Manual routing retains only prior choices; automatic routing adopts the proven eligible roster.
 $("directory-form").addEventListener("submit", async event => {
   event.preventDefault();
   const button = $<HTMLButtonElement>("refresh-directory");
   const state = $("directory-status");
   if (button.disabled) return;
-  const ethRegistry = $<HTMLInputElement>("ens-registry").value.trim();
-  const registrar = $<HTMLInputElement>("ens-registrar").value.trim();
-  const codeHash = $<HTMLInputElement>("ens-code-hash").value.trim();
-  if (!isAddress(ethRegistry) || registrar && (!isAddress(registrar) || !/^0x[\da-fA-F]{64}$/.test(codeHash))) {
-    state.textContent = "Enter a valid .eth registry address. A registrar also needs its trusted 32-byte runtime hash."; state.className = "bad"; return;
+  if (directorySource === "bootstrap" && activeRouting.selection !== "manual" && activeRouting.scope === "selected") {
+    state.textContent = "Apply Manual routing before loading ENS operators from a restricted bootstrap selection. Public provider choices do not authorize matching ENS names; select your ENS operators after the refresh.";
+    state.className = "warn";
+    return;
+  }
+  const ethRegistry = directoryFields.ethRegistry.value.trim();
+  const registrar = directoryFields.registrar.value.trim();
+  const codeHash = directoryFields.codeHash.value.trim();
+  const registry = directoryFields.registry.value.trim();
+  if (configuredDirectory && (ethRegistry !== configuredDirectory.ethRegistry || registrar !== configuredDirectory.registrar.address ||
+      codeHash !== configuredDirectory.registrar.codeHash || registry !== configuredDirectory.registrar.registry || !verifiedRecords.checked)) {
+    state.textContent = "This build requires its configured ENS pins and proven execution. Reload to restore them; no unverified refresh was sent."; state.className = "bad"; return;
+  }
+  if (!nonzeroAddress(ethRegistry) || ((registrar || codeHash || registry) &&
+      (!nonzeroAddress(registrar) || !/^0x[\da-fA-F]{64}$/.test(codeHash) || /^0x0+$/i.test(codeHash) || registry && !nonzeroAddress(registry)))) {
+    state.textContent = "Enter a nonzero .eth registry address. A registrar needs its trusted 32-byte runtime hash; an expected subregistry must be a nonzero address and requires a registrar."; state.className = "bad"; return;
   }
   button.disabled = true; button.textContent = "Reading the full directory…";
   state.textContent = "Reading every operator through Anon-RPC. This can take a few minutes over Tor."; state.className = "muted";
   try {
     const previous = new Set(chosen.map(choiceId));
-    const result = await derpc.refreshDirectory({ ethRegistry, ...(registrar ? { registrar: { address: registrar as Hex, codeHash: codeHash as Hex } } : {}), verifiedRecords: $<HTMLInputElement>("ens-verified-records").checked });
+    const retainedIdentities = new Set(chosen.filter(operator => operator.source !== "bootstrap").map(choiceId));
+    const result = await derpc.refreshDirectory({
+      ethRegistry: ethRegistry as Hex,
+      ...(registrar ? { registrar: { address: registrar as Hex, codeHash: codeHash as Hex, ...(registry ? { registry: registry as Hex } : {}) } } : {}),
+      verifiedRecords: configuredDirectory !== null || verifiedRecords.checked,
+    });
+    if (configuredDirectory && (result.listVerification !== "proven" || result.recordVerification !== "proven")) {
+      throw new Error("The configured ENS directory requires proven membership and records");
+    }
     latestDirectory = result;
     const refreshed = result.operators.map(o => ({ ...o, source: "ens" as const, listVerification: result.listVerification, recordVerification: result.recordVerification }));
     // An ENS name can rotate its URL. Observations about the old endpoint do not prove the new one.
@@ -453,7 +499,7 @@ $("directory-form").addEventListener("submit", async event => {
     }
     available = [...refreshed, ...(personalNode ? [personalNode] : [])];
     directorySource = "ens";
-    chosen = activeRouting.selection === "manual" ? available.filter(o => previous.has(choiceId(o))) : automaticOperators(activeRouting);
+    chosen = activeRouting.selection === "manual" ? available.filter(o => retainedIdentities.has(choiceId(o))) : automaticOperators(activeRouting);
     const removed = [...previous].filter(id => !chosen.some(o => choiceId(o) === id)).length;
     activeRouting = { ...activeRouting, source: "ens", ...(activeRouting.selection === "manual" ? { allowedOperators: operatorKeys(chosen.filter(o => o.source !== "personal")) } : {}) };
     // refreshDirectory already applied revocation and, in automatic mode, the full proven roster.
@@ -463,7 +509,7 @@ $("directory-form").addEventListener("submit", async event => {
     state.className = result.recordVerification === "proven" ? "ok" : "warn";
     $("directory-rejected").replaceChildren(...result.rejected.map(entry => Object.assign(document.createElement("li"), { textContent: `${entry.name}: ${entry.reason}` })));
   } catch (error) { state.textContent = `Directory refresh failed: ${rootError(error).text}. Check the deployment addresses and retry.`; state.className = "bad"; }
-  finally { button.disabled = false; button.textContent = "Refresh ENS directory"; renderStatus(derpc.status()); }
+  finally { button.disabled = false; button.textContent = directoryRefreshLabel; renderStatus(derpc.status()); }
 });
 
 $("personal-form").addEventListener("submit", event => {
@@ -523,6 +569,7 @@ $("verified-call-form").addEventListener("submit", async event => {
   if (!isAddress(to) || !/^0x(?:[\da-fA-F]{2})*$/.test(data)) { result.textContent = "Enter a contract address and even-length hex call data."; result.className = "bad"; return; }
   if (button.disabled) return;
   verifiedCallInProgress = true;
+  updateReadControls(derpc.status());
   button.disabled = true; button.textContent = "Executing against proven state…";
   result.textContent = "Fetching and verifying the state needed by the call…"; result.className = "muted";
   try {
@@ -634,12 +681,27 @@ async function runReads() {
 
 readAgainBtn.addEventListener("click", () => void readAll());
 injectLiarBtn.addEventListener("click", () => {
-  injectLiarBtn.disabled = true;
-  if (activeRouting.selection !== "manual" || directoryFreshness(derpc.status()).blocked) return;
+  if (readsInProgress || verifiedCallInProgress || activeRouting.selection !== "manual" || directoryFreshness(derpc.status()).blocked) return;
   const active = effectiveOperators();
   if (!active.length) return;
-  derpc.setOperators([simulatedLyingOperator(active[0]!), ...active]);
-  void readAll();
+  injectLiarBtn.disabled = true;
+  const liar = { ...simulatedLyingOperator(active[0]!), priority: Math.min(...active.map(operator => operator.priority)) - 1 };
+  let cleared = false;
+  try {
+    // Reset this explicit demo's account affinity so prior healthy reads cannot skip the injected proof.
+    derpc.setOperators([]);
+    cleared = true;
+    derpc.setOperators([liar, ...active]);
+    $("routing-error").textContent = "";
+    void readAll();
+  } catch (error) {
+    if (cleared) {
+      chosen = []; activeRouting = { ...activeRouting, allowedOperators: [] };
+      saveChoice(chosen); persistRouting(); renderOperators(); showActiveChoice();
+    }
+    $("routing-error").textContent = `Demo injection failed${cleared ? "; reads remain stopped. Apply a valid selection before retrying" : ""}: ${rootError(error).text}`;
+    updateReadControls(derpc.status());
+  }
 });
 cutNetworkBtn.addEventListener("click", () => {
   cutNetworkBtn.disabled = injectLiarBtn.disabled = true;
@@ -650,9 +712,9 @@ cutNetworkBtn.addEventListener("click", () => {
 // ---- 4 · Your operators, live ----
 function label(id: string): string {
   if (id.startsWith("simulated-liar:")) return "simulated lying operator";
-  const operator = [...available, ...chosen].find(o => o.id === id || o.url === id || o.ens === id);
+  const operator = [...available, ...chosen].find(o => o.id === id || o.url === id || choiceId(o) === id);
   if (operator) {
-    const name = operator.ens ?? operator.operator ?? "operator";
+    const name = operatorDisplayName(operator);
     return operator.source !== "personal" && operator.endpointId ? `${name} / ${operator.endpointId}` : name;
   }
   try { return new URL(id).host; } catch { return id; }

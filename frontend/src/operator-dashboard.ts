@@ -65,9 +65,17 @@ export class OperatorObservations {
 const idOf = (operator: DashboardOperator) => operator.id ?? operator.url;
 const OBSERVATION_RECENT_MS = 60_000;
 
+/** Display provenance comes from the candidate source, never from an ENS-shaped routing key. */
+export function operatorDisplayName(operator: DashboardOperator): string {
+  if (operator.source === "personal") return "My own node";
+  if (operator.source === "ens" && operator.ens) return operator.ens;
+  if (operator.operator) return operator.operator;
+  try { return new URL(operator.url).host; } catch { return "Public endpoint"; }
+}
+
 function identity(operator: DashboardOperator): string {
   if (operator.source === "personal") return "Private configuration · ENS not checked";
-  if (operator.source === "bootstrap") return "Mock ENS · bootstrap list";
+  if (operator.source === "bootstrap") return "Public bootstrap · not ENS-enrolled";
   if (operator.source === "unknown") return "Current route · identity provenance not loaded";
   return `ENS list ${operator.listVerification === "proven" ? "proven" : "unverified"} · records ${operator.recordVerification === "proven" ? "proven" : "unverified"}`;
 }
@@ -102,14 +110,16 @@ export function renderOperatorDashboard(input: {
     const simulation = group.endpoints.some(endpoint => idOf(endpoint).startsWith("simulated-liar:"));
     if (simulation) simulationCount += group.endpoints.length;
     const selected = selectedIds.has(group.key) || simulation;
-    const name = simulation ? "Simulated lying operator" : first.source === "personal" ? "My own node" : first.operator ?? first.ens ?? group.key;
+    const name = simulation ? "Simulated lying operator" : operatorDisplayName(first);
     const heading = document.createElement("tr");
     heading.className = "dashboard-operator-row";
     heading.dataset.operatorKey = first.source === "personal" ? "personal" : group.key;
     const title = document.createElement("th");
     title.colSpan = 7; title.scope = "row"; title.id = `operator-group-${groupIndex}`;
     title.append(Object.assign(document.createElement("span"), { className: "dashboard-name", textContent: name }));
-    const identityName = simulation ? "Demo injection" : first.source === "personal" ? "Unpublished identity" : first.ens ?? group.key;
+    const identityName = simulation ? "Demo injection" : first.source === "personal" ? "Unpublished identity"
+      : first.source === "bootstrap" ? "Public bootstrap · not ENS-enrolled"
+      : first.source === "ens" ? first.ens ?? "ENS identity unavailable" : "Identity provenance not loaded";
     title.append(Object.assign(document.createElement("span"), {
       className: "dashboard-detail muted", textContent: `${identityName} · ${group.endpoints.length} endpoint${group.endpoints.length === 1 ? "" : "s"} · ${selected ? "Selected" : "Not selected"}`,
     }));
