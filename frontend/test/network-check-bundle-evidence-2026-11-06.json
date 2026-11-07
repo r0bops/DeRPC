@@ -1,0 +1,79 @@
+{
+  "startedAt": "2026-11-06T23:45:54.655Z",
+  "url": "https://derpc.eth.limo/demo/network-check.html",
+  "requests": [
+    "https://derpc.eth.limo/demo/network-check.html",
+    "https://derpc.eth.limo/demo/assets/check-DhJ4qm3I.js",
+    "https://derpc.eth.limo/demo/assets/rolldown-runtime-XKyaHtl9.js",
+    "https://derpc.eth.limo/demo/assets/utils-Bpv4vmSW.js",
+    "https://derpc.eth.limo/demo/assets/sha3-CixuFzsY.js",
+    "https://derpc.eth.limo/demo/assets/endpoints-CRJPe_u7.js",
+    "https://derpc.eth.limo/demo/assets/verify-BrqvWFSp.js",
+    "https://derpc.eth.limo/demo/assets/reader-DA5FvdMd.js",
+    "https://derpc.eth.limo/demo/assets/dist-CM5luU_N.js",
+    "https://derpc.eth.limo/demo/assets/preload-helper-CRzLMJPS.js",
+    "https://derpc.eth.limo/demo/assets/sha2-CsZgHejA.js",
+    "https://derpc.eth.limo/demo/assets/__vite-browser-external-TtGlo6oh.js",
+    "https://derpc.eth.limo/demo/assets/src-DlO1qo0x.js",
+    "https://derpc.eth.limo/demo/assets/direct-connections-CHHR_MOD.js",
+    "https://derpc.eth.limo/demo/assets/src-B3Gfg644.css",
+    "https://derpc.eth.limo/demo/assets/derpc-lockup-CiJcctT3.svg",
+    "https://derpc.eth.limo/demo/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+    "https://derpc.eth.limo/demo/assets/favicon-Try9hxE_.svg",
+    "https://derpc.eth.limo/demo/assets/dist-DOxWJp2w.js"
+  ],
+  "workerStatus": "ready — tor-js 0.4.4 via configured gateway (1) after 13.3 s",
+  "results": [
+    [
+      "Tor exit check (isolationKey key-a)",
+      "IsTor=true exit 192.42.116.60",
+      "1.32 s",
+      "0.0 KB"
+    ],
+    [
+      "Tor exit check (isolationKey key-b)",
+      "IsTor=true exit 192.42.116.107",
+      "1.79 s",
+      "0.0 KB"
+    ],
+    [
+      "Tor exit check (isolationKey key-a)",
+      "IsTor=true exit 192.42.116.60",
+      "1.27 s",
+      "0.0 KB"
+    ],
+    [
+      "Tor exit check (isolationKey key-b)",
+      "IsTor=true exit 192.42.116.107",
+      "1.56 s",
+      "0.0 KB"
+    ],
+    [
+      "Isolation observation (not proof)",
+      "key-a exits {192.42.116.60} vs key-b exits {192.42.116.107}: no overlap",
+      "0.00 s",
+      ""
+    ],
+    [
+      "eth_getProof via eth.drpc.org",
+      "accountProof 9 nodes, storageProof 1",
+      "2.29 s",
+      "13.7 KB"
+    ]
+  ],
+  "directLoads": [
+    [
+      "derpc.eth.limo",
+      "page assets",
+      "18"
+    ]
+  ],
+  "pageErrors": [],
+  "directStatus": "18 HTTP(S) resource timing observations retained for this page.",
+  "hosts": [
+    "derpc.eth.limo"
+  ],
+  "cdnBundleRequests": [],
+  "elapsedMs": 29192,
+  "ok": true
+}
