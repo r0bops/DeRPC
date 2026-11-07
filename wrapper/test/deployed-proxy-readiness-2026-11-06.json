@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-deployed-demo-proxy-readiness",
+  "checkedAt": "2026-11-06T23:52:23.198072+00:00",
+  "operatorGrouping": "Three separate team-run demo entries, explicitly selected by the user. They do not establish independent ownership.",
+  "proxies": [
+    {
+      "name": "demo-1.derpc.eth",
+      "administrativeHost": "209.250.237.225",
+      "endpoint": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion/rpc",
+      "beacon": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion",
+      "identity": {
+        "ens": "demo-1.derpc.eth",
+        "signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "chains": [
+          1
+        ],
+        "version": "1",
+        "service": "demo-proxy"
+      },
+      "administrativeChecks": {
+        "publicIdentityReadOverSSH": true,
+        "poolOnionHostnameReadOverSSH": true
+      },
+      "registeredInEns": false
+    },
+    {
+      "name": "demo-2.derpc.eth",
+      "administrativeHost": "192.248.176.219",
+      "endpoint": "http://4ckka4hvhybii4n7nltw6ckut2mc4gkqvp3u2b3lo4sg5omqnp4oxfad.onion/rpc",
+      "beacon": "http://4ckka4hvhybii4n7nltw6ckut2mc4gkqvp3u2b3lo4sg5omqnp4oxfad.onion",
+      "identity": {
+        "ens": "demo-2.derpc.eth",
+        "signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "chains": [
+          1
+        ],
+        "version": "1",
+        "service": "demo-proxy"
+      },
+      "administrativeChecks": {
+        "publicIdentityReadOverSSH": true,
+        "poolOnionHostnameReadOverSSH": true
+      },
+      "registeredInEns": false
+    },
+    {
+      "name": "demo-3.derpc.eth",
+      "administrativeHost": "45.76.81.156",
+      "endpoint": "http://kz4znzvgkoybyej4mwuctj4mhqpkv57kiscdxvxsguystmv3vtjfimad.onion/rpc",
+      "beacon": "http://kz4znzvgkoybyej4mwuctj4mhqpkv57kiscdxvxsguystmv3vtjfimad.onion",
+      "identity": {
+        "ens": "demo-3.derpc.eth",
+        "signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "chains": [
+          1
+        ],
+        "version": "1",
+        "service": "demo-proxy"
+      },
+      "administrativeChecks": {
+        "publicIdentityReadOverSSH": true,
+        "poolOnionHostnameReadOverSSH": true
+      },
+      "registeredInEns": false
+    }
+  ],
+  "ownership": {
+    "teamGateway": "45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg",
+    "declaredInPreparedRecords": true,
+    "sameOwnerPairingRefused": true
+  },
+  "browserAttempts": [
+    {
+      "started": "2026-11-06T23:46:46.792Z",
+      "finished": "2026-11-06T23:47:35.815Z",
+      "gateway": "152.236.3.22:12298:uEiCH0VdbhryzJcMtCfB0vLA4sOvHdQ4hq5w7CopcwU59bQ",
+      "endpoint": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion/rpc",
+      "ok": false,
+      "phase": "worker-startup",
+      "error": {
+        "name": "LiveCheckDeadline",
+        "message": "worker startup exceeded harness bound 45000ms"
+      },
+      "requestsThroughTransport": 0,
+      "noDirectRpcOrBeacon": true,
+      "close": {
+        "error": {
+          "name": "TransportUnavailableError",
+          "message": "DeRPC: anonymous transport is closed; refusing to send (no direct fallback)"
+        },
+        "callsAfterClose": 0,
+        "observationMs": 1000,
+        "state": "closed"
+      },
+      "changedSources": [],
+      "sourcesBefore": {
+        "provider/src/api/derpc.ts": "db26fb1d45448bb32e6a5f5a1b4bf24dadc3f89b2b1abeaaff2cc30d5439fc7a",
+        "provider/src/api/eip1193.ts": "e3635ae3abe6284e063c2933f56b8d26b3be8fb5ca40adcf86f4924672e86df1",
+        "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+        "provider/src/pool/pool.ts": "e6aaa1e2bee9717f9f1703944ea6aa129e431f8b3274c2aa94acfb16c9393840",
+        "provider/src/light-client/header-source.ts": "796ea4dca2e9f4d28ac1c78e539ccca7c8756543a28b2a14c8802469ad62840a",
+        "provider/src/transport/anon-transport.ts": "6f868d5021207c5d46ac529451a0d2f74a59c888e32d5de3711f955591595940",
+        "provider/src/transport/response-body.ts": "a0b3d4692e81cee31137bc67c8a9c85dad2732422080053e7917d6c0c810711a",
+        "provider/src/transport/json-rpc.ts": "427616e720bf80d963f76aab7d14b2883fad03487993551c522b4140b73757d6",
+        "provider/src/config/mainnet.ts": "b64e2640a015fa83c3fe12550016f47c4e7f5023b3526fa8be1e9b00feef7ede",
+        "frontend/build/gateways.ts": "56f5ba46d703af36029d4d793ca0e2e857c79667410ef741b4b8e1a25fcc0f88",
+        "patches/@lodestar__light-client@1.43.0.patch": "a0da4dcf9be9e10813ec2f8f1715c1585e52aa0a3acef83758c480ba944b775d",
+        "wrapper/src/server.ts": "db8861851cdbcfccc54623b0818a9cd73b59cf1571b54524682390fdc925b5d9",
+        "wrapper/src/proxy.ts": "bacf8188ab524a00bff7cef7ce105a4a1f26767d07a21b57cff310bd5423a7ca",
+        "wrapper/test/onion-availability.mjs": "54479582ecf43dd16e1ba661e6d86f81517f14b2dbaf57315dec932436d27af9"
+      },
+      "workerGatewayFailureObserved": true
+    },
+    {
+      "started": "2026-11-06T23:49:09.388Z",
+      "finished": "2026-11-06T23:49:58.702Z",
+      "gateway": "152.236.3.22:12298:uEiCH0VdbhryzJcMtCfB0vLA4sOvHdQ4hq5w7CopcwU59bQ",
+      "endpoint": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion/rpc",
+      "ok": false,
+      "phase": "worker-startup",
+      "error": {
+        "name": "LiveCheckDeadline",
+        "message": "worker startup exceeded harness bound 45000ms"
+      },
+      "requestsThroughTransport": 0,
+      "noDirectRpcOrBeacon": true,
+      "close": {
+        "error": {
+          "name": "TransportUnavailableError",
+          "message": "DeRPC: anonymous transport is closed; refusing to send (no direct fallback)"
+        },
+        "callsAfterClose": 0,
+        "observationMs": 1000,
+        "state": "closed"
+      },
+      "changedSources": [],
+      "sourcesBefore": {
+        "provider/src/api/derpc.ts": "db26fb1d45448bb32e6a5f5a1b4bf24dadc3f89b2b1abeaaff2cc30d5439fc7a",
+        "provider/src/api/eip1193.ts": "e3635ae3abe6284e063c2933f56b8d26b3be8fb5ca40adcf86f4924672e86df1",
+        "provider/src/operators/endpoint.ts": "5ce05c2f8a058fb6af788e4eb4132f3b824e09d98ff3f7d22df9357ddf410120",
+        "provider/src/pool/pool.ts": "e6aaa1e2bee9717f9f1703944ea6aa129e431f8b3274c2aa94acfb16c9393840",
+        "provider/src/light-client/header-source.ts": "796ea4dca2e9f4d28ac1c78e539ccca7c8756543a28b2a14c8802469ad62840a",
+        "provider/src/transport/anon-transport.ts": "6f868d5021207c5d46ac529451a0d2f74a59c888e32d5de3711f955591595940",
+        "provider/src/transport/response-body.ts": "a0b3d4692e81cee31137bc67c8a9c85dad2732422080053e7917d6c0c810711a",
+        "provider/src/transport/json-rpc.ts": "427616e720bf80d963f76aab7d14b2883fad03487993551c522b4140b73757d6",
+        "provider/src/config/mainnet.ts": "b64e2640a015fa83c3fe12550016f47c4e7f5023b3526fa8be1e9b00feef7ede",
+        "frontend/build/gateways.ts": "56f5ba46d703af36029d4d793ca0e2e857c79667410ef741b4b8e1a25fcc0f88",
+        "patches/@lodestar__light-client@1.43.0.patch": "a0da4dcf9be9e10813ec2f8f1715c1585e52aa0a3acef83758c480ba944b775d",
+        "wrapper/src/server.ts": "db8861851cdbcfccc54623b0818a9cd73b59cf1571b54524682390fdc925b5d9",
+        "wrapper/src/proxy.ts": "bacf8188ab524a00bff7cef7ce105a4a1f26767d07a21b57cff310bd5423a7ca",
+        "wrapper/test/onion-availability.mjs": "54479582ecf43dd16e1ba661e6d86f81517f14b2dbaf57315dec932436d27af9"
+      },
+      "workerGatewayFailureObserved": true
+    }
+  ],
+  "limits": [
+    "SSH observations authenticate the administrated host, not ENS enrollment or a client proof.",
+    "The independent upstream gateway failed before any proxy request in both browser attempts; these attempts do not establish whether the deployed proxies are reachable through that worker.",
+    "The observed gateway connection failure does not distinguish a remote outage from local or network UDP/WebRTC restrictions.",
+    "No wrapper service, onion identity, production timeout or gateway ownership guard was changed.",
+    "No ENS transaction was signed or sent."
+  ]
+}

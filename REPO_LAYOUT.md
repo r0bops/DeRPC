@@ -37,7 +37,7 @@ specs/
 ├── ENS_TOR_MILESTONE.md — free ENS/onion milestone, scoped rotation/delisting demo and multi-endpoint completion gates
 ├── ANON_RPC.md    — notes on the upstream Anon-RPC spec, plus design findings
 ├── OPERATIONS.md  — implementation evidence, deployment commands and remaining external gates
-├── QA_REPORT.md   — Nov 6 project-wide test results, reproduced defects and remaining release evidence
+├── QA_REPORT.md   — Nov 6–7 test results, reproduced defects and remaining release evidence
 ├── TRACKS.md      — prize tracks, judging criteria, qualification checklists
 ├── SUBMISSION.md  — ETHGlobal submission, video and AI rules
 ├── SUBMISSION_DRAFT.md — project and partner form text, timed human-narrated demo script and final handoff gates
@@ -112,6 +112,7 @@ frontend/
 ├── package.json        — Vite 8.3.5, TypeScript 5.9.3, viem 2.57.8, self-hosted Inter
 ├── vite.config.ts      — relative asset paths, public-gateway release checks, three pages and dev-only call logging
 ├── build/gateways.ts   — gateway address validation and release-output scanning
+├── build/ens-directory.ts — strict optional mainnet directory/runtime pins for local and release builds
 ├── test/              — safe rendering, ENS/payment controls, wallet chain binding, release gateways, Firefox cache/private-window HTTP evidence and opt-in public VPS/IPFS-path and live ENS-domain verification; ipns-hosted-firefox-evidence-2026-11-06.json records the post-IPNS activation run and preceding canceled-asset attempt
 ├── index.html          — the demo: start-up status, operator choice, verified reads, live operators, direct connections
 ├── example.html        — the smallest integrator example
@@ -139,7 +140,8 @@ web/
 ├── deployment-mainnet-alpha-2026-11-06.json — historical static deployment and browser evidence, marked removed after the ENS/IPFS hosting decision
 ├── deployment-ens-ipfs-2026-11-06.json — published IPFS release, asset/CAR checks, ENS transaction and public HTTPS browser evidence
 ├── deployment-ipns-2026-11-06.json — stable IPNS name, public signed record, independent resolution, encrypted-backup restore evidence and ENS activation status
-├── deployment-github-ipns-2026-11-06.json — restricted SSH rehearsal, GitHub environment scope, native/IPNS/HTTPS checks and remaining first Actions-run gate
+├── deployment-github-ipns-2026-11-06.json — historical restricted SSH rehearsal, GitHub environment scope and native/IPNS/HTTPS checks
+├── deployment-ops-observation-2026-11-07.json — current signed IPNS release, renewal limits, local exposure and existing second-pin capacity
 ├── ens-ipns-publication-2026-11-06.json — owner-signed IPNS switch, two-source receipt/record checks, HTTPS asset hashes and browser evidence
 ├── deployment-vps-2026-11-06.json — gateway/IPFS services, binary hashes, restart checks and fresh-node public IPFS retrieval evidence
 ├── ens-website-transaction-2026-11-06.json — unsigned mainnet contenthash update, decoded fields, two-source simulation and current resolver authorities
@@ -154,7 +156,7 @@ web/
     ├── main.ts, page.ts — hash routing and page interface
     ├── ui.ts           — shared navigation, live-demo link and finalized-read example
     ├── styles.css, tokens.css — site styles and design tokens
-    ├── directory/      — network/operator data, validation, local multi-node onboarding drafts, unsigned operator-config conversion and directory styles
+    ├── directory/      — public bootstrap data, pending-operators.ts bound to the active two-operator configuration, validation, local onboarding drafts, unsigned operator-config conversion and directory styles
     └── pages/          — landing, directory, network, operator, operate and not-found views
 ```
 
@@ -181,9 +183,9 @@ contracts/
 ├── README.md                    — contract trust, layout, roles and deployment workflow
 ├── src/
 │   ├── QueryEscrow.sol          — immutable native-asset prepaid sessions, typed vouchers, close/refund/top-up
-│   └── OperatorRegistrar.sol    — free curated ENSv2 registration, expiry/delisting, provable list and payee
-├── scripts/                     — compilation, unsigned deployment and ENS rotation/renewal/delisting plans, receipt verification and local wallet review helpers
-├── deployments/                 — templates, public ENS preflights, local lifecycle/fork/gas evidence, verified Hoodi escrow manifest and RPC cross-check
+│   └── OperatorRegistrar.sol    — open operator-signed ENSv2 registration, persistent moderation, expiry, provable list and payee
+├── scripts/                     — compilation, unsigned deployment and ENS rotation/renewal/delisting plans, receipt verification; ens-wallet.mjs/ens-wallet-client.mjs provide local staged wallet review with a durable receipt journal; ens-join.mjs prepares and verifies operator-only enrollment after namespace setup, alongside the test-payment wallet helper
+├── deployments/                 — active two-operator ENS config/unsigned plan, historical three-demo preparation, public preflights, local lifecycle/fork/gas evidence, verified Hoodi escrow manifest and RPC cross-check
 └── test/                        — escrow replay/refund/authorization, registrar role/layout and actual-code ENS lifecycle checks
 ```
 
@@ -200,6 +202,7 @@ wrapper/
 ├── compose.payments.yaml      — settlement-key secret and persistent payment-state volume
 ├── torrc                      — pool/personal onion services; proof-of-work disabled
 ├── release/                   — downloadable free-pool Compose, launcher, public env example, pool-only torrc and operator instructions
+├── demo/                      — explicitly enabled server fault overlay for demo-2/demo-3, SSH-only timed controls and recovery runbook; absent from the operator release
 ├── scripts/package-release.mjs — native image builds, isolated checks, archive/checksum generation and installation checks without host Node
 ├── src/
 │   ├── proxy.ts                — body-aware RPC/beacon allowlists, budgets and finalized cache
@@ -216,6 +219,7 @@ wrapper/
 
 ```
 payments/
+├── README.md                  — payment authority, delegated agent caps, restart recovery and deployment boundaries
 ├── package.json, tsconfig.json — shared Viem typed-data protocol and client package
 ├── src/
 │   ├── protocol.ts             — escrow ABI and separate read, voucher and close authorization domains
@@ -247,7 +251,7 @@ scripts/
 ├── verify-ipfs.mjs  — compares a pinned release with its manifest through a local directory, an explicit provider, or public gateways
 ├── verify-site-release.mjs — independently checks a pinned CID or signed IPNS publication and every website file
 ├── check-site-package.mjs — binds Actions artifacts and durable publication acceptance to the exact tested release
-└── vps/             — Ubuntu/systemd gateway/IPFS services, restricted release-site handler/installer/tests, GITHUB_RELEASE.md for deployment and retry operations, and IPNS.md for recovery; identities and backups stay outside the repo
+└── vps/             — Ubuntu/systemd gateway/IPFS services, restricted release-site handler/installer/tests, GITHUB_RELEASE.md for deployment and retry operations, and IPNS.md for recovery; identities and backups stay outside the repo; install-demo-proxy.sh installs a team-run demonstration proxy; install-demo-faults.sh and demo-scenario.sh install and control timed faults on demo-2/demo-3 over SSH
 ```
 
 ## /reference — upstream context (not committed)

@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-deployed-server-demo-fault-evidence",
+  "recordedAt": "2026-11-07T00:20:17.625Z",
+  "sourceSha256": {
+    "wrapper/demo/control.mjs": "d2a47cfaf473d3dd3c696eb496ac410c92344eec52d34625fd952594058dc077",
+    "wrapper/demo/proxy.mjs": "6cfe2155ecc4007eee5bb8b552ba92ad3e3bfb71c4a2704fce5490a91d9512ff",
+    "wrapper/demo/server.mjs": "36982e1c390fefbc3e25cf96255879fb466cac4bbd2361acc68812ab71b7ae53",
+    "scripts/vps/install-demo-faults.sh": "79747572a710b9dd09b287327480ee4062154cf9eb6920d04be19e5300b1f244",
+    "scripts/vps/demo-scenario.sh": "36147687c9e5e944dabacbd4b4fb8b7be253402e60e3a11679f28fa2bae06865"
+  },
+  "deployment": {
+    "demo1": {
+      "host": "209.250.237.225",
+      "role": "healthy reference",
+      "modified": false,
+      "administrativeIdentityMatches": true
+    },
+    "demo2": {
+      "host": "192.248.176.219",
+      "imageId": "sha256:c22e5267c46684e9eada9bb9042563e87af39279c7cface644d37dae33df23c8",
+      "onion": "4ckka4hvhybii4n7nltw6ckut2mc4gkqvp3u2b3lo4sg5omqnp4oxfad.onion",
+      "sourceHashesMatch": true,
+      "onionIdentityPreserved": true,
+      "modeAtFinalCheck": "off"
+    },
+    "demo3": {
+      "host": "45.76.81.156",
+      "imageId": "sha256:4a96ab36b88848c49d51627c6413ee01b3bb5bdc0aeca8fc2ed6b2269c7038e8",
+      "onion": "kz4znzvgkoybyej4mwuctj4mhqpkv57kiscdxvxsguystmv3vtjfimad.onion",
+      "sourceHashesMatch": true,
+      "onionIdentityPreserved": true,
+      "modeAtFinalCheck": "off"
+    }
+  },
+  "administrative": {
+    "checkedAt": "2026-11-07T00:12:40.208Z",
+    "kind": "deployed-server-demo-faults",
+    "transport": "SSH administration and server-loopback HTTP",
+    "checks": [
+      {
+        "server": "demo-2",
+        "host": "192.248.176.219",
+        "mode": "corrupt-proof",
+        "activation": {
+          "demoOnly": true,
+          "mode": "corrupt-proof",
+          "id": "8d06e7dc6fcedb5cb9512da2bebffd2a",
+          "issuedAt": 1794010371663,
+          "expiresAt": 1794010431663
+        },
+        "block": {
+          "number": "0x19235c7",
+          "hash": "0x847061fc34888e12a25a8255ed87c4fd9c3eb5cd1a3ba71cda2d8f736f52f307",
+          "stateRoot": "0xb5024bc7f9d1237e355ee8ff714f1a67d0871526e36b89bd13f61306643f959d"
+        },
+        "normalStatus": 200,
+        "corruptedStatus": 200,
+        "proofRejected": true,
+        "recovered": true,
+        "normalProofSha256": "8e5dd2fe80323214b82c9e07cf1476455fbe47a48c3c75ae35ff02f1bf1398e2",
+        "corruptedProofSha256": "2ac1d7fcd48bf8d094db76f46dd54577e4e2de275fd9a90e0c499166d960e45d"
+      },
+      {
+        "server": "demo-3",
+        "host": "45.76.81.156",
+        "mode": "unavailable",
+        "activation": {
+          "demoOnly": true,
+          "mode": "unavailable",
+          "id": "a1817cef53374601f2c434378a2b6461",
+          "issuedAt": 1794010383266,
+          "expiresAt": 1794010393266
+        },
+        "unavailableStatus": 503,
+        "automaticExpiry": true,
+        "postExpiryMode": "off",
+        "recoveredChainId": "0x1"
+      }
+    ],
+    "limits": [
+      "This is an administrative server check, not Anon-RPC or light-client consensus verification.",
+      "The proof root is read administratively from the execution upstream.",
+      "The separate unit integration uses recorded mainnet proofs and the real verifier/pool.",
+      "ENS enrollment and independent-gateway browser verification remain pending."
+    ],
+    "ok": true,
+    "finalStates": {
+      "demo-2": {
+        "demoOnly": true,
+        "mode": "off"
+      },
+      "demo-3": {
+        "demoOnly": true,
+        "mode": "off"
+      }
+    },
+    "finishedAt": "2026-11-07T00:13:24.090Z"
+  },
+  "nativeTor": {
+    "startedAt": "2026-11-07T00:17:29.086Z",
+    "transport": "native Tor 0.4.9.11 via temporary loopback SOCKS client",
+    "checks": [
+      {
+        "name": "demo-2",
+        "mode": "corrupt-proof",
+        "publicStatus": true,
+        "activation": {
+          "demoOnly": true,
+          "mode": "corrupt-proof",
+          "id": "87441434b6037eeb3ef056eab9e8b970",
+          "issuedAt": 1794010655264,
+          "expiresAt": 1794010745264
+        },
+        "responseStatus": 200,
+        "proofRejected": true,
+        "ok": true,
+        "reset": {
+          "demoOnly": true,
+          "mode": "off"
+        }
+      },
+      {
+        "name": "demo-3",
+        "mode": "unavailable",
+        "publicStatus": true,
+        "activation": {
+          "demoOnly": true,
+          "mode": "unavailable",
+          "id": "ecbf6d01c1eb89f1389ff3bae4afa31b",
+          "issuedAt": 1794010668666,
+          "expiresAt": 1794010758666
+        },
+        "responseStatus": 503,
+        "ok": true,
+        "reset": {
+          "demoOnly": true,
+          "mode": "off"
+        }
+      }
+    ],
+    "earlierReachability": [
+      {
+        "name": "demo-2",
+        "attempt": 1,
+        "result": "45-second Tor connection timeout"
+      },
+      {
+        "name": "demo-2",
+        "attempt": 2,
+        "result": "public status retrieved with a fresh SOCKS isolation key"
+      },
+      {
+        "name": "demo-3",
+        "result": "public status retrieved"
+      }
+    ],
+    "limits": [
+      "Native Tor onion delivery, not the browser Anon-RPC harness.",
+      "Proof consistency uses the administratively read root recorded in the loopback check; no light-client consensus claim.",
+      "ENS deployment and independent-gateway browser verification remain pending."
+    ],
+    "ok": true,
+    "finishedAt": "2026-11-07T00:17:53.469Z"
+  },
+  "localValidation": {
+    "wrapperTests": 65,
+    "frontendTests": 392,
+    "webAndFrontendBuild": true,
+    "wrapperTypecheck": true
+  },
+  "limitations": [
+    "Deliberate team-operated demos, not independent bad actors.",
+    "No ENS transaction was sent; operator enrollment is pending.",
+    "Native Tor checks do not clear the separate browser Anon-RPC/independent-gateway gate.",
+    "Proof rejection in live probes uses an administratively obtained root; this is not a consensus verification claim.",
+    "The website changes are local and uncommitted; only the two server overlays were deployed."
+  ]
+}

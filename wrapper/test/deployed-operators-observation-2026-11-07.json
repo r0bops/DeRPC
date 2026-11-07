@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "kind": "deployed-team-operator-identities-and-health",
+  "checkedAt": "2026-11-07T00:31:59.255468+00:00",
+  "sourceHead": "e2af22ded9bb0e0e62427a3aec6e9f496dd84495",
+  "decision": "Keep demo-1 and demo-2 as two separate legacy operator entries, as clarified by the user. Do not group them or add endpoint IDs.",
+  "migrationRequired": false,
+  "imageOrSourceUpdateRequired": false,
+  "remoteChangesPerformed": false,
+  "servicesRestarted": false,
+  "faultsActivated": false,
+  "onionKeysOrPersonalHostnamesRead": false,
+  "processArgumentsOrEnvironmentDumped": false,
+  "operators": [
+    {
+      "host": "209.250.237.225",
+      "name": "demo-1.derpc.eth",
+      "operatorId": "demo-1.derpc.eth",
+      "ownership": "team-owned demonstration proxy; not an independent third-party operator",
+      "endpointMode": "legacy-single-endpoint",
+      "endpoint": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion/rpc",
+      "beacon": "http://g7mnbyz5mu6gucvkb5oanp2cxmm54ufcguddkdnrpzazsbsyy2zoyhid.onion",
+      "declaredTeamGateways": [
+        "45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg"
+      ],
+      "identity": {
+        "version": "1",
+        "ens": "demo-1.derpc.eth",
+        "signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "chains": [
+          1
+        ],
+        "service": "demo-proxy"
+      },
+      "publicHostnameMatchedPreviouslyRecordedValue": true,
+      "inspectionAt": "2026-11-07T00:28:49.396891+00:00",
+      "health": {
+        "observedAt": "2026-11-07T00:30:39.116887+00:00",
+        "scope": "administrative loopback health; no anonymous transport or cryptographic verification",
+        "identity": {
+          "httpStatus": 200,
+          "identity": {
+            "version": "1",
+            "ens": "demo-1.derpc.eth",
+            "signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+            "chains": [
+              1
+            ],
+            "service": "demo-proxy"
+          }
+        },
+        "chain": {
+          "httpStatus": 200,
+          "chainId": "0x1",
+          "rpcErrorCode": null
+        },
+        "beacon": {
+          "httpStatus": 200,
+          "finalizedHeaderPresent": true,
+          "finalizedSlot": "15598880"
+        },
+        "overlayTorrcExists": false
+      },
+      "publicRuntimeConfiguration": {
+        "DERPC_ENS_NAME": "demo-1.derpc.eth",
+        "DERPC_SIGNER": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "DERPC_ENDPOINT_ID": "",
+        "DERPC_DEMO_PROXY": "true"
+      },
+      "paymentsConfigured": false,
+      "personalConfiguredInPublicWrapper": false,
+      "checkoutHead": "3c5003cd5186e1101f1998be7115114a5843be15",
+      "wrapperSourceSha256": {
+        "main.ts": "266ba617cb419a4bb24a29952b97fda710276057694ee8aa63b9cbe31c6855be",
+        "proxy.ts": "bacf8188ab524a00bff7cef7ce105a4a1f26767d07a21b57cff310bd5423a7ca"
+      },
+      "wrapperSourcesMatchCurrentWorkspace": true,
+      "imageId": "sha256:67fe514dae6218ea398a8e43b082c150b2f5ace4d0a66f9e6ee2e89741867fd0",
+      "endpointIdCapable": true,
+      "runningComposeFiles": {
+        "proxy": [
+          "/opt/derpc/app/wrapper/compose.yaml"
+        ],
+        "tor": [
+          "/opt/derpc/app/wrapper/compose.yaml"
+        ]
+      },
+      "publicTorVolume": "wrapper_onion-keys",
+      "serviceStatus": {
+        "proxy": "Up 2 hours",
+        "tor": "Up 2 hours"
+      },
+      "faultOverlay": {
+        "installedInObservedComposeProject": false,
+        "state": "not installed"
+      }
+    },
+    {
+      "host": "192.248.176.219",
+      "name": "demo-2.derpc.eth",
+      "operatorId": "demo-2.derpc.eth",
+      "ownership": "team-owned demonstration proxy; not an independent third-party operator",
+      "endpointMode": "legacy-single-endpoint",
+      "endpoint": "http://4ckka4hvhybii4n7nltw6ckut2mc4gkqvp3u2b3lo4sg5omqnp4oxfad.onion/rpc",
+      "beacon": "http://4ckka4hvhybii4n7nltw6ckut2mc4gkqvp3u2b3lo4sg5omqnp4oxfad.onion",
+      "declaredTeamGateways": [
+        "45.76.81.48:12298:uEiDF_BrtBaFV_aXYw0Eo4OY73zCVlT96GTYm-wNqYiDopg"
+      ],
+      "identity": {
+        "version": "1",
+        "ens": "demo-2.derpc.eth",
+        "signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "chains": [
+          1
+        ],
+        "service": "demo-proxy"
+      },
+      "publicHostnameMatchedPreviouslyRecordedValue": true,
+      "inspectionAt": "2026-11-07T00:29:08.516808+00:00",
+      "health": {
+        "observedAt": "2026-11-07T00:31:14.080128+00:00",
+        "scope": "administrative loopback health; no anonymous transport or cryptographic verification",
+        "identity": {
+          "httpStatus": 200,
+          "identity": {
+            "version": "1",
+            "ens": "demo-2.derpc.eth",
+            "signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+            "chains": [
+              1
+            ],
+            "service": "demo-proxy"
+          }
+        },
+        "chain": {
+          "httpStatus": 200,
+          "chainId": "0x1",
+          "rpcErrorCode": null
+        },
+        "beacon": {
+          "httpStatus": 200,
+          "finalizedHeaderPresent": true,
+          "finalizedSlot": "15598880"
+        },
+        "faultOverlay": {
+          "httpStatus": 200,
+          "publicState": {
+            "demoOnly": true,
+            "mode": "off",
+            "control": "operator SSH only",
+            "corruptionAccount": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+          }
+        },
+        "overlayIdentity": {
+          "httpStatus": 200,
+          "identity": {
+            "version": "1",
+            "ens": "demo-2.derpc.eth",
+            "signer": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+            "chains": [
+              1
+            ],
+            "service": "demo-proxy"
+          }
+        },
+        "overlayChain": {
+          "httpStatus": 200,
+          "chainId": "0x1",
+          "rpcErrorCode": null
+        }
+      },
+      "publicRuntimeConfiguration": {
+        "DERPC_ENS_NAME": "demo-2.derpc.eth",
+        "DERPC_SIGNER": "0x9E15a220Cc2cfcFa3381C5488434291EB65EAa78",
+        "DERPC_ENDPOINT_ID": "",
+        "DERPC_DEMO_PROXY": "true"
+      },
+      "paymentsConfigured": false,
+      "personalConfiguredInPublicWrapper": false,
+      "checkoutHead": "3c5003cd5186e1101f1998be7115114a5843be15",
+      "wrapperSourceSha256": {
+        "main.ts": "266ba617cb419a4bb24a29952b97fda710276057694ee8aa63b9cbe31c6855be",
+        "proxy.ts": "bacf8188ab524a00bff7cef7ce105a4a1f26767d07a21b57cff310bd5423a7ca"
+      },
+      "wrapperSourcesMatchCurrentWorkspace": true,
+      "imageId": "sha256:c22e5267c46684e9eada9bb9042563e87af39279c7cface644d37dae33df23c8",
+      "endpointIdCapable": true,
+      "runningComposeFiles": {
+        "tor": [
+          "/opt/derpc/app/wrapper/compose.yaml",
+          "/opt/derpc/demo/compose.yaml"
+        ],
+        "demo-fault": [
+          "/opt/derpc/app/wrapper/compose.yaml",
+          "/opt/derpc/demo/compose.yaml"
+        ],
+        "proxy": [
+          "/opt/derpc/app/wrapper/compose.yaml"
+        ]
+      },
+      "publicTorVolume": "wrapper_onion-keys",
+      "serviceStatus": {
+        "tor": "Up 18 minutes",
+        "demo-fault": "Up 18 minutes",
+        "proxy": "Up 2 hours"
+      },
+      "faultOverlay": {
+        "installedInObservedComposeProject": true,
+        "state": "off",
+        "stateSource": "http://127.0.0.1:8790/.well-known/derpc-demo.json over administrative SSH",
+        "composeFile": "/opt/derpc/demo/compose.yaml",
+        "publicIngressIdentityMatchesUnderlyingWrapper": true
+      }
+    }
+  ],
+  "readOnlyCommands": [
+    "curl -fsS --max-time 20 http://127.0.0.1:8787/.well-known/derpc.json",
+    "curl -fsS --max-time 10 http://127.0.0.1:8790/.well-known/derpc-demo.json (demo-2 only)",
+    "HTTP POST 127.0.0.1:8787/rpc: eth_chainId with empty params",
+    "HTTP GET 127.0.0.1:8787/eth/v1/beacon/light_client/finality_update; report only header presence and finalized slot",
+    "docker exec wrapper-tor-1 cat /var/lib/tor/pool/hostname"
+  ],
+  "qualifications": [
+    "These are two separate configured operator identities under the same team control, not evidence of independent ownership.",
+    "The checks ran through administrative SSH to server-loopback HTTP. They establish response availability at observation, not anonymous browser/onion reachability.",
+    "Returned beacon headers were not BLS-verified by this administrative check; chain ID is an unverified health response. No host proof verification is claimed.",
+    "The ENS-shaped names are wrapper identity claims. This observation neither publishes ENS records nor proves registration or discovery.",
+    "Payments remained off. Existing public onion volume and any personal-service mapping were not modified.",
+    "The production gateway/operator ownership guard remains required. The team gateway must be declared for both entries; this observation does not authorize bypassing that guard."
+  ]
+}
