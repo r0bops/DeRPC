@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "kind": "derpc-ens-wallet-review-evidence",
+  "recordedAt": "2026-11-07T00:45:07.167Z",
+  "publicTransactionsSent": false,
+  "operators": [
+    "demo-1.derpc.eth",
+    "demo-2.derpc.eth"
+  ],
+  "firstStage": {
+    "stage": "deploy-ens-proxies",
+    "reviewBlock": "26359456",
+    "ids": [
+      "deploy-registry",
+      "deploy-resolver-demo-1",
+      "deploy-resolver-demo-2"
+    ],
+    "submissionStatuses": [
+      "ready",
+      "ready",
+      "ready"
+    ]
+  },
+  "sourceSha256": {
+    "contracts/scripts/ens-wallet.mjs": "a29c3b7e3f5b6bb9740803e6833ff1312d0730cf3a9cb5856f2d432afa9403e2",
+    "contracts/scripts/ens-wallet-client.mjs": "a6a370686c572e4fc77829de915db9e89d2b7acaf34b311d82af7ed492dae01d",
+    "contracts/test/ens-wallet.test.mjs": "56abc3a057f616a65ace960b3bfe11d1a24c503e3c43c745f18eb6de16ec9473",
+    "contracts/test/ens-wallet-client.test.mjs": "1b3d9b1f73cc70bd9cecec97127d47dcd92f2ff5d08f2f5f150337f24ee85d8f"
+  },
+  "validation": {
+    "contracts": {
+      "passed": 109,
+      "skipped": 7
+    },
+    "focusedBackend": 10,
+    "browser": {
+      "startedAt": "2026-11-07T00:44:37.709Z",
+      "scope": "Local ENS signing page with a mock extension. No wallet transaction requested or submitted; actual mainnet plan only inspected.",
+      "checks": [
+        "Wrong network keeps review and send disabled and exposes explicit mainnet switch",
+        "Matching owner on chain 1 can review and enable one transaction without sending",
+        "Only demo-1 and demo-2 appear in the reviewed configuration",
+        "Page fits 375px viewport",
+        "Page fits 1280px viewport"
+      ],
+      "errors": [],
+      "walletMethods": [
+        "eth_requestAccounts",
+        "eth_chainId",
+        "wallet_switchEthereumChain",
+        "eth_accounts",
+        "eth_chainId"
+      ],
+      "ok": true,
+      "finishedAt": "2026-11-07T00:44:39.916Z"
+    }
+  },
+  "limits": [
+    "Browser smoke check uses a mock extension and does not send a transaction.",
+    "Contract unit tests and earlier local fork evidence do not deploy the mainnet operator registry.",
+    "Owner wallet signatures, full receipt verification, finalized anonymous directory discovery and a working separately operated gateway remain pending.",
+    "No website directory pins have been emitted or published."
+  ]
+}
