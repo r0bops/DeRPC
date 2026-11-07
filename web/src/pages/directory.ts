@@ -61,7 +61,10 @@ export function netChip(id: NetworkId): string {
   const verified = isVerified(NETWORKS, id);
   const label = network?.short ?? id;
   const title = `${network?.name ?? id}: ${verified ? "reads proven by DeRPC" : "listed, not verified by DeRPC"}`;
-  return `<span class="net-chip ${verified ? "v" : "l"}" title="${escapeHtml(title)}">${escapeHtml(label)}</span>`;
+  const img = network?.logoUrl
+    ? `<img class="net-chip__logo" src="${escapeHtml(network.logoUrl)}" alt="" width="14" height="14" loading="lazy" onerror="this.style.display='none'" />`
+    : "";
+  return `<span class="net-chip ${verified ? "v" : "l"}" title="${escapeHtml(title)}">${img}${escapeHtml(label)}</span>`;
 }
 
 export function tierChip(tier: 1 | 2): string {

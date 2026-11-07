@@ -1,6 +1,6 @@
 import type { PageResult } from "../page.ts";
 import { NETWORKS, OPERATORS } from "../directory/operators.ts";
-import { codeCard, icon } from "../ui.ts";
+import { routeDiagram, icon } from "../ui.ts";
 
 export function landingPage(): PageResult {
   return {
@@ -10,14 +10,16 @@ export function landingPage(): PageResult {
         <div class="container hero__inner">
           <div>
             <span class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>Private reads. Verified answers.</span>
-            <h1 class="display">Choose your operators.<br /><span class="lime">Verify their answers.</span></h1>
-            <p class="lead">DeRPC routes supported reads through Anon-RPC and checks answers against authenticated Ethereum state. The route hides your IP from the RPC endpoint; the endpoint still sees the query. If the route or proof is missing, the read fails closed. Ethereum mainnet only; experimental and not ready for production.</p>
+            <h1 class="display">Private routes.<br /><span class="lime">Verified reads.</span></h1>
+            <p class="lead">Reads routed through Tor. Answers verified by a light client. No direct fallback, ever.</p>
             <div class="hero__actions">
               <a class="btn btn--lime" href="#/directory">Browse operators ${icon("arrow")}</a>
               <a class="btn btn--ghost" href="#/operate">Run an operator</a>
             </div>
           </div>
-          <div class="hero__card">${codeCard()}</div>
+          <div class="hero__card">
+  <div class="diagram-card">${routeDiagram()}</div>
+</div>
         </div>
       </section>
 
@@ -41,7 +43,7 @@ export function landingPage(): PageResult {
               <div class="stat__caption">Direct fallbacks</div>
             </div>
           </div>
-          <p class="stats__note">Five operators you can choose today. Only Ethereum mainnet is verified. Staking, payments and the ENS operator registry are roadmap, not live.</p>
+          <p class="stats__note">Ethereum mainnet only. Staking and ENS registry are roadmap.</p>
         </div>
       </section>
 
@@ -62,7 +64,7 @@ export function landingPage(): PageResult {
                 </svg>
               </div>
               <h3 class="card__title">Private by route</h3>
-              <p class="card__text">Reads go through Anon-RPC. Tor hides your IP from the endpoint. No direct fallback, ever.</p>
+              <p class="card__text">Tor hides your IP. No direct fallback.</p>
             </article>
             <article class="card">
               <div class="card__icon">
@@ -76,7 +78,7 @@ export function landingPage(): PageResult {
                 </svg>
               </div>
               <h3 class="card__title">Verified by proof</h3>
-              <p class="card__text">Every answer checked against the light client's finalized state. Invalid proofs fail closed before reaching your app.</p>
+              <p class="card__text">Every answer checked against finalized state. Invalid proofs fail closed.</p>
             </article>
             <article class="card">
               <div class="card__icon">
@@ -92,7 +94,7 @@ export function landingPage(): PageResult {
                 </svg>
               </div>
               <h3 class="card__title">Open by choice</h3>
-              <p class="card__text">You pick the operators and inspect local health. ENS enrollment and staking come in the next milestone.</p>
+              <p class="card__text">Pick your operators. Inspect health locally. Staking on the roadmap.</p>
             </article>
           </div>
         </div>
@@ -104,7 +106,6 @@ export function landingPage(): PageResult {
             <article class="panel panel--dark">
               <p class="panel__kicker">For app builders</p>
               <h2 class="panel__title">Add verified reads to your app.</h2>
-              <p class="panel__text">Private workspace package — integrate from the repo. EIP-1193 and viem. All verification runs on the user's device.</p>
               <ul class="panel__list">
                 <li>${icon("check")}<code>eth_getBalance</code> · <code>eth_getCode</code> · <code>eth_getStorageAt</code></li>
                 <li>${icon("check")}<code>eth_getTransactionCount</code> · <code>eth_blockNumber</code></li>
@@ -117,7 +118,6 @@ export function landingPage(): PageResult {
             <article class="panel panel--lime">
               <p class="panel__kicker">For operators</p>
               <h2 class="panel__title">One identity. Up to 8 nodes.</h2>
-              <p class="panel__text">Run the wrapper beside your Ethereum node. Callers reach you through Tor. ENS registration and staking come in the next milestone.</p>
               <ul class="panel__list">
                 <li>${icon("check")}Free to run today — no deposit or stake.</li>
                 <li>${icon("check")}Each node gets its own Tor onion address.</li>

@@ -432,6 +432,17 @@ p {
   padding: 8px 14px 18px;
 }
 
+.diagram-card {
+  background: var(--ink-raised);
+  border: 1px solid var(--line-on-ink);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-float);
+  padding: 24px 16px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Route diagram */
 
 .route-diagram {
