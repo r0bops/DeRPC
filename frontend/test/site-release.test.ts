@@ -249,15 +249,51 @@ describe("signed IPNS and website publication", () => {
     expect(result).toMatchObject({ filesChecked: 2, bytes: 8, retrievedBytes: 16 });
     for (const file of result.files) {
       expect(file).toMatchObject({ sha256: hash(pages[file.path]), ipfsRoots: `${OLD},bafkreifile`, gatewayBindingRefresh: {
-        url: `${WEBSITE_ORIGIN}/${file.path}?derpc-release=${CID}`, bytes: 4, sha256: hash(pages[file.path]),
+        url: expect.stringContaining(`${WEBSITE_ORIGIN}/${file.path}?derpc-release=${CID}&derpc-check=`), bytes: 4, sha256: hash(pages[file.path]),
         ipfsPath: `/ipns/${WEBSITE_NAME}/${file.path}`, ipfsRoots: `${CID},bafkreifile`,
       } });
     }
     expect(fixture.fetchImpl.mock.calls.map(([url]) => url)).toEqual([
       RECORD_URL,
-      `${WEBSITE_ORIGIN}/demo/index.html`, `${WEBSITE_ORIGIN}/demo/index.html?derpc-release=${CID}`,
-      `${WEBSITE_ORIGIN}/index.html`, `${WEBSITE_ORIGIN}/index.html?derpc-release=${CID}`,
+      `${WEBSITE_ORIGIN}/demo/index.html`, expect.stringContaining(`${WEBSITE_ORIGIN}/demo/index.html?derpc-release=${CID}&derpc-check=`),
+      `${WEBSITE_ORIGIN}/index.html`, expect.stringContaining(`${WEBSITE_ORIGIN}/index.html?derpc-release=${CID}&derpc-check=`),
     ]);
+  });
+  it.each(["retry", "new invocation"])("escapes a cached stale refresh on a %s without accepting its old root", async mode => {
+    const fixture = publishedFixture();
+    const cachedRoots = new Map<string, string>();
+    let propagated = false;
+    fixture.fetchImpl.mockImplementation(async (url: string) => {
+      if (url === RECORD_URL) return new Response("signed-record");
+      const parsed = new URL(url), path = parsed.pathname.slice(1);
+      if (!parsed.searchParams.has("derpc-release")) return https(path, pages[path], OLD);
+      if (!cachedRoots.has(url)) {
+        cachedRoots.set(url, propagated ? CID : OLD);
+        propagated = true;
+      }
+      return https(path, pages[path], cachedRoots.get(url));
+    });
+    const options = { ...fixture, now: () => 0 };
+    if (mode === "new invocation") {
+      await expect(verifyPublished(validateManifest(manifest()), options)).rejects.toThrow(/HTTPS refreshed root differs/);
+    }
+    const result = await verifyPublished(validateManifest(manifest()), { ...options, maxAttempts: mode === "retry" ? 2 : 1 });
+    expect(result.filesChecked).toBe(2);
+    expect(result.files.every((file: { gatewayBindingRefresh: { ipfsRoots: string } }) => file.gatewayBindingRefresh.ipfsRoots === `${CID},bafkreifile`)).toBe(true);
+    const urls = [...cachedRoots.keys()].filter(url => new URL(url).pathname === "/demo/index.html");
+    expect(urls).toHaveLength(2);
+    expect(cachedRoots.get(urls[0]!)).toBe(OLD);
+    expect(cachedRoots.get(urls[1]!)).toBe(CID);
+    expect(fixture.node.command).toHaveBeenCalledTimes(2);
+  });
+  it("exhausts fresh attempts when every refreshed root remains stale", async () => {
+    const fixture = publishedFixture();
+    fixture.fetchImpl.mockImplementation(async (url: string) => url === RECORD_URL
+      ? new Response("signed-record") : https(new URL(url).pathname.slice(1), undefined, OLD));
+    await expect(verifyPublished(validateManifest(manifest()), { ...fixture, maxAttempts: 3 })).rejects.toThrow(/HTTPS refreshed root differs/);
+    const urls = fixture.fetchImpl.mock.calls.map(([url]) => url).filter(url => new URL(url).searchParams.has("derpc-release"));
+    expect(urls).toHaveLength(3);
+    expect(new Set(urls).size).toBe(3);
   });
   it("never conceals wrong canonical bytes behind a correct release-specific response", async () => {
     const fixture = publishedFixture();
@@ -308,7 +344,7 @@ describe("signed IPNS and website publication", () => {
     await expect(verifyPublished(validateManifest(manifest()), { ...fixture, limits: { ...LIMITS, totalBytes: 11 } })).rejects.toThrow(/byte limit/);
     // The first file used eight bytes (canonical + refresh). Only three remain for the second canonical response.
     expect(fixture.fetchImpl.mock.calls.map(([url]) => url)).toEqual([
-      RECORD_URL, `${WEBSITE_ORIGIN}/demo/index.html`, `${WEBSITE_ORIGIN}/demo/index.html?derpc-release=${CID}`, `${WEBSITE_ORIGIN}/index.html`,
+      RECORD_URL, `${WEBSITE_ORIGIN}/demo/index.html`, expect.stringContaining(`${WEBSITE_ORIGIN}/demo/index.html?derpc-release=${CID}&derpc-check=`), `${WEBSITE_ORIGIN}/index.html`,
     ]);
   });
   it("retries a stale signed target before fetching any website files", async () => {

@@ -31,7 +31,9 @@ fixes after the failure investigation.
 6. Verify the exact accepted release tuple on the VPS, the public record's signature,
    target and expiry, and every normal HTTPS URL's file hash and IPNS path. If an
    unchanged asset retains an older root header, also fetch its release-specific
-   query URL and require the same hash, exact IPNS path and new root CID. Both
+   query URL and require the same hash, exact IPNS path and new root CID. The query
+   includes a random verification nonce and attempt number so an early stale
+   refresh cannot remain cached for every retry of that CID. Both
    responses count against the byte budget; evidence preserves both sets of headers.
    Keep receipts and verification reports as GitHub artifacts for 90 days.
 
@@ -100,6 +102,23 @@ authorized committing and pushing the fixes. [Run 42310022450](https://github.co
 completed successfully with those fixes, and the later [d90cc742 release](https://github.com/r0bops/DeRPC/actions/runs/42314676419)
 also passed. This resolves the earlier Actions acceptance gate; each new release
 still needs verification against its own source commit and CID.
+
+On November 7, [run 42322025663](https://github.com/r0bops/DeRPC/actions/runs/42322025663)
+published the operator-onboarding release, but the final check timed out on an
+unchanged font. Both its normal URL and the fixed `derpc-release` query returned
+the correct bytes with older root headers. A new query key returned the same
+bytes with the expected root. Refresh URLs now retain the release CID and add a
+per-verification random nonce plus the attempt number. Regression checks cover
+retries, separate invocations and persistent stale roots; signatures, canonical
+hashes, refreshed path/root/hash checks and resource limits remain mandatory.
+The browser release checker also loads each site route in a fresh document with
+the HTTP cache disabled when collecting file hashes, because Firefox BiDi cannot
+read every cached image body during same-document navigation. A missing body
+still fails provenance validation; successful read behavior alone does not clear it.
+Before committing these fixes, a local recheck of the published `a01d8af` package
+verified its signed IPNS record and all 61 HTTPS files. Fresh Firefox also passed
+every release-binding and live-behavior gate, including simulated invalid-proof
+rejection, recovery through another selected provider, and shutdown refusal.
 
 Workflow concurrency avoids overlapping releases, but does not establish commit
 order. The VPS also locks operations and fsyncs the accepted run number, run ID,

@@ -1,7 +1,7 @@
 // Read-only release gate. Never imports a CAR or private key, publishes a name, or touches a shared daemon.
 // IPFS_BIN=/path/to/ipfs node scripts/verify-site-release.mjs --manifest release/manifest.json --phase pinned --out pinned.json
 import { spawn } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { mkdtempSync, readFileSync, writeFileSync, rmSync, openSync, fstatSync, readSync, closeSync, constants } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -257,6 +257,7 @@ export function verifyIpnsInspection(inspection, cid, now = Date.now()) {
 /** Every attempt starts over: successes from different stale releases cannot form a partial pass. */
 export async function verifyPublished(manifest, { node, signal, limits = LIMITS, fetchImpl = fetch, sleep = pause, now = Date.now, maxAttempts = 25, onAttempt = () => {}, onStep = () => {} }) {
   const attempts = [];
+  const cacheNonce = randomUUID();
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     signal.throwIfAborted();
     const began = now();
@@ -286,7 +287,10 @@ export async function verifyPublished(manifest, { node, signal, limits = LIMITS,
           // require the same bytes and exact new root on a release-specific URL;
           // cache busting must never conceal stale content at the normal URL.
           onStep({ stage: "refresh-https-binding", path, attempt, filesAlreadyChecked: files.length });
-          const url = `${WEBSITE_ORIGIN}/${path}?derpc-release=${manifest.cid}`;
+          // A first refresh can itself cache the old root while IPNS propagates.
+          // Give each verification attempt a fresh cache key, including reruns
+          // of the same release, without changing the canonical byte check.
+          const url = `${WEBSITE_ORIGIN}/${path}?derpc-release=${manifest.cid}&derpc-check=${cacheNonce}-${attempt}`;
           const fresh = await fetchBounded(url, { fetchImpl, signal, maxBytes: Math.min(limits.fileBytes, limits.totalBytes - retrievedBytes), timeoutMs: limits.requestMs });
           retrievedBytes += fresh.bytes.length;
           const freshPath = fresh.headers.get("x-ipfs-path"), freshRoots = fresh.headers.get("x-ipfs-roots");
