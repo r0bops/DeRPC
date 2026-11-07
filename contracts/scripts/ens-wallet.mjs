@@ -2,9 +2,11 @@ import { createServer } from 'node:http';
 import { createHash, randomBytes } from 'node:crypto';
 import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { addresses, adminClient, isMain, json, sameAddress, validateConfig } from './ens-common.mjs';
+import { adminClient, isMain, json, validateConfig } from './ens-common.mjs';
 import { loadConfig, preparePlan, registrarBuild } from './ens-plan.mjs';
 import { expectedTransaction, verifyDeployment, verifyStageIdentity } from './ens-verify.mjs';
+import { directoryPins, checkSubmittedTransaction } from '../lib/ens-wallet.mjs';
+export { directoryPins, checkSubmittedTransaction } from '../lib/ens-wallet.mjs';
 
 const clone = value => JSON.parse(json(value));
 const digest = value => createHash('sha256').update(json(value)).digest('hex');
@@ -18,40 +20,6 @@ function atomicSave(path, value) {
   renameSync(temp, path);
   const directory = openSync(resolve(path, '..'), 'r');
   try { fsyncSync(directory); } finally { closeSync(directory); }
-}
-
-export function directoryPins(manifest) {
-  if (manifest?.kind !== 'derpc-ens-deployment' || manifest.chainId !== 1 || manifest.localOnly !== false ||
-      !['receipts', 'canonicalBlocks', 'stateMatchesConfig', 'hotKeyEventAudit'].every(key => manifest.verification?.[key] === true) ||
-      !Number.isSafeInteger(manifest.verification.minimumConfirmations) || manifest.verification.minimumConfirmations < 12) throw new Error('A public receipt-checked ENS manifest with twelve confirmations is required');
-  const pins = { chainId: 1, ethRegistry: manifest.upstream?.ETHRegistry?.address,
-    registrar: { address: manifest.registrar?.address, codeHash: manifest.registrar?.codeHash, registry: manifest.subregistry } };
-  if (![pins.ethRegistry, pins.registrar.address, pins.registrar.registry].every(value => /^0x[0-9a-fA-F]{40}$/.test(value ?? '') && !/^0x0+$/i.test(value)) ||
-      !hashPattern.test(pins.registrar.codeHash ?? '') || /^0x0+$/i.test(pins.registrar.codeHash) || !sameAddress(pins.ethRegistry, addresses.ETHRegistry)) throw new Error('Manifest has invalid mainnet directory pins');
-  return pins;
-}
-
-/** Public administrative reads only. There is deliberately no wallet or send RPC here. */
-export async function checkSubmittedTransaction(client, item, hash, reviewBlock) {
-  if (!hashPattern.test(hash)) throw new Error('Expected a transaction hash');
-  if (await client.getChainId() !== 1) throw new Error('Administrative RPC is not Ethereum mainnet');
-  let tx;
-  try { tx = await client.getTransaction({ hash }); }
-  catch (error) { if (error.name === 'TransactionNotFoundError') return null; throw error; }
-  const expected = item.walletRequest.params[0];
-  if (tx.hash.toLowerCase() !== hash.toLowerCase() || !sameAddress(tx.from, expected.from) ||
-      (expected.to ? !sameAddress(tx.to, expected.to) : tx.to !== null) || tx.input.toLowerCase() !== expected.data.toLowerCase() ||
-      tx.value !== 0n || tx.chainId !== 1 || expected.nonce !== undefined && BigInt(tx.nonce) !== BigInt(expected.nonce)) {
-    throw new Error('Transaction does not match the reviewed sender, destination, calldata, value, network or nonce');
-  }
-  let receipt;
-  try { receipt = await client.getTransactionReceipt({ hash }); }
-  catch (error) { if (error.name === 'TransactionReceiptNotFoundError') return null; throw error; }
-  if (receipt.status !== 'success') throw new Error('Transaction reverted. Resolve its receipt before attempting a replacement');
-  if (receipt.transactionHash.toLowerCase() !== hash.toLowerCase() || !sameAddress(receipt.from, expected.from) ||
-      receipt.blockNumber <= BigInt(reviewBlock) || tx.blockHash !== receipt.blockHash || tx.blockNumber !== receipt.blockNumber ||
-      (await client.getBlock({ blockNumber: receipt.blockNumber })).hash !== receipt.blockHash) throw new Error('Transaction receipt is not canonical or does not follow the review block');
-  return clone({ hash, blockNumber: receipt.blockNumber, blockHash: receipt.blockHash });
 }
 
 export async function createEnsSession({ config, directory, client, crosscheckClient, build = registrarBuild(),
@@ -178,8 +146,8 @@ export async function createEnsSession({ config, directory, client, crosscheckCl
         const plan = await freshPlan();
         const current = plan.transactions.find(tx => tx.id === item.id);
         if (!current || json(current.walletRequest) !== json(item.walletRequest)) throw new Error('On-chain state or transaction changed; inspect the earlier submission before continuing');
-        entry.status = 'pending'; entry.startedAt = new Date().toISOString(); persist();
-        return { ...state(), permit: { id: item.id, walletRequest: clone(item.walletRequest), expiresAt: Date.now() + 60000 } };
+        entry.status = 'pending'; entry.startedAt = new Date().toISOString(); entry.reservation = randomBytes(32).toString('hex'); persist();
+        return { ...state(), permit: { id: item.id, reservationId: entry.reservation, walletRequest: clone(item.walletRequest), expiresAt: Date.now() + 60000 } };
       }
       if (request.action === 'record') {
         if (!['pending', 'submitted'].includes(entry.status) || !hashPattern.test(request.hash ?? '')) throw new Error('Only a pending submission can receive a valid transaction hash');
@@ -190,8 +158,12 @@ export async function createEnsSession({ config, directory, client, crosscheckCl
         await updateReceipts(); return state();
       }
       if (request.action === 'rejected') {
-        if (entry.status !== 'pending' || entry.hash) throw new Error('Only an explicitly rejected wallet request without a hash can be cleared');
-        entry.status = 'ready'; delete entry.startedAt; persist(); return state();
+        // A delayed acknowledgement/retry from an earlier tab must never release
+        // a newer send of the same transaction. Old journals without an attempt
+        // identifier remain unknown and can only be reconciled by hash.
+        if (entry.status !== 'pending' || entry.hash || !entry.reservation ||
+            typeof request.reservationId !== 'string' || request.reservationId !== entry.reservation) throw new Error('Only this exact explicitly rejected wallet attempt without a hash can be cleared');
+        entry.status = 'ready'; delete entry.startedAt; delete entry.reservation; persist(); return state();
       }
       throw new Error('Unsupported action');
     } finally { busy = false; }

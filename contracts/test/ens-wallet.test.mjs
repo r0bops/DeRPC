@@ -137,8 +137,36 @@ describe('ENS wallet session', () => {
     const restarted = await createEnsSession(f.options());
     await expect(restarted.action({ action: 'begin', id })).rejects.toThrow(/earlier wallet submission/);
     await expect(restarted.action({ action: 'begin', id: plan.transactions[1].id })).rejects.toThrow(/earlier wallet submission/);
-    await restarted.action({ action: 'rejected', id });
+    await expect(restarted.action({ action: 'rejected', id })).rejects.toThrow(/exact explicitly rejected/);
+    await restarted.action({ action: 'rejected', id, reservationId: begun.permit.reservationId });
     expect((await restarted.action({ action: 'begin', id })).permit.id).toBe(id);
+  });
+
+  it('never releases a later send when a lost rejection acknowledgement is retried', async () => {
+    const f = fixture(), session = await createEnsSession(f.options()), id = plan.transactions[0].id;
+    const first = await session.action({ action: 'begin', id });
+    expect(first.permit.reservationId).toMatch(/^[0-9a-f]{64}$/);
+    expect(first.entries[0].reservation).toBe(first.permit.reservationId);
+    await session.action({ action: 'rejected', id, reservationId: first.permit.reservationId });
+    // Imagine that the previous response was lost and another tab now sends.
+    const next = await session.action({ action: 'begin', id });
+    expect(next.permit.reservationId).not.toBe(first.permit.reservationId);
+    await expect(session.action({ action: 'rejected', id, reservationId: first.permit.reservationId })).rejects.toThrow(/exact explicitly rejected/);
+    expect(session.state().entries[0]).toMatchObject({ status: 'pending', reservation: next.permit.reservationId });
+    await expect(session.action({ action: 'begin', id })).rejects.toThrow(/earlier wallet submission/);
+    await session.action({ action: 'rejected', id, reservationId: next.permit.reservationId });
+    expect(session.state().entries[0].status).toBe('ready');
+  });
+
+  it('preserves unknown pending entries from old journals without reservation identifiers', async () => {
+    const f = fixture(), session = await createEnsSession(f.options()), id = plan.transactions[0].id;
+    const first = await session.action({ action: 'begin', id });
+    const path = join(f.directory, 'session.json'), saved = JSON.parse(readFileSync(path));
+    delete saved.stages[0].entries[0].reservation; writeFileSync(path, JSON.stringify(saved));
+    const restored = await createEnsSession(f.options());
+    for (const reservationId of [undefined, first.permit.reservationId]) await expect(restored.action({ action: 'rejected', id, reservationId })).rejects.toThrow(/exact explicitly rejected/);
+    await expect(restored.action({ action: 'begin', id })).rejects.toThrow(/earlier wallet submission/);
+    expect((await restored.action({ action: 'record', id, hash: f.submit(0) })).entries[0].status).toBe('confirmed');
   });
 
   it('preserves unindexed hashes and rejects changed calldata or a conflicting replacement hash', async () => {

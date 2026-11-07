@@ -1,4 +1,4 @@
-/** Local ENS review UI. Wallet signing stays in the selected extension; only public hashes reach the server. */
+/** Shared ENS review UI. Signing stays in the selected wallet; the journal receives public transaction data only. */
 const HASH = /^0x[\da-fA-F]{64}$/;
 const ADDRESS = /^0x[\da-fA-F]{40}$/;
 const copy = value => structuredClone(value);
@@ -8,7 +8,7 @@ const stable = value => JSON.stringify(value, (_key, item) => item && typeof ite
   ? Object.fromEntries(Object.keys(item).sort().map(key => [key, item[key]])) : item);
 const errorText = error => error?.code === -32002
   ? 'A wallet request is already pending. Open your wallet and finish or reject it. An unknown transaction stays locked here.'
-  : typeof error?.message === 'string' ? error.message : 'The wallet or local server request failed.';
+  : typeof error?.message === 'string' ? error.message : 'The wallet or transaction checks failed.';
 
 export function validateENSWalletRequest(request) {
   const tx = request?.params?.[0];
@@ -31,7 +31,7 @@ export function validateENSWalletState(input) {
       !Array.isArray(plan.transactions) || plan.transactions.length > 128 || !Array.isArray(plan.roleTable) ||
       plan.resumeConfig?.schemaVersion !== 1 || plan.resumeConfig.chainId !== 1 || plan.resumeConfig.parentName !== 'derpc.eth' ||
       !Array.isArray(plan.resumeConfig.operators) || !Array.isArray(input.entries) || input.entries.length !== plan.transactions.length) {
-    throw new Error('The local server did not provide a complete mainnet ENS plan and saved transaction state.');
+    throw new Error('The saved journal does not contain a complete mainnet ENS plan and transaction state.');
   }
   const ids = new Set();
   for (const item of plan.transactions) {
@@ -48,7 +48,7 @@ export function validateENSWalletState(input) {
   }
   for (const operator of plan.resumeConfig.operators) if (!/^[a-z0-9](?:[a-z0-9-]{0,29}[a-z0-9])?$/.test(operator?.label ?? '')) throw new Error('Invalid operator name in the reviewed configuration.');
   if (input.readyToVerify === true && (plan.transactions.length || plan.status !== 'state-matches-config')) throw new Error('Final verification requires a complete plan with no remaining transactions.');
-  if (input.complete === true && (input.readyToVerify !== true || !input.manifest || typeof input.manifest !== 'object' || Array.isArray(input.manifest))) throw new Error('Completion requires a verified deployment manifest and no remaining stage.');
+  if (input.complete === true && (input.readyToVerify !== true || !input.manifest || typeof input.manifest !== 'object' || Array.isArray(input.manifest))) throw new Error('Completion requires a verified operation manifest and no remaining stage.');
   const { permit: _permit, ...state } = copy(input);
   return state;
 }
@@ -57,11 +57,11 @@ export function validateENSWalletState(input) {
 export function createENSWalletController({ initialState, action, onChange = () => {}, now = Date.now }) {
   let server = validateENSWalletState(initialState), provider, walletName = '', selectedId = '';
   let busy = false, connected = false, reviewed = false, account, chainId, revision = 0, closed = false;
-  const operation = () => server.plan.flow === 'operator-join' ? 'operator registration' : 'deployment';
+  const operation = () => server.plan.flow === 'operator-join' ? 'operator registration' : server.plan.flow === 'operator-management' ? 'operator management' : 'deployment';
   let message = server.plan.flow === 'operator-join'
     ? 'Choose an operator registration transaction, connect the operator\'s own wallet on Ethereum mainnet, and review it before sending.'
     : 'Choose a transaction, connect its sender on Ethereum mainnet, and review it before sending.';
-  const locks = new Set(), rejected = new Set(), returnedHashes = new Map(), detach = [];
+  const locks = new Set(), rejected = new Map(), returnedHashes = new Map(), detach = [];
   const item = () => server.plan.transactions.find(tx => tx.id === selectedId);
   const entry = id => server.entries.find(saved => saved.id === id);
   const blocked = () => server.entries.some(saved => ['pending', 'submitted'].includes(saved.status) || locks.has(saved.id));
@@ -79,7 +79,7 @@ export function createENSWalletController({ initialState, action, onChange = () 
     hashes: [...returnedHashes].map(([id, hash]) => ({ id, hash })),
   });
   const publish = text => { if (text !== undefined) message = text; try { onChange(snapshot()); } catch { /* UI observers cannot alter the send gate. */ } };
-  const idle = () => { if (closed) throw new Error('The wallet review has been closed.'); if (busy) throw new Error('Another wallet or server operation is pending.'); };
+  const idle = () => { if (closed) throw new Error('The wallet review has been closed.'); if (busy) throw new Error('Another wallet or journal operation is pending.'); };
   const apply = next => {
     const previousPlan = stable(server.plan);
     server = validateENSWalletState(next);
@@ -97,8 +97,9 @@ export function createENSWalletController({ initialState, action, onChange = () 
     return result;
   };
   const observe = async (wallet, requestAccounts = false) => {
-    const accounts = await wallet.request({ method: requestAccounts ? 'eth_requestAccounts' : 'eth_accounts' });
     const observedRevision = revision;
+    const accounts = await wallet.request({ method: requestAccounts ? 'eth_requestAccounts' : 'eth_accounts' });
+    if (closed || provider !== wallet || revision !== observedRevision) throw new Error('Wallet changed during the account/network check. Reconnect.');
     const chain = await wallet.request({ method: 'eth_chainId' });
     if (closed || provider !== wallet || revision !== observedRevision) throw new Error('Wallet changed during the account/network check. Reconnect.');
     account = Array.isArray(accounts) ? accounts[0] : undefined;
@@ -151,11 +152,12 @@ export function createENSWalletController({ initialState, action, onChange = () 
       try {
         await recheck(wallet, expectedRevision, expectedRequest);
         locks.add(id); rejected.delete(id); began = true;
-        publish('Reserving this transaction in the local journal before opening your wallet…');
+        publish('Reserving this transaction in the saved journal before opening your wallet…');
         const response = await call('begin', { id });
         apply(response);
         const permit = response.permit;
         if (stable(server.plan) !== expectedPlan || entry(id)?.status !== 'pending' || permit?.id !== id ||
+            typeof permit.reservationId !== 'string' || !/^[a-zA-Z0-9_-]{32,128}$/.test(permit.reservationId) || entry(id).reservation !== permit.reservationId ||
             stable(validateENSWalletRequest(permit?.walletRequest)) !== stable(expectedRequest) ||
             !Number.isSafeInteger(permit.expiresAt) || permit.expiresAt <= now()) throw new Error('The send permit is stale or differs from the reviewed transaction. No wallet send was requested; the reservation stays locked.');
         await recheck(wallet, expectedRevision, expectedRequest);
@@ -165,9 +167,9 @@ export function createENSWalletController({ initialState, action, onChange = () 
         try { hash = await wallet.request(copy(expectedRequest)); }
         catch (error) {
           if (error?.code === 4001) {
-            rejected.add(id);
-            try { apply(await call('rejected', { id })); } catch (releaseError) { applyError(releaseError); }
-            throw new Error(locks.has(id) ? 'The wallet explicitly rejected the request, but the local server has not confirmed releasing it. Refresh saved status before continuing.' : 'You rejected the wallet transaction. Reconnect/review before trying again.');
+            rejected.set(id, permit.reservationId);
+            try { apply(await call('rejected', { id, reservationId: permit.reservationId })); } catch (releaseError) { applyError(releaseError); }
+            throw new Error(locks.has(id) ? 'The wallet explicitly rejected the request, but the saved journal has not confirmed releasing it. Refresh saved status before continuing.' : 'You rejected the wallet transaction. Reconnect/review before trying again.');
           }
           throw error;
         }
@@ -198,7 +200,7 @@ export function createENSWalletController({ initialState, action, onChange = () 
       try {
         // Retry only an observed, explicit wallet rejection when the user asks to
         // refresh. A generic error/unknown result can never enter this set.
-        for (const id of [...rejected]) if (entry(id)?.status === 'pending' && !entry(id).hash) apply(await call('rejected', { id }));
+        for (const [id, reservationId] of [...rejected]) if (entry(id)?.status === 'pending' && !entry(id).hash) apply(await call('rejected', { id, reservationId }));
         apply(await call('refresh'));
         publish(server.complete ? `Saved ${operation()} verification rechecked. Finalized browser discovery remains separate.` : server.readyToVerify ? `All planned stages match the chain. Run final verification to create the ${operation()} manifest.` : 'Saved state refreshed. Select and review any next transaction yourself.');
       }
@@ -210,8 +212,9 @@ export function createENSWalletController({ initialState, action, onChange = () 
       busy = true; reviewed = false; publish('Verifying receipts, runtime and permissions with the administrative RPC sources…');
       try {
         apply(await call('verify'));
-        if (!server.complete || !server.manifest) throw new Error(`The server has not completed ${operation()} verification.`);
-        publish(`${server.plan.flow === 'operator-join' ? 'Operator registration' : 'Deployment'} manifest verified and saved. Finalized discovery through the browser verifier remains a separate check.`);
+        if (!server.complete || !server.manifest) throw new Error(`The transaction checks have not completed ${operation()} verification.`);
+        const label = operation();
+        publish(`${label[0].toUpperCase()}${label.slice(1)} evidence verified and saved. Finalized discovery through the browser verifier remains a separate check.`);
       } catch (error) { applyError(error); publish(errorText(error)); throw error; }
       finally { busy = false; publish(); }
     },

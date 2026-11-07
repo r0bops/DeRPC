@@ -6,7 +6,7 @@ import { prepareJoinPlan, validateJoinConfig, verifyJoin } from '../scripts/ens-
 
 // Historical RPC fixture only: real planner/calldata/runtime checks, injected administrative
 // observations. Actual ENS bytecode, upstream preflight and wallet integration run in the fork suite.
-vi.mock('../scripts/ens-common.mjs', async importOriginal => ({
+vi.mock('../lib/ens-common.mjs', async importOriginal => ({
   ...await importOriginal(), preflight: async client => structuredClone(client.reviewSnapshot),
 }));
 

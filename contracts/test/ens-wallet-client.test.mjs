@@ -34,16 +34,17 @@ function fakeWallet() {
   return wallet;
 }
 function fakeServer() {
-  const server = { saved: initial(), calls: [], now: Date.now, beforeReturnBegin: undefined, mutatePermit: undefined, failBegin: false, failRecord: false, failRejected: false, onRefresh: undefined };
+  const server = { saved: initial(), calls: [], now: Date.now, beforeReturnBegin: undefined, mutatePermit: undefined, failBegin: false, failRecord: false, failRejected: false, loseRejectionAck: false, attempt: 0, onRefresh: undefined };
   server.action = async request => {
     expect(request.token).toBe(token); server.calls.push(clone(request));
     const saved = server.saved.entries.find(entry => entry.id === request.id);
     if (request.action === 'begin') {
       if (saved.status !== 'ready' || server.saved.entries.some(entry => ['pending', 'submitted'].includes(entry.status))) throw new Error('pending');
       saved.status = 'pending';
+      saved.reservation = (++server.attempt).toString(16).padStart(64, '0');
       if (server.failBegin) throw new Error('begin response lost');
       await server.beforeReturnBegin?.();
-      const permit = { id: request.id, walletRequest: clone(server.saved.plan.transactions.find(tx => tx.id === request.id).walletRequest), expiresAt: server.now() + 60000 };
+      const permit = { id: request.id, reservationId: saved.reservation, walletRequest: clone(server.saved.plan.transactions.find(tx => tx.id === request.id).walletRequest), expiresAt: server.now() + 60000 };
       server.mutatePermit?.(permit);
       return { ...clone(server.saved), permit };
     }
@@ -53,7 +54,9 @@ function fakeServer() {
     }
     if (request.action === 'rejected') {
       if (server.failRejected) throw new Error('rejection response lost');
-      saved.status = 'ready'; delete saved.hash;
+      if (saved.status !== 'pending' || !saved.reservation || request.reservationId !== saved.reservation) throw new Error('different wallet attempt remains locked');
+      saved.status = 'ready'; delete saved.hash; delete saved.reservation;
+      if (server.loseRejectionAck) throw new Error('rejection response lost after save');
     }
     if (request.action === 'refresh') await server.onRefresh?.();
     if (request.action === 'verify') {
@@ -102,6 +105,14 @@ describe('ENS browser request validation', () => {
 });
 
 describe('ENS explicit wallet submission', () => {
+  it('invalidates an account change during the first connection await', async () => {
+    const { wallet, controller } = await setup({ connect: false });
+    wallet.onRequest = request => { if (request.method === 'eth_requestAccounts') wallet.emit('accountsChanged', [other]); };
+    await expect(controller.connect()).rejects.toThrow(/changed during/);
+    expect(controller.state()).toMatchObject({ connected: false, reviewed: false, canSend: false });
+    expect(sends(wallet)).toEqual([]);
+  });
+
   it('requires the operator wallet for a join, even when the namespace owner is connected', async () => {
     const server = fakeServer(), wallet = fakeWallet();
     server.saved.plan.flow = 'operator-join';
@@ -187,13 +198,15 @@ describe('ENS explicit wallet submission', () => {
     expect(controller.state().canSend).toBe(false);
   });
 
-  it.each(['data', 'sender', 'expiry', 'id'])('rejects a changed or expired %s permit before asking the wallet to send', async change => {
+  it.each(['data', 'sender', 'expiry', 'id', 'reservation', 'missing reservation'])('rejects a changed or expired %s permit before asking the wallet to send', async change => {
     const { wallet, server, controller } = await setup();
     server.mutatePermit = permit => {
       if (change === 'data') permit.walletRequest.params[0].data = '0xabcd';
       if (change === 'sender') permit.walletRequest.params[0].from = other;
       if (change === 'expiry') permit.expiresAt = Date.now() - 1;
       if (change === 'id') permit.id = 'deploy-1';
+      if (change === 'reservation') permit.reservationId = 'ef'.repeat(32);
+      if (change === 'missing reservation') delete permit.reservationId;
     };
     await expect(controller.send()).rejects.toThrow(); expect(sends(wallet)).toEqual([]);
     expect(server.saved.entries[0].status).toBe('pending');
@@ -244,6 +257,22 @@ describe('ENS explicit wallet submission', () => {
     server.failRejected = false; await controller.refresh();
     expect(server.calls.map(call => call.action)).toEqual(['begin', 'rejected', 'rejected', 'refresh']);
     expect(controller.state()).toMatchObject({ reviewed: false, canSend: false }); expect(server.saved.entries[0].status).toBe('ready');
+    const rejections = server.calls.filter(call => call.action === 'rejected');
+    expect(rejections.map(call => call.reservationId)).toEqual(['0'.repeat(63) + '1', '0'.repeat(63) + '1']);
+  });
+
+  it('retries only its own rejected attempt after another tab creates a new reservation', async () => {
+    const { wallet, server, controller } = await setup();
+    wallet.send = async () => { throw { code: 4001, message: 'User rejected' }; };
+    server.loseRejectionAck = true;
+    await expect(controller.send()).rejects.toThrow('not confirmed');
+    const first = server.calls.find(call => call.action === 'rejected').reservationId;
+    const next = await server.action({ token, action: 'begin', id: 'deploy-0' });
+    expect(next.permit.reservationId).not.toBe(first);
+    await expect(controller.refresh()).rejects.toThrow('different wallet attempt');
+    expect(server.saved.entries[0]).toMatchObject({ status: 'pending', reservation: next.permit.reservationId });
+    expect(server.calls.filter(call => call.action === 'rejected').map(call => call.reservationId)).toEqual([first, first]);
+    expect(sends(wallet)).toHaveLength(1);
   });
 
   it('keeps a returned hash visible when record fails and reconciles it without resending', async () => {
