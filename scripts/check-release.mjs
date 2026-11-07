@@ -3,8 +3,11 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 import { findNonPublicAddresses, releaseGateways } from "../frontend/build/gateways.ts";
 import { parseEnsDirectory } from "../frontend/build/ens-directory.ts";
+import { operatorReleaseMetadata, parseOperatorDeployment } from "../web/build/ens-operator.ts";
+import { operatorBuild } from "../web/build/ens-operator-node.mjs";
 import { MAINNET_CHECKPOINT, TOR_JS_DEMO_GATEWAY } from "../provider/src/config/mainnet.ts";
 
 const REPOSITORY = fileURLToPath(new URL("../", import.meta.url));
@@ -24,7 +27,7 @@ function hasAttribute(tag, name) {
 }
 
 /** Inspects build files/package metadata; never opens local .env/key files or makes network requests. */
-export function checkRelease({ artifact = resolve(REPOSITORY, "web/dist"), root = REPOSITORY, configuredGateways, configuredEnsDirectory, now = Date.now() } = {}) {
+export function checkRelease({ artifact = resolve(REPOSITORY, "web/dist"), root = REPOSITORY, configuredGateways, configuredEnsDirectory, configuredOperatorDeployment, now = Date.now() } = {}) {
   artifact = resolve(artifact);
   const errors = [];
   const warnings = [];
@@ -39,6 +42,12 @@ export function checkRelease({ artifact = resolve(REPOSITORY, "web/dist"), root 
   let ensDirectory = null;
   try { ensDirectory = parseEnsDirectory(configuredEnsDirectory); }
   catch { fail("ens-directory", "VITE_ENS_DIRECTORY must contain complete mainnet directory pins; use the same reviewed value for the build and this check."); }
+  let ensOperator = null;
+  try {
+    const build = operatorBuild();
+    const deployment = parseOperatorDeployment(configuredOperatorDeployment, configuredEnsDirectory, build);
+    ensOperator = operatorReleaseMetadata(deployment, build);
+  } catch { fail("ens-operator", "VITE_ENS_OPERATOR_DEPLOYMENT must be a public, current-source verified deployment matching VITE_ENS_DIRECTORY; use the same reviewed inputs for build and check."); }
   if (gateways.length && gateways.every(gateway => gateway === TOR_JS_DEMO_GATEWAY)) {
     warnings.push({ check: "demo-gateway", message: "Only the demonstration gateway is configured; reliable public gateway availability remains unverified." });
   }
@@ -111,12 +120,18 @@ export function checkRelease({ artifact = resolve(REPOSITORY, "web/dist"), root 
     } catch {
       fail("ens-directory-artifact", "Built directory pins are missing, invalid or differ from VITE_ENS_DIRECTORY; rebuild with the same reviewed configuration.", "demo/ens-directory.json");
     }
+    try {
+      const metadata = JSON.parse(textFiles.get("ens-operator.json"));
+      if (!ensOperator || !isDeepStrictEqual(metadata, ensOperator)) throw new Error();
+    } catch {
+      fail("ens-operator-artifact", "Built operator-wallet metadata is missing or differs from the configured deployment, local source/compiler, directory pins or administrative origins.", "ens-operator.json");
+    }
   }
   return {
     ok: errors.length === 0, filesChecked,
     checkpoint: { epoch: MAINNET_CHECKPOINT.epoch, ageHours: Math.round(checkpointAge / 3_600_000 * 10) / 10, expiresAt: new Date(CHECKPOINT_TIME + 7 * DAY).toISOString() },
-    gatewayCount: gateways.length, ensDirectory, errors, warnings,
-    limits: ["Offline checks do not establish gateway reachability, hosted browser behavior, committee-transition sync, or the quality of release documentation.", "ENS build pins do not establish deployment, live membership or records; those require receipt verification and a finalized proven browser refresh.", "Payment validation checks initial built HTML only; run the existing frontend UI tests for runtime behavior.", "Secret checks detect known literal patterns, not arbitrary secrets; matched values and local secret files are never printed."],
+    gatewayCount: gateways.length, ensDirectory, ensOperator, errors, warnings,
+    limits: ["Offline checks do not establish gateway reachability, hosted browser behavior, committee-transition sync, or the quality of release documentation.", "ENS build pins do not establish deployment, live membership or records; those require receipt verification and a finalized proven browser refresh.", "Operator-wallet metadata binds reviewed build inputs, not current on-chain truth; wallet actions still require both administrative sources and canonical receipt checks.", "Payment validation checks initial built HTML only; run the existing frontend UI tests for runtime behavior.", "Secret checks detect known literal patterns, not arbitrary secrets; matched values and local secret files are never printed."],
   };
 }
 
@@ -127,7 +142,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
     console.error("Usage: VITE_TOR_GATEWAYS='ip:port:certhash' node scripts/check-release.mjs [web/dist] [--json]");
     process.exitCode = 1;
   } else {
-    const report = checkRelease({ artifact: paths[0] ? resolve(paths[0]) : undefined, configuredGateways: process.env.VITE_TOR_GATEWAYS, configuredEnsDirectory: process.env.VITE_ENS_DIRECTORY });
+    const report = checkRelease({ artifact: paths[0] ? resolve(paths[0]) : undefined, configuredGateways: process.env.VITE_TOR_GATEWAYS, configuredEnsDirectory: process.env.VITE_ENS_DIRECTORY, configuredOperatorDeployment: process.env.VITE_ENS_OPERATOR_DEPLOYMENT });
     if (args.includes("--json")) console.log(JSON.stringify(report, null, 2));
     else {
       console.log(`${report.ok ? "PASS" : "FAIL"}: local release checks (${report.filesChecked} files; checkpoint ${report.checkpoint.ageHours} hours old).`);

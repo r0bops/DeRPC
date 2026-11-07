@@ -41,6 +41,7 @@ jobs:
         with:
           tor-gateways: ${{ vars.DERPC_TOR_GATEWAYS }}
           ens-directory: ${{ vars.DERPC_ENS_DIRECTORY }}
+          ens-operator-deployment: ${{ vars.DERPC_ENS_OPERATOR_DEPLOYMENT }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: site-ipfs-release

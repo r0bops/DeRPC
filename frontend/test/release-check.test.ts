@@ -5,6 +5,10 @@ import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { checkRelease } from "../../scripts/check-release.mjs";
 import { MAINNET_CHECKPOINT, TOR_JS_DEMO_GATEWAY } from "../../provider/src/config/mainnet.ts";
+import { operatorReleaseMetadata } from "../../web/build/ens-operator.ts";
+// @ts-expect-error Node-only build adapter has no declaration file.
+import { operatorBuild } from "../../web/build/ens-operator-node.mjs";
+import { syntheticOperatorManifest, syntheticOperatorPins } from "./ens-operator-fixture.ts";
 
 const CERT = TOR_JS_DEMO_GATEWAY.split(":")[2];
 const GATEWAY = `95.216.10.20:12298:${CERT}`;
@@ -27,6 +31,7 @@ function fixture(gateways = [GATEWAY]) {
   write("web/dist/demo/index.html", `${entry}<input id="enable-payments" type="checkbox"><fieldset id="payment-controls" disabled></fieldset>`);
   for (const page of ["example", "network-check"]) write(`web/dist/demo/${page}.html`, entry);
   write("web/dist/demo/ens-directory.json", "null\n");
+  write("web/dist/ens-operator.json", JSON.stringify(operatorReleaseMetadata(null, operatorBuild())));
   write("web/dist/demo/assets/demo.js", `const checkpoint=${JSON.stringify(MAINNET_CHECKPOINT)};const gateways=${JSON.stringify(gateways)};const rpc="https://eth.drpc.org";`);
   const run = (extra = {}) => checkRelease({ root, artifact, configuredGateways: GATEWAY, now: CHECKPOINT_TIME + 86_400_000, ...extra });
   return { root, artifact, write, run };
@@ -104,6 +109,35 @@ describe("offline assembled release check", () => {
     expect(run({ configuredEnsDirectory: "{}" }).errors).toContainEqual(expect.objectContaining({ check: "ens-directory" }));
     rmSync(join(root, "web/dist/demo/ens-directory.json"));
     expect(run().errors).toContainEqual(expect.objectContaining({ check: "ens-directory-artifact" }));
+  });
+
+  it("binds operator-wallet metadata to the configured manifest and reviewed local source", () => {
+    const { run, write } = fixture(), build = operatorBuild(), manifest = syntheticOperatorManifest(build);
+    const configuredOperatorDeployment = JSON.stringify(manifest), configuredEnsDirectory = JSON.stringify(syntheticOperatorPins(manifest));
+    write("web/dist/demo/ens-directory.json", configuredEnsDirectory);
+    write("web/dist/demo/assets/directory.js", `const pins=${configuredEnsDirectory};`);
+    write("web/dist/ens-operator.json", JSON.stringify(operatorReleaseMetadata(manifest, build)));
+    expect(run({ configuredOperatorDeployment, configuredEnsDirectory }).ok).toBe(true);
+    expect(run({ configuredEnsDirectory }).errors).toContainEqual(expect.objectContaining({ check: "ens-operator-artifact" }));
+    const changed = structuredClone(manifest); changed.operators[0]!.records["derpc.endpoint"] = "https://changed.example/rpc";
+    expect(run({ configuredOperatorDeployment: JSON.stringify(changed), configuredEnsDirectory }).errors).toContainEqual(expect.objectContaining({ check: "ens-operator-artifact" }));
+    changed.localOnly = true;
+    expect(run({ configuredOperatorDeployment: JSON.stringify(changed), configuredEnsDirectory }).errors).toContainEqual(expect.objectContaining({ check: "ens-operator" }));
+  });
+
+  it.each(["missing", "sourceHash", "compiler", "adminRpcOrigins", "enabled", "extra"])("rejects missing or stale operator-wallet metadata: %s", field => {
+    const { run, write, root } = fixture();
+    if (field === "missing") rmSync(join(root, "web/dist/ens-operator.json"));
+    else {
+      const metadata = operatorReleaseMetadata(null, operatorBuild());
+      if (field === "sourceHash") metadata.sourceHash = `0x${"ff".repeat(32)}`;
+      else if (field === "compiler") metadata.compiler = { ...metadata.compiler, optimizerRuns: 1 };
+      else if (field === "adminRpcOrigins") metadata.adminRpcOrigins = ["https://different.example"];
+      else if (field === "enabled") metadata.enabled = true;
+      else Object.assign(metadata, { unexpected: true });
+      write("web/dist/ens-operator.json", JSON.stringify(metadata));
+    }
+    expect(run().errors).toContainEqual(expect.objectContaining({ check: "ens-operator-artifact", path: "ens-operator.json" }));
   });
 
   it("reports missing assembled pages before scanning a non-site target", () => {

@@ -11,6 +11,10 @@ inputs:
     description: Optional reviewed mainnet ENS directory pins as JSON; blank keeps manual configuration.
     required: false
     default: ''
+  ens-operator-deployment:
+    description: Optional public receipt-verified ENS deployment manifest; enables operator wallet actions only with matching directory pins.
+    required: false
+    default: ''
 
 outputs:
   cid:
@@ -42,12 +46,14 @@ runs:
       env:
         VITE_TOR_GATEWAYS: ${{ inputs.tor-gateways }}
         VITE_ENS_DIRECTORY: ${{ inputs.ens-directory }}
+        VITE_ENS_OPERATOR_DEPLOYMENT: ${{ inputs.ens-operator-deployment }}
       run: pnpm build:site
     - name: Offline release check
       shell: bash
       env:
         VITE_TOR_GATEWAYS: ${{ inputs.tor-gateways }}
         VITE_ENS_DIRECTORY: ${{ inputs.ens-directory }}
+        VITE_ENS_OPERATOR_DEPLOYMENT: ${{ inputs.ens-operator-deployment }}
       run: node scripts/check-release.mjs
     - uses: ./.github/actions/install-kubo
     - name: Test the restricted VPS release command and real offline CAR validation
