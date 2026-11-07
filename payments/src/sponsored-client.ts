@@ -41,7 +41,7 @@ const bytes32 = (value: unknown): value is Hex => typeof value === "string" && /
 const signature65 = (value: unknown): value is Hex => typeof value === "string" && /^0x[0-9a-fA-F]{130}$/.test(value);
 const validAddress = (value: Address) => isAddress(value) && value.toLowerCase() !== zeroAddress;
 
-/** Browser-side delegated key only. The app's escrow session key never enters this client. */
+/** Delegated browser/agent request key only. Keep the escrow session key in the trusted coordinator. */
 export class SponsoredPaymentClient {
   private readonly session: Readonly<SponsoredSession>;
   private readonly signer: Pick<PrivateKeyAccount, "address" | "signTypedData">;
@@ -61,6 +61,7 @@ export class SponsoredPaymentClient {
     const session = { ...options.session, safetyMarginSeconds: options.session.safetyMarginSeconds ?? 600 };
     assertTestPaymentChain(session.chainId);
     if (!validAddress(session.escrow) || !validAddress(options.sessionKey) || !validAddress(options.userSigner.address) || !uint256(session.sessionId) || session.sessionId === 0n || !uint256(session.price) || session.price === 0n || !Number.isSafeInteger(session.refundAfter) || !Number.isSafeInteger(session.safetyMarginSeconds) || session.safetyMarginSeconds < 60) throw new Error("invalid sponsored session");
+    if (options.userSigner.address.toLowerCase() === options.sessionKey.toLowerCase()) throw new Error("escrow session key cannot be used as a delegated request key");
     this.session = Object.freeze(session);
     this.signer = Object.freeze({ address: options.userSigner.address, signTypedData: options.userSigner.signTypedData });
     this.sessionKey = options.sessionKey;

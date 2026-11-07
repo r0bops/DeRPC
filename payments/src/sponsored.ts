@@ -13,7 +13,7 @@ export interface SponsoredCoordinatorOptions {
   store: DelegationStore;
   /** Frozen per-read price, including each full code/call logical read. */
   price: bigint;
-  /** Only the trusted app holds this escrow key. Never pass it to the delegated browser. */
+  /** Only the trusted app holds this escrow key. Never pass it to a delegated browser or agent. */
   signer: Pick<PrivateKeyAccount, "address" | "signTypedData">;
   verifyRead: (evidence: unknown, control: { signal?: AbortSignal; intent: Readonly<SponsoredReadIntent>; authorization: Readonly<DelegationReadAuthorization> }) => Promise<{ requestHash: Hex; readHash: Hex; charge: bigint }>;
   now?: () => number;
@@ -66,6 +66,7 @@ export class SponsoredPaymentCoordinator {
   /** Trusted administration only. A cap covers every issued authorization, including abandoned ones. */
   async grant(address: Address, cap: bigint, expiresAt: number): Promise<void> {
     if (!isAddress(address) || address.toLowerCase() === zeroAddress || !uint(cap) || cap > this.session.budget || !Number.isSafeInteger(expiresAt) || expiresAt <= this.now() || expiresAt > this.cutoff) throw new Error("invalid sponsored grant");
+    this.assertRequestKey(address);
     await this.transact(state => {
       this.assertOpen(state);
       const previous = state.grants[userKey(address)];
@@ -194,9 +195,14 @@ export class SponsoredPaymentCoordinator {
 
   private async authenticate(intent: SponsoredReadIntent, signature: Hex): Promise<Hex> {
     if (intent.sessionId !== this.session.sessionId || !isAddress(intent.userKey) || intent.userKey.toLowerCase() === zeroAddress || !uint(intent.nonce) || intent.charge !== this.options.price || !["proof", "code", "call"].includes(intent.kind) || !/^0x[0-9a-fA-F]{64}$/.test(intent.requestHash) || !Number.isSafeInteger(intent.expiresAt) || intent.expiresAt <= 0) throw new Error("invalid sponsored intent");
+    this.assertRequestKey(intent.userKey); // Also refuse unsafe grants written by an older coordinator.
     const typed = sponsoredIntentTypedData(this.session, intent);
     if (!await verifyTypedData({ ...typed, address: intent.userKey, signature })) throw new Error("invalid sponsored intent signature");
     return hashTypedData(typed);
+  }
+
+  private assertRequestKey(address: Address): void {
+    if (userKey(address) === userKey(this.options.signer.address)) throw new Error("escrow session key cannot be used as a delegated request key");
   }
 
   private async transact<T>(update: (state: DelegationState) => T): Promise<T> {

@@ -13,6 +13,7 @@ export interface PaymentSessionOptions extends PaymentDomain {
   price: bigint;
   refundAfter: number;
   creditWindow?: number;
+  /** Cooperative host policy only; a raw session-key holder can bypass it. Delegate agent keys instead. */
   spendLimit?: bigint;
   safetyMarginSeconds?: number;
 }
@@ -172,7 +173,7 @@ export class PaymentClient {
     };
   }
 
-  /** Supply a newly confirmed deposit value; a top-up never silently raises the agent's spend cap. */
+  /** Supply a newly confirmed deposit value; a top-up never silently raises this local spending policy. */
   updateDeposit(operatorId: string, confirmedDeposit: bigint): void {
     const session = this.get(operatorId);
     if (!uint256(confirmedDeposit) || confirmedDeposit < session.deposit || confirmedDeposit < session.total) throw new Error("deposit cannot decrease or exceed uint256");
